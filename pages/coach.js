@@ -90,6 +90,12 @@ export default function Coach(){
     setNewName("");setNewSport("");setNewGender("");setNewRole("iron");
   };
 
+  const deleteAthlete=async(id,name)=>{
+    if(!window.confirm("Delete "+name+"? This cannot be undone."))return;
+    await supabase.from("athletes").delete().eq("id",id);
+    setAthletes(p=>p.filter(x=>x.id!==id));
+  };
+
   const updateAthlete=async(id,key,val)=>{
     setAthletes(p=>p.map(a=>a.id===id?{...a,[key]:val}:a));
     await supabase.from("athletes").update({[key]:val}).eq("id",id);
@@ -313,6 +319,7 @@ export default function Coach(){
                       <option value="sleeping">Sleeping</option>
                       <option value="archived">Archived</option>
                     </select>
+                    <button onClick={()=>deleteAthlete(a.id,a.name)} style={{padding:"4px 8px",borderRadius:6,border:"0.5px solid #ffcccc",background:"transparent",color:RED,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>
                   </div>
                 ))}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 60px 80px 80px auto",gap:8,marginTop:16}}>
