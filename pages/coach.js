@@ -3,6 +3,9 @@ import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import Draft from "../components/Draft";
 import Accountability from "../components/Accountability";
+import FellowshipFriday from "../components/FellowshipFriday";
+import MindsetMonday from "../components/MindsetMonday";
+import CultureEvents from "../components/CultureEvents";
 
 const BG="#0f0f0f";
 const PUR="#534AB7";
@@ -150,6 +153,9 @@ export default function Coach(){
     {id:"inbox",label:`Inbox${inboxCount>0?` (${inboxCount})`:""}`},
     {id:"leaderboard",label:"Leaderboard"},
     {id:"goals",label:"Goals"},
+    {id:"fellowship",label:"Fellowship Friday"},
+{id:"mindset",label:"Mindset Monday"},
+{id:"culture",label:"Culture & Events"},
   ];
 
   if(!authed) return(
@@ -357,6 +363,9 @@ export default function Coach(){
           )}
 
           {tab==="accountability"&&<Accountability athletes={athletes.filter(a=>a.status==="active")}/>}
+{tab==="fellowship"&&<FellowshipFriday/>}
+{tab==="mindset"&&<MindsetMonday/>}
+{tab==="culture"&&<CultureEvents/>}
 
           {tab==="anvil"&&(
             <div>
