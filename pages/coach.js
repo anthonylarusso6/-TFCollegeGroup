@@ -1,0 +1,522 @@
+import { useState, useEffect } from "react";
+import Head from "next/head";
+import { supabase } from "../lib/supabase";
+
+const BG="#0f0f0f";
+const PUR="#534AB7";
+const GOLD="#D4AF37";
+const RED="#C0392B";
+const STEEL="#708090";
+const GREEN="#1E6B3A";
+const COACH_PIN="1803";
+
+export default function Coach(){
+  const[authed,setAuthed]=useState(false);
+  const[pin,setPin]=useState("");
+  const[pinError,setPinError]=useState("");
+  const[tab,setTab]=useState("overview");
+  const[athletes,setAthletes]=useState([]);
+  const[attendance,setAttendance]=useState([]);
+  const[inbox,setInbox]=useState([]);
+  const[anvil,setAnvil]=useState([]);
+  const[leaderboard,setLeaderboard]=useState([]);
+  const[announcement,setAnnouncement]=useState("");
+  const[currentAnnouncement,setCurrentAnnouncement]=useState(null);
+  const[loading,setLoading]=useState(true);
+  const[newName,setNewName]=useState("");
+  const[newSport,setNewSport]=useState("");
+  const[newGender,setNewGender]=useState("");
+  const[newRole,setNewRole]=useState("iron");
+  const[genLoading,setGenLoading]=useState(null);
+  const[anvilWinner,setAnvilWinner]=useState("");
+  const[anvilNote,setAnvilNote]=useState("");
+  const[anvilDate,setAnvilDate]=useState("");
+
+  useEffect(()=>{if(authed)loadAll();},[authed]);
+
+  const loadAll=async()=>{
+    setLoading(true);
+    const[{data:aths},{data:att},{data:inb},{data:anv},{data:lb},{data:ann}]=await Promise.all([
+      supabase.from("athletes").select("*").order("name"),
+      supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200),
+      supabase.from("inbox").select("*,athletes(name)").eq("done",false).order("created_at",{ascending:false}),
+      supabase.from("anvil").select("*").order("created_at",{ascending:false}),
+      supabase.from("leaderboard").select("*,athletes(name)").order("early_count",{ascending:false}),
+      supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1),
+    ]);
+    if(aths)setAthletes(aths);
+    if(att)setAttendance(att);
+    if(inb)setInbox(inb);
+    if(anv)setAnvil(anv);
+    if(lb)setLeaderboard(lb);
+    if(ann&&ann.length>0){setCurrentAnnouncement(ann[0]);setAnnouncement(ann[0].message);}
+    setLoading(false);
+  };
+
+  const callAI=async(prompt)=>{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+    const data=await res.json();
+    return data.content?.[0]?.text||"";
+  };
+
+  const generateTask=async(athlete,type)=>{
+    const goal=type==="athletic"?athlete.athletic_goal:athlete.character_goal;
+    if(!goal?.trim())return;
+    setGenLoading(athlete.id+"-"+type);
+    try{
+      const prompt=type==="athletic"
+        ?`You are Coach Ant, a faith-based strength coach. Athlete ${athlete.name} plays ${athlete.sport}. Their athletic goal: "${goal}". Give 3 specific exercises before training. Direct, under 60 words, no bullets.`
+        :`You are Coach Ant, a faith-based coach. Athlete ${athlete.name}'s character goal: "${goal}". Give one specific actionable task this week. Personal, encouraging, under 50 words.`;
+      const text=await callAI(prompt);
+      const key=type==="athletic"?"coach_athletic_task":"coach_character_task";
+      await supabase.from("athletes").update({[key]:text}).eq("id",athlete.id);
+      setAthletes(p=>p.map(a=>a.id===athlete.id?{...a,[key]:text}:a));
+    }catch(e){console.error(e);}
+    setGenLoading(null);
+  };
+
+  const generateReply=async(prompt,onResult,key)=>{
+    setGenLoading(key);
+    try{const text=await callAI(prompt);if(text)onResult(text);}
+    catch(e){console.error(e);}
+    setGenLoading(null);
+  };
+
+  const addAthlete=async()=>{
+    if(!newName.trim())return;
+    const{data}=await supabase.from("athletes").insert({name:newName.trim(),sport:newSport.trim(),gender:newGender,role:newRole,status:"active"}).select();
+    if(data)setAthletes(p=>[...p,data[0]]);
+    setNewName("");setNewSport("");setNewGender("");setNewRole("iron");
+  };
+
+  const updateAthlete=async(id,key,val)=>{
+    setAthletes(p=>p.map(a=>a.id===id?{...a,[key]:val}:a));
+    await supabase.from("athletes").update({[key]:val}).eq("id",id);
+  };
+
+  const saveAnnouncement=async()=>{
+    if(currentAnnouncement){
+      await supabase.from("announcements").update({message:announcement}).eq("id",currentAnnouncement.id);
+    } else {
+      await supabase.from("announcements").insert({message:announcement,week_label:"This week",active:true});
+    }
+    await loadAll();
+  };
+
+  const awardAnvil=async()=>{
+    if(!anvilWinner.trim())return;
+    await supabase.from("anvil").insert({athlete_name:anvilWinner,note:anvilNote,date_awarded:anvilDate||new Date().toLocaleDateString(),type:"individual",athlete_role:"iron"});
+    // Update leaderboard
+    const ath=athletes.find(a=>a.name===anvilWinner);
+    if(ath){
+      const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",ath.id);
+      if(lb&&lb.length>0)await supabase.from("leaderboard").update({anvil_count:(lb[0].anvil_count||0)+1}).eq("athlete_id",ath.id);
+    }
+    setAnvilWinner("");setAnvilNote("");setAnvilDate("");
+    await loadAll();
+  };
+
+  const replyToInbox=async(item,reply)=>{
+    await supabase.from("inbox").update({reply,reply_sent:true,done:true}).eq("id",item.id);
+    await loadAll();
+  };
+
+  const injuries=inbox.filter(i=>i.type==="injury");
+  const messages=inbox.filter(i=>i.type==="message");
+  const prayers=inbox.filter(i=>i.type==="prayer");
+  const inboxCount=inbox.length;
+
+  const today=new Date();
+  const dayName=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][today.getDay()];
+  const isClassDay=["Mon","Tue","Thu","Fri"].includes(dayName);
+  const todayAtt=attendance.filter(a=>a.date===today.toISOString().split("T")[0]);
+  const earlyToday=todayAtt.filter(a=>a.status==="early").length;
+  const lateToday=todayAtt.filter(a=>a.status==="late").length;
+
+  const TABS=[
+    {id:"overview",label:"Overview"},
+    {id:"roster",label:"Roster"},
+    {id:"attendance",label:"Attendance"},
+    {id:"anvil",label:"The Anvil"},
+    {id:"inbox",label:`Inbox${inboxCount>0?` (${inboxCount})`:""}`},
+    {id:"leaderboard",label:"Leaderboard"},
+    {id:"goals",label:"Goals"},
+  ];
+
+  // ── LOGIN ──
+  if(!authed) return(
+    <>
+      <Head><title>Coach — TF College Group</title></Head>
+      <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
+        <div style={{textAlign:"center",maxWidth:320,width:"100%"}}>
+          <div style={{width:60,height:60,borderRadius:16,background:GOLD,margin:"0 auto 1.5rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,boxShadow:"0 0 30px "+GOLD+"44"}}>⚒</div>
+          <div style={{fontSize:20,fontWeight:400,color:"#fff",marginBottom:4}}>Coach Ant</div>
+          <div style={{fontSize:13,color:"#888",marginBottom:32}}>Enter your PIN to access the dashboard</div>
+          <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:28}}>
+            {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+GOLD,background:i<pin.length?GOLD:"transparent"}}/>)}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
+            {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
+              <button key={i} onClick={()=>{
+                if(k===null)return;
+                if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
+                if(pin.length<4){
+                  const newPin=pin+String(k);
+                  setPin(newPin);
+                  if(newPin.length===4){
+                    if(newPin===COACH_PIN){setAuthed(true);setPin("");}
+                    else{setPinError("Wrong PIN. Try again.");setPin("");}
+                  }
+                }
+              }} style={{padding:"16px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#333"),background:k===null?"transparent":"#141414",fontSize:20,fontWeight:500,cursor:k===null?"default":"pointer",color:"#fff",fontFamily:"Georgia, serif"}}>
+                {k===null?"":k}
+              </button>
+            ))}
+          </div>
+          {pinError&&<div style={{marginTop:14,fontSize:13,color:RED}}>{pinError}</div>}
+          <a href="/" style={{display:"block",marginTop:24,fontSize:12,color:"#444"}}>← Back to home</a>
+        </div>
+      </div>
+    </>
+  );
+
+  if(loading) return(
+    <div style={{minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{textAlign:"center"}}><div style={{fontSize:32,marginBottom:16}}>⚒</div><div style={{fontSize:14,color:"#555"}}>Loading dashboard...</div></div>
+    </div>
+  );
+
+  return(
+    <>
+      <Head><title>Coach Dashboard — TF College Group</title></Head>
+      <div style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"#f5f5f5",minHeight:"100vh"}}>
+
+        {/* Header */}
+        <div style={{background:BG,padding:"1rem 1.25rem 0"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <div>
+              <div style={{fontSize:18,fontWeight:400,color:"#fff"}}>TF College Group</div>
+              <div style={{fontSize:12,color:"#555"}}>Coach dashboard · {dayName} · {isClassDay?"Class day":"No class"}</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:12,color:"#888"}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
+              <button onClick={()=>setAuthed(false)} style={{fontSize:11,color:"#444",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif"}}>Sign out</button>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:1}}>
+            {TABS.map(t=>(
+              <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"8px 14px",background:"transparent",border:"none",borderBottom:"2px solid "+(tab===t.id?"#fff":"transparent"),color:tab===t.id?"#fff":"#555",fontSize:13,fontWeight:tab===t.id?500:400,cursor:"pointer",fontFamily:"Georgia, serif",whiteSpace:"nowrap"}}>{t.label}</button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{padding:"1rem",maxWidth:900,margin:"0 auto"}}>
+
+          {/* OVERVIEW */}
+          {tab==="overview"&&(
+            <div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:12}}>
+                {[
+                  {label:"Athletes",val:athletes.filter(a=>a.status==="active").length,color:"#1a1a1a",bg:"#fff"},
+                  {label:"Early today",val:earlyToday,color:GREEN,bg:"#EAF3DE"},
+                  {label:"Late today",val:lateToday,color:RED,bg:"#FCEBEB"},
+                  {label:"Inbox",val:inboxCount,color:inboxCount>0?PUR:"#888",bg:inboxCount>0?"#EEEDFE":"#fff"},
+                ].map(s=>(
+                  <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"10px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+                    <div style={{fontSize:22,fontWeight:500,color:s.color}}>{s.val}</div>
+                    <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Weekly announcement */}
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>Weekly announcement</div>
+                <div style={{fontSize:12,color:"#888",marginBottom:8}}>This shows on every athlete's home screen when they log in.</div>
+                <textarea value={announcement} onChange={e=>setAnnouncement(e.target.value)} placeholder="Type this week's message to your athletes..." style={{width:"100%",minHeight:80,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",marginBottom:8}}/>
+                <button onClick={saveAnnouncement} style={{padding:"8px 20px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Save & push to athletes →</button>
+              </div>
+
+              {/* Needs attention */}
+              {(injuries.length>0||messages.length>0||prayers.length>0)&&(
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>Needs attention</div>
+                  {injuries.map((i,idx)=>(
+                    <div key={idx} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"flex-start"}}>
+                      <div style={{width:7,height:7,borderRadius:"50%",background:RED,marginTop:5,flexShrink:0}}/>
+                      <div style={{fontSize:13}}><span style={{fontWeight:500}}>{i.athletes?.name}</span> — injury: <span style={{color:"#888"}}>{i.message}</span></div>
+                    </div>
+                  ))}
+                  {messages.map((m,idx)=>(
+                    <div key={idx} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"flex-start"}}>
+                      <div style={{width:7,height:7,borderRadius:"50%",background:PUR,marginTop:5,flexShrink:0}}/>
+                      <div style={{fontSize:13}}><span style={{fontWeight:500}}>{m.athletes?.name}</span> sent a message</div>
+                    </div>
+                  ))}
+                  {prayers.map((p,idx)=>(
+                    <div key={idx} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"flex-start"}}>
+                      <div style={{width:7,height:7,borderRadius:"50%",background:GREEN,marginTop:5,flexShrink:0}}/>
+                      <div style={{fontSize:13}}><span style={{fontWeight:500}}>{p.athletes?.name}</span> submitted a prayer request</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Class flow */}
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Class flow — 2 hours · done by 11:20am</div>
+                {[
+                  {time:"9:00am",label:"Pre-class",detail:dayName==="Mon"?"Draft → Mindset Monday":dayName==="Fri"?"Fellowship Friday devotional":"Polar sign-in · stretch prep",color:PUR,dur:"30 min"},
+                  {time:"9:30am",label:"Stretch & mobility",detail:"10 min · dynamic stretching · all athletes together",color:GREEN,dur:"10 min"},
+                  {time:"9:40am",label:"Run",detail:"40–50 min · all 4 groups · hand positions enforced · leaders set pace",color:"#854F0B",dur:"40–50 min"},
+                  {time:"10:30am",label:"Weight room",detail:"30–50 min · 2 groups Tier 1 · 1 group Tier 2 · 1 group Tier 3",color:PUR,dur:"30–50 min"},
+                  {time:"11:15am",label:"Closeout & prayer",detail:"5 min · all together · coach or athlete prays",color:RED,dur:"5 min"},
+                ].map((s,i,arr)=>(
+                  <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<arr.length-1?"0.5px solid #f0f0f0":"none"}}>
+                    <div style={{minWidth:56,fontSize:12,color:"#888",paddingTop:2}}>{s.time}</div>
+                    <div style={{minWidth:8,display:"flex",flexDirection:"column",alignItems:"center"}}>
+                      <div style={{width:8,height:8,borderRadius:"50%",background:s.color,marginTop:4,flexShrink:0}}/>
+                      {i<arr.length-1&&<div style={{width:1,flex:1,background:"#e0e0e0",marginTop:3}}/>}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+                        <span style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{s.label}</span>
+                        <span style={{fontSize:11,background:"#f5f5f5",color:"#888",padding:"1px 7px",borderRadius:5}}>{s.dur}</span>
+                      </div>
+                      <div style={{fontSize:12,color:"#888"}}>{s.detail}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ROSTER */}
+          {tab==="roster"&&(
+            <div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Athletes — {athletes.filter(a=>a.status==="active").length} active</div>
+                {athletes.map(a=>(
+                  <div key={a.id} style={{padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0}}>{a.name[0]}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{a.name}</div>
+                      <div style={{fontSize:11,color:"#888"}}>{a.sport} · {a.gender}</div>
+                    </div>
+                    <select value={a.role} onChange={e=>updateAthlete(a.id,"role",e.target.value)} style={{padding:"4px 8px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fff",color:a.role==="forge"?RED:STEEL}}>
+                      <option value="iron">The Iron</option>
+                      <option value="forge">The Forge</option>
+                    </select>
+                    <select value={a.status} onChange={e=>updateAthlete(a.id,"status",e.target.value)} style={{padding:"4px 8px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fff",color:a.status==="active"?GREEN:a.status==="sleeping"?"#854F0B":RED}}>
+                      <option value="active">Active</option>
+                      <option value="sleeping">Sleeping</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
+                ))}
+                {/* Add athlete */}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 60px 80px 80px auto",gap:8,marginTop:16}}>
+                  <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{padding:"6px 8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif"}}/>
+                  <input value={newSport} onChange={e=>setNewSport(e.target.value)} placeholder="Sport" style={{padding:"6px 8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif"}}/>
+                  <select value={newGender} onChange={e=>setNewGender(e.target.value)} style={{padding:"6px 8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
+                    <option value="">M/F</option><option value="M">M</option><option value="F">F</option>
+                  </select>
+                  <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={{padding:"6px 8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
+                    <option value="iron">Iron</option><option value="forge">Forge</option>
+                  </select>
+                  <button onClick={addAthlete} disabled={!newName.trim()} style={{padding:"6px 16px",borderRadius:8,border:"none",background:newName.trim()?PUR:"#e0e0e0",color:"#fff",fontSize:13,fontWeight:500,cursor:newName.trim()?"pointer":"not-allowed",fontFamily:"Georgia, serif"}}>Add</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ATTENDANCE */}
+          {tab==="attendance"&&(
+            <div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Today's attendance — {dayName}</div>
+                {athletes.filter(a=>a.status==="active").map(a=>{
+                  const rec=todayAtt.find(r=>r.athlete_id===a.id);
+                  return(
+                    <div key={a.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0"}}>
+                      <div style={{width:32,height:32,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:500,color:"#fff",flexShrink:0}}>{a.name[0]}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{a.name}</div>
+                        {rec&&<div style={{fontSize:11,color:"#888"}}>{rec.time_logged}</div>}
+                      </div>
+                      {rec?(
+                        <span style={{fontSize:11,fontWeight:500,padding:"2px 10px",borderRadius:6,background:rec.status==="early"?"#EAF3DE":"#FCEBEB",color:rec.status==="early"?GREEN:RED}}>{rec.status==="early"?"Early ✓":"Late"}</span>
+                      ):(
+                        <span style={{fontSize:11,color:"#aaa"}}>Not checked in</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* THE ANVIL */}
+          {tab==="anvil"&&(
+            <div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Award this week's Anvil</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                  <div>
+                    <div style={{fontSize:11,color:"#888",marginBottom:4}}>Athlete</div>
+                    <select value={anvilWinner} onChange={e=>setAnvilWinner(e.target.value)} style={{width:"100%",padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
+                      <option value="">Select athlete...</option>
+                      {athletes.filter(a=>a.status==="active").map(a=><option key={a.id} value={a.name}>{a.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div style={{fontSize:11,color:"#888",marginBottom:4}}>Week / date</div>
+                    <input value={anvilDate} onChange={e=>setAnvilDate(e.target.value)} placeholder="e.g. Week 1 · June 2" style={{width:"100%",padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",boxSizing:"border-box"}}/>
+                  </div>
+                </div>
+                <div style={{marginBottom:8}}>
+                  <div style={{fontSize:11,color:"#888",marginBottom:4}}>Why they earned it</div>
+                  <textarea value={anvilNote} onChange={e=>setAnvilNote(e.target.value)} placeholder="What did this person do that nobody else did this week?" style={{width:"100%",minHeight:70,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box"}}/>
+                </div>
+                <button onClick={awardAnvil} disabled={!anvilWinner} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:anvilWinner?GOLD:"#e0e0e0",color:anvilWinner?"#1a1a1a":"#aaa",fontSize:14,fontWeight:600,cursor:anvilWinner?"pointer":"not-allowed",fontFamily:"Georgia, serif"}}>Award The Anvil →</button>
+              </div>
+
+              {/* HOF */}
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Hall of Fame</div>
+                {anvil.filter(a=>a.type==="individual").map((w,i)=>(
+                  <div key={i} style={{display:"flex",gap:12,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"center"}}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:i===0?"#1f1700":BG,border:"2px solid "+(i===0?GOLD:"#333"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:i===0?GOLD:"#666",fontWeight:600,flexShrink:0}}>{w.athlete_name[0]}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:500,color:i===0?GOLD:"#1a1a1a"}}>{w.athlete_name} {i===0&&"⚡"}</div>
+                      <div style={{fontSize:11,color:"#888"}}>{w.date_awarded}</div>
+                      {w.note&&<div style={{fontSize:12,color:"#aaa",fontStyle:"italic"}}>"{w.note}"</div>}
+                    </div>
+                    {i===0&&<span style={{fontSize:10,background:"#1f1700",color:GOLD,padding:"2px 7px",borderRadius:5}}>Current</span>}
+                  </div>
+                ))}
+                {anvil.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No Anvil winners yet. Award the first one above.</div>}
+              </div>
+            </div>
+          )}
+
+          {/* INBOX */}
+          {tab==="inbox"&&(
+            <div>
+              {/* Injuries */}
+              {injuries.length>0&&(
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
+                  <div style={{fontSize:13,fontWeight:600,color:RED,marginBottom:10}}>Injury flags</div>
+                  {injuries.map((item,i)=>(
+                    <InboxItem key={i} item={item} color={RED} bg="#FCEBEB" type="injury" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"inj-"+item.id)} genLoading={genLoading} loadKey={"inj-"+item.id}/>
+                  ))}
+                </div>
+              )}
+
+              {/* Messages */}
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
+                <div style={{fontSize:13,fontWeight:600,color:PUR,marginBottom:10}}>Messages from athletes</div>
+                {messages.length===0&&<div style={{fontSize:13,color:"#aaa"}}>No messages.</div>}
+                {messages.map((item,i)=>(
+                  <InboxItem key={i} item={item} color={PUR} bg="#EEEDFE" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"msg-"+item.id)} genLoading={genLoading} loadKey={"msg-"+item.id}/>
+                ))}
+              </div>
+
+              {/* Prayers */}
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
+                <div style={{fontSize:13,fontWeight:600,color:GREEN,marginBottom:10}}>Prayer requests</div>
+                {prayers.length===0&&<div style={{fontSize:13,color:"#aaa"}}>No prayer requests.</div>}
+                {prayers.map((item,i)=>(
+                  <InboxItem key={i} item={item} color={GREEN} bg="#EAF3DE" type="prayer" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"pry-"+item.id)} genLoading={genLoading} loadKey={"pry-"+item.id}/>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* LEADERBOARD */}
+          {tab==="leaderboard"&&(
+            <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
+              <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Summer leaderboard</div>
+              {leaderboard.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No data yet. Leaderboard builds as athletes check in.</div>}
+              {leaderboard.map((lb,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0"}}>
+                  <div style={{width:28,height:28,borderRadius:"50%",background:i===0?GOLD:i===1?"#aaa":i===2?"#CD7F32":"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:i<3?"#fff":"#888",flexShrink:0}}>{i+1}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{lb.athletes?.name}</div>
+                    <div style={{display:"flex",gap:10,marginTop:2}}>
+                      <span style={{fontSize:11,color:GREEN}}>🟢 {lb.early_count||0} early</span>
+                      <span style={{fontSize:11,color:"#854F0B"}}>🔥 {lb.current_streak||0} streak</span>
+                      <span style={{fontSize:11,color:GOLD}}>⚡ {lb.anvil_count||0} anvil</span>
+                    </div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:11,color:RED}}>{lb.late_count||0} late</div>
+                    <div style={{fontSize:11,color:"#aaa"}}>{lb.callout_count||0} callouts</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* GOALS */}
+          {tab==="goals"&&(
+            <div>
+              {athletes.filter(a=>a.status==="active").map(a=>(
+                <div key={a.id} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:10,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+(a.role==="forge"?RED:STEEL)}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0}}>{a.name[0]}</div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#1a1a1a"}}>{a.name}</div><div style={{fontSize:12,color:"#888"}}>{a.sport}</div></div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    {[{label:"Athletic goal",goalKey:"athletic_goal",taskKey:"coach_athletic_task",type:"athletic",color:GREEN},{label:"Character goal",goalKey:"character_goal",taskKey:"coach_character_task",type:"character",color:PUR}].map(({label,goalKey,taskKey,type,color})=>(
+                      <div key={goalKey}>
+                        <div style={{fontSize:11,color:"#888",marginBottom:4}}>{label}</div>
+                        <div style={{fontSize:12,color:"#1a1a1a",padding:"6px 8px",background:"#f9f9f9",borderRadius:6,minHeight:40,marginBottom:6}}>{a[goalKey]||<span style={{color:"#ccc"}}>Not set</span>}</div>
+                        <button onClick={()=>generateTask(a,type)} disabled={!a[goalKey]||genLoading===a.id+"-"+type} style={{padding:"5px 10px",borderRadius:6,border:"0.5px solid "+color,background:"transparent",color:color,fontSize:11,cursor:a[goalKey]?"pointer":"not-allowed",fontFamily:"Georgia, serif",opacity:a[goalKey]?1:0.4,marginBottom:6}}>
+                          {genLoading===a.id+"-"+type?"Generating...":"Generate task"}
+                        </button>
+                        {a[taskKey]&&(
+                          <div style={{padding:"8px",background:BG,borderRadius:6,borderLeft:"3px solid "+color}}>
+                            <div style={{fontSize:10,color:color,marginBottom:3}}>Task from Coach Ant</div>
+                            <div style={{fontSize:11,color:"#ccc",lineHeight:1.5}}>{a[taskKey]}</div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function InboxItem({item,color,bg,type,onReply,onGenerate,genLoading,loadKey}){
+  const[reply,setReply]=useState(item.reply||"");
+  const[sent,setSent]=useState(item.reply_sent||false);
+  const prompts={
+    injury:`You are Coach Ant, a faith-based strength coach. Athlete ${item.athletes?.name} reported: "${item.message}". Write a caring professional response as Coach Ant. Acknowledge the injury, tell them what to do, encourage them. Under 60 words.`,
+    message:`You are Coach Ant, a faith-based strength coach. Athlete ${item.athletes?.name} sent: "${item.message}". Write a warm personal reply as Coach Ant. Encouraging, real, grounded in faith. Under 60 words.`,
+    prayer:`You are Coach Ant, a faith-based coach who prays for athletes. ${item.athletes?.name} submitted: "${item.message}". Write a warm faith-filled response as Coach Ant. Include a short scripture if natural. Under 70 words.`,
+  };
+  return(
+    <div style={{padding:"10px 0",borderBottom:"0.5px solid #f0f0f0"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+        <span style={{fontSize:13,fontWeight:500,color}}>{item.athletes?.name}</span>
+        <span style={{fontSize:11,color:"#aaa"}}>{new Date(item.created_at).toLocaleDateString()}</span>
+      </div>
+      <div style={{fontSize:13,color:"#555",marginBottom:8,padding:"8px 10px",background:bg,borderRadius:8,borderLeft:"3px solid "+color}}>{item.message}</div>
+      <textarea value={reply} onChange={e=>setReply(e.target.value)} placeholder="Write a reply..." style={{width:"100%",minHeight:50,padding:"6px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <button onClick={()=>onGenerate(prompts[type],text=>setReply(text))} style={{padding:"5px 12px",borderRadius:8,border:"0.5px solid "+color,background:"transparent",color,fontSize:11,cursor:"pointer",fontFamily:"Georgia, serif"}}>
+          {genLoading===loadKey?"Generating...":"Generate reply"}
+        </button>
+        <button onClick={async()=>{await onReply(item,reply);setSent(true);}} style={{padding:"5px 14px",borderRadius:8,border:"none",background:color,color:"#fff",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Send reply</button>
+        {sent&&<span style={{fontSize:12,color:GREEN,fontWeight:500}}>✓ Sent</span>}
+      </div>
+    </div>
+  );
+}
