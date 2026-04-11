@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import Draft from "../components/Draft";
+import Accountability from "../components/Accountability";
 
 const BG="#0f0f0f";
 const PUR="#534AB7";
@@ -144,6 +145,7 @@ export default function Coach(){
     {id:"draft",label:"Draft"},
     {id:"roster",label:"Roster"},
     {id:"attendance",label:"Attendance"},
+    {id:"accountability",label:"Accountability"},
     {id:"anvil",label:"The Anvil"},
     {id:"inbox",label:`Inbox${inboxCount>0?` (${inboxCount})`:""}`},
     {id:"leaderboard",label:"Leaderboard"},
@@ -217,7 +219,6 @@ export default function Coach(){
 
         <div style={{padding:"1rem",maxWidth:900,margin:"0 auto"}}>
 
-          {/* OVERVIEW */}
           {tab==="overview"&&(
             <div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:12}}>
@@ -233,14 +234,12 @@ export default function Coach(){
                   </div>
                 ))}
               </div>
-
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>Weekly announcement</div>
                 <div style={{fontSize:12,color:"#888",marginBottom:8}}>This shows on every athlete's home screen when they log in.</div>
                 <textarea value={announcement} onChange={e=>setAnnouncement(e.target.value)} placeholder="Type this week's message to your athletes..." style={{width:"100%",minHeight:80,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",marginBottom:8}}/>
                 <button onClick={saveAnnouncement} style={{padding:"8px 20px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Save & push to athletes →</button>
               </div>
-
               {(injuries.length>0||messages.length>0||prayers.length>0)&&(
                 <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
                   <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>Needs attention</div>
@@ -264,7 +263,6 @@ export default function Coach(){
                   ))}
                 </div>
               )}
-
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Class flow — 2 hours · done by 11:20am</div>
                 {[
@@ -293,12 +291,8 @@ export default function Coach(){
             </div>
           )}
 
-          {/* DRAFT */}
-          {tab==="draft"&&(
-            <Draft athletes={athletes.filter(a=>a.status==="active")}/>
-          )}
+          {tab==="draft"&&<Draft athletes={athletes.filter(a=>a.status==="active")}/>}
 
-          {/* ROSTER */}
           {tab==="roster"&&(
             <div>
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
@@ -337,7 +331,6 @@ export default function Coach(){
             </div>
           )}
 
-          {/* ATTENDANCE */}
           {tab==="attendance"&&(
             <div>
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
@@ -363,7 +356,8 @@ export default function Coach(){
             </div>
           )}
 
-          {/* THE ANVIL */}
+          {tab==="accountability"&&<Accountability athletes={athletes.filter(a=>a.status==="active")}/>}
+
           {tab==="anvil"&&(
             <div>
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
@@ -405,7 +399,6 @@ export default function Coach(){
             </div>
           )}
 
-          {/* INBOX */}
           {tab==="inbox"&&(
             <div>
               {injuries.length>0&&(
@@ -433,7 +426,6 @@ export default function Coach(){
             </div>
           )}
 
-          {/* LEADERBOARD */}
           {tab==="leaderboard"&&(
             <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
               <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Summer leaderboard</div>
@@ -458,7 +450,6 @@ export default function Coach(){
             </div>
           )}
 
-          {/* GOALS */}
           {tab==="goals"&&(
             <div>
               {athletes.filter(a=>a.status==="active").map(a=>(
