@@ -78,4 +78,118 @@ export default function Landing(){
 
           {/* Icon */}
           <div style={{
-            width:70,height:70,borderR
+            width:70,height:70,borderRadius:16,
+            background:"linear-gradient(135deg, #1a1a1a, #2a2a2a)",
+            border:"0.5px solid #333",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            margin:"0 auto 2rem",
+            fontSize:32,
+            boxShadow:"0 0 40px rgba(212,175,55,0.15)",
+          }}>⚒</div>
+
+          {/* Title */}
+          <div style={{fontSize:11,color:"#999999",textTransform:"uppercase",letterSpacing:"0.2em",marginBottom:12}}>
+            Triple F · College Group
+          </div>
+          <h1 style={{fontSize:36,fontWeight:400,color:"#fff",margin:"0 0 8px",letterSpacing:"-0.02em",lineHeight:1.1}}>
+            TF College Group
+          </h1>
+          <div style={{fontSize:13,color:"#cccccc",fontStyle:"italic",marginBottom:48,lineHeight:1.6}}>
+            "As iron sharpens iron, so one person sharpens another."
+            <div style={{fontSize:11,marginTop:4,color:"#999999"}}>— Proverbs 27:17</div>
+          </div>
+
+          {/* Three buttons */}
+          <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:40}}>
+
+            {/* Athlete */}
+            <a href="/athlete">
+              <div style={{
+                padding:"18px 24px",borderRadius:14,
+                border:"0.5px solid #333",
+                background:"linear-gradient(135deg, #1a1a1a, #1f1f1f)",
+                cursor:"pointer",display:"flex",alignItems:"center",gap:16,
+                transition:"all 0.2s ease",
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.border="0.5px solid "+STEEL;e.currentTarget.style.transform="translateY(-2px)";}}
+              onMouseLeave={e=>{e.currentTarget.style.border="0.5px solid #333";e.currentTarget.style.transform="translateY(0)";}}>
+                <div style={{width:44,height:44,borderRadius:"50%",background:STEEL,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,boxShadow:"0 0 18px "+STEEL+"88"}}>⚙</div>
+                <div style={{textAlign:"left",flex:1}}>
+                  <div style={{fontSize:15,fontWeight:500,color:"#fff",marginBottom:2}}>Athlete Login</div>
+                  <div style={{fontSize:12,color:"#cccccc"}}>Sign in to your profile, check in, view your group</div>
+                </div>
+                <div style={{fontSize:18,color:"#aaaaaa"}}>→</div>
+              </div>
+            </a>
+
+            {/* Coach */}
+            <a href="/coach">
+              <div style={{
+                padding:"18px 24px",borderRadius:14,
+                border:"0.5px solid #333",
+                background:"linear-gradient(135deg, #1a1a1a, #1f1f1f)",
+                cursor:"pointer",display:"flex",alignItems:"center",gap:16,
+                transition:"all 0.2s ease",
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.border="0.5px solid "+GOLD;e.currentTarget.style.transform="translateY(-2px)";}}
+              onMouseLeave={e=>{e.currentTarget.style.border="0.5px solid #333";e.currentTarget.style.transform="translateY(0)";}}>
+                <div style={{width:44,height:44,borderRadius:"50%",background:GOLD,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,boxShadow:"0 0 18px "+GOLD+"88"}}>⚒</div>
+                <div style={{textAlign:"left",flex:1}}>
+                  <div style={{fontSize:15,fontWeight:500,color:GOLD,marginBottom:2}}>Coach Access</div>
+                  <div style={{fontSize:12,color:"#cccccc"}}>Full dashboard · Draft · Roster · Inbox · Everything</div>
+                </div>
+                <div style={{fontSize:18,color:"#aaaaaa"}}>→</div>
+              </div>
+            </a>
+
+            {/* Callout */}
+            <a href="/callout">
+              <div style={{
+                padding:"18px 24px",borderRadius:14,
+                border:"0.5px solid #333",
+                background:"linear-gradient(135deg, #1a1a1a, #1f1f1f)",
+                cursor:"pointer",display:"flex",alignItems:"center",gap:16,
+                transition:"all 0.2s ease",
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.border="0.5px solid "+RED;e.currentTarget.style.transform="translateY(-2px)";}}
+              onMouseLeave={e=>{e.currentTarget.style.border="0.5px solid #333";e.currentTarget.style.transform="translateY(0)";}}>
+                <div style={{width:44,height:44,borderRadius:"50%",background:RED,border:"2px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0,boxShadow:"0 0 18px "+RED+"88"}}>📲</div>
+                <div style={{textAlign:"left",flex:1}}>
+                  <div style={{fontSize:15,fontWeight:500,color:RED,marginBottom:2}}>Call-Out Station</div>
+                  <div style={{fontSize:12,color:"#cccccc"}}>iPad · Weight room · Log violations</div>
+                </div>
+                <div style={{fontSize:18,color:"#aaaaaa"}}>→</div>
+              </div>
+            </a>
+          </div>
+
+          {/* Anvil winner */}
+          <div style={{
+            padding:"14px 18px",borderRadius:12,
+            background:"#1f1700",border:"0.5px solid "+GOLD+"44",
+            display:"flex",alignItems:"center",gap:12,marginBottom:32,
+          }}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:GOLD,flexShrink:0}}/>
+            <div style={{textAlign:"left"}}>
+              <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}}>This week's Anvil</div>
+              <div style={{fontSize:13,color:"#fff",fontWeight:500}}>To be announced Friday</div>
+              <div style={{fontSize:11,color:"#999999",fontStyle:"italic",marginTop:2}}>"The anvil does not move."</div>
+            </div>
+          </div>
+
+          {/* Progression */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:32}}>
+            {[{label:"The Iron",color:STEEL},{label:"→",color:"#777"},{label:"The Forge",color:RED},{label:"→",color:"#777"},{label:"The Anvil",color:GOLD}].map((item,i)=>(
+              <div key={i} style={{fontSize:11,color:item.color,fontWeight:i%2===0?500:400}}>{item.label}</div>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div style={{fontSize:11,color:"#999999",letterSpacing:"0.05em"}}>
+            TF College Group · Knoxville, TN · triplefsports.com
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
