@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
+import Draft from "../components/Draft";
 
 const BG="#0f0f0f";
 const PUR="#534AB7";
@@ -106,7 +107,6 @@ export default function Coach(){
   const awardAnvil=async()=>{
     if(!anvilWinner.trim())return;
     await supabase.from("anvil").insert({athlete_name:anvilWinner,note:anvilNote,date_awarded:anvilDate||new Date().toLocaleDateString(),type:"individual",athlete_role:"iron"});
-    // Update leaderboard
     const ath=athletes.find(a=>a.name===anvilWinner);
     if(ath){
       const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",ath.id);
@@ -135,6 +135,7 @@ export default function Coach(){
 
   const TABS=[
     {id:"overview",label:"Overview"},
+    {id:"draft",label:"Draft"},
     {id:"roster",label:"Roster"},
     {id:"attendance",label:"Attendance"},
     {id:"anvil",label:"The Anvil"},
@@ -143,7 +144,6 @@ export default function Coach(){
     {id:"goals",label:"Goals"},
   ];
 
-  // ── LOGIN ──
   if(!authed) return(
     <>
       <Head><title>Coach — TF College Group</title></Head>
@@ -191,7 +191,6 @@ export default function Coach(){
       <Head><title>Coach Dashboard — TF College Group</title></Head>
       <div style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"#f5f5f5",minHeight:"100vh"}}>
 
-        {/* Header */}
         <div style={{background:BG,padding:"1rem 1.25rem 0"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
             <div>
@@ -229,7 +228,6 @@ export default function Coach(){
                 ))}
               </div>
 
-              {/* Weekly announcement */}
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>Weekly announcement</div>
                 <div style={{fontSize:12,color:"#888",marginBottom:8}}>This shows on every athlete's home screen when they log in.</div>
@@ -237,7 +235,6 @@ export default function Coach(){
                 <button onClick={saveAnnouncement} style={{padding:"8px 20px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Save & push to athletes →</button>
               </div>
 
-              {/* Needs attention */}
               {(injuries.length>0||messages.length>0||prayers.length>0)&&(
                 <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
                   <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>Needs attention</div>
@@ -262,7 +259,6 @@ export default function Coach(){
                 </div>
               )}
 
-              {/* Class flow */}
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Class flow — 2 hours · done by 11:20am</div>
                 {[
@@ -291,6 +287,11 @@ export default function Coach(){
             </div>
           )}
 
+          {/* DRAFT */}
+          {tab==="draft"&&(
+            <Draft athletes={athletes.filter(a=>a.status==="active")}/>
+          )}
+
           {/* ROSTER */}
           {tab==="roster"&&(
             <div>
@@ -314,7 +315,6 @@ export default function Coach(){
                     </select>
                   </div>
                 ))}
-                {/* Add athlete */}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 60px 80px 80px auto",gap:8,marginTop:16}}>
                   <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{padding:"6px 8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif"}}/>
                   <input value={newSport} onChange={e=>setNewSport(e.target.value)} placeholder="Sport" style={{padding:"6px 8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif"}}/>
@@ -380,8 +380,6 @@ export default function Coach(){
                 </div>
                 <button onClick={awardAnvil} disabled={!anvilWinner} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:anvilWinner?GOLD:"#e0e0e0",color:anvilWinner?"#1a1a1a":"#aaa",fontSize:14,fontWeight:600,cursor:anvilWinner?"pointer":"not-allowed",fontFamily:"Georgia, serif"}}>Award The Anvil →</button>
               </div>
-
-              {/* HOF */}
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Hall of Fame</div>
                 {anvil.filter(a=>a.type==="individual").map((w,i)=>(
@@ -395,7 +393,7 @@ export default function Coach(){
                     {i===0&&<span style={{fontSize:10,background:"#1f1700",color:GOLD,padding:"2px 7px",borderRadius:5}}>Current</span>}
                   </div>
                 ))}
-                {anvil.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No Anvil winners yet. Award the first one above.</div>}
+                {anvil.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No Anvil winners yet.</div>}
               </div>
             </div>
           )}
@@ -403,7 +401,6 @@ export default function Coach(){
           {/* INBOX */}
           {tab==="inbox"&&(
             <div>
-              {/* Injuries */}
               {injuries.length>0&&(
                 <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
                   <div style={{fontSize:13,fontWeight:600,color:RED,marginBottom:10}}>Injury flags</div>
@@ -412,8 +409,6 @@ export default function Coach(){
                   ))}
                 </div>
               )}
-
-              {/* Messages */}
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
                 <div style={{fontSize:13,fontWeight:600,color:PUR,marginBottom:10}}>Messages from athletes</div>
                 {messages.length===0&&<div style={{fontSize:13,color:"#aaa"}}>No messages.</div>}
@@ -421,8 +416,6 @@ export default function Coach(){
                   <InboxItem key={i} item={item} color={PUR} bg="#EEEDFE" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"msg-"+item.id)} genLoading={genLoading} loadKey={"msg-"+item.id}/>
                 ))}
               </div>
-
-              {/* Prayers */}
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
                 <div style={{fontSize:13,fontWeight:600,color:GREEN,marginBottom:10}}>Prayer requests</div>
                 {prayers.length===0&&<div style={{fontSize:13,color:"#aaa"}}>No prayer requests.</div>}
