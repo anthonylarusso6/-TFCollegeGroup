@@ -126,21 +126,38 @@ export default function Athlete(){
   const submitPin=async()=>{
     if(pin.length<4)return;
     const saved=selectedAthlete.pin;
-    if(!saved||saved===""){
-      if(pinStep==="enter"){setPinConfirm(pin);setPin("");setPinStep("confirm");setPinError("");}
-      else{
+    if(!saved||saved===""||saved===null){
+      if(pinStep==="enter"){
+        setPinConfirm(pin);
+        setPin("");
+        setPinStep("confirm");
+        setPinError("");
+      } else {
         if(pin===pinConfirm){
           await supabase.from("athletes").update({pin}).eq("id",selectedAthlete.id);
           setSelectedAthlete({...selectedAthlete,pin});
-          const info=await doCheckin(selectedAthlete);
-          setCheckinInfo(info);setPin("");setScreen("checkin");
-        } else {setPinError("PINs don't match. Try again.");setPin("");setPinStep("enter");setPinConfirm("");}
+          const info=await doCheckin({...selectedAthlete,pin});
+          setCheckinInfo(info);
+          setPin("");
+          setScreen("checkin");
+        } else {
+          setPinError("PINs don't match. Try again.");
+          setPin("");
+          setPinStep("enter");
+          setPinConfirm("");
+        }
       }
     } else {
       if(pin===saved){
         const info=await doCheckin(selectedAthlete);
-        setCheckinInfo(info);setPin("");setScreen("checkin");setPinError("");
-      } else {setPinError("Incorrect PIN. Try again.");setPin("");}
+        setCheckinInfo(info);
+        setPin("");
+        setScreen("checkin");
+        setPinError("");
+      } else {
+        setPinError("Incorrect PIN. Try again.");
+        setPin("");
+      }
     }
   };
 
