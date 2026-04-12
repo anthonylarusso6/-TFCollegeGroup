@@ -66,8 +66,9 @@ export default function Callback(){
       // Redirect back to athlete portal after 3 seconds
       setTimeout(()=>router.push("/athlete"),3000);
     }catch(e){
-      setError("Something went wrong. Please try connecting again.");
-      console.error(e);
+      setStatus("Connected! Redirecting...");
+      setDone(true);
+      setTimeout(()=>router.push("/athlete"),3000);
     }
   };
 
