@@ -30,6 +30,12 @@ const BRACELETS=[
   {color:"Teal",ref:"Jeremiah 29:11",text:"Plans to prosper you and not to harm you.",hex:"#1A9E8F"},
 ];
 
+const TIER_COLORS={
+  1:{bg:"#EEEDFE",border:"#534AB7",color:"#3C3489",label:"Tier 1"},
+  2:{bg:"#E1F5EE",border:"#0F6E56",color:"#085041",label:"Tier 2"},
+  3:{bg:"#FAEEDA",border:"#854F0B",color:"#633806",label:"Tier 3"},
+};
+
 const snakeSeq=(total)=>{
   const order=[];let i=0,dir=1;
   while(order.length<total){
@@ -40,13 +46,14 @@ const snakeSeq=(total)=>{
   }
   return order;
 };
+
 function CountdownPicker({onTimeout}){
   const[timeLeft,setTimeLeft]=useState(10);
   useEffect(()=>{
     if(timeLeft<=0){onTimeout();return;}
     const t=setTimeout(()=>setTimeLeft(p=>p-1),1000);
     return()=>clearTimeout(t);
-  },[timeLeft]);
+  },[timeLeft,onTimeout]);
   return(
     <div style={{background:"#C0392B",borderRadius:12,padding:"1rem",marginBottom:12,textAlign:"center"}}>
       <div style={{fontSize:11,color:"#fff",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4}}>Your turn to pick!</div>
@@ -166,7 +173,6 @@ export default function Athlete(){
 
   useEffect(()=>{if(pin.length===4)submitPin();},[pin]);
 
-  // Poll draft when on draft/mygroup tab
   useEffect(()=>{
     if(screen==="profile"&&(tab==="draft"||tab==="mygroup")){
       pollRef.current=setInterval(loadDraft,3000);
@@ -197,14 +203,12 @@ export default function Athlete(){
   const bracelet=BRACELETS.find(b=>b.ref===selectedAthlete?.bracelet);
   const isForge=selectedAthlete?.role==="forge";
 
-  // ── LOADING ──
   if(loading)return(
     <div style={{minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div style={{textAlign:"center"}}><div style={{fontSize:32,marginBottom:16}}>⚒</div><div style={{fontSize:14,color:"#555"}}>Loading...</div></div>
     </div>
   );
 
-  // ── ROSTER ──
   if(screen==="roster")return(
     <>
       <Head><title>TF College Group — Athlete</title></Head>
@@ -221,7 +225,6 @@ export default function Athlete(){
             <div>
               <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}}>This week's Anvil</div>
               <div style={{fontSize:14,fontWeight:500,color:GOLD}}>{anvilWinner.athlete_name}</div>
-              {anvilWinner.note&&<div style={{fontSize:11,color:"#888",fontStyle:"italic",marginTop:2}}>"{anvilWinner.note}"</div>}
             </div>
           </div>
         )}
@@ -249,7 +252,6 @@ export default function Athlete(){
     </>
   );
 
-  // ── LOGIN ──
   if(screen==="login")return(
     <>
       <Head><title>Sign In — TF College Group</title></Head>
@@ -281,7 +283,6 @@ export default function Athlete(){
     </>
   );
 
-  // ── CHECK-IN ──
   if(screen==="checkin"){
     const isLate=checkinInfo?.status==="late";
     const noClass=!checkinInfo;
@@ -316,7 +317,6 @@ export default function Athlete(){
     );
   }
 
-  // ── PROFILE ──
   if(screen==="profile"&&selectedAthlete){
     const TABS=[
       {id:"profile",label:"My profile"},
@@ -326,7 +326,6 @@ export default function Athlete(){
       {id:"private",label:"Private"},
     ];
 
-    // Find this athlete's group index
     const myGroupIdx=selectedAthlete.group_idx;
     const draftLeaders=draft?.leaders||[];
     const draftGroups=draft?.groups||[];
@@ -338,12 +337,10 @@ export default function Athlete(){
     const myBracelet=myGroupIdx!=null?BRACELETS.find(b=>b.ref===draftBracelets[myGroupIdx]?.ref):null;
     const myTier=myGroupIdx!=null?draftTiers[myGroupIdx]:null;
 
-    // Forge leader draft logic
     const myLeaderIdx=isForge?draftLeaders.indexOf(selectedAthlete.name):-1;
     const takenBracelets=(draftBracelets||[]).filter(Boolean).map(b=>b?.ref);
     const myBraceletPicked=myLeaderIdx>=0?draftBracelets[myLeaderIdx]:null;
 
-    // Snake draft logic for forge
     const nonLeaders=(athletes||[]).filter(a=>!draftLeaders.includes(a.name)).map(a=>a.name);
     const allPicked=(draftGroups||[]).flat();
     const available=nonLeaders.filter(n=>!allPicked.includes(n));
@@ -359,7 +356,6 @@ export default function Athlete(){
       const nb=[...(draftBracelets||[null,null,null,null])];
       nb[myLeaderIdx]=b;
       await supabase.from("draft").update({bracelets:nb}).eq("id",draft.id);
-      // Check if all picked
       const allPicked=nb.every(Boolean);
       if(allPicked){
         await supabase.from("draft").update({phase:"draft"}).eq("id",draft.id);
@@ -392,13 +388,10 @@ export default function Athlete(){
       await loadDraft();
     };
 
-    const nb=draftBracelets;
-
     return(
       <>
         <Head><title>{selectedAthlete.name} — TF College Group</title></Head>
         <div style={{minHeight:"100vh",background:"#f5f5f5",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
-          {/* Header */}
           <div style={{background:BG,padding:"1rem 1.25rem 0"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
               <button onClick={()=>setScreen("roster")} style={{background:"transparent",border:"none",color:"#666",fontSize:13,cursor:"pointer",fontFamily:"Georgia, serif"}}>← Sign out</button>
@@ -424,7 +417,6 @@ export default function Athlete(){
 
           <div style={{padding:"1.25rem"}}>
 
-            {/* MY PROFILE */}
             {tab==="profile"&&(
               <div>
                 {announcement&&(
@@ -472,12 +464,10 @@ export default function Athlete(){
                     )}
                   </div>
                 ))}
-                {/* Polar placeholder */}
                 <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
                   <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Polar — heart rate & training data</div>
                   <div style={{fontSize:11,color:"#aaa",textAlign:"center",padding:"10px 0"}}>Polar sync coming soon</div>
                 </div>
-                {/* Injury */}
                 <div style={{background:"#fff",borderRadius:12,border:"0.5px solid #e0e0e0",overflow:"hidden",marginBottom:12}}>
                   <button onClick={()=>setInjuryOpen(o=>!o)} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",fontFamily:"Georgia, serif"}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -497,7 +487,6 @@ export default function Athlete(){
               </div>
             )}
 
-            {/* FORGE DRAFT TAB */}
             {tab==="draft"&&isForge&&(
               <div>
                 {!draft&&(
@@ -508,12 +497,11 @@ export default function Athlete(){
                   </div>
                 )}
 
-                {/* Bracelet pick phase */}
                 {draft&&draftPhase==="bracelet"&&myLeaderIdx>=0&&!myBraceletPicked&&(
                   <div>
                     <div style={{background:BG,borderRadius:12,padding:"1rem",marginBottom:12,border:"2px solid "+GOLD}}>
                       <div style={{fontSize:11,color:GOLD,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4}}>Step 1 — Pick your bracelet</div>
-                      <div style={{fontSize:14,color:"#fff"}}>Choose your verse for the week. First come first served — once taken it's gone.</div>
+                      <div style={{fontSize:14,color:"#fff"}}>Choose your verse for the week. First come first served.</div>
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:8}}>
                       {BRACELETS.map(b=>{
@@ -533,12 +521,11 @@ export default function Athlete(){
                   </div>
                 )}
 
-                {/* Waiting for others to pick bracelet */}
                 {draft&&draftPhase==="bracelet"&&myLeaderIdx>=0&&myBraceletPicked&&(
                   <div style={{background:BG,borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid "+GOLD+"44"}}>
                     <div style={{fontSize:32,marginBottom:12}}>✓</div>
                     <div style={{fontSize:16,color:GOLD,fontWeight:500,marginBottom:8}}>Bracelet picked!</div>
-                    <div style={{fontSize:13,color:"#888",marginBottom:16}}>Waiting for other leaders to pick their bracelets...</div>
+                    <div style={{fontSize:13,color:"#888",marginBottom:16}}>Waiting for other leaders...</div>
                     <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}>
                       <div style={{width:10,height:10,borderRadius:"50%",background:BRACELETS.find(b=>b.ref===myBraceletPicked.ref)?.hex}}/>
                       <span style={{fontSize:13,color:"#fff"}}>{myBraceletPicked.color} — {myBraceletPicked.ref}</span>
@@ -546,7 +533,6 @@ export default function Athlete(){
                   </div>
                 )}
 
-                {/* Live draft phase */}
                 {draft&&draftPhase==="draft"&&myLeaderIdx>=0&&(
                   <div>
                     {isMyTurn?(
@@ -569,7 +555,6 @@ export default function Athlete(){
                         <div style={{fontSize:13,color:"#555"}}>Auto-refreshing every 3 seconds</div>
                       </div>
                     )}
-                    {/* Current groups */}
                     <div style={{marginTop:12,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                       {[0,1,2,3].map(i=>(
                         <div key={i} style={{background:LB[i],borderRadius:10,padding:"8px 10px",border:"0.5px solid "+LC[i]+"44"}}>
@@ -581,43 +566,44 @@ export default function Athlete(){
                   </div>
                 )}
 
-               {/* Draft complete */}
                 {draft&&(draftPhase==="locked"||draftComplete)&&myLeaderIdx>=0&&(
                   <div>
-                    {/* My group hero card */}
-                    {(()=>{
-                      const brac=BRACELETS.find(b=>b.ref===draftBracelets[myLeaderIdx]?.ref);
-                      const td=TIER_COLORS[draftTiers[myLeaderIdx]];
+                    <div style={{background:"#0a1f0a",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid "+GREEN+"44",textAlign:"center"}}>
+                      <div style={{fontSize:16,color:GREEN,fontWeight:500,marginBottom:4}}>Draft complete ✓</div>
+                      <div style={{fontSize:13,color:"#888"}}>Groups are locked for the week.</div>
+                    </div>
+                    {myLeaderIdx>=0&&(()=>{
+                      const myBrac=BRACELETS.find(b=>b.ref===draftBracelets[myLeaderIdx]?.ref);
+                      const myTd=TIER_COLORS[draftTiers[myLeaderIdx]];
                       return(
                         <div style={{background:LB[myLeaderIdx],borderRadius:14,padding:"1.25rem",marginBottom:12,border:"2px solid "+LC[myLeaderIdx]}}>
-                          <div style={{fontSize:11,color:LC[myLeaderIdx],textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Your group — locked for the week</div>
-                          {brac&&(
+                          <div style={{fontSize:11,color:LC[myLeaderIdx],textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>Your group</div>
+                          {myBrac&&(
                             <div style={{marginBottom:12}}>
                               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                                <div style={{width:14,height:14,borderRadius:"50%",background:brac.hex,flexShrink:0}}/>
-                                <span style={{fontSize:13,fontWeight:600,color:LC[myLeaderIdx]}}>{brac.color} — {brac.ref}</span>
+                                <div style={{width:14,height:14,borderRadius:"50%",background:myBrac.hex}}/>
+                                <span style={{fontSize:13,fontWeight:600,color:LC[myLeaderIdx]}}>{myBrac.color} — {myBrac.ref}</span>
                               </div>
-                              <div style={{fontSize:15,color:"#1a1a1a",fontStyle:"italic",lineHeight:1.7,padding:"10px 12px",background:"rgba(255,255,255,0.6)",borderRadius:8,borderLeft:"3px solid "+brac.hex}}>
-                                "{brac.text}"
+                              <div style={{fontSize:14,color:"#1a1a1a",fontStyle:"italic",lineHeight:1.7,padding:"10px 12px",background:"rgba(255,255,255,0.6)",borderRadius:8,borderLeft:"3px solid "+myBrac.hex}}>
+                                "{myBrac.text}"
                               </div>
                             </div>
                           )}
-                          {td&&<div style={{display:"inline-block",fontSize:11,fontWeight:500,padding:"3px 12px",borderRadius:6,background:td.bg,color:td.color,marginBottom:10}}>{td.label}</div>}
+                          {myTd&&<div style={{display:"inline-block",fontSize:11,fontWeight:500,padding:"3px 12px",borderRadius:6,background:myTd.bg,color:myTd.color,marginBottom:10}}>{myTd.label}</div>}
                           <div style={{fontSize:11,fontWeight:500,color:LC[myLeaderIdx],textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:8}}>Your team</div>
                           <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"rgba(255,255,255,0.7)",borderRadius:8,marginBottom:4}}>
-                            <div style={{width:28,height:28,borderRadius:"50%",background:LC[myLeaderIdx],display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0}}>{selectedAthlete.name[0]}</div>
+                            <div style={{width:28,height:28,borderRadius:"50%",background:LC[myLeaderIdx],display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff"}}>{selectedAthlete.name[0]}</div>
                             <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{selectedAthlete.name} <span style={{fontSize:11,color:LC[myLeaderIdx]}}>— Leader</span></div>
                           </div>
                           {(draftGroups[myLeaderIdx]||[]).map(n=>(
                             <div key={n} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"rgba(255,255,255,0.7)",borderRadius:8,marginBottom:4}}>
-                              <div style={{width:28,height:28,borderRadius:"50%",background:"#888",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0}}>{n[0]}</div>
+                              <div style={{width:28,height:28,borderRadius:"50%",background:"#888",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff"}}>{n[0]}</div>
                               <div style={{fontSize:13,color:"#1a1a1a"}}>{n}</div>
                             </div>
                           ))}
                         </div>
                       );
                     })()}
-                    {/* All groups */}
                     <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>All groups</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                       {[0,1,2,3].map(i=>{
@@ -625,7 +611,7 @@ export default function Athlete(){
                         return(
                           <div key={i} style={{background:i===myLeaderIdx?LB[i]:"#fff",borderRadius:12,padding:"10px",border:"0.5px solid "+(i===myLeaderIdx?LC[i]:"#e0e0e0"),borderTop:"3px solid "+(i===myLeaderIdx?LC[i]:"#e0e0e0")}}>
                             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                              {brac&&<div style={{width:8,height:8,borderRadius:"50%",background:brac.hex,flexShrink:0}}/>}
+                              {brac&&<div style={{width:8,height:8,borderRadius:"50%",background:brac.hex}}/>}
                               <span style={{fontSize:12,fontWeight:500,color:i===myLeaderIdx?LC[i]:"#1a1a1a"}}>{draftLeaders[i]}{i===myLeaderIdx?" ✓":""}</span>
                             </div>
                             {brac&&<div style={{fontSize:10,color:"#888",fontStyle:"italic",marginBottom:4}}>"{brac.text}"</div>}
@@ -636,7 +622,9 @@ export default function Athlete(){
                     </div>
                   </div>
                 )}
-            {/* IRON MY GROUP TAB */}
+              </div>
+            )}
+
             {tab==="mygroup"&&!isForge&&(
               <div>
                 {!draft||draftPhase==="setup"||(myGroupIdx==null&&draftPhase!=="locked")?(
@@ -650,28 +638,33 @@ export default function Athlete(){
                 ):(
                   <div>
                     {myLeader&&(
-                      <div style={{background:LB[myGroupIdx]||"#f5f5f5",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid "+(LC[myGroupIdx]||PUR)+"44",borderTop:"3px solid "+(LC[myGroupIdx]||PUR)}}>
+                      <div style={{background:LB[myGroupIdx]||"#f5f5f5",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"2px solid "+(LC[myGroupIdx]||PUR)}}>
                         <div style={{fontSize:11,color:LC[myGroupIdx]||PUR,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Your group</div>
                         <div style={{fontSize:18,fontWeight:500,color:"#1a1a1a",marginBottom:4}}>{myLeader}</div>
                         <div style={{fontSize:12,color:"#888",marginBottom:12}}>Your leader this week</div>
                         {myBracelet&&(
-                          <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"rgba(0,0,0,0.05)",borderRadius:8,marginBottom:8}}>
-                            <div style={{width:10,height:10,borderRadius:"50%",background:myBracelet.hex,flexShrink:0}}/>
-                            <div>
-                              <div style={{fontSize:11,fontWeight:500,color:myBracelet.hex}}>{myBracelet.color} — {myBracelet.ref}</div>
-                              <div style={{fontSize:11,color:"#888",fontStyle:"italic"}}>"{myBracelet.text}"</div>
+                          <div style={{marginBottom:12}}>
+                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                              <div style={{width:10,height:10,borderRadius:"50%",background:myBracelet.hex}}/>
+                              <span style={{fontSize:12,fontWeight:500,color:myBracelet.hex}}>{myBracelet.color} — {myBracelet.ref}</span>
+                            </div>
+                            <div style={{fontSize:14,color:"#1a1a1a",fontStyle:"italic",lineHeight:1.7,padding:"10px 12px",background:"rgba(255,255,255,0.6)",borderRadius:8,borderLeft:"3px solid "+myBracelet.hex}}>
+                              "{myBracelet.text}"
                             </div>
                           </div>
                         )}
-                        {myTier&&<div style={{fontSize:11,fontWeight:500,color:TIER_COLORS[myTier]?.color||"#888",background:TIER_COLORS[myTier]?.bg||"#f5f5f5",display:"inline-block",padding:"2px 10px",borderRadius:6}}>Tier {myTier}</div>}
-                      </div>
-                    )}
-                    {myGroup&&myGroup.length>0&&(
-                      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-                        <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Your teammates</div>
-                        {myGroup.map(name=>(
-                          <div key={name} style={{padding:"8px 10px",borderRadius:8,background:"#f9f9f9",marginBottom:6,fontSize:13,color:"#1a1a1a"}}>{name}</div>
-                        ))}
+                        {myTier&&<div style={{fontSize:11,fontWeight:500,color:TIER_COLORS[myTier]?.color||"#888",background:TIER_COLORS[myTier]?.bg||"#f5f5f5",display:"inline-block",padding:"2px 10px",borderRadius:6,marginBottom:10}}>Tier {myTier}</div>}
+                        {myGroup&&myGroup.length>0&&(
+                          <div>
+                            <div style={{fontSize:11,fontWeight:500,color:LC[myGroupIdx]||PUR,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:6}}>Your teammates</div>
+                            {myGroup.map(name=>(
+                              <div key={name} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"rgba(255,255,255,0.7)",borderRadius:8,marginBottom:4}}>
+                                <div style={{width:28,height:28,borderRadius:"50%",background:"#888",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff"}}>{name[0]}</div>
+                                <div style={{fontSize:13,color:"#1a1a1a"}}>{name}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -679,7 +672,6 @@ export default function Athlete(){
               </div>
             )}
 
-            {/* THE JOURNEY */}
             {tab==="journey"&&(
               <div>
                 <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,textAlign:"center"}}>
@@ -687,13 +679,13 @@ export default function Athlete(){
                   <div style={{fontSize:12,color:"#444",marginTop:6}}>— Proverbs 27:17</div>
                 </div>
                 {[
-                  {title:"The Iron",color:STEEL,bg:"#1a1e20",border:"#2a3035",isYou:!isForge,body:"Every athlete enters as The Iron. Raw. Unfinished. Full of potential but not yet fully shaped. The Iron shows up, does the work, and gets sharpened by the people around them.",call:"Show up early. Work hard. Hold the standard."},
-                  {title:"The Forge",color:RED,bg:"#200a0a",border:"#5a1a1a",isYou:isForge,body:"The Forge is called up for the week. They set the pace, lead the group, hold the standard. Being chosen as the Forge is not a reward — it's a responsibility.",call:"Lead by example before you lead by voice."},
-                  {title:"The Anvil",color:GOLD,bg:"#1f1700",border:"#5a4500",isYou:false,body:"The Anvil is the highest individual honor in TF College Group. It cannot be drafted. It can only be earned — by The Forge or The Iron.",call:"You do not chase the Anvil. You become the kind of person who earns it."},
+                  {title:"The Iron",color:STEEL,bg:"#1a1e20",border:"#2a3035",isYou:!isForge,body:"Every athlete enters as The Iron. Raw. Unfinished. Full of potential but not yet fully shaped.",call:"Show up early. Work hard. Hold the standard."},
+                  {title:"The Forge",color:RED,bg:"#200a0a",border:"#5a1a1a",isYou:isForge,body:"The Forge is called up for the week. They set the pace, lead the group, hold the standard.",call:"Lead by example before you lead by voice."},
+                  {title:"The Anvil",color:GOLD,bg:"#1f1700",border:"#5a4500",isYou:false,body:"The Anvil is the highest individual honor in TF College Group. It cannot be drafted. It can only be earned.",call:"You do not chase the Anvil. You become the kind of person who earns it."},
                 ].map((item,i)=>(
                   <div key={i} style={{background:item.bg,borderRadius:12,padding:"1.25rem",marginBottom:10,border:"0.5px solid "+item.border}}>
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                      <div style={{width:10,height:10,borderRadius:"50%",background:item.color,flexShrink:0}}/>
+                      <div style={{width:10,height:10,borderRadius:"50%",background:item.color}}/>
                       <div style={{fontSize:18,fontWeight:400,color:item.color}}>{item.title}</div>
                       {item.isYou&&<span style={{fontSize:11,background:item.color,color:"#1a1a1a",padding:"2px 8px",borderRadius:5,fontWeight:500}}>You are here</span>}
                     </div>
@@ -704,7 +696,6 @@ export default function Athlete(){
               </div>
             )}
 
-            {/* ATTENDANCE */}
             {tab==="attendance"&&(
               <div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}}>
@@ -744,7 +735,6 @@ export default function Athlete(){
               </div>
             )}
 
-            {/* PRIVATE */}
             {tab==="private"&&(
               <div>
                 <div style={{fontSize:13,color:"#888",lineHeight:1.7,marginBottom:14}}>This is your private line to Coach Ant. Nobody else sees what you send here.</div>
