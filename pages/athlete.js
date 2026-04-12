@@ -49,7 +49,7 @@ const snakeSeq=(total)=>{
 function VitruveData({athleteId}){
   const[data,setData]=useState(null);
   useEffect(()=>{
-    fetch("/api/vitruve?athleteId="+athleteId).then(r=>r.json()).then(setData);
+    fetch("/api/vitruve?athleteId="+athleteId+"&athleteName="+encodeURIComponent(athleteName)).then(r=>r.json()).then(setData);
   },[athleteId]);
   return(
     <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
