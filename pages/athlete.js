@@ -639,13 +639,13 @@ export default function Athlete(){
             {/* IRON MY GROUP TAB */}
             {tab==="mygroup"&&!isForge&&(
               <div>
-                {!draft||(draftPhase!=="locked"&&draftPhase!=="draft")||(myGroupIdx==null)?(
+                {!draft||draftPhase==="setup"||(myGroupIdx==null&&draftPhase!=="locked")?(
                   <div style={{background:BG,borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #222"}}>
                     <div style={{fontSize:32,marginBottom:12}}>⏳</div>
                     <div style={{fontSize:16,fontWeight:400,color:"#fff",marginBottom:8}}>
                       {draftPhase==="bracelet"?"Leaders are picking bracelets...":draftPhase==="draft"?"Draft is live — waiting to be picked...":"Draft pending..."}
                     </div>
-                    <div style={{fontSize:13,color:"#555",lineHeight:1.7}}>Check back here once the draft is complete to see your group, leader, bracelet verse, and tier.</div>
+                    <div style={{fontSize:13,color:"#555",lineHeight:1.7}}>You'll see your group, leader, bracelet verse, and tier right here once you've been picked.</div>
                   </div>
                 ):(
                   <div>
