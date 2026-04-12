@@ -583,6 +583,21 @@ export default function Athlete(){
               </div>
             )}
 
+{tab==="training"&&(
+              <div>
+                <VitruveData athleteId={selectedAthlete.id} athleteName={selectedAthlete.name}/>
+                <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+                  <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Polar — heart rate & training data</div>
+                  {selectedAthlete.polar_token?(
+                    <PolarData token={selectedAthlete.polar_token}/>
+                  ):(
+                    <a href={"https://flow.polar.com/oauth2/authorization?response_type=code&client_id=d2759b37-57d2-4f8b-8d4a-b12a13288f4b&redirect_uri=https://tfcollegegroup.com/callback&scope=accesslink.read_all&state="+selectedAthlete.id} style={{display:"block",width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#E8001E",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",textDecoration:"none"}}>
+                      Connect Polar →
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
             {tab==="draft"&&isForge&&(
               <div>
                 {!draft&&(
