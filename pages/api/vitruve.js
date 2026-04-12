@@ -5,9 +5,10 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(`https://api.vitruve.fit/v1/organizations/${ORG_ID}/sessions?limit=10`, {
-      headers: {
-        "Authorization": `Bearer ${API_KEY}`,
+   headers: {
+        "Authorization": `Api-Key ${API_KEY}`,
         "Content-Type": "application/json",
+        "x-api-key": API_KEY,
       },
     });
 
