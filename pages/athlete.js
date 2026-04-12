@@ -40,6 +40,21 @@ const snakeSeq=(total)=>{
   }
   return order;
 };
+function CountdownPicker({onTimeout}){
+  const[timeLeft,setTimeLeft]=useState(10);
+  useEffect(()=>{
+    if(timeLeft<=0){onTimeout();return;}
+    const t=setTimeout(()=>setTimeLeft(p=>p-1),1000);
+    return()=>clearTimeout(t);
+  },[timeLeft]);
+  return(
+    <div style={{background:"#C0392B",borderRadius:12,padding:"1rem",marginBottom:12,textAlign:"center"}}>
+      <div style={{fontSize:11,color:"#fff",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4}}>Your turn to pick!</div>
+      <div style={{fontSize:48,fontWeight:700,color:timeLeft<=3?"#ffcccc":"#fff",lineHeight:1}}>{timeLeft}</div>
+      <div style={{fontSize:12,color:"rgba(255,255,255,0.7)",marginTop:4}}>{timeLeft<=3?"Picking automatically...":"seconds to pick"}</div>
+    </div>
+  );
+}
 
 export default function Athlete(){
   const[athletes,setAthletes]=useState([]);
@@ -536,10 +551,9 @@ export default function Athlete(){
                   <div>
                     {isMyTurn?(
                       <div>
-                        <div style={{background:RED,borderRadius:12,padding:"1rem",marginBottom:12,textAlign:"center"}}>
-                          <div style={{fontSize:11,color:"#fff",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4}}>Your turn to pick!</div>
-                          <div style={{fontSize:16,color:"#fff",fontWeight:500}}>Select an athlete for your group</div>
-                        </div>
+                        <CountdownPicker onTimeout={()=>{
+                          if(available.length>0)pickAthlete(available[0]);
+                        }}/>
                         <div style={{display:"flex",flexDirection:"column",gap:8}}>
                           {available.map(name=>(
                             <button key={name} onClick={()=>pickAthlete(name)} style={{padding:"14px 18px",borderRadius:12,border:"0.5px solid "+LC[myLeaderIdx],background:LB[myLeaderIdx],color:"#1a1a1a",cursor:"pointer",fontSize:14,fontWeight:500,textAlign:"left",fontFamily:"Georgia,serif"}}>
