@@ -46,8 +46,7 @@ const snakeSeq=(total)=>{
   }
   return order;
 };
-function VitruveData({athleteId}){
-  const[data,setData]=useState(null);
+function VitruveData({athleteId,athleteName}){  const[data,setData]=useState(null);
   useEffect(()=>{
     fetch("/api/vitruve?athleteId="+athleteId+"&athleteName="+encodeURIComponent(athleteName)).then(r=>r.json()).then(setData);
   },[athleteId]);
