@@ -515,6 +515,7 @@ export default function Athlete(){
                     )}
                   </div>
                 ))}
+<VitruveData athleteId={selectedAthlete.id}/>
                <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
                   <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Polar — heart rate & training data</div>
                   {selectedAthlete.polar_token?(
