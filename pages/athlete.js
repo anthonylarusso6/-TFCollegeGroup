@@ -46,39 +46,193 @@ const snakeSeq=(total)=>{
   }
   return order;
 };
-function VitruveData({athleteId,athleteName}){  const[data,setData]=useState(null);
+function VitruveData({athleteId,athleteName}){
+  const[data,setData]=useState(null);
+  const[filter,setFilter]=useState("last-30days");
+  const zoneColor=v=>v>=1.0?"#3C3489":v>=0.75?"#27500A":v>=0.5?"#633806":"#A32D2D";
+  const zoneBg=v=>v>=1.0?"#EEEDFE":v>=0.75?"#EAF3DE":v>=0.5?"#FAEEDA":"#FCEBEB";
+  const zoneLabel=v=>v>=1.0?"Power":v>=0.75?"Speed-Str":v>=0.5?"Str-Speed":"Strength";
+  const zoneBorder=v=>v>=1.0?"#534AB7":v>=0.75?"#1E6B3A":v>=0.5?"#854F0B":"#C0392B";
+
   useEffect(()=>{
-    fetch("/api/vitruve?athleteId="+athleteId+"&athleteName="+encodeURIComponent(athleteName)).then(r=>r.json()).then(setData);
-  },[athleteId]);
+    setData(null);
+    fetch("/api/vitruve?athleteId="+athleteId+"&athleteName="+encodeURIComponent(athleteName)+"&date="+filter)
+      .then(r=>r.json()).then(setData);
+  },[athleteId,filter]);
+
+  const latest=data?.latest;
+  const history=data?.history||[];
+
   return(
-    <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-      <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Vitruve — velocity based training</div>
-      {!data&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"8px 0"}}>Loading...</div>}
-      {data?.noData&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"8px 0"}}>No sessions yet — sync after your next lift</div>}
-      {data?.error&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"8px 0"}}>Vitruve connecting...</div>}
-      {data?.connected&&(
-        <div>
-          <div style={{fontSize:11,color:"#1E6B3A",marginBottom:8}}>✓ Connected · {data.exercise||"Last session"} · {data.date||""}</div>
-          {(data.sets||[]).slice(0,5).map((s,i)=>(
-            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:6,padding:"8px",background:"#f9f9f9",borderRadius:8}}>
-              <div style={{textAlign:"center"}}>
-                <div style={{fontSize:14,fontWeight:500,color:"#1a1a1a"}}>{s.load||"—"}</div>
-                <div style={{fontSize:10,color:"#888"}}>kg</div>
+    <div>
+      {/* History */}
+      <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+        <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Vitruve — training history</div>
+        <div style={{display:"flex",gap:6,marginBottom:12}}>
+          {[{id:"this-week",label:"This week"},{id:"last-30days",label:"30 days"},{id:"all",label:"All time"}].map(f=>(
+            <button key={f.id} onClick={()=>setFilter(f.id)} style={{flex:1,padding:"7px",borderRadius:8,border:"0.5px solid "+(filter===f.id?"#534AB7":"#e0e0e0"),background:filter===f.id?"#534AB7":"transparent",color:filter===f.id?"#fff":"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>{f.label}</button>
+          ))}
+        </div>
+        {!data&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"10px 0"}}>Loading...</div>}
+        {data?.noData&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"10px 0"}}>No sessions yet — sync after your next lift</div>}
+        {data?.error&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"10px 0"}}>Vitruve connecting...</div>}
+        {data?.connected&&history.map((s,idx)=>{
+          if(!s.sets||!s.sets.length)return null;
+          const maxLoad=Math.max(...s.sets.map(x=>x.load||0));
+          const totalReps=s.sets.reduce((n,x)=>n+(x.reps||0),0);
+          const bestPeak=s.bestPeak||0;
+          return(
+            <div key={idx} style={{marginBottom:10,border:"0.5px solid #e0e0e0",borderRadius:10,overflow:"hidden"}}>
+              <div style={{padding:"10px 12px",background:zoneBg(bestPeak),display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:500,color:zoneColor(bestPeak)}}>{s.exercise}</div>
+                  <div style={{fontSize:11,color:zoneColor(bestPeak),opacity:0.8}}>{s.date}</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:11,fontWeight:500,color:zoneColor(bestPeak)}}>{zoneLabel(bestPeak)}</div>
+                  <div style={{fontSize:10,color:zoneColor(bestPeak),opacity:0.8}}>{s.sets.length} sets · {totalReps} reps</div>
+                </div>
               </div>
-              <div style={{textAlign:"center"}}>
-                <div style={{fontSize:14,fontWeight:500,color:"#534AB7"}}>{s.peakVelocity||"—"}</div>
-                <div style={{fontSize:10,color:"#888"}}>peak m/s</div>
-              </div>
-              <div style={{textAlign:"center"}}>
-                <div style={{fontSize:14,fontWeight:500,color:"#0F6E56"}}>{s.meanVelocity||"—"}</div>
-                <div style={{fontSize:10,color:"#888"}}>mean m/s</div>
-              </div>
-              <div style={{textAlign:"center"}}>
-                <div style={{fontSize:14,fontWeight:500,color:"#1a1a1a"}}>{s.reps||"—"}</div>
-                <div style={{fontSize:10,color:"#888"}}>reps</div>
+              <div style={{padding:"10px 12px"}}>
+                <div style={{display:"flex",alignItems:"flex-end",gap:4,height:50,marginBottom:6}}>
+                  {s.sets.map((set,i)=>{
+                    const h=maxLoad>0?Math.round((set.load||0)/maxLoad*46):4;
+                    return(
+                      <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",gap:2}}>
+                        <div style={{width:"100%",background:zoneBg(set.peakVelocity||0),borderRadius:"3px 3px 0 0",height:h+"px",border:"0.5px solid "+zoneColor(set.peakVelocity||0)}}/>
+                        <div style={{fontSize:9,color:"#888"}}>{set.load}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                  <div style={{background:"#f5f5f5",borderRadius:6,padding:"6px",textAlign:"center"}}>
+                    <div style={{fontSize:13,fontWeight:500,color:"#534AB7"}}>{bestPeak.toFixed(2)}</div>
+                    <div style={{fontSize:9,color:"#888"}}>best peak m/s</div>
+                  </div>
+                  <div style={{background:"#f5f5f5",borderRadius:6,padding:"6px",textAlign:"center"}}>
+                    <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{maxLoad}</div>
+                    <div style={{fontSize:9,color:"#888"}}>top load (lbs)</div>
+                  </div>
+                  <div style={{background:"#f5f5f5",borderRadius:6,padding:"6px",textAlign:"center"}}>
+                    <div style={{fontSize:13,fontWeight:500,color:"#0F6E56"}}>{totalReps}</div>
+                    <div style={{fontSize:9,color:"#888"}}>total reps</div>
+                  </div>
+                </div>
               </div>
             </div>
-          ))}
+          );
+        })}
+      </div>
+
+      {/* Latest session detail */}
+      {data?.connected&&latest&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+          <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Vitruve — latest session</div>
+          <div style={{fontSize:11,color:"#1E6B3A",marginBottom:12}}>✓ Connected · {latest.exercise} · {latest.date}</div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+            <div style={{background:"#f5f5f5",borderRadius:8,padding:"10px",textAlign:"center"}}>
+              <div style={{fontSize:18,fontWeight:500,color:"#1a1a1a"}}>{latest.oneRM||"—"}</div>
+              <div style={{fontSize:10,color:"#888",marginTop:2}}>Est. 1RM (lbs)</div>
+            </div>
+            <div style={{background:"#f5f5f5",borderRadius:8,padding:"10px",textAlign:"center"}}>
+              <div style={{fontSize:18,fontWeight:500,color:"#534AB7"}}>{latest.bestPeak?.toFixed(2)||"—"}</div>
+              <div style={{fontSize:10,color:"#888",marginTop:2}}>Peak m/s</div>
+            </div>
+            <div style={{background:"#f5f5f5",borderRadius:8,padding:"10px",textAlign:"center"}}>
+              <div style={{fontSize:18,fontWeight:500,color:"#0F6E56"}}>{latest.bestMean?.toFixed(2)||"—"}</div>
+              <div style={{fontSize:10,color:"#888",marginTop:2}}>Mean m/s</div>
+            </div>
+          </div>
+
+          {/* Velocity zones */}
+          <div style={{marginBottom:14}}>
+            <div style={{fontSize:11,color:"#888",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.04em"}}>Velocity zones — what they mean</div>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {[
+                {key:"str",label:"Strength",range:"under 0.5 m/s",desc:"Heavy load, slow bar speed. Building max force and raw strength.",bg:"#FCEBEB",color:"#A32D2D",dark:"#791F1F",min:0,max:0.5},
+                {key:"ss",label:"Str-Speed",range:"0.5 to 0.75 m/s",desc:"Moderate load, controlled speed. Bridge between strength and power.",bg:"#FAEEDA",color:"#633806",dark:"#412402",min:0.5,max:0.75},
+                {key:"sp",label:"Spd-Str",range:"0.75 to 1.0 m/s",desc:"Lighter load, fast bar speed. Converting strength into sport speed.",bg:"#EAF3DE",color:"#27500A",dark:"#173404",min:0.75,max:1.0},
+                {key:"pwr",label:"Power",range:"above 1.0 m/s",desc:"Explosive bar speed. Maximum rate of force development. Athletic power.",bg:"#EEEDFE",color:"#3C3489",dark:"#26215C",min:1.0,max:99},
+              ].map(z=>{
+                const isHere=latest.bestPeak>=z.min&&latest.bestPeak<z.max;
+                return(
+                  <div key={z.key} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:z.bg,borderRadius:8,border:isHere?"2px solid "+z.color:"0.5px solid transparent"}}>
+                    <div style={{width:32,height:32,borderRadius:6,background:z.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:500,color:"#fff",flexShrink:0}}>{z.label.split("-")[0].toUpperCase().slice(0,3)}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:500,color:z.color}}>{z.label} — {z.range}{isHere?" ← You are here":""}</div>
+                      <div style={{fontSize:11,color:z.dark}}>{z.desc}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Load progression */}
+          {latest.sets&&latest.sets.length>0&&(
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,color:"#888",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.04em"}}>Load progression</div>
+              <div style={{display:"flex",alignItems:"flex-end",gap:5,height:60,marginBottom:4}}>
+                {latest.sets.map((s,i)=>{
+                  const maxL=Math.max(...latest.sets.map(x=>x.load||0));
+                  const h=maxL>0?Math.round((s.load||0)/maxL*56):4;
+                  return(
+                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",gap:3}}>
+                      <div style={{width:"100%",background:zoneBg(s.peakVelocity||0),borderRadius:"3px 3px 0 0",height:h+"px",border:"0.5px solid "+zoneColor(s.peakVelocity||0)}}/>
+                      <div style={{fontSize:9,color:"#888"}}>{s.load}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{fontSize:10,color:"#888",textAlign:"center"}}>lbs per set — color = velocity zone</div>
+            </div>
+          )}
+
+          {/* Sets & reps */}
+          {latest.sets&&latest.sets.length>0&&(
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,color:"#888",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.04em"}}>Sets & reps</div>
+              <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                {latest.sets.map((s,i)=>(
+                  <div key={i} style={{display:"grid",gridTemplateColumns:"40px 55px 1fr 1fr 1fr",gap:5,alignItems:"center",padding:"7px 10px",background:"#f9f9f9",borderRadius:8,borderLeft:"3px solid "+zoneBorder(s.peakVelocity||0)}}>
+                    <div style={{fontSize:11,color:"#888"}}>Set {i+1}</div>
+                    <div style={{fontSize:11,fontWeight:500,color:"#1a1a1a"}}>{s.load} lbs</div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:12,fontWeight:500,color:s.peakVelocity>=0.75?"#534AB7":"#E24B4A"}}>{s.peakVelocity?.toFixed(2)||"—"}</div>
+                      <div style={{fontSize:9,color:"#888"}}>peak</div>
+                    </div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:12,fontWeight:500,color:s.meanVelocity>=0.5?"#0F6E56":"#E24B4A"}}>{s.meanVelocity?.toFixed(2)||"—"}</div>
+                      <div style={{fontSize:9,color:"#888"}}>mean</div>
+                    </div>
+                    <div style={{textAlign:"center"}}>
+                      <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a"}}>{s.reps||"—"}</div>
+                      <div style={{fontSize:9,color:"#888"}}>reps</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Fatigue */}
+          {latest.fatigue!=null&&(
+            <div>
+              <div style={{fontSize:11,color:"#888",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Fatigue</div>
+              <div style={{background:"#f9f9f9",borderRadius:8,padding:"10px",border:"0.5px solid #e0e0e0"}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{fontSize:11,color:"#888"}}>Velocity drop</span>
+                  <span style={{fontSize:11,fontWeight:500,color:latest.fatigue>15?"#E24B4A":"#1E6B3A"}}>{latest.fatigue?.toFixed(1)}% drop</span>
+                </div>
+                <div style={{background:"#e0e0e0",borderRadius:4,height:8,overflow:"hidden"}}>
+                  <div style={{width:Math.min(latest.fatigue||0,100)+"%",height:"100%",background:latest.fatigue>15?"#E24B4A":"#1E6B3A",borderRadius:4}}/>
+                </div>
+                <div style={{fontSize:10,color:"#888",marginTop:4}}>{latest.fatigue>15?"High fatigue — consider lighter next session":"Within normal range — good session"}</div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
