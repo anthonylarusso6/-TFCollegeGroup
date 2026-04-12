@@ -16,10 +16,19 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    const workouts = data?.data || data?.workouts || data || [];
+   let workouts = data?.data || data?.workouts || data || [];
 
     if (!workouts.length) {
       return res.status(200).json({ noData: true });
+    }
+
+    // Filter by athlete name if provided
+    if(athleteName){
+      const filtered = workouts.filter(w => 
+        (w?.athlete_name||w?.athlete||w?.user_name||w?.name||"")
+        .toLowerCase().includes(athleteName.toLowerCase())
+      );
+      if(filtered.length) workouts = filtered;
     }
 
     const latest = workouts[0];
