@@ -1,8 +1,9 @@
 export default async function handler(req, res) {
-  const API_KEY = "ba1b08b4-6c4d-46fc-8ecc-d108ca3402d5";
+ const API_KEY = "ba1b08b4-6c4d-46fc-8ecc-d108ca3402d5";
+  const { athleteName } = req.query;
 
   try {
-    const response = await fetch("https://api-exports.vitruve.fit/vbt-workouts?date=last-30days&limit=10", {
+    const response = await fetch("https://api-exports.vitruve.fit/vbt-workouts?date=last-30days&limit=100", {
       headers: {
         "x-api-key": API_KEY,
         "Content-Type": "application/json",
