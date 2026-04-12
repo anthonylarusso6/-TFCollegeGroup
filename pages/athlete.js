@@ -386,10 +386,10 @@ export default function Athlete(){
             const ath=athletes.find(a=>a.name===n);
             if(ath)await supabase.from("athletes").update({group_idx:i,tier:draftTiers[i]}).eq("id",ath.id);
           });
-         const leader=athletes.find(a=>a.name===draftLeaders[i]);
-          if(leader)await supabase.from("athletes").update({group_idx:i,tier:draftTiers[i],bracelet:draftBracelets[i]?.ref}).eq("id",leader.id);
+        const leader=athletes.find(a=>a.name===draftLeaders[i]);
+          if(leader)supabase.from("athletes").update({group_idx:i,tier:draftTiers[i],bracelet:draftBracelets[i]?.ref}).eq("id",leader.id);
       }
-      await loadDraft();
+      loadDraft();
     };
 
     const nb=draftBracelets;
