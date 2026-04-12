@@ -12,7 +12,8 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      return res.status(200).json({ error: "Could not fetch Vitruve data", status: response.status });
+     const raw = await response.text();
+    return res.status(200).json({ error: "Could not fetch Vitruve data", status: response.status, raw });
     }
 
     const data = await response.json();
@@ -38,7 +39,7 @@ export default async function handler(req, res) {
       })),
     });
 
-  } catch (e) {
-    return res.status(200).json({ error: "Failed to connect to Vitruve" });
+ } catch (e) {
+    return res.status(200).json({ error: "Failed to connect to Vitruve", message: e.message });
   }
 }
