@@ -46,6 +46,45 @@ const snakeSeq=(total)=>{
   }
   return order;
 };
+function VitruveData({athleteId}){
+  const[data,setData]=useState(null);
+  useEffect(()=>{
+    fetch("/api/vitruve?athleteId="+athleteId).then(r=>r.json()).then(setData);
+  },[athleteId]);
+  return(
+    <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+      <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Vitruve — velocity based training</div>
+      {!data&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"8px 0"}}>Loading...</div>}
+      {data?.noData&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"8px 0"}}>No sessions yet — sync after your next lift</div>}
+      {data?.error&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"8px 0"}}>Vitruve connecting...</div>}
+      {data?.connected&&(
+        <div>
+          <div style={{fontSize:11,color:"#1E6B3A",marginBottom:8}}>✓ Connected · {data.exercise||"Last session"} · {data.date||""}</div>
+          {(data.sets||[]).slice(0,5).map((s,i)=>(
+            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:6,padding:"8px",background:"#f9f9f9",borderRadius:8}}>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:14,fontWeight:500,color:"#1a1a1a"}}>{s.load||"—"}</div>
+                <div style={{fontSize:10,color:"#888"}}>kg</div>
+              </div>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:14,fontWeight:500,color:"#534AB7"}}>{s.peakVelocity||"—"}</div>
+                <div style={{fontSize:10,color:"#888"}}>peak m/s</div>
+              </div>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:14,fontWeight:500,color:"#0F6E56"}}>{s.meanVelocity||"—"}</div>
+                <div style={{fontSize:10,color:"#888"}}>mean m/s</div>
+              </div>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:14,fontWeight:500,color:"#1a1a1a"}}>{s.reps||"—"}</div>
+                <div style={{fontSize:10,color:"#888"}}>reps</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 function PolarData({token}){
   const[data,setData]=useState(null);
   useEffect(()=>{
