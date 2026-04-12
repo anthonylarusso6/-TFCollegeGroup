@@ -409,6 +409,7 @@ export default function Athlete(){
   if(screen==="profile"&&selectedAthlete){
     const TABS=[
       {id:"profile",label:"My profile"},
+      {id:"training",label:"Training"},
       ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My group"}]),
       {id:"journey",label:"The journey"},
       {id:"attendance",label:"Attendance"},
