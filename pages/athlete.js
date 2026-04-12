@@ -380,16 +380,16 @@ export default function Athlete(){
         locked:done,
       }).eq("id",draft.id);
       if(done){
-        // Assign group_idx and tier to all drafted athletes
-        ng.forEach(async(group,i)=>{
-          group.forEach(async(n)=>{
+        for(let i=0;i<ng.length;i++){
+          for(const n of ng[i]){
             const ath=athletes.find(a=>a.name===n);
             if(ath)await supabase.from("athletes").update({group_idx:i,tier:draftTiers[i]}).eq("id",ath.id);
-          });
-        const leader=athletes.find(a=>a.name===draftLeaders[i]);
-          if(leader)supabase.from("athletes").update({group_idx:i,tier:draftTiers[i],bracelet:draftBracelets[i]?.ref}).eq("id",leader.id);
+          }
+          const leader=athletes.find(a=>a.name===draftLeaders[i]);
+          if(leader)await supabase.from("athletes").update({group_idx:i,tier:draftTiers[i],bracelet:draftBracelets[i]?.ref}).eq("id",leader.id);
+        }
       }
-      loadDraft();
+      await loadDraft();
     };
 
     const nb=draftBracelets;
