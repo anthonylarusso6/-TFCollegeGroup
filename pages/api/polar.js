@@ -39,7 +39,12 @@ export default async function handler(req, res) {
       calories: detail?.calories || null,
       duration: detail?.duration || null,
       date: detail?.start_time?.split("T")[0] || null,
-      sport: detail?.detailed_sport_info || detail?.sport || null,
+     sport: detail?.detailed_sport_info || detail?.sport || null,
+      zone1: detail?.heart_rate_zones?.zone1?.inzone || null,
+      zone2: detail?.heart_rate_zones?.zone2?.inzone || null,
+      zone3: detail?.heart_rate_zones?.zone3?.inzone || null,
+      zone4: detail?.heart_rate_zones?.zone4?.inzone || null,
+      zone5: detail?.heart_rate_zones?.zone5?.inzone || null,
     });
 
   } catch (e) {
