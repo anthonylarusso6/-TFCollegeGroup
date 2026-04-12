@@ -46,7 +46,33 @@ const snakeSeq=(total)=>{
   }
   return order;
 };
-
+function PolarData({token}){
+  const[data,setData]=useState(null);
+  useEffect(()=>{
+    fetch("/api/polar?token="+token).then(r=>r.json()).then(setData);
+  },[token]);
+  if(!data)return<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"8px 0"}}>Loading Polar data...</div>;
+  if(data.noData)return<div style={{fontSize:12,color:"#58B368",textAlign:"center",padding:"8px 0"}}>✓ Polar connected — sync after your next workout</div>;
+  if(data.error)return<div style={{fontSize:12,color:"#58B368",textAlign:"center",padding:"8px 0"}}>✓ Polar connected</div>;
+  return(
+    <div>
+      <div style={{fontSize:11,color:"#58B368",marginBottom:8}}>✓ Connected · Last session: {data.date||"—"}</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        {[
+          {label:"Avg HR",val:data.avgHr?data.avgHr+" bpm":"—"},
+          {label:"Max HR",val:data.maxHr?data.maxHr+" bpm":"—"},
+          {label:"Calories",val:data.calories?data.calories+" kcal":"—"},
+          {label:"Duration",val:data.duration||"—"},
+        ].map(s=>(
+          <div key={s.label} style={{background:"#f5f5f5",borderRadius:8,padding:"10px",textAlign:"center"}}>
+            <div style={{fontSize:16,fontWeight:500,color:"#1a1a1a"}}>{s.val}</div>
+            <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 function CountdownPicker({onTimeout}){
   const[timeLeft,setTimeLeft]=useState(10);
   useEffect(()=>{
@@ -467,7 +493,7 @@ export default function Athlete(){
                <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
                   <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Polar — heart rate & training data</div>
                   {selectedAthlete.polar_token?(
-                    <div style={{fontSize:12,color:GREEN,textAlign:"center",padding:"8px 0"}}>✓ Polar connected</div>
+                    <PolarData token={selectedAthlete.polar_token}/>
                   ):(
                     <a href={"https://flow.polar.com/oauth2/authorization?response_type=code&client_id=d2759b37-57d2-4f8b-8d4a-b12a13288f4b&redirect_uri=https://tfcollegegroup.com/callback&scope=accesslink.read_all&state="+selectedAthlete.id} style={{display:"block",width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#E8001E",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",textDecoration:"none"}}>
                       Connect Polar →
