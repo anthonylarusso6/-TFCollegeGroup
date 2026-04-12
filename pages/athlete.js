@@ -68,8 +68,33 @@ function PolarData({token}){
             <div style={{fontSize:16,fontWeight:500,color:"#1a1a1a"}}>{s.val}</div>
             <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
           </div>
-        ))}
+               ))}
       </div>
+      {(data.zone1||data.zone2||data.zone3||data.zone4||data.zone5)&&(
+        <div style={{background:"#f9f9f9",borderRadius:8,padding:"10px",border:"0.5px solid #e0e0e0",marginTop:10}}>
+          <div style={{fontSize:11,color:"#888",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Heart rate zones</div>
+          {[
+            {z:"Z1",val:data.zone1,color:"#5BBFEA"},
+            {z:"Z2",val:data.zone2,color:"#1E6B3A"},
+            {z:"Z3",val:data.zone3,color:"#D4AF37"},
+            {z:"Z4",val:data.zone4,color:"#C0392B"},
+            {z:"Z5",val:data.zone5,color:"#5B2D8E"},
+          ].map(z=>{
+            const total=(data.zone1||0)+(data.zone2||0)+(data.zone3||0)+(data.zone4||0)+(data.zone5||0);
+            const pct=total>0?Math.round((z.val||0)/total*100):0;
+            const mins=z.val?Math.round(z.val/60)+"m":"—";
+            return(
+              <div key={z.z} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                <div style={{fontSize:11,color:"#888",width:24}}>{z.z}</div>
+                <div style={{flex:1,background:"#e0e0e0",borderRadius:4,height:8,overflow:"hidden"}}>
+                  <div style={{width:pct+"%",height:"100%",background:z.color,borderRadius:4}}/>
+                </div>
+                <div style={{fontSize:11,color:"#888",width:28,textAlign:"right"}}>{mins}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
