@@ -581,20 +581,54 @@ export default function Athlete(){
                   </div>
                 )}
 
-                {/* Draft complete */}
+               {/* Draft complete */}
                 {draft&&(draftPhase==="locked"||draftComplete)&&myLeaderIdx>=0&&(
                   <div>
-                    <div style={{background:"#0a1f0a",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid "+GREEN+"44",textAlign:"center"}}>
-                      <div style={{fontSize:16,color:GREEN,fontWeight:500,marginBottom:4}}>Draft complete ✓</div>
-                      <div style={{fontSize:13,color:"#888"}}>Groups are locked for the week.</div>
-                    </div>
+                    {/* My group hero card */}
+                    {(()=>{
+                      const brac=BRACELETS.find(b=>b.ref===draftBracelets[myLeaderIdx]?.ref);
+                      const td=TIER_COLORS[draftTiers[myLeaderIdx]];
+                      return(
+                        <div style={{background:LB[myLeaderIdx],borderRadius:14,padding:"1.25rem",marginBottom:12,border:"2px solid "+LC[myLeaderIdx]}}>
+                          <div style={{fontSize:11,color:LC[myLeaderIdx],textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Your group — locked for the week</div>
+                          {brac&&(
+                            <div style={{marginBottom:12}}>
+                              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                                <div style={{width:14,height:14,borderRadius:"50%",background:brac.hex,flexShrink:0}}/>
+                                <span style={{fontSize:13,fontWeight:600,color:LC[myLeaderIdx]}}>{brac.color} — {brac.ref}</span>
+                              </div>
+                              <div style={{fontSize:15,color:"#1a1a1a",fontStyle:"italic",lineHeight:1.7,padding:"10px 12px",background:"rgba(255,255,255,0.6)",borderRadius:8,borderLeft:"3px solid "+brac.hex}}>
+                                "{brac.text}"
+                              </div>
+                            </div>
+                          )}
+                          {td&&<div style={{display:"inline-block",fontSize:11,fontWeight:500,padding:"3px 12px",borderRadius:6,background:td.bg,color:td.color,marginBottom:10}}>{td.label}</div>}
+                          <div style={{fontSize:11,fontWeight:500,color:LC[myLeaderIdx],textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:8}}>Your team</div>
+                          <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"rgba(255,255,255,0.7)",borderRadius:8,marginBottom:4}}>
+                            <div style={{width:28,height:28,borderRadius:"50%",background:LC[myLeaderIdx],display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0}}>{selectedAthlete.name[0]}</div>
+                            <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{selectedAthlete.name} <span style={{fontSize:11,color:LC[myLeaderIdx]}}>— Leader</span></div>
+                          </div>
+                          {(draftGroups[myLeaderIdx]||[]).map(n=>(
+                            <div key={n} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"rgba(255,255,255,0.7)",borderRadius:8,marginBottom:4}}>
+                              <div style={{width:28,height:28,borderRadius:"50%",background:"#888",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0}}>{n[0]}</div>
+                              <div style={{fontSize:13,color:"#1a1a1a"}}>{n}</div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    {/* All groups */}
+                    <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>All groups</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                       {[0,1,2,3].map(i=>{
                         const brac=BRACELETS.find(b=>b.ref===draftBracelets[i]?.ref);
                         return(
-                          <div key={i} style={{background:i===myLeaderIdx?LB[i]:"#fff",borderRadius:12,padding:"10px",border:"0.5px solid "+(i===myLeaderIdx?LC[i]+"66":"#e0e0e0"),borderTop:i===myLeaderIdx?"3px solid "+LC[i]:"3px solid #e0e0e0"}}>
-                            <div style={{fontSize:12,fontWeight:500,color:i===myLeaderIdx?LC[i]:"#1a1a1a",marginBottom:4}}>{draftLeaders[i]}{i===myLeaderIdx?" (you)":""}</div>
-                            {brac&&<div style={{fontSize:10,color:"#888",marginBottom:4}}>{brac.color}</div>}
+                          <div key={i} style={{background:i===myLeaderIdx?LB[i]:"#fff",borderRadius:12,padding:"10px",border:"0.5px solid "+(i===myLeaderIdx?LC[i]:"#e0e0e0"),borderTop:"3px solid "+(i===myLeaderIdx?LC[i]:"#e0e0e0")}}>
+                            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                              {brac&&<div style={{width:8,height:8,borderRadius:"50%",background:brac.hex,flexShrink:0}}/>}
+                              <span style={{fontSize:12,fontWeight:500,color:i===myLeaderIdx?LC[i]:"#1a1a1a"}}>{draftLeaders[i]}{i===myLeaderIdx?" ✓":""}</span>
+                            </div>
+                            {brac&&<div style={{fontSize:10,color:"#888",fontStyle:"italic",marginBottom:4}}>"{brac.text}"</div>}
                             {(draftGroups[i]||[]).map(n=><div key={n} style={{fontSize:11,color:"#555",padding:"2px 0"}}>{n}</div>)}
                           </div>
                         );
@@ -602,9 +636,6 @@ export default function Athlete(){
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-
             {/* IRON MY GROUP TAB */}
             {tab==="mygroup"&&!isForge&&(
               <div>
