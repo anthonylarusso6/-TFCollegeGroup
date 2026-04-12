@@ -31,8 +31,9 @@ export default async function handler(req, res) {
       if(filtered.length) workouts = filtered;
     }
 
-    const latest = workouts[0];
-    const sets = latest?.sets || latest?.metrics || latest?.exercises || [];
+   const latest = workouts[0];
+    // Return raw for debugging
+    return res.status(200).json({ raw: latest });
 
     return res.status(200).json({
       connected: true,
