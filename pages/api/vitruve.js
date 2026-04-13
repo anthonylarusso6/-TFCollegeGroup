@@ -15,7 +15,10 @@ export default async function handler(req, res) {
     let workouts = data?.data || data?.workouts || data || [];
     if (!workouts.length) return res.status(200).json({ noData: true });
 
-    if (athleteName) {
+    if (vitruveId) {
+      const filtered = workouts.filter(w => w?.userId === vitruveId);
+      if (filtered.length) workouts = filtered;
+    } else if (athleteName) {
       const filtered = workouts.filter(w =>
         (w?.athlete_name || w?.athlete || w?.user_name || w?.name || "")
         .toLowerCase().includes(athleteName.toLowerCase())
