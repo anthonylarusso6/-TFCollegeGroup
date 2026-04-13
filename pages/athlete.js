@@ -46,7 +46,7 @@ const snakeSeq=(total)=>{
   }
   return order;
 };
-function VitruveData({athleteId,athleteName}){
+function VitruveData({athleteId,athleteName,vitruveId}){
   const[data,setData]=useState(null);
   const[filter,setFilter]=useState("last-30days");
   const zoneColor=v=>v>=1.0?"#3C3489":v>=0.75?"#27500A":v>=0.5?"#633806":"#A32D2D";
