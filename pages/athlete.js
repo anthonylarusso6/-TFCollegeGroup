@@ -56,7 +56,7 @@ function VitruveData({athleteId,athleteName}){
 
   useEffect(()=>{
     setData(null);
-    fetch("/api/vitruve?athleteId="+athleteId+"&athleteName="+encodeURIComponent(athleteName)+"&date="+filter)
+    fetch("/api/vitruve?athleteId="+athleteId+"&athleteName="+encodeURIComponent(athleteName)+"&date="+filter+(vitruveId?"&vitruveId="+vitruveId:""))
       .then(r=>r.json()).then(setData);
   },[athleteId,filter]);
 
