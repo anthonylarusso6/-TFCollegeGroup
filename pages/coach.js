@@ -489,9 +489,15 @@ export default function Coach(){
                       <div key={goalKey}>
                         <div style={{fontSize:11,color:"#888",marginBottom:4}}>{label}</div>
                         <div style={{fontSize:12,color:"#1a1a1a",padding:"6px 8px",background:"#f9f9f9",borderRadius:6,minHeight:40,marginBottom:6}}>{a[goalKey]||<span style={{color:"#ccc"}}>Not set</span>}</div>
-                        <button onClick={()=>generateTask(a,type)} disabled={!a[goalKey]||genLoading===a.id+"-"+type} style={{padding:"5px 10px",borderRadius:6,border:"0.5px solid "+color,background:"transparent",color:color,fontSize:11,cursor:a[goalKey]?"pointer":"not-allowed",fontFamily:"Georgia, serif",opacity:a[goalKey]?1:0.4,marginBottom:6}}>
-                          {genLoading===a.id+"-"+type?"Generating...":"Generate task"}
-                        </button>
+                       <textarea id={a.id+"-"+type} defaultValue={a[taskKey]||""} placeholder="Type your response or generate one..." style={{width:"100%",minHeight:70,padding:"8px",fontSize:12,border:"0.5px solid "+color,borderRadius:6,background:BG,color:"#fff",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
+                        <div style={{display:"flex",gap:6,marginBottom:6}}>
+                          <button onClick={()=>generateTask(a,type)} disabled={!a[goalKey]||genLoading===a.id+"-"+type} style={{flex:1,padding:"6px",borderRadius:6,border:"0.5px solid "+color,background:"transparent",color:color,fontSize:11,cursor:a[goalKey]?"pointer":"not-allowed",fontFamily:"Georgia,serif",opacity:a[goalKey]?1:0.4}}>
+                            {genLoading===a.id+"-"+type?"Generating...":"Generate response"}
+                          </button>
+                          <button onClick={async()=>{const val=document.getElementById(a.id+"-"+type)?.value;if(val){await supabase.from("athletes").update({[taskKey]:val}).eq("id",a.id);alert("Sent to "+a.name+"!");}}} style={{flex:1,padding:"6px",borderRadius:6,border:"none",background:color,color:"#fff",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                            Send →
+                          </button>
+                        </div>
                         {a[taskKey]&&(
                           <div style={{padding:"8px",background:BG,borderRadius:6,borderLeft:"3px solid "+color}}>
                             <div style={{fontSize:10,color:color,marginBottom:3}}>Task from Coach Ant</div>
