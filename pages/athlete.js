@@ -764,7 +764,9 @@ export default function Athlete(){
               <div style={{fontSize:12,color:"#555"}}>TF College Group</div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
-              <div style={{width:50,height:50,borderRadius:"50%",background:isForge?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:500,color:"#fff",flexShrink:0}}>{selectedAthlete.name[0]}</div>
+             <div style={{width:50,height:50,borderRadius:"50%",background:isForge?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:selectedAthlete.name[0]}
+              </div>
               <div style={{flex:1}}>
                 <div style={{fontSize:18,fontWeight:400,color:"#fff"}}>{selectedAthlete.name}</div>
                 <div style={{fontSize:12,color:"#888"}}>{selectedAthlete.sport}</div>
