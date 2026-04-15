@@ -73,8 +73,25 @@ export default async function handler(req, res) {
       };
     };
 
-    const latest = processWorkout(workouts[0]);
-    const history = workouts.slice(0, 10).map(processWorkout);
+   // Sort newest first
+    workouts.sort((a,b)=>new Date(b.completedAt||0)-new Date(a.completedAt||0));
+
+    // Group by date and exercise name so each card is one exercise per day
+    const seen=new Set();
+    const uniqueWorkouts=[];
+    for(const w of workouts){
+      const exercises=w?.exercises||[];
+      for(const ex of exercises){
+        const key=(w.completedAt||"").split("T")[0]+"-"+ex.name;
+        if(!seen.has(key)){
+          seen.add(key);
+          uniqueWorkouts.push({...w,exercises:[ex]});
+        }
+      }
+    }
+
+    const latest=processWorkout(uniqueWorkouts[0]);
+    const history=uniqueWorkouts.slice(0,15).map(processWorkout);
 
     return res.status(200).json({ connected: true, latest, history });
 
