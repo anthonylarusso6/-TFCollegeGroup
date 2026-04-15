@@ -306,7 +306,21 @@ export default function Coach(){
                {athletes.map(a=>(
                   <div key={a.id} style={{padding:"10px 0",borderBottom:"0.5px solid #f0f0f0"}}>
                     <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
-                      <div style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0}}>{a.name[0]}</div>
+                   <label style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden",position:"relative"}}>
+                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:a.name[0]}
+                      <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
+                        const file=e.target.files[0];
+                        if(!file)return;
+                        const ext=file.name.split(".").pop();
+                        const path=`${a.id}.${ext}`;
+                        const{error}=await supabase.storage.from("athlete-photos").upload(path,file,{upsert:true});
+                        if(!error){
+                          const{data}=supabase.storage.from("athlete-photos").getPublicUrl(path);
+                          await supabase.from("athletes").update({photo_url:data.publicUrl}).eq("id",a.id);
+                          loadAthletes();
+                        }
+                      }}/>
+                    </label>
                       <div style={{flex:1}}>
                         <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{a.name}</div>
                         <div style={{fontSize:11,color:"#888"}}>{a.sport} · {a.gender}</div>
