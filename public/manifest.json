@@ -1,20 +1,19 @@
 {
   "name": "TF College Group",
-  "short_name": "TFCG",
-  "description": "TF College Group — Iron sharpens iron",
+  "short_name": "TF College",
+  "description": "Triple F — Faith, Family, Football",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0f0f",
   "theme_color": "#0f0f0f",
-  "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icon.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
