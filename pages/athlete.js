@@ -359,7 +359,7 @@ function VitruveData({athleteId,athleteName,vitruveId}){
     </div>
   );
 }
-function PolarData
+function PolarData({token}){
   const[data,setData]=useState(null);
   useEffect(()=>{
     fetch("/api/polar?token="+token).then(r=>r.json()).then(setData);
