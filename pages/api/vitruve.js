@@ -174,7 +174,7 @@ export default async function handler(req, res) {
     };
 
     // Debug — show raw userIds
-    const rawIds=workouts.slice(0,3).map(w=>({userId:w.userId,keys:Object.keys(w)}));
+   const rawIds=undefined;
     return res.status(200).json({
       connected: true,
       latest,
