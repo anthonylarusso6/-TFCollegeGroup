@@ -281,12 +281,85 @@ function VitruveData({athleteId,athleteName,vitruveId}){
               </div>
             );
           })}
+      </div>
+      )}
+
+      {data?.connected&&history.length>0&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+          <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:12}}>Exercise library</div>
+          <div style={{fontSize:12,color:"#888",marginBottom:12}}>Tap any exercise to see your full history</div>
+          {[...new Set(history.map(s=>s.exercise))].map(exName=>{
+            const exSessions=history.filter(s=>s.exercise===exName);
+            const bestPeak=Math.max(...exSessions.map(s=>s.bestPeak||0));
+            const bestOneRM=Math.max(...exSessions.map(s=>s.oneRM||0));
+            const isOpen=openSession===("ex-"+exName);
+            const color=zc(bestPeak);
+            const bg=zb(bestPeak);
+            const label=zl(bestPeak);
+            const maxLoad=Math.max(...exSessions.flatMap(s=>s.sets||[]).map(x=>x.load||0));
+            return(
+              <div key={exName} style={{marginBottom:8,border:"0.5px solid #e0e0e0",borderRadius:10,overflow:"hidden"}}>
+                <button onClick={()=>setOpenSession(o=>o===("ex-"+exName)?null:("ex-"+exName))} style={{width:"100%",padding:"12px 14px",background:isOpen?bg:"#fff",border:"none",cursor:"pointer",fontFamily:"Georgia,serif",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{textAlign:"left"}}>
+                    <div style={{fontSize:13,fontWeight:500,color:isOpen?color:"#1a1a1a"}}>{exName}</div>
+                    <div style={{fontSize:11,color:"#888"}}>{exSessions.length} sessions · Best 1RM: {bestOneRM>0?bestOneRM+" lbs":"—"}</div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{fontSize:11,padding:"3px 8px",borderRadius:6,background:bg,color:color,fontWeight:500}}>{label}</div>
+                    <div style={{fontSize:12,color:"#888"}}>{isOpen?"▲":"▼"}</div>
+                  </div>
+                </button>
+                {isOpen&&(
+                  <div style={{padding:"12px"}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:12}}>
+                      <div style={{background:"#f5f5f5",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                        <div style={{fontSize:16,fontWeight:500,color:"#1a1a1a"}}>{bestOneRM>0?bestOneRM+" lbs":"—"}</div>
+                        <div style={{fontSize:9,color:"#888"}}>best 1RM</div>
+                      </div>
+                      <div style={{background:"#f5f5f5",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                        <div style={{fontSize:16,fontWeight:500,color:"#534AB7"}}>{bestPeak.toFixed(2)}</div>
+                        <div style={{fontSize:9,color:"#888"}}>best peak m/s</div>
+                      </div>
+                      <div style={{background:"#f5f5f5",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                        <div style={{fontSize:16,fontWeight:500,color:"#0F6E56"}}>{exSessions.length}</div>
+                        <div style={{fontSize:9,color:"#888"}}>sessions</div>
+                      </div>
+                    </div>
+                    <div style={{fontSize:11,color:"#888",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Load progression</div>
+                    <div style={{display:"flex",alignItems:"flex-end",gap:4,height:50,marginBottom:12}}>
+                      {exSessions.slice().reverse().map((s,i)=>{
+                        const topLoad=Math.max(...(s.sets||[]).map(x=>x.load||0));
+                        const h=maxLoad>0?Math.round((topLoad/maxLoad)*46):4;
+                        const bp=s.bestPeak||0;
+                        return(
+                          <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",gap:2}}>
+                            <div style={{width:"100%",background:zb(bp),borderRadius:"3px 3px 0 0",height:h+"px",border:"0.5px solid "+zbd(bp)}}/>
+                            <div style={{fontSize:9,color:"#888"}}>{s.date?.slice(5)}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{fontSize:11,color:"#888",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Session history</div>
+                    {exSessions.map((s,i)=>(
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"55px 60px 1fr 1fr 1fr",gap:5,alignItems:"center",padding:"7px 10px",background:"#f9f9f9",borderRadius:8,marginBottom:4,borderLeft:"3px solid "+zbd(s.bestPeak||0)}}>
+                        <div style={{fontSize:11,color:"#888"}}>{s.date?.slice(5)}</div>
+                        <div style={{fontSize:11,fontWeight:500,color:"#1a1a1a"}}>{Math.max(...(s.sets||[]).map(x=>x.load||0))} lbs</div>
+                        <div style={{textAlign:"center"}}><div style={{fontSize:12,fontWeight:500,color:"#534AB7"}}>{(s.bestPeak||0).toFixed(2)}</div><div style={{fontSize:9,color:"#888"}}>peak</div></div>
+                        <div style={{textAlign:"center"}}><div style={{fontSize:12,fontWeight:500,color:"#1a1a1a"}}>{s.totalReps}</div><div style={{fontSize:9,color:"#888"}}>reps</div></div>
+                        <div style={{textAlign:"center"}}><div style={{fontSize:12,fontWeight:500,color:"#1a1a1a"}}>{s.oneRM>0?s.oneRM:"—"}</div><div style={{fontSize:9,color:"#888"}}>1RM</div></div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
-function PolarData({token}){
+function PolarData
   const[data,setData]=useState(null);
   useEffect(()=>{
     fetch("/api/polar?token="+token).then(r=>r.json()).then(setData);
