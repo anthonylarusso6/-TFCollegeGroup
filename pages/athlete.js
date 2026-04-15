@@ -48,11 +48,22 @@ const snakeSeq=(total)=>{
 };
 function VitruveData({athleteId,athleteName,vitruveId}){
   const[data,setData]=useState(null);
-  const[filter,setFilter]=useState("last-30days");
-  const zoneColor=v=>v>=1.0?"#3C3489":v>=0.75?"#27500A":v>=0.5?"#633806":"#A32D2D";
-  const zoneBg=v=>v>=1.0?"#EEEDFE":v>=0.75?"#EAF3DE":v>=0.5?"#FAEEDA":"#FCEBEB";
-  const zoneLabel=v=>v>=1.0?"Power":v>=0.75?"Speed-Str":v>=0.5?"Str-Speed":"Strength";
-  const zoneBorder=v=>v>=1.0?"#534AB7":v>=0.75?"#1E6B3A":v>=0.5?"#854F0B":"#C0392B";
+  const[filter,setFilter]=useState("all");
+  const[openSet,setOpenSet]=useState(null);
+  const[openSession,setOpenSession]=useState(null);
+  const[openSessionSet,setOpenSessionSet]=useState(null);
+
+  const zc=v=>v>=1.0?"#3C3489":v>=0.75?"#27500A":v>=0.5?"#633806":"#A32D2D";
+  const zb=v=>v>=1.0?"#EEEDFE":v>=0.75?"#EAF3DE":v>=0.5?"#FAEEDA":"#FCEBEB";
+  const zl=v=>v>=1.0?"Power":v>=0.75?"Speed-Str":v>=0.5?"Str-Speed":"Strength";
+  const zbd=v=>v>=1.0?"#534AB7":v>=0.75?"#1E6B3A":v>=0.5?"#854F0B":"#A32D2D";
+
+  const zones=[
+    {label:"Strength",range:"under 0.5 m/s",desc:"Heavy load, slow bar speed. Building max force and raw strength.",bg:"#FCEBEB",color:"#A32D2D",dark:"#791F1F",min:0,max:0.5},
+    {label:"Str-Speed",range:"0.5 to 0.75 m/s",desc:"Moderate load, controlled speed. Bridge between strength and power.",bg:"#FAEEDA",color:"#633806",dark:"#412402",min:0.5,max:0.75},
+    {label:"Spd-Str",range:"0.75 to 1.0 m/s",desc:"Lighter load, fast bar speed. Converting strength into sport speed.",bg:"#EAF3DE",color:"#27500A",dark:"#173404",min:0.75,max:1.0},
+    {label:"Power",range:"above 1.0 m/s",desc:"Explosive bar speed. Maximum rate of force development. Athletic power.",bg:"#EEEDFE",color:"#3C3489",dark:"#26215C",min:1.0,max:99},
+  ];
 
   useEffect(()=>{
     setData(null);
@@ -62,177 +73,214 @@ function VitruveData({athleteId,athleteName,vitruveId}){
 
   const latest=data?.latest;
   const history=data?.history||[];
+  const prev=data?.prevSame;
+  const wk=data?.weekVolume;
+
+  const repRow=(r,si)=>(
+    <div key={r.rep} style={{display:"grid",gridTemplateColumns:"40px 1fr 1fr 20px",gap:5,alignItems:"center",padding:"5px 10px",background:r.isBest?"#FAEEDA":"#fff",borderRadius:6,marginBottom:3,borderLeft:"2px solid "+zbd(r.peak)}}>
+      <div style={{fontSize:10,color:"#888"}}>Rep {r.rep}</div>
+      <div style={{textAlign:"center"}}><div style={{fontSize:11,fontWeight:500,color:"#534AB7"}}>{r.peak?.toFixed(2)||"—"}</div><div style={{fontSize:9,color:"#888"}}>peak</div></div>
+      <div style={{textAlign:"center"}}><div style={{fontSize:11,fontWeight:500,color:"#0F6E56"}}>{r.mean?.toFixed(2)||"—"}</div><div style={{fontSize:9,color:"#888"}}>mean</div></div>
+      <div style={{fontSize:12,textAlign:"center"}}>{r.isBest?"★":""}</div>
+    </div>
+  );
+
+  const trendLine=(sets)=>{
+    if(!sets||sets.length<2)return null;
+    const peaks=sets.map(s=>s.peakVelocity||0);
+    const max=Math.max(...peaks);const min=Math.min(...peaks);
+    const range=max-min||0.1;
+    const pts=peaks.map((p,i)=>`${Math.round(i/(peaks.length-1)*400)},${Math.round((1-(p-min)/range)*28+2)}`).join(" ");
+    return(
+      <div style={{background:"#f9f9f9",borderRadius:8,padding:"8px 12px",border:"0.5px solid #e0e0e0",marginBottom:12}}>
+        <div style={{fontSize:10,color:"#888",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.04em"}}>Velocity trend across sets</div>
+        <svg viewBox="0 0 400 32" style={{width:"100%",height:32}}>
+          <polyline points={pts} fill="none" stroke="#534AB7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          {peaks.map((p,i)=><circle key={i} cx={Math.round(i/(peaks.length-1)*400)} cy={Math.round((1-(p-min)/range)*28+2)} r="4" fill={zbd(p)}/>)}
+        </svg>
+        <div style={{display:"flex",justifyContent:"space-between"}}>
+          {peaks.map((p,i)=><span key={i} style={{fontSize:9,color:"#888"}}>S{i+1}·{p.toFixed(2)}</span>)}
+        </div>
+      </div>
+    );
+  };
+
+  const setRow=(s,i,sessionIdx,isLatest)=>{
+    const key=isLatest?"l-"+i:sessionIdx+"-"+i;
+    const isOpen=isLatest?openSet===i:openSessionSet===key;
+    const toggle=()=>{
+      if(isLatest)setOpenSet(o=>o===i?null:i);
+      else setOpenSessionSet(o=>o===key?null:key);
+    };
+    return(
+      <div key={i} style={{marginBottom:5}}>
+        <button onClick={toggle} style={{width:"100%",display:"grid",gridTemplateColumns:"40px 55px 1fr 1fr 1fr "+(s.isPR?"32px":"20px"),gap:5,alignItems:"center",padding:"8px 10px",background:isOpen?zb(s.peakVelocity||0):"#f9f9f9",borderRadius:8,border:"none",borderLeft:"3px solid "+zbd(s.peakVelocity||0),cursor:"pointer",fontFamily:"Georgia,serif"}}>
+          <div style={{fontSize:11,color:"#888",textAlign:"left"}}>Set {i+1}</div>
+          <div style={{fontSize:11,fontWeight:500,color:"#1a1a1a",textAlign:"left"}}>{s.load||"—"} lbs</div>
+          <div style={{textAlign:"center"}}><div style={{fontSize:12,fontWeight:500,color:"#534AB7"}}>{s.peakVelocity?.toFixed(2)||"—"}</div><div style={{fontSize:9,color:"#888"}}>peak</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontSize:12,fontWeight:500,color:"#0F6E56"}}>{s.meanVelocity?.toFixed(2)||"—"}</div><div style={{fontSize:9,color:"#888"}}>mean</div></div>
+          <div style={{textAlign:"center"}}><div style={{fontSize:12,fontWeight:500,color:"#1a1a1a"}}>{s.reps||"—"}</div><div style={{fontSize:9,color:"#888"}}>reps</div></div>
+          {s.isPR?<div style={{fontSize:10,fontWeight:500,color:"#D4AF37",background:"#1f1700",borderRadius:4,padding:"2px 4px",textAlign:"center"}}>PR</div>:<div style={{fontSize:11,color:"#888"}}>{isOpen?"▲":"▼"}</div>}
+        </button>
+        {isOpen&&s.repData&&s.repData.length>0&&(
+          <div style={{padding:"8px 10px",background:zb(s.peakVelocity||0),borderRadius:"0 0 8px 8px",borderLeft:"3px solid "+zbd(s.peakVelocity||0)}}>
+            <div style={{fontSize:10,color:"#888",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.04em"}}>Rep by rep — ★ best rep</div>
+            {s.repData.map((r,ri)=>repRow(r,ri))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if(!data)return<div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}><div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"10px 0"}}>Loading training data...</div></div>;
+  if(data.noData)return<div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}><div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"10px 0"}}>No sessions yet — sync after your next lift</div></div>;
+  if(data.error)return<div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}><div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"10px 0"}}>Vitruve connecting...</div></div>;
 
   return(
     <div>
-      {/* History */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Vitruve — training history</div>
-        <div style={{display:"flex",gap:6,marginBottom:12}}>
-          {[{id:"this-week",label:"This week"},{id:"last-30days",label:"30 days"},{id:"all",label:"All time"}].map(f=>(
-            <button key={f.id} onClick={()=>setFilter(f.id)} style={{flex:1,padding:"7px",borderRadius:8,border:"0.5px solid "+(filter===f.id?"#534AB7":"#e0e0e0"),background:filter===f.id?"#534AB7":"transparent",color:filter===f.id?"#fff":"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>{f.label}</button>
-          ))}
+      {/* Weekly volume */}
+      {wk&&(
+        <div style={{background:"#0f0f0f",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #222"}}>
+          <div style={{fontSize:11,fontWeight:500,color:"#555",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>This week — velocity training</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+            {[
+              {label:"Sessions",val:wk.sessions,color:"#fff"},
+              {label:"Sets",val:wk.sets,color:"#534AB7"},
+              {label:"Reps",val:wk.reps,color:"#0F6E56"},
+              {label:"lbs moved",val:wk.lbs>999?(Math.round(wk.lbs/100)/10)+"k":wk.lbs,color:"#D4AF37"},
+            ].map(s=>(
+              <div key={s.label} style={{textAlign:"center"}}>
+                <div style={{fontSize:20,fontWeight:500,color:s.color}}>{s.val}</div>
+                <div style={{fontSize:10,color:"#555",marginTop:2}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        {!data&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"10px 0"}}>Loading...</div>}
-        {data?.noData&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"10px 0"}}>No sessions yet — sync after your next lift</div>}
-        {data?.error&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"10px 0"}}>Vitruve connecting...</div>}
-        {data?.connected&&history.map((s,idx)=>{
-          if(!s.sets||!s.sets.length)return null;
-          const maxLoad=Math.max(...s.sets.map(x=>x.load||0));
-          const totalReps=s.sets.reduce((n,x)=>n+(x.reps||0),0);
-          const bestPeak=s.bestPeak||0;
-          return(
-            <div key={idx} style={{marginBottom:10,border:"0.5px solid #e0e0e0",borderRadius:10,overflow:"hidden"}}>
-              <div style={{padding:"10px 12px",background:zoneBg(bestPeak),display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div>
-                  <div style={{fontSize:13,fontWeight:500,color:zoneColor(bestPeak)}}>{s.exercise}</div>
-                  <div style={{fontSize:11,color:zoneColor(bestPeak),opacity:0.8}}>{s.date}</div>
-                </div>
-                <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:11,fontWeight:500,color:zoneColor(bestPeak)}}>{zoneLabel(bestPeak)}</div>
-                  <div style={{fontSize:10,color:zoneColor(bestPeak),opacity:0.8}}>{s.sets.length} sets · {totalReps} reps</div>
-                </div>
-              </div>
-              <div style={{padding:"10px 12px"}}>
-                <div style={{display:"flex",alignItems:"flex-end",gap:4,height:50,marginBottom:6}}>
-                  {s.sets.map((set,i)=>{
-                    const h=maxLoad>0?Math.round((set.load||0)/maxLoad*46):4;
-                    return(
-                      <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",gap:2}}>
-                        <div style={{width:"100%",background:zoneBg(set.peakVelocity||0),borderRadius:"3px 3px 0 0",height:h+"px",border:"0.5px solid "+zoneColor(set.peakVelocity||0)}}/>
-                        <div style={{fontSize:9,color:"#888"}}>{set.load}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                  <div style={{background:"#f5f5f5",borderRadius:6,padding:"6px",textAlign:"center"}}>
-                    <div style={{fontSize:13,fontWeight:500,color:"#534AB7"}}>{bestPeak.toFixed(2)}</div>
-                    <div style={{fontSize:9,color:"#888"}}>best peak m/s</div>
-                  </div>
-                  <div style={{background:"#f5f5f5",borderRadius:6,padding:"6px",textAlign:"center"}}>
-                    <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{maxLoad}</div>
-                    <div style={{fontSize:9,color:"#888"}}>top load (lbs)</div>
-                  </div>
-                  <div style={{background:"#f5f5f5",borderRadius:6,padding:"6px",textAlign:"center"}}>
-                    <div style={{fontSize:13,fontWeight:500,color:"#0F6E56"}}>{totalReps}</div>
-                    <div style={{fontSize:9,color:"#888"}}>total reps</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      )}
 
-      {/* Latest session detail */}
-      {data?.connected&&latest&&(
+      {/* Latest session */}
+      {latest&&(
         <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-          <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Vitruve — latest session</div>
-          <div style={{fontSize:11,color:"#1E6B3A",marginBottom:12}}>✓ Connected · {latest.exercise} · {latest.date}</div>
+          <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Latest session</div>
+          <div style={{fontSize:11,color:"#1E6B3A",marginBottom:12}}>✓ {latest.date} · {latest.exercise}</div>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
             <div style={{background:"#f5f5f5",borderRadius:8,padding:"10px",textAlign:"center"}}>
               <div style={{fontSize:18,fontWeight:500,color:"#1a1a1a"}}>{latest.oneRM||"—"}</div>
               <div style={{fontSize:10,color:"#888",marginTop:2}}>Est. 1RM (lbs)</div>
+              {prev&&prev.oneRM>0&&<div style={{fontSize:10,color:latest.oneRM>prev.oneRM?"#1E6B3A":"#E24B4A",marginTop:2}}>{latest.oneRM>prev.oneRM?"↑":"↓"} {Math.abs(latest.oneRM-prev.oneRM)} vs last</div>}
             </div>
             <div style={{background:"#f5f5f5",borderRadius:8,padding:"10px",textAlign:"center"}}>
               <div style={{fontSize:18,fontWeight:500,color:"#534AB7"}}>{latest.bestPeak?.toFixed(2)||"—"}</div>
               <div style={{fontSize:10,color:"#888",marginTop:2}}>Peak m/s</div>
+              {prev&&prev.peak>0&&<div style={{fontSize:10,color:latest.bestPeak>prev.peak?"#1E6B3A":"#E24B4A",marginTop:2}}>{latest.bestPeak>prev.peak?"↑":"↓"} {Math.abs(Math.round((latest.bestPeak-prev.peak)*100)/100)} vs last</div>}
             </div>
             <div style={{background:"#f5f5f5",borderRadius:8,padding:"10px",textAlign:"center"}}>
-              <div style={{fontSize:18,fontWeight:500,color:"#0F6E56"}}>{latest.bestMean?.toFixed(2)||"—"}</div>
-              <div style={{fontSize:10,color:"#888",marginTop:2}}>Mean m/s</div>
+              <div style={{fontSize:18,fontWeight:500,color:"#0F6E56"}}>{latest.score||"—"}</div>
+              <div style={{fontSize:10,color:"#888",marginTop:2}}>Session score</div>
+              <div style={{fontSize:10,color:latest.score>=8?"#1E6B3A":latest.score>=6?"#854F0B":"#E24B4A",marginTop:2}}>{latest.score>=8?"Great":latest.score>=6?"Good":"Tough session"}</div>
             </div>
           </div>
 
-          {/* Velocity zones */}
+          {trendLine(latest.sets)}
+
           <div style={{marginBottom:14}}>
-            <div style={{fontSize:11,color:"#888",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.04em"}}>Velocity zones — what they mean</div>
-            <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              {[
-                {key:"str",label:"Strength",range:"under 0.5 m/s",desc:"Heavy load, slow bar speed. Building max force and raw strength.",bg:"#FCEBEB",color:"#A32D2D",dark:"#791F1F",min:0,max:0.5},
-                {key:"ss",label:"Str-Speed",range:"0.5 to 0.75 m/s",desc:"Moderate load, controlled speed. Bridge between strength and power.",bg:"#FAEEDA",color:"#633806",dark:"#412402",min:0.5,max:0.75},
-                {key:"sp",label:"Spd-Str",range:"0.75 to 1.0 m/s",desc:"Lighter load, fast bar speed. Converting strength into sport speed.",bg:"#EAF3DE",color:"#27500A",dark:"#173404",min:0.75,max:1.0},
-                {key:"pwr",label:"Power",range:"above 1.0 m/s",desc:"Explosive bar speed. Maximum rate of force development. Athletic power.",bg:"#EEEDFE",color:"#3C3489",dark:"#26215C",min:1.0,max:99},
-              ].map(z=>{
-                const isHere=latest.bestPeak>=z.min&&latest.bestPeak<z.max;
-                return(
-                  <div key={z.key} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:z.bg,borderRadius:8,border:isHere?"2px solid "+z.color:"0.5px solid transparent"}}>
-                    <div style={{width:32,height:32,borderRadius:6,background:z.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:500,color:"#fff",flexShrink:0}}>{z.label.split("-")[0].toUpperCase().slice(0,3)}</div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:12,fontWeight:500,color:z.color}}>{z.label} — {z.range}{isHere?" ← You are here":""}</div>
-                      <div style={{fontSize:11,color:z.dark}}>{z.desc}</div>
-                    </div>
+            <div style={{fontSize:11,color:"#888",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.04em"}}>Velocity zones</div>
+            {zones.map(z=>{
+              const isHere=latest.bestPeak>=z.min&&latest.bestPeak<z.max;
+              return(
+                <div key={z.label} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:z.bg,borderRadius:8,marginBottom:5,border:isHere?"2px solid "+z.color:"0.5px solid transparent"}}>
+                  <div style={{width:30,height:30,borderRadius:6,background:z.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:500,color:"#fff",flexShrink:0}}>{z.label.slice(0,3).toUpperCase()}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:12,fontWeight:500,color:z.color}}>{z.label} — {z.range}{isHere?" ← You are here":""}</div>
+                    <div style={{fontSize:11,color:z.dark}}>{z.desc}</div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Load progression */}
-          {latest.sets&&latest.sets.length>0&&(
-            <div style={{marginBottom:14}}>
-              <div style={{fontSize:11,color:"#888",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.04em"}}>Load progression</div>
-              <div style={{display:"flex",alignItems:"flex-end",gap:5,height:60,marginBottom:4}}>
-                {latest.sets.map((s,i)=>{
-                  const maxL=Math.max(...latest.sets.map(x=>x.load||0));
-                  const h=maxL>0?Math.round((s.load||0)/maxL*56):4;
-                  return(
-                    <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",gap:3}}>
-                      <div style={{width:"100%",background:zoneBg(s.peakVelocity||0),borderRadius:"3px 3px 0 0",height:h+"px",border:"0.5px solid "+zoneColor(s.peakVelocity||0)}}/>
-                      <div style={{fontSize:9,color:"#888"}}>{s.load}</div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{fontSize:10,color:"#888",textAlign:"center"}}>lbs per set — color = velocity zone</div>
-            </div>
-          )}
+          <div style={{marginBottom:14}}>
+            <div style={{fontSize:11,color:"#888",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.04em"}}>Sets & reps — tap a set to see each rep</div>
+            {latest.sets.map((s,i)=>setRow(s,i,0,true))}
+          </div>
 
-          {/* Sets & reps */}
-          {latest.sets&&latest.sets.length>0&&(
-            <div style={{marginBottom:14}}>
-              <div style={{fontSize:11,color:"#888",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.04em"}}>Sets & reps</div>
-              <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                {latest.sets.map((s,i)=>(
-                  <div key={i} style={{display:"grid",gridTemplateColumns:"40px 55px 1fr 1fr 1fr",gap:5,alignItems:"center",padding:"7px 10px",background:"#f9f9f9",borderRadius:8,borderLeft:"3px solid "+zoneBorder(s.peakVelocity||0)}}>
-                    <div style={{fontSize:11,color:"#888"}}>Set {i+1}</div>
-                    <div style={{fontSize:11,fontWeight:500,color:"#1a1a1a"}}>{s.load} lbs</div>
-                    <div style={{textAlign:"center"}}>
-                      <div style={{fontSize:12,fontWeight:500,color:s.peakVelocity>=0.75?"#534AB7":"#E24B4A"}}>{s.peakVelocity?.toFixed(2)||"—"}</div>
-                      <div style={{fontSize:9,color:"#888"}}>peak</div>
-                    </div>
-                    <div style={{textAlign:"center"}}>
-                      <div style={{fontSize:12,fontWeight:500,color:s.meanVelocity>=0.5?"#0F6E56":"#E24B4A"}}>{s.meanVelocity?.toFixed(2)||"—"}</div>
-                      <div style={{fontSize:9,color:"#888"}}>mean</div>
-                    </div>
-                    <div style={{textAlign:"center"}}>
-                      <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a"}}>{s.reps||"—"}</div>
-                      <div style={{fontSize:9,color:"#888"}}>reps</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Fatigue */}
           {latest.fatigue!=null&&(
-            <div>
-              <div style={{fontSize:11,color:"#888",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Fatigue</div>
-              <div style={{background:"#f9f9f9",borderRadius:8,padding:"10px",border:"0.5px solid #e0e0e0"}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                  <span style={{fontSize:11,color:"#888"}}>Velocity drop</span>
-                  <span style={{fontSize:11,fontWeight:500,color:latest.fatigue>15?"#E24B4A":"#1E6B3A"}}>{latest.fatigue?.toFixed(1)}% drop</span>
-                </div>
-                <div style={{background:"#e0e0e0",borderRadius:4,height:8,overflow:"hidden"}}>
-                  <div style={{width:Math.min(latest.fatigue||0,100)+"%",height:"100%",background:latest.fatigue>15?"#E24B4A":"#1E6B3A",borderRadius:4}}/>
-                </div>
-                <div style={{fontSize:10,color:"#888",marginTop:4}}>{latest.fatigue>15?"High fatigue — consider lighter next session":"Within normal range — good session"}</div>
+            <div style={{background:"#f9f9f9",borderRadius:8,padding:"10px",border:"0.5px solid #e0e0e0"}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                <span style={{fontSize:11,color:"#888"}}>Fatigue</span>
+                <span style={{fontSize:11,fontWeight:500,color:latest.fatigue>15?"#E24B4A":"#1E6B3A"}}>{latest.fatigue?.toFixed(1)}% drop</span>
               </div>
+              <div style={{background:"#e0e0e0",borderRadius:4,height:8,overflow:"hidden"}}>
+                <div style={{width:Math.min(latest.fatigue||0,100)+"%",height:"100%",background:latest.fatigue>15?"#E24B4A":"#1E6B3A",borderRadius:4}}/>
+              </div>
+              <div style={{fontSize:10,color:"#888",marginTop:4}}>{latest.fatigue>15?"High fatigue — consider lighter next session":"Within normal range — good session"}</div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Previous workouts */}
+      {history.length>0&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+          <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:12}}>Previous workouts</div>
+          <div style={{display:"flex",gap:6,marginBottom:12}}>
+            {[{id:"this-week",label:"This week"},{id:"last-30days",label:"30 days"},{id:"all",label:"All time"}].map(f=>(
+              <button key={f.id} onClick={()=>setFilter(f.id)} style={{flex:1,padding:"7px",borderRadius:8,border:"0.5px solid "+(filter===f.id?"#534AB7":"#e0e0e0"),background:filter===f.id?"#534AB7":"transparent",color:filter===f.id?"#fff":"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>{f.label}</button>
+            ))}
+          </div>
+          {history.map((s,i)=>{
+            const isOpen=openSession===i;
+            const color=zc(s.bestPeak||0);
+            const bg=zb(s.bestPeak||0);
+            const label=zl(s.bestPeak||0);
+            return(
+              <div key={i} style={{marginBottom:8,border:"0.5px solid #e0e0e0",borderRadius:10,overflow:"hidden"}}>
+                <button onClick={()=>setOpenSession(o=>o===i?null:i)} style={{width:"100%",padding:"12px 14px",background:isOpen?bg:"#fff",border:"none",cursor:"pointer",fontFamily:"Georgia,serif",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{textAlign:"left"}}>
+                    <div style={{fontSize:13,fontWeight:500,color:isOpen?color:"#1a1a1a"}}>{s.exercise}</div>
+                    <div style={{fontSize:11,color:"#888"}}>{s.date} · {s.sets?.length||0} sets · {s.totalReps} reps · {s.maxLoad} lbs top</div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{fontSize:11,padding:"3px 6px",borderRadius:6,background:"#f5f5f5",color:"#888"}}>{s.score}/10</div>
+                    <div style={{fontSize:11,padding:"3px 8px",borderRadius:6,background:bg,color:color,fontWeight:500}}>{label}</div>
+                    <div style={{fontSize:12,color:"#888"}}>{isOpen?"▲":"▼"}</div>
+                  </div>
+                </button>
+                {isOpen&&(
+                  <div style={{padding:"10px 12px"}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:12}}>
+                      <div style={{background:"#f5f5f5",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:15,fontWeight:500,color:"#1a1a1a"}}>{s.oneRM>0?s.oneRM+" lbs":"—"}</div><div style={{fontSize:9,color:"#888"}}>est. 1RM</div></div>
+                      <div style={{background:"#f5f5f5",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:15,fontWeight:500,color:"#534AB7"}}>{(s.bestPeak||0).toFixed(2)}</div><div style={{fontSize:9,color:"#888"}}>best peak</div></div>
+                      <div style={{background:"#f5f5f5",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:15,fontWeight:500,color:"#D4AF37"}}>{s.score}/10</div><div style={{fontSize:9,color:"#888"}}>session score</div></div>
+                    </div>
+                    {trendLine(s.sets)}
+                    <div style={{fontSize:11,color:"#888",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Velocity zones</div>
+                    <div style={{marginBottom:12}}>
+                      {zones.map(z=>{
+                        const isHere=(s.bestPeak||0)>=z.min&&(s.bestPeak||0)<z.max;
+                        return(
+                          <div key={z.label} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:z.bg,borderRadius:8,marginBottom:4,border:isHere?"2px solid "+z.color:"0.5px solid transparent"}}>
+                            <div style={{width:26,height:26,borderRadius:5,background:z.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:500,color:"#fff",flexShrink:0}}>{z.label.slice(0,3).toUpperCase()}</div>
+                            <div><div style={{fontSize:11,fontWeight:500,color:z.color}}>{z.label} — {z.range}{isHere?" ← You were here":""}</div><div style={{fontSize:10,color:z.dark}}>{z.desc}</div></div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{fontSize:11,color:"#888",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Sets & reps — tap a set to see each rep</div>
+                    {(s.sets||[]).map((set,si)=>setRow(set,si,i,false))}
+                    {s.fatigue!=null&&(
+                      <div style={{marginTop:8,background:"#f9f9f9",borderRadius:8,padding:"8px",border:"0.5px solid #e0e0e0"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:"#888"}}>Fatigue</span><span style={{fontSize:11,fontWeight:500,color:s.fatigue>15?"#E24B4A":"#1E6B3A"}}>{s.fatigue?.toFixed(1)}% drop</span></div>
+                        <div style={{background:"#e0e0e0",borderRadius:4,height:6,overflow:"hidden"}}><div style={{width:Math.min(s.fatigue||0,100)+"%",height:"100%",background:s.fatigue>15?"#E24B4A":"#1E6B3A",borderRadius:4}}/></div>
+                        <div style={{fontSize:10,color:"#888",marginTop:3}}>{s.fatigue>15?"High fatigue — consider lighter next session":"Within normal range — good session"}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
