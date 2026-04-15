@@ -173,12 +173,15 @@ export default async function handler(req, res) {
       lbs: weekProcessed.reduce((n, w) => n + (w.sets || []).reduce((a, s) => a + ((s.load || 0) * (s.reps || 0)), 0), 0),
     };
 
+    // Debug — show raw userIds
+    const rawIds=[...new Set(workouts.map(w=>w.userId).filter(Boolean))];
     return res.status(200).json({
       connected: true,
       latest,
       history: history.slice(1),
       prevSame,
       weekVolume,
+      rawIds,
     });
 
   } catch (e) {
