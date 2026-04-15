@@ -303,23 +303,40 @@ export default function Coach(){
             <div>
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Athletes — {athletes.filter(a=>a.status==="active").length} active</div>
-                {athletes.map(a=>(
-                  <div key={a.id} style={{padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",display:"flex",alignItems:"center",gap:12}}>
-                    <div style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0}}>{a.name[0]}</div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{a.name}</div>
-                      <div style={{fontSize:11,color:"#888"}}>{a.sport} · {a.gender}</div>
+               {athletes.map(a=>(
+                  <div key={a.id} style={{padding:"10px 0",borderBottom:"0.5px solid #f0f0f0"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
+                      <div style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0}}>{a.name[0]}</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{a.name}</div>
+                        <div style={{fontSize:11,color:"#888"}}>{a.sport} · {a.gender}</div>
+                      </div>
+                      <select value={a.role} onChange={e=>updateAthlete(a.id,"role",e.target.value)} style={{padding:"4px 8px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fff",color:a.role==="forge"?RED:STEEL}}>
+                        <option value="iron">The Iron</option>
+                        <option value="forge">The Forge</option>
+                      </select>
+                      <select value={a.status} onChange={e=>updateAthlete(a.id,"status",e.target.value)} style={{padding:"4px 8px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fff",color:a.status==="active"?GREEN:a.status==="sleeping"?"#854F0B":RED}}>
+                        <option value="active">Active</option>
+                        <option value="sleeping">Sleeping</option>
+                        <option value="archived">Archived</option>
+                      </select>
+                      <button onClick={()=>deleteAthlete(a.id,a.name)} style={{padding:"4px 8px",borderRadius:6,border:"0.5px solid #ffcccc",background:"transparent",color:RED,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>
                     </div>
-                    <select value={a.role} onChange={e=>updateAthlete(a.id,"role",e.target.value)} style={{padding:"4px 8px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fff",color:a.role==="forge"?RED:STEEL}}>
-                      <option value="iron">The Iron</option>
-                      <option value="forge">The Forge</option>
-                    </select>
-                    <select value={a.status} onChange={e=>updateAthlete(a.id,"status",e.target.value)} style={{padding:"4px 8px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fff",color:a.status==="active"?GREEN:a.status==="sleeping"?"#854F0B":RED}}>
-                      <option value="active">Active</option>
-                      <option value="sleeping">Sleeping</option>
-                      <option value="archived">Archived</option>
-                    </select>
-                    <button onClick={()=>deleteAthlete(a.id,a.name)} style={{padding:"4px 8px",borderRadius:6,border:"0.5px solid #ffcccc",background:"transparent",color:RED,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>
+                    <div style={{display:"flex",alignItems:"center",gap:6,paddingLeft:48}}>
+                      <div style={{fontSize:10,color:"#aaa",flexShrink:0}}>Vitruve ID:</div>
+                      <input
+                        defaultValue={a.vitruve_id||""}
+                        placeholder="Paste Vitruve ID from URL..."
+                        onBlur={async e=>{
+                          const val=e.target.value.trim();
+                          if(val!==a.vitruve_id){
+                            await supabase.from("athletes").update({vitruve_id:val||null}).eq("id",a.id);
+                          }
+                        }}
+                        style={{flex:1,padding:"3px 8px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif"}}
+                      />
+                      {a.vitruve_id&&<div style={{width:8,height:8,borderRadius:"50%",background:"#1E6B3A",flexShrink:0}}/>}
+                    </div>
                   </div>
                 ))}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 60px 80px 80px auto",gap:8,marginTop:16}}>
