@@ -77,12 +77,12 @@ export default function Landing(){
           paddingTop:"70px",
         }}>
 
-          {/* Poster photo — full image, no crop */}
+          {/* Poster photo — constrained width so full portrait shows on screen */}
           <div style={{
-            width:"100%",
-            marginBottom:"1.5rem",
-            boxShadow:"0 0 60px rgba(255,130,0,0.4)",
-            border:"2px solid rgba(255,130,0,0.4)",
+            width:220,
+            margin:"0 auto 1.5rem",
+            boxShadow:"0 0 50px rgba(255,130,0,0.5), 0 0 100px rgba(255,130,0,0.2)",
+            border:"2px solid rgba(255,130,0,0.5)",
             borderRadius:16,
             overflow:"hidden",
           }}>
