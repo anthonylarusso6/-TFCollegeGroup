@@ -78,7 +78,7 @@ export default function Landing(){
 
           {/* Icon */}
           <div style={{
-            width:"100%",maxWidth:320,height:360,borderRadius:20,
+            width:"100%",maxWidth:320,height:280,borderRadius:20,
             margin:"0 auto 2rem",
             overflow:"hidden",
             boxShadow:"0 0 60px rgba(255,130,0,0.35), 0 0 120px rgba(255,130,0,0.15)",
