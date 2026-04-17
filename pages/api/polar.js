@@ -1,35 +1,81 @@
 export default async function handler(req, res) {
-  const { token, athleteId } = req.query;
+  const { token } = req.query;
   if (!token) return res.status(400).json({ error: "No token" });
 
   try {
-    // Create transaction to get latest data
-    const txRes = await fetch("https://www.polaraccesslink.com/v3/exercises", {
+    // Step 1 — create a pull notification transaction to get new data
+    const txRes = await fetch("https://www.polaraccesslink.com/v3/users/transaction", {
+      method: "POST",
       headers: {
         "Authorization": "Bearer " + token,
         "Accept": "application/json",
+        "Content-Type": "application/json",
       },
     });
 
-    if (!txRes.ok) {
-      return res.status(200).json({ error: "No data yet", connected: true });
+    // Step 2 — try to list exercises from the transaction
+    let exercises = [];
+
+    if (txRes.ok) {
+      const tx = await txRes.json();
+      const txId = tx?.transaction_id;
+      if (txId) {
+        const listRes = await fetch(`https://www.polaraccesslink.com/v3/users/transaction/${txId}/exercises`, {
+          headers: { "Authorization": "Bearer " + token, "Accept": "application/json" },
+        });
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          exercises = listData?.exercises || [];
+        }
+        // Commit the transaction
+        await fetch(`https://www.polaraccesslink.com/v3/users/transaction/${txId}`, {
+          method: "PUT",
+          headers: { "Authorization": "Bearer " + token },
+        });
+      }
     }
 
-    const data = await txRes.json();
-    const exercises = data?.data || [];
-
+    // Step 3 — fallback: try the continuous data endpoint for recent training data
     if (exercises.length === 0) {
+      const now = new Date();
+      const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+      const from = weekAgo.toISOString().split("T")[0];
+      const to = now.toISOString().split("T")[0];
+
+      const contRes = await fetch(
+        `https://www.polaraccesslink.com/v3/exercises?from=${from}&to=${to}`,
+        {
+          headers: {
+            "Authorization": "Bearer " + token,
+            "Accept": "application/json",
+          },
+        }
+      );
+
+      if (contRes.ok) {
+        const contData = await contRes.json();
+        exercises = contData?.data || contData?.exercises || [];
+      }
+    }
+
+    if (!exercises || exercises.length === 0) {
       return res.status(200).json({ connected: true, noData: true });
     }
 
-    // Get most recent exercise
-    const latest = exercises[0];
-    const detailRes = await fetch(latest, {
+    // Get detail of most recent exercise
+    const latestUrl = typeof exercises[0] === "string" ? exercises[0] : exercises[0]?.url || exercises[0]?.id;
+
+    if (!latestUrl) return res.status(200).json({ connected: true, noData: true });
+
+    const detailRes = await fetch(latestUrl, {
       headers: {
         "Authorization": "Bearer " + token,
         "Accept": "application/json",
       },
     });
+
+    if (!detailRes.ok) return res.status(200).json({ connected: true, noData: true });
+
     const detail = await detailRes.json();
 
     return res.status(200).json({
@@ -39,7 +85,7 @@ export default async function handler(req, res) {
       calories: detail?.calories || null,
       duration: detail?.duration || null,
       date: detail?.start_time?.split("T")[0] || null,
-     sport: detail?.detailed_sport_info || detail?.sport || null,
+      sport: detail?.detailed_sport_info || detail?.sport || null,
       zone1: detail?.heart_rate_zones?.zone1?.inzone || null,
       zone2: detail?.heart_rate_zones?.zone2?.inzone || null,
       zone3: detail?.heart_rate_zones?.zone3?.inzone || null,
@@ -48,6 +94,6 @@ export default async function handler(req, res) {
     });
 
   } catch (e) {
-    return res.status(200).json({ error: "Failed to fetch Polar data", connected: true });
+    return res.status(200).json({ error: "Failed: " + e.message, connected: true });
   }
 }
