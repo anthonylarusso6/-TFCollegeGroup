@@ -929,70 +929,46 @@ export default function Athlete(){
               </div>
             )}
 
-{tab==="polar"&&(()=>{
-              const[log,setLog]=useState({calories:"",duration:"",avgHr:"",maxHr:"",feeling:"",notes:""});
-              const[logs,setLogs]=useState([]);
-              const[saving,setSaving]=useState(false);
-              const[saved,setSaved]=useState(false);
-              useEffect(()=>{
-                supabase.from("polar_sessions").select("*").eq("athlete_id",selectedAthlete.id).order("date",{ascending:false}).limit(10).then(({data})=>setLogs(data||[]));
-              },[]);
-              const saveLog=async()=>{
-                if(!log.calories&&!log.duration)return;
-                setSaving(true);
-                const today=new Date().toISOString().split("T")[0];
-                await supabase.from("polar_sessions").insert({athlete_id:selectedAthlete.id,date:today,calories:parseInt(log.calories)||null,duration:log.duration||null,avg_hr:parseInt(log.avgHr)||null,max_hr:parseInt(log.maxHr)||null,feeling:log.feeling||null,notes:log.notes||null});
-                const{data}=await supabase.from("polar_sessions").select("*").eq("athlete_id",selectedAthlete.id).order("date",{ascending:false}).limit(10);
-                setLogs(data||[]);
-                setLog({calories:"",duration:"",avgHr:"",maxHr:"",feeling:"",notes:""});
-                setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),3000);
-              };
-              return(
-                <div>
-                  <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid #E8001E"}}>
-                    <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:2}}>Log Today's Workout</div>
-                    <div style={{fontSize:12,color:"#888",marginBottom:14}}>Enter your stats from the Polar Club screen after class</div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-                      {[{label:"Calories (kcal)",key:"calories",placeholder:"e.g. 290",type:"number"},{label:"Duration",key:"duration",placeholder:"e.g. 1:17:36",type:"text"},{label:"Avg HR (bpm)",key:"avgHr",placeholder:"e.g. 88",type:"number"},{label:"Max HR (bpm)",key:"maxHr",placeholder:"e.g. 132",type:"number"}].map(f=>(
-                        <div key={f.key}>
-                          <div style={{fontSize:11,color:"#888",marginBottom:4}}>{f.label}</div>
-                          <input type={f.type} value={log[f.key]} onChange={e=>setLog(p=>({...p,[f.key]:e.target.value}))} placeholder={f.placeholder} style={{width:"100%",padding:"8px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",boxSizing:"border-box",background:"#fafafa"}}/>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{marginBottom:10}}>
-                      <div style={{fontSize:11,color:"#888",marginBottom:4}}>How did you feel?</div>
-                      <div style={{display:"flex",gap:8}}>
-                        {["💀","😤","😊","🔥"].map(e=>(
-                          <button key={e} onClick={()=>setLog(p=>({...p,feeling:e}))} style={{flex:1,padding:"8px",borderRadius:8,border:"0.5px solid "+(log.feeling===e?"#E8001E":"#e0e0e0"),background:log.feeling===e?"#fff5f5":"#fafafa",fontSize:20,cursor:"pointer"}}>{e}</button>
-                        ))}
-                      </div>
-                    </div>
-                    <textarea value={log.notes} onChange={e=>setLog(p=>({...p,notes:e.target.value}))} placeholder="Any notes about today's session..." style={{width:"100%",minHeight:50,padding:"8px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",background:"#fafafa",marginBottom:10}}/>
-                    <button onClick={saveLog} disabled={saving||(!log.calories&&!log.duration)} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:(!log.calories&&!log.duration)?"#e0e0e0":"#E8001E",color:(!log.calories&&!log.duration)?"#aaa":"#fff",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                      {saved?"✓ Saved!":saving?"Saving...":"Save workout →"}
-                    </button>
-                  </div>
-                  {logs.length>0&&(
-                    <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-                      <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Recent workouts</div>
-                      {logs.map((l,i)=>(
-                        <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:i<logs.length-1?"0.5px solid #f0f0f0":"none"}}>
-                          <div>
-                            <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{l.date} {l.feeling||""}</div>
-                            <div style={{fontSize:12,color:"#888"}}>{l.duration||"—"} · {l.avg_hr?l.avg_hr+" bpm avg":""}</div>
+{tab==="polar"&&(
+              <div>
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid #E8001E"}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>Polar — Heart Rate & Training</div>
+                  <div style={{fontSize:12,color:"#888",marginBottom:12}}>Your latest workout data from your Polar device.</div>
+                  {(()=>{
+                    // Always check token validity — show connect if no token or expired
+                    if(!selectedAthlete.polar_token){
+                      return(
+                        <div>
+                          <div style={{background:"#fff5f5",borderRadius:10,padding:"14px",marginBottom:12,border:"0.5px solid #ffcccc"}}>
+                            <div style={{fontSize:13,fontWeight:600,color:"#E8001E",marginBottom:6}}>⚠️ Must use Safari to connect</div>
+                            <div style={{fontSize:12,color:"#888",lineHeight:1.7}}>
+                              iOS blocks Polar login from the home screen app.{"
+"}
+                              <strong>Steps:</strong>{"
+"}
+                              1. Open Safari on your iPhone{"
+"}
+                              2. Go to tfcollegegroup.com/athlete{"
+"}
+                              3. Log in and come to this Polar tab{"
+"}
+                              4. Tap Connect below — Polar login will appear
+                            </div>
                           </div>
-                          <div style={{textAlign:"right"}}>
-                            <div style={{fontSize:14,fontWeight:500,color:"#E8001E"}}>{l.calories?l.calories+" kcal":"—"}</div>
-                            <div style={{fontSize:11,color:"#888"}}>Max {l.max_hr||"—"} bpm</div>
-                          </div>
+                          <button onClick={()=>{
+                            window.location.href="https://flow.polar.com/oauth2/authorization?response_type=code&client_id=d2759b37-57d2-4f8b-8d4a-b12a13288f4b&redirect_uri=https://tfcollegegroup.com/callback&scope=accesslink.read_all&state="+selectedAthlete.id;
+                          }} style={{width:"100%",padding:"14px",borderRadius:8,border:"none",background:"#E8001E",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center"}}>
+                            Connect Polar →
+                          </button>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      );
+                    }
+                    return <PolarData token={selectedAthlete.polar_token} refreshToken={selectedAthlete.polar_refresh_token} athleteId={selectedAthlete.id}/>;
+                  })()}
                 </div>
-              );
-            })()}
+              </div>
+            )}
+
             {tab==="vitruve"&&(
               <div>
                 <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid #1a1a1a"}}>
