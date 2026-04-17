@@ -78,13 +78,13 @@ export default function Landing(){
 
           {/* Icon */}
           <div style={{
-            width:220,height:220,borderRadius:20,
+            width:"100%",maxWidth:400,height:520,borderRadius:20,
             margin:"0 auto 2rem",
             overflow:"hidden",
-            boxShadow:"0 0 50px rgba(255,130,0,0.3), 0 0 100px rgba(255,130,0,0.1)",
-            border:"2px solid rgba(255,130,0,0.3)",
+            boxShadow:"0 0 60px rgba(255,130,0,0.35), 0 0 120px rgba(255,130,0,0.15)",
+            border:"2px solid rgba(255,130,0,0.4)",
           }}>
-            <img src="/og-image.jpg" alt="TF College Group" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
+            <img src="/poster.png" alt="TF College Group" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
           </div>
 
           {/* Title */}
