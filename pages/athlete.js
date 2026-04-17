@@ -718,8 +718,10 @@ export default function Athlete(){
   if(screen==="profile"&&selectedAthlete){
     const TABS=[
       {id:"profile",label:"My profile"},
-      {id:"polar",label:"Polar"},
-      {id:"vitruve",label:"Vitruve"},
+      {id:"prayer",label:"Prayer"},
+      {id:"leaderboard",label:"Leaderboard"},
+      {id:"bracelets",label:"Bracelets"},
+      {id:"mindset",label:"Mindset"},
       ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My group"}]),
       {id:"journey",label:"The journey"},
       {id:"attendance",label:"Attendance"},
@@ -1162,6 +1164,188 @@ export default function Athlete(){
                 )}
               </div>
             )}
+
+            
+            {tab==="prayer"&&(()=>{
+              const[prayers,setPrayers]=useState([]);
+              const[text,setText]=useState("");
+              const[anon,setAnon]=useState(false);
+              const[submitting,setSubmitting]=useState(false);
+              const[submitted,setSubmitted]=useState(false);
+              useEffect(()=>{
+                supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false}).then(({data})=>setPrayers(data||[]));
+              },[]);
+              const submit=async()=>{
+                if(!text.trim())return;
+                setSubmitting(true);
+                await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"prayer",message:text,anonymous:anon});
+                const{data}=await supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false});
+                setPrayers(data||[]);
+                setText("");setSubmitting(false);setSubmitted(true);setTimeout(()=>setSubmitted(false),3000);
+              };
+              return(
+                <div>
+                  <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:4}}>🙏 Prayer Wall</div>
+                    <div style={{fontSize:12,color:"#888",marginBottom:12}}>Submit a prayer request. Coach Ant and the group are praying for you.</div>
+                    <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="What can the group pray for you about?" style={{width:"100%",minHeight:80,padding:"10px",borderRadius:8,border:"0.5px solid #333",background:"#141414",color:"#fff",fontSize:13,fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",marginBottom:10}}/>
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                      <button onClick={()=>setAnon(!anon)} style={{display:"flex",alignItems:"center",gap:6,background:"transparent",border:"none",cursor:"pointer",padding:0}}>
+                        <div style={{width:18,height:18,borderRadius:4,border:"1.5px solid "+(anon?PUR:"#555"),background:anon?PUR:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          {anon&&<div style={{color:"#fff",fontSize:11}}>✓</div>}
+                        </div>
+                        <span style={{fontSize:12,color:"#888"}}>Submit anonymously</span>
+                      </button>
+                    </div>
+                    <button onClick={submit} disabled={submitting||!text.trim()} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:text.trim()?PUR:"#333",color:text.trim()?"#fff":"#666",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                      {submitted?"✓ Submitted — we're praying for you":submitting?"Submitting...":"Submit prayer request →"}
+                    </button>
+                  </div>
+                  <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Group prayer requests</div>
+                    {prayers.length===0&&<div style={{fontSize:12,color:"#888",textAlign:"center",padding:"1rem 0"}}>No prayer requests yet. Be the first to share.</div>}
+                    {prayers.map((p,i)=>(
+                      <div key={i} style={{padding:"10px 0",borderBottom:i<prayers.length-1?"0.5px solid #f0f0f0":"none"}}>
+                        <div style={{fontSize:11,color:PUR,fontWeight:500,marginBottom:3}}>{p.anonymous?"Anonymous":p.athletes?.name||"Athlete"}</div>
+                        <div style={{fontSize:13,color:"#1a1a1a",lineHeight:1.6}}>{p.message}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {tab==="leaderboard"&&(()=>{
+              const[lb,setLb]=useState([]);
+              useEffect(()=>{
+                supabase.from("leaderboard").select("*,athletes(name,photo_url,role)").order("early_count",{ascending:false}).then(({data})=>setLb(data||[]));
+              },[]);
+              const myRank=lb.findIndex(r=>r.athlete_id===selectedAthlete.id)+1;
+              const myRow=lb.find(r=>r.athlete_id===selectedAthlete.id);
+              return(
+                <div>
+                  {myRow&&(
+                    <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"2px solid "+GOLD}}>
+                      <div style={{fontSize:11,color:GOLD,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:4}}>Your rank</div>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                        <div style={{fontSize:28,fontWeight:600,color:GOLD}}>#{myRank}</div>
+                        <div style={{textAlign:"right"}}>
+                          <div style={{fontSize:13,color:"#fff"}}>{myRow.early_count||0} early · {myRow.late_count||0} late</div>
+                          <div style={{fontSize:12,color:"#888"}}>🔥 {myRow.current_streak||0} streak · best {myRow.best_streak||0}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Early arrival leaderboard</div>
+                    {lb.map((r,i)=>{
+                      const isMe=r.athlete_id===selectedAthlete.id;
+                      return(
+                        <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<lb.length-1?"0.5px solid #f0f0f0":"none",background:isMe?"#fffbe6":"transparent",borderRadius:isMe?8:0,padding:isMe?"10px 8px":"10px 0"}}>
+                          <div style={{width:28,fontSize:14,fontWeight:600,color:i===0?GOLD:i===1?"#999":i===2?"#CD7F32":"#888",textAlign:"center"}}>
+                            {i===0?"🥇":i===1?"🥈":i===2?"🥉":"#"+(i+1)}
+                          </div>
+                          <div style={{width:32,height:32,borderRadius:"50%",background:r.athletes?.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                            {r.athletes?.photo_url?<img src={r.athletes.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:(r.athletes?.name||"?")[0]}
+                          </div>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:13,fontWeight:isMe?600:500,color:"#1a1a1a"}}>{r.athletes?.name||"—"}{isMe?" (you)":""}</div>
+                            <div style={{fontSize:11,color:"#888"}}>🔥 {r.current_streak||0} streak</div>
+                          </div>
+                          <div style={{textAlign:"right"}}>
+                            <div style={{fontSize:14,fontWeight:600,color:GREEN}}>{r.early_count||0}</div>
+                            <div style={{fontSize:11,color:"#888"}}>early</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {tab==="bracelets"&&(()=>{
+              const[draftData,setDraftData]=useState(null);
+              useEffect(()=>{
+                supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1).then(({data})=>setDraftData(data?.[0]||null));
+              },[]);
+              return(
+                <div>
+                  <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:4}}>📿 Bracelet Wall</div>
+                    <div style={{fontSize:12,color:"#888"}}>All 12 bracelets — one scripture for each member of the group.</div>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    {BRACELETS.map((b,i)=>{
+                      const owner=draftData?.bracelets?.[i];
+                      const isMe=owner&&selectedAthlete.bracelet===b.ref;
+                      return(
+                        <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",border:"0.5px solid "+(isMe?b.hex+"66":"#e0e0e0"),borderLeft:"4px solid "+b.hex}}>
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                            <div style={{display:"flex",alignItems:"center",gap:8}}>
+                              <div style={{width:12,height:12,borderRadius:"50%",background:b.hex,flexShrink:0}}/>
+                              <span style={{fontSize:12,fontWeight:600,color:b.hex,textTransform:"uppercase",letterSpacing:"0.05em"}}>{b.color}</span>
+                              {isMe&&<span style={{fontSize:10,background:b.hex,color:"#fff",padding:"1px 6px",borderRadius:4}}>yours</span>}
+                            </div>
+                            <span style={{fontSize:11,color:"#888"}}>{b.ref}</span>
+                          </div>
+                          <div style={{fontSize:13,color:"#1a1a1a",fontStyle:"italic",lineHeight:1.6}}>"{b.text}"</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {tab==="mindset"&&(()=>{
+              const WEEKS_SHORT=[
+                {week:1,title:"Who Are You Now?",scripture:"2 Cor 5:17",takeaway:"Your past is not your ceiling.",color:GOLD},
+                {week:2,title:"Testimony Monday",scripture:"Rev 12:11",takeaway:"Your story has power.",color:GOLD},
+                {week:3,title:"Process Over Outcome",scripture:"Gal 6:9",takeaway:"Fall in love with the work.",color:PUR},
+                {week:4,title:"Testimony Monday",scripture:"Psalm 34:18",takeaway:"God doesn't waste pain.",color:GOLD},
+                {week:5,title:"Confidence vs Belief",scripture:"Phil 4:13",takeaway:"Confidence runs out. Belief doesn't.",color:PUR},
+                {week:6,title:"Testimony Monday",scripture:"Isaiah 43:2",takeaway:"You will not be swept away.",color:PUR},
+                {week:7,title:"Fear vs Faith",scripture:"Joshua 1:9",takeaway:"Courage is a decision before a feeling.",color:PUR},
+                {week:8,title:"Testimony Monday",scripture:"Rom 8:28",takeaway:"Nothing you've been through is wasted.",color:PUR},
+                {week:9,title:"Mental Side of Adversity",scripture:"James 1:2-4",takeaway:"Adversity is training. Treat it like it.",color:GREEN},
+                {week:10,title:"Testimony Monday",scripture:"2 Tim 1:7",takeaway:"God did not give you a spirit of fear.",color:GREEN},
+                {week:11,title:"Who Are You When Nobody's Watching?",scripture:"Prov 11:3",takeaway:"Private character is real character.",color:GREEN},
+                {week:12,title:"Who Did You Become?",scripture:"Micah 6:8",takeaway:"Act justly. Love mercy. Walk humbly.",color:GOLD},
+              ];
+              const[notes,setNotes]=useState({});
+              const[saving,setSaving]=useState(null);
+              const saveNote=async(week,val)=>{
+                setSaving(week);
+                await supabase.from("athletes").update({[`mindset_note_${week}`]:val}).eq("id",selectedAthlete.id);
+                setSaving(null);
+              };
+              return(
+                <div>
+                  <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:4}}>Mindset Monday — Your Notes</div>
+                    <div style={{fontSize:12,color:"#888"}}>Write your personal takeaway from each week's session. Only you can see these.</div>
+                  </div>
+                  {WEEKS_SHORT.map((w,i)=>(
+                    <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:8,border:"0.5px solid #e0e0e0",borderLeft:"4px solid "+w.color}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+                        <div style={{fontSize:11,color:w.color,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.04em"}}>Week {w.week}</div>
+                        <div style={{fontSize:11,color:"#888"}}>{w.scripture}</div>
+                      </div>
+                      <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a",marginBottom:2}}>{w.title}</div>
+                      <div style={{fontSize:12,color:"#888",fontStyle:"italic",marginBottom:8}}>"{w.takeaway}"</div>
+                      <textarea
+                        defaultValue={selectedAthlete[`mindset_note_${w.week}`]||""}
+                        onBlur={e=>saveNote(w.week,e.target.value)}
+                        placeholder="Your personal takeaway from this session..."
+                        style={{width:"100%",minHeight:55,padding:"8px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",background:"#fafafa",color:"#1a1a1a"}}
+                      />
+                      {saving===w.week&&<div style={{fontSize:11,color:GREEN,marginTop:3}}>Saving...</div>}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
 
             {tab==="journey"&&(
               <div>
