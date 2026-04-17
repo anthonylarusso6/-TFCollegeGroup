@@ -14,7 +14,10 @@ export default function Callback(){
   useEffect(()=>{
     if(!router.isReady)return;
     const{code,state}=router.query;
-    if(!code){setError("No authorization code received from Polar.");return;}
+    const polarError=router.query.error;
+    if(polarError){setError("Polar error: "+polarError);return;}
+    if(!code){setError("No code received. Params: "+JSON.stringify(router.query));return;}
+    setStatus("Got code — exchanging for token...");
     exchangeCode(code,state);
   },[router.isReady,router.query]);
 
