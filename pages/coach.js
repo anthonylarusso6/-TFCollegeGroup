@@ -14,9 +14,11 @@ const RED="#C0392B";
 const STEEL="#708090";
 const GREEN="#1E6B3A";
 const COACH_PIN="1803";
+const KEVIN_PIN="2024";
 
 export default function Coach(){
   const[authed,setAuthed]=useState(false);
+  const[coachRole,setCoachRole]=useState("ant");
   const[pin,setPin]=useState("");
   const[pinError,setPinError]=useState("");
   const[tab,setTab]=useState("overview");
@@ -164,7 +166,7 @@ export default function Coach(){
       <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
         <div style={{textAlign:"center",maxWidth:320,width:"100%"}}>
           <div style={{width:60,height:60,borderRadius:16,background:GOLD,margin:"0 auto 1.5rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,boxShadow:"0 0 30px "+GOLD+"44"}}>⚒</div>
-          <div style={{fontSize:20,fontWeight:400,color:"#fff",marginBottom:4}}>Coach Ant</div>
+          <div style={{fontSize:20,fontWeight:400,color:"#fff",marginBottom:4}}>Coach Login</div>
           <div style={{fontSize:13,color:"#888",marginBottom:32}}>Enter your PIN to access the dashboard</div>
           <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:28}}>
             {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+GOLD,background:i<pin.length?GOLD:"transparent"}}/>)}
@@ -178,7 +180,8 @@ export default function Coach(){
                   const newPin=pin+String(k);
                   setPin(newPin);
                   if(newPin.length===4){
-                    if(newPin===COACH_PIN){setAuthed(true);setPin("");}
+                    if(newPin===COACH_PIN){setAuthed(true);setCoachRole("ant");setPin("");}
+                    else if(newPin===KEVIN_PIN){setAuthed(true);setCoachRole("kevin");setPin("");}
                     else{setPinError("Wrong PIN. Try again.");setPin("");}
                   }
                 }
@@ -209,7 +212,7 @@ export default function Coach(){
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
             <div>
               <div style={{fontSize:18,fontWeight:400,color:"#fff"}}>TF College Group</div>
-              <div style={{fontSize:12,color:"#555"}}>Coach dashboard · {dayName} · {isClassDay?"Class day":"No class"}</div>
+              <div style={{fontSize:12,color:"#555"}}>{coachRole==="kevin"?"Kevin" : "Coach Ant"} · {dayName} · {isClassDay?"Class day":"No class"}</div>
             </div>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:12,color:"#888"}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
