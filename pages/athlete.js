@@ -371,8 +371,15 @@ function PolarData({token, refreshToken, athleteId}){
   if(data.tokenExpired)return(
     <div style={{textAlign:"center",padding:"1rem 0"}}>
       <div style={{fontSize:28,marginBottom:8}}>🔄</div>
-      <div style={{fontSize:14,fontWeight:500,color:"#E8001E",marginBottom:4}}>Polar token expired</div>
-      <div style={{fontSize:12,color:"#888",marginBottom:12}}>Your Polar connection expired. Tap below to reconnect — it only takes a second.</div>
+      <div style={{fontSize:14,fontWeight:500,color:"#E8001E",marginBottom:4}}>Polar session expired</div>
+      <div style={{fontSize:12,color:"#888",marginBottom:12}}>Your Polar token expired. Reconnect to restore your data.</div>
+      <button onClick={()=>{
+        const url="https://flow.polar.com/oauth2/authorization?response_type=code&client_id=d2759b37-57d2-4f8b-8d4a-b12a13288f4b&redirect_uri=https://tfcollegegroup.com/callback&scope=accesslink.read_all&state="+athleteId;
+        window.location.href=url;
+      }} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:"#E8001E",color:"#fff",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+        Reconnect Polar →
+      </button>
+      <div style={{fontSize:11,color:"#666",marginTop:8}}>Use Safari (not home screen) if the login page doesn't appear.</div>
     </div>
   );
   if(data.noData)return(
