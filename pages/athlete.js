@@ -792,7 +792,11 @@ export default function Athlete(){
             {tab==="profile"&&(
               <div>
                 {/* Day schedule */}
-                {isClassDay&&(()=>{
+                {(()=>{
+                  const _days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+                  const _day=_days[new Date().getDay()];
+                  const _classDays=["Mon","Tue","Thu","Fri"];
+                  if(!_classDays.includes(_day))return null;
                   const schedules={
                     Mon:[
                       {time:"9:00am",label:"Mindset Monday",detail:"Pre-class · mindset session with Coach Ant & Kevin",color:GOLD},
@@ -809,10 +813,10 @@ export default function Athlete(){
                       {time:"9:30am",label:"Workout",detail:"Stretch · run · weight room · done by 11:20am",color:GREEN},
                     ],
                   };
-                  const todaySchedule=schedules[day]||[];
+                  const todaySchedule=schedules[_day]||[];
                   return(
                     <div style={{background:BG,borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
-                      <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Today's schedule — {["Mon","Fri"].includes(day)?"2 sessions":"Class starts 9:30am"}</div>
+                      <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Today's schedule — {["Mon","Fri"].includes(_day)?"2 sessions":"Class starts 9:30am"}</div>
                       {todaySchedule.map((s,i,arr)=>(
                         <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<arr.length-1?"0.5px solid #222":"none"}}>
                           <div style={{minWidth:52,fontSize:12,color:"#666",paddingTop:2}}>{s.time}</div>
