@@ -84,7 +84,7 @@ export default function Landing(){
             boxShadow:"0 0 60px rgba(255,130,0,0.35), 0 0 120px rgba(255,130,0,0.15)",
             border:"2px solid rgba(255,130,0,0.4)",
           }}>
-            <img src="/poster.png" alt="TF College Group" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top"}}/>
+            <img src="/poster.png" alt="TF College Group" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 15%"}}/>
           </div>
 
           {/* Title */}
