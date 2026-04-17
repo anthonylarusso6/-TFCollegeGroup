@@ -365,8 +365,20 @@ function PolarData({token}){
     fetch("/api/polar?token="+token).then(r=>r.json()).then(setData);
   },[token]);
   if(!data)return<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"8px 0"}}>Loading Polar data...</div>;
-  if(data.noData)return<div style={{fontSize:12,color:"#58B368",textAlign:"center",padding:"8px 0"}}>✓ Polar connected — sync after your next workout</div>;
-  if(data.error)return<div style={{fontSize:12,color:"#58B368",textAlign:"center",padding:"8px 0"}}>✓ Polar connected</div>;
+  if(data.noData)return(
+    <div style={{textAlign:"center",padding:"1rem 0"}}>
+      <div style={{fontSize:28,marginBottom:8}}>✓</div>
+      <div style={{fontSize:14,fontWeight:500,color:"#58B368",marginBottom:4}}>Polar Connected</div>
+      <div style={{fontSize:12,color:"#888"}}>No recent workout data found. Wear your Polar during class and sync it after — data will appear here.</div>
+    </div>
+  );
+  if(data.error)return(
+    <div style={{textAlign:"center",padding:"1rem 0"}}>
+      <div style={{fontSize:28,marginBottom:8}}>⚡</div>
+      <div style={{fontSize:14,fontWeight:500,color:"#58B368",marginBottom:4}}>Polar Connected</div>
+      <div style={{fontSize:12,color:"#888"}}>Couldn't load latest data. Make sure you synced your Polar after your last session.</div>
+    </div>
+  );
   return(
     <div>
       <div style={{fontSize:11,color:"#58B368",marginBottom:8}}>✓ Connected · Last session: {data.date||"—"}</div>
@@ -899,19 +911,32 @@ export default function Athlete(){
               </div>
             )}
 
-{tab==="training"&&(
+{tab==="polar"&&(
               <div>
-               <VitruveData athleteId={selectedAthlete.id} athleteName={selectedAthlete.name} vitruveId={selectedAthlete.vitruve_id}/>
-                <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-                  <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Polar — heart rate & training data</div>
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid #E8001E"}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>Polar — Heart Rate & Training</div>
+                  <div style={{fontSize:12,color:"#888",marginBottom:12}}>Your latest workout data from your Polar device.</div>
                   {selectedAthlete.polar_token?(
                     <PolarData token={selectedAthlete.polar_token}/>
                   ):(
-                    <a href={"https://flow.polar.com/oauth2/authorization?response_type=code&client_id=d2759b37-57d2-4f8b-8d4a-b12a13288f4b&redirect_uri=https://tfcollegegroup.com/callback&scope=accesslink.read_all&state="+selectedAthlete.id} style={{display:"block",width:"100%",padding:"10px",borderRadius:8,border:"none",background:"#E8001E",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",textDecoration:"none"}}>
-                      Connect Polar →
-                    </a>
+                    <div>
+                      <div style={{fontSize:12,color:"#888",marginBottom:10}}>Connect your Polar account to see calories burned, heart rate zones, and workout duration after every session.</div>
+                      <a href={"https://flow.polar.com/oauth2/authorization?response_type=code&client_id=d2759b37-57d2-4f8b-8d4a-b12a13288f4b&redirect_uri=https://tfcollegegroup.com/callback&scope=accesslink.read_all&state="+selectedAthlete.id} style={{display:"block",width:"100%",padding:"12px",borderRadius:8,border:"none",background:"#E8001E",color:"#fff",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",textDecoration:"none"}}>
+                        Connect Polar →
+                      </a>
+                    </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {tab==="vitruve"&&(
+              <div>
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid #1a1a1a"}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>Vitruve — Velocity Based Training</div>
+                  <div style={{fontSize:12,color:"#888",marginBottom:12}}>Your bar speed and load data from the Vitruve encoder.</div>
+                </div>
+                <VitruveData athleteId={selectedAthlete.id} athleteName={selectedAthlete.name} vitruveId={selectedAthlete.vitruve_id}/>
               </div>
             )}
             {tab==="draft"&&isForge&&(
