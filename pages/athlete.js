@@ -791,41 +791,35 @@ export default function Athlete(){
 
             {tab==="profile"&&(
               <div>
-                {/* Day schedule */}
+                {/* Day schedule — matches coach overview style */}
                 {(()=>{
                   const _days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
                   const _day=_days[new Date().getDay()];
                   const _classDays=["Mon","Tue","Thu","Fri"];
                   if(!_classDays.includes(_day))return null;
-                  const schedules={
-                    Mon:[
-                      {time:"9:00am",label:"Mindset Monday",detail:"Pre-class · mindset session with Coach Ant & Kevin",color:GOLD},
-                      {time:"9:30am",label:"Workout",detail:"Stretch · run · weight room · done by 11:20am",color:GREEN},
-                    ],
-                    Tue:[
-                      {time:"9:30am",label:"Workout",detail:"Stretch · run · weight room · done by 11:20am",color:GREEN},
-                    ],
-                    Thu:[
-                      {time:"9:30am",label:"Workout",detail:"Stretch · run · weight room · done by 11:20am",color:GREEN},
-                    ],
-                    Fri:[
-                      {time:"9:00am",label:"Fellowship Friday",detail:"Pre-class · devotional & discussion with Coach Ant",color:PUR},
-                      {time:"9:30am",label:"Workout",detail:"Stretch · run · weight room · done by 11:20am",color:GREEN},
-                    ],
-                  };
-                  const todaySchedule=schedules[_day]||[];
+                  const _preClass=_day==="Mon"?"Mindset Monday · 9:00am with Coach Ant & Kevin":_day==="Fri"?"Fellowship Friday · 9:00am devotional & discussion":"Polar sign-in · stretch prep";
+                  const _items=[
+                    ...(["Mon","Fri"].includes(_day)?[{time:_day==="Mon"?"9:00am":"9:00am",label:_day==="Mon"?"Mindset Monday":"Fellowship Friday",detail:_preClass,color:_day==="Mon"?GOLD:PUR,dur:"30 min"}]:[]),
+                    {time:"9:30am",label:"Stretch & mobility",detail:"10 min · dynamic stretching · all athletes together",color:GREEN,dur:"10 min"},
+                    {time:"9:40am",label:"Run",detail:"40–50 min · all 4 groups · hand positions enforced · leaders set pace",color:"#854F0B",dur:"40–50 min"},
+                    {time:"10:30am",label:"Weight room",detail:"30–50 min · groups by tier",color:PUR,dur:"30–50 min"},
+                    {time:"11:15am",label:"Closeout & prayer",detail:"5 min · all together · coach or athlete prays",color:RED,dur:"5 min"},
+                  ];
                   return(
-                    <div style={{background:BG,borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
-                      <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Today's schedule — {["Mon","Fri"].includes(_day)?"2 sessions":"Class starts 9:30am"}</div>
-                      {todaySchedule.map((s,i,arr)=>(
-                        <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<arr.length-1?"0.5px solid #222":"none"}}>
-                          <div style={{minWidth:52,fontSize:12,color:"#666",paddingTop:2}}>{s.time}</div>
+                    <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Class flow — 2 hours · done by 11:20am</div>
+                      {_items.map((s,i,arr)=>(
+                        <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<arr.length-1?"0.5px solid #f0f0f0":"none"}}>
+                          <div style={{minWidth:56,fontSize:12,color:"#888",paddingTop:2}}>{s.time}</div>
                           <div style={{minWidth:8,display:"flex",flexDirection:"column",alignItems:"center"}}>
                             <div style={{width:8,height:8,borderRadius:"50%",background:s.color,marginTop:4,flexShrink:0}}/>
-                            {i<arr.length-1&&<div style={{width:1,flex:1,background:"#333",marginTop:3}}/>}
+                            {i<arr.length-1&&<div style={{width:1,flex:1,background:"#e0e0e0",marginTop:3}}/>}
                           </div>
                           <div style={{flex:1}}>
-                            <div style={{fontSize:13,fontWeight:500,color:"#fff",marginBottom:2}}>{s.label}</div>
+                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+                              <span style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{s.label}</span>
+                              <span style={{fontSize:11,background:"#f5f5f5",color:"#888",padding:"1px 7px",borderRadius:5}}>{s.dur}</span>
+                            </div>
                             <div style={{fontSize:12,color:"#888"}}>{s.detail}</div>
                           </div>
                         </div>
