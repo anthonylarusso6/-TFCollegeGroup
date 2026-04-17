@@ -74,19 +74,19 @@ export default function Landing(){
           opacity:loaded?1:0,
           transform:loaded?"translateY(0)":"translateY(20px)",
           transition:"opacity 0.8s ease, transform 0.8s ease",
-          paddingTop:"80px",
+          paddingTop:"70px",
         }}>
 
-          {/* Poster photo — big and prominent */}
+          {/* Poster photo — full image, no crop */}
           <div style={{
             width:"100%",
-            height:420,
-            overflow:"hidden",
-            boxShadow:"0 0 60px rgba(255,130,0,0.4), 0 0 120px rgba(255,130,0,0.2)",
-            border:"0 0 2px 2px solid rgba(255,130,0,0.4)",
             marginBottom:"1.5rem",
+            boxShadow:"0 0 60px rgba(255,130,0,0.4)",
+            border:"2px solid rgba(255,130,0,0.4)",
+            borderRadius:16,
+            overflow:"hidden",
           }}>
-            <img src="/poster.png" alt="TF College Group" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 18%"}}/>
+            <img src="/poster.png" alt="TF College Group" style={{width:"100%",height:"auto",display:"block"}}/>
           </div>
 
           {/* Title */}
