@@ -433,6 +433,7 @@ export default function Athlete(){
   const[anvilWinner,setAnvilWinner]=useState(null);
   const[screen,setScreen]=useState("roster");
   const[selectedAthlete,setSelectedAthlete]=useState(null);
+  const[search,setSearch]=useState("");
   const[pin,setPin]=useState("");
   const[pinStep,setPinStep]=useState("enter");
   const[pinConfirm,setPinConfirm]=useState("");
@@ -597,8 +598,12 @@ export default function Athlete(){
           <div style={{fontSize:22,fontWeight:400,color:"#fff",marginBottom:4}}>TF College Group</div>
           <div style={{fontSize:13,color:"#888"}}>Select your name to sign in</div>
         </div>
+        <div style={{marginBottom:14,position:"relative"}}>
+          <input type="text" placeholder="Search your name..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"12px 16px 12px 42px",borderRadius:12,border:"0.5px solid #333",background:"#141414",color:"#fff",fontSize:14,fontFamily:"Georgia, serif",boxSizing:"border-box",outline:"none"}} autoComplete="off"/>
+          <div style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#555"}}>🔍</div>
+        </div>
         <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
-          {athletes.map(a=>(
+          {athletes.filter(a=>!search||a.name.toLowerCase().includes(search.toLowerCase())).map(a=>(
             <button key={a.id} onClick={()=>selectAthlete(a)} style={{width:"100%",padding:"14px 18px",borderRadius:12,border:"0.5px solid #2a2a2a",background:"#141414",color:"#fff",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:12}}>
                 <div style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>{a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:a.name[0]}</div>
