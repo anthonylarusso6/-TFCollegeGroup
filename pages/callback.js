@@ -39,16 +39,18 @@ export default function Callback(){
         }),
       });
       const data=await res.json();
+      console.log("Polar token response:", JSON.stringify(data));
       if(!data.access_token){
-        setError("Failed to get access token from Polar. Try connecting again.");
+        setError("Failed to get access token from Polar. Response: "+JSON.stringify(data));
         return;
       }
-      setStatus("Saving your Polar connection...");
+      setStatus("Saving your Polar connection... refresh_token: "+(data.refresh_token?"YES":"NO"));
       // Save token to athlete record using state (athlete id)
       if(state){
         await supabase.from("athletes").update({
           polar_token:data.access_token,
           polar_refresh_token:data.refresh_token||null,
+          polar_token_expires:data.expires_in?new Date(Date.now()+data.expires_in*1000).toISOString():null,
         }).eq("id",state);
         // Register user with Polar
         await fetch("https://www.polaraccesslink.com/v3/users",{
