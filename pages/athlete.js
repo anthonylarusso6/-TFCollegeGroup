@@ -359,12 +359,22 @@ function VitruveData({athleteId,athleteName,vitruveId}){
     </div>
   );
 }
-function PolarData({token}){
+function PolarData({token, refreshToken, athleteId}){
   const[data,setData]=useState(null);
   useEffect(()=>{
-    fetch("/api/polar?token="+token).then(r=>r.json()).then(setData);
+    const params=new URLSearchParams({token});
+    if(refreshToken)params.append("refreshToken",refreshToken);
+    if(athleteId)params.append("athleteId",athleteId);
+    fetch("/api/polar?"+params.toString()).then(r=>r.json()).then(setData);
   },[token]);
   if(!data)return<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"8px 0"}}>Loading Polar data...</div>;
+  if(data.tokenExpired)return(
+    <div style={{textAlign:"center",padding:"1rem 0"}}>
+      <div style={{fontSize:28,marginBottom:8}}>🔄</div>
+      <div style={{fontSize:14,fontWeight:500,color:"#E8001E",marginBottom:4}}>Polar token expired</div>
+      <div style={{fontSize:12,color:"#888",marginBottom:12}}>Your Polar connection expired. Tap below to reconnect — it only takes a second.</div>
+    </div>
+  );
   if(data.noData)return(
     <div style={{textAlign:"center",padding:"1rem 0"}}>
       <div style={{fontSize:28,marginBottom:8}}>✓</div>
@@ -918,7 +928,7 @@ export default function Athlete(){
                   <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>Polar — Heart Rate & Training</div>
                   <div style={{fontSize:12,color:"#888",marginBottom:12}}>Your latest workout data from your Polar device.</div>
                   {selectedAthlete.polar_token?(
-                    <PolarData token={selectedAthlete.polar_token}/>
+                    <PolarData token={selectedAthlete.polar_token} refreshToken={selectedAthlete.polar_refresh_token} athleteId={selectedAthlete.id}/>
                   ):(
                     <div>
                       <div style={{fontSize:12,color:"#888",marginBottom:10}}>Connect your Polar account to see calories burned, heart rate zones, and workout duration after every session.</div>

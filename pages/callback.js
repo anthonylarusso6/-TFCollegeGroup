@@ -48,6 +48,7 @@ export default function Callback(){
       if(state){
         await supabase.from("athletes").update({
           polar_token:data.access_token,
+          polar_refresh_token:data.refresh_token||null,
         }).eq("id",state);
         // Register user with Polar
         await fetch("https://www.polaraccesslink.com/v3/users",{
