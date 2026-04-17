@@ -36,10 +36,10 @@ export default function Landing(){
         display:"flex",
         flexDirection:"column",
         alignItems:"center",
-        justifyContent:"center",
-        padding:"2rem 1.5rem",
+        justifyContent:"flex-start",
+        padding:"0 0 3rem",
         position:"relative",
-        overflow:"hidden",
+        overflowY:"auto",
       }}>
         {/* Background */}
         <div style={{
@@ -74,18 +74,19 @@ export default function Landing(){
           opacity:loaded?1:0,
           transform:loaded?"translateY(0)":"translateY(20px)",
           transition:"opacity 0.8s ease, transform 0.8s ease",
+          paddingTop:"80px",
         }}>
 
-          {/* Icon */}
+          {/* Poster photo — big and prominent */}
           <div style={{
-            width:160,height:200,borderRadius:16,
-            margin:"0 auto 1.5rem",
+            width:"100%",
+            height:420,
             overflow:"hidden",
-            boxShadow:"0 0 40px rgba(255,130,0,0.35), 0 0 80px rgba(255,130,0,0.15)",
-            border:"2px solid rgba(255,130,0,0.4)",
-            flexShrink:0,
+            boxShadow:"0 0 60px rgba(255,130,0,0.4), 0 0 120px rgba(255,130,0,0.2)",
+            border:"0 0 2px 2px solid rgba(255,130,0,0.4)",
+            marginBottom:"1.5rem",
           }}>
-            <img src="/poster.png" alt="TF College Group" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 20%"}}/>
+            <img src="/poster.png" alt="TF College Group" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 18%"}}/>
           </div>
 
           {/* Title */}
