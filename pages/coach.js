@@ -14,12 +14,14 @@ const RED="#C0392B";
 const STEEL="#708090";
 const GREEN="#1E6B3A";
 const COACH_PIN="1803";
-const KEVIN_PIN="2024";
 
 export default function Coach(){
   const[authed,setAuthed]=useState(false);
   const[coachRole,setCoachRole]=useState("ant");
+  const[selectedCoach,setSelectedCoach]=useState(null); // "ant" or "kevin"
   const[pin,setPin]=useState("");
+  const[pinStep,setPinStep]=useState("select"); // "select" | "enter" | "create" | "confirm"
+  const[pinConfirm,setPinConfirm]=useState("");
   const[pinError,setPinError]=useState("");
   const[tab,setTab]=useState("overview");
   const[athletes,setAthletes]=useState([]);
@@ -160,38 +162,101 @@ export default function Coach(){
 {id:"culture",label:"Culture & Events"},
   ];
 
+  // Kevin PIN stored in localStorage
+  const getKevinPin=()=>typeof window!=="undefined"?localStorage.getItem("kevin_coach_pin"):null;
+  const saveKevinPin=(p)=>localStorage.setItem("kevin_coach_pin",p);
+
+  function handlePinKey(k){
+    if(k===null)return;
+    if(k==="⌫"){setPin(p=>p.slice(0,-1));setPinError("");return;}
+    if(pin.length>=4)return;
+    const newPin=pin+String(k);
+    setPin(newPin);
+    if(newPin.length===4){
+      if(pinStep==="enter"){
+        // Logging in
+        if(selectedCoach==="ant"){
+          if(newPin===COACH_PIN){setAuthed(true);setCoachRole("ant");setPin("");}
+          else{setPinError("Wrong PIN. Try again.");setPin("");}
+        } else {
+          const kp=getKevinPin();
+          if(newPin===kp){setAuthed(true);setCoachRole("kevin");setPin("");}
+          else{setPinError("Wrong PIN. Try again.");setPin("");}
+        }
+      } else if(pinStep==="create"){
+        setPinConfirm(newPin);setPin("");setPinStep("confirm");setPinError("");
+      } else if(pinStep==="confirm"){
+        if(newPin===pinConfirm){saveKevinPin(newPin);setAuthed(true);setCoachRole("kevin");setPin("");}
+        else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+      }
+    }
+  }
+
+  const coaches=[
+    {id:"ant",name:"Coach Ant",sub:"Head Coach",color:GOLD,emoji:"⚒"},
+    {id:"kevin",name:"Coach Kevin",sub:"Guest Speaker",color:PUR,emoji:"📖"},
+  ];
+
   if(!authed) return(
     <>
       <Head><title>Coach — TF College Group</title></Head>
       <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
-        <div style={{textAlign:"center",maxWidth:320,width:"100%"}}>
-          <div style={{width:60,height:60,borderRadius:16,background:GOLD,margin:"0 auto 1.5rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,boxShadow:"0 0 30px "+GOLD+"44"}}>⚒</div>
-          <div style={{fontSize:20,fontWeight:400,color:"#fff",marginBottom:4}}>Coach Login</div>
-          <div style={{fontSize:13,color:"#888",marginBottom:32}}>Enter your PIN to access the dashboard</div>
-          <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:28}}>
-            {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+GOLD,background:i<pin.length?GOLD:"transparent"}}/>)}
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
-            {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
-              <button key={i} onClick={()=>{
-                if(k===null)return;
-                if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
-                if(pin.length<4){
-                  const newPin=pin+String(k);
-                  setPin(newPin);
-                  if(newPin.length===4){
-                    if(newPin===COACH_PIN){setAuthed(true);setCoachRole("ant");setPin("");}
-                    else if(newPin===KEVIN_PIN){setAuthed(true);setCoachRole("kevin");setPin("");}
-                    else{setPinError("Wrong PIN. Try again.");setPin("");}
-                  }
-                }
-              }} style={{padding:"16px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#333"),background:k===null?"transparent":"#141414",fontSize:20,fontWeight:500,cursor:k===null?"default":"pointer",color:"#fff",fontFamily:"Georgia, serif"}}>
-                {k===null?"":k}
-              </button>
-            ))}
-          </div>
-          {pinError&&<div style={{marginTop:14,fontSize:13,color:RED}}>{pinError}</div>}
-          <a href="/" style={{display:"block",marginTop:24,fontSize:12,color:"#444"}}>← Back to home</a>
+        <div style={{textAlign:"center",maxWidth:340,width:"100%"}}>
+
+          {/* Step 1 — Select coach */}
+          {pinStep==="select"&&(
+            <>
+              <div style={{width:60,height:60,borderRadius:16,background:GOLD,margin:"0 auto 1.5rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,boxShadow:"0 0 30px "+GOLD+"44"}}>⚒</div>
+              <div style={{fontSize:20,fontWeight:400,color:"#fff",marginBottom:4}}>Coach Login</div>
+              <div style={{fontSize:13,color:"#888",marginBottom:28}}>Select your name to continue</div>
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                {coaches.map(c=>(
+                  <button key={c.id} onClick={()=>{
+                    setSelectedCoach(c.id);
+                    setPin("");setPinError("");
+                    const hasPin=c.id==="ant"||getKevinPin();
+                    setPinStep(hasPin?"enter":"create");
+                  }} style={{width:"100%",padding:"16px 20px",borderRadius:14,border:"0.5px solid #2a2a2a",background:"#141414",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:14,textAlign:"left"}}>
+                    <div style={{width:44,height:44,borderRadius:"50%",background:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,boxShadow:"0 0 18px "+c.color+"66"}}>{c.emoji}</div>
+                    <div>
+                      <div style={{fontSize:15,fontWeight:500}}>{c.name}</div>
+                      <div style={{fontSize:12,color:"#888"}}>{c.sub}</div>
+                    </div>
+                    <div style={{marginLeft:"auto",color:"#555",fontSize:18}}>→</div>
+                  </button>
+                ))}
+              </div>
+              <a href="/" style={{display:"block",marginTop:24,fontSize:12,color:"#444"}}>← Back to home</a>
+            </>
+          )}
+
+          {/* Step 2 — PIN entry / create */}
+          {pinStep!=="select"&&(
+            <>
+              <button onClick={()=>{setPinStep("select");setPin("");setPinError("");setSelectedCoach(null);}} style={{position:"absolute",top:20,left:20,background:"transparent",border:"none",color:"#666",fontSize:13,cursor:"pointer",fontFamily:"Georgia, serif"}}>← Back</button>
+              {(() => {
+                const c=coaches.find(x=>x.id===selectedCoach);
+                return(
+                  <div style={{width:60,height:60,borderRadius:"50%",background:c.color,margin:"0 auto 1rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,boxShadow:"0 0 30px "+c.color+"44"}}>{c.emoji}</div>
+                );
+              })()}
+              <div style={{fontSize:18,fontWeight:400,color:"#fff",marginBottom:4}}>{coaches.find(x=>x.id===selectedCoach)?.name}</div>
+              <div style={{fontSize:13,color:"#888",marginBottom:28}}>
+                {pinStep==="create"?"Create your 4-digit PIN":pinStep==="confirm"?"Confirm your PIN":"Enter your PIN"}
+              </div>
+              <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:28}}>
+                {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD),background:i<pin.length?(coaches.find(x=>x.id===selectedCoach)?.color||GOLD):"transparent"}}/>)}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
+                {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
+                  <button key={i} onClick={()=>handlePinKey(k)} style={{padding:"16px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#333"),background:k===null?"transparent":"#141414",fontSize:20,fontWeight:500,cursor:k===null?"default":"pointer",color:"#fff",fontFamily:"Georgia, serif"}}>
+                    {k===null?"":k}
+                  </button>
+                ))}
+              </div>
+              {pinError&&<div style={{marginTop:14,fontSize:13,color:RED}}>{pinError}</div>}
+            </>
+          )}
         </div>
       </div>
     </>
