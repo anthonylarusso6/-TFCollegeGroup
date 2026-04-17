@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { supabase } from "../lib/supabase";
 
 const BG="#0f0f0f";
 const GREEN="#1E6B3A";
 const RED="#C0392B";
-
-const CLIENT_ID="d2759b37-57d2-4f8b-8d4a-b12a13288f4b";
-const CLIENT_SECRET="2b1a2a4d-5a55-452c-9bb9-ef92a0d4e0fe";
 
 export default function Callback(){
   const router=useRouter();
@@ -24,54 +20,21 @@ export default function Callback(){
 
   const exchangeCode=async(code,state)=>{
     try{
-      setStatus("Exchanging authorization code...");
-      // Exchange code for token
-      const res=await fetch("https://polarremote.com/v2/oauth2/token",{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/x-www-form-urlencoded",
-          "Authorization":"Basic "+btoa(CLIENT_ID+":"+CLIENT_SECRET),
-        },
-        body:new URLSearchParams({
-          grant_type:"authorization_code",
-          code,
-          redirect_uri:"https://tfcollegegroup.com/callback",
-        }),
-      });
+      setStatus("Saving your Polar connection...");
+      // Call our SERVER-SIDE API to avoid CORS issues
+      const res=await fetch(`/api/polar-auth?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state||"")}`);
       const data=await res.json();
-      console.log("Polar token response:", JSON.stringify(data));
-      if(!data.access_token){
-        setError("Failed to get access token from Polar. Response: "+JSON.stringify(data));
+
+      if(data.error){
+        setError("Could not connect Polar: "+data.error);
         return;
       }
-      setStatus("Saving your Polar connection... refresh_token: "+(data.refresh_token?"YES":"NO"));
-      // Save token to athlete record using state (athlete id)
-      if(state){
-        await supabase.from("athletes").update({
-          polar_token:data.access_token,
-          polar_refresh_token:data.refresh_token||null,
-          polar_token_expires:data.expires_in?new Date(Date.now()+data.expires_in*1000).toISOString():null,
-        }).eq("id",state);
-        // Register user with Polar
-        await fetch("https://www.polaraccesslink.com/v3/users",{
-          method:"POST",
-          headers:{
-            "Content-Type":"application/json",
-            "Authorization":"Bearer "+data.access_token,
-          },
-          body:JSON.stringify({
-            "member-id":state,
-          }),
-        });
-      }
-      setStatus("Polar connected successfully!");
+
+      setStatus("Polar connected! "+(data.hasRefreshToken?"Token saved.":"Connected."));
       setDone(true);
-      // Redirect back to athlete portal after 3 seconds
-      setTimeout(()=>router.push("/athlete"),3000);
+      setTimeout(()=>router.push("/athlete"),2500);
     }catch(e){
-      setStatus("Connected! Redirecting...");
-      setDone(true);
-      setTimeout(()=>router.push("/athlete"),3000);
+      setError("Connection error: "+e.message);
     }
   };
 
