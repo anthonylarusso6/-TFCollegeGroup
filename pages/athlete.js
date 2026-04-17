@@ -933,40 +933,10 @@ export default function Athlete(){
 
 {tab==="polar"&&(
               <div>
-                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid #E8001E"}}>
-                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>Polar — Heart Rate & Training</div>
-                  <div style={{fontSize:12,color:"#888",marginBottom:12}}>Your latest workout data from your Polar device.</div>
-                  {(()=>{
-                    // Always check token validity — show connect if no token or expired
-                    if(!selectedAthlete.polar_token){
-                      return(
-                        <div>
-                          <div style={{background:"#fff5f5",borderRadius:10,padding:"14px",marginBottom:12,border:"0.5px solid #ffcccc"}}>
-                            <div style={{fontSize:13,fontWeight:600,color:"#E8001E",marginBottom:6}}>⚠️ Must use Safari to connect</div>
-                            <div style={{fontSize:12,color:"#888",lineHeight:1.7}}>
-                              iOS blocks Polar login from the home screen app.{"
-"}
-                              <strong>Steps:</strong>{"
-"}
-                              1. Open Safari on your iPhone{"
-"}
-                              2. Go to tfcollegegroup.com/athlete{"
-"}
-                              3. Log in and come to this Polar tab{"
-"}
-                              4. Tap Connect below — Polar login will appear
-                            </div>
-                          </div>
-                          <button onClick={()=>{
-                            window.location.href="https://flow.polar.com/oauth2/authorization?response_type=code&client_id=d2759b37-57d2-4f8b-8d4a-b12a13288f4b&redirect_uri=https://tfcollegegroup.com/callback&scope=accesslink.read_all&state="+selectedAthlete.id;
-                          }} style={{width:"100%",padding:"14px",borderRadius:8,border:"none",background:"#E8001E",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center"}}>
-                            Connect Polar →
-                          </button>
-                        </div>
-                      );
-                    }
-                    return <PolarData token={selectedAthlete.polar_token} refreshToken={selectedAthlete.polar_refresh_token} athleteId={selectedAthlete.id}/>;
-                  })()}
+                <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+                  <div style={{fontSize:32,marginBottom:12}}>⚡</div>
+                  <div style={{fontSize:15,fontWeight:500,color:"#1a1a1a",marginBottom:8}}>Polar Integration</div>
+                  <div style={{fontSize:13,color:"#888",lineHeight:1.7}}>We are working with Polar to get your class data syncing automatically. Check back soon!</div>
                 </div>
               </div>
             )}
