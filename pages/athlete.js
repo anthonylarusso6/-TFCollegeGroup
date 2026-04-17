@@ -932,7 +932,7 @@ export default function Athlete(){
                   ):(
                     <div>
                       <div style={{fontSize:12,color:"#888",marginBottom:10}}>Connect your Polar account to see calories burned, heart rate zones, and workout duration after every session.</div>
-                      <a href={"https://flow.polar.com/oauth2/authorization?response_type=code&client_id=d2759b37-57d2-4f8b-8d4a-b12a13288f4b&redirect_uri=https://tfcollegegroup.com/callback&scope=accesslink.read_all&state="+selectedAthlete.id} style={{display:"block",width:"100%",padding:"12px",borderRadius:8,border:"none",background:"#E8001E",color:"#fff",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",textDecoration:"none"}}>
+                      <a href={"https://flow.polar.com/oauth2/authorization?response_type=code&client_id=d2759b37-57d2-4f8b-8d4a-b12a13288f4b&redirect_uri=https://tfcollegegroup.com/callback&scope=accesslink.read_all&state="+selectedAthlete.id} target="_blank" rel="noreferrer" style={{display:"block",width:"100%",padding:"12px",borderRadius:8,border:"none",background:"#E8001E",color:"#fff",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",textDecoration:"none"}}>
                         Connect Polar →
                       </a>
                     </div>
