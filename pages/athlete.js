@@ -791,15 +791,21 @@ export default function Athlete(){
 
             {tab==="profile"&&(
               <div>
-                {/* Day schedule — matches coach overview style */}
+                {/* Day schedule — always shows */}
                 {(()=>{
                   const _days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
                   const _day=_days[new Date().getDay()];
                   const _classDays=["Mon","Tue","Thu","Fri"];
-                  if(!_classDays.includes(_day))return null;
-                  const _preClass=_day==="Mon"?"Mindset Monday · 9:00am with Coach Ant & Kevin":_day==="Fri"?"Fellowship Friday · 9:00am devotional & discussion":"Polar sign-in · stretch prep";
+                  const _isClassDay=_classDays.includes(_day);
+                  if(!_isClassDay) return(
+                    <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>No class today</div>
+                      <div style={{fontSize:12,color:"#888"}}>Class days are Monday, Tuesday, Thursday & Friday. Rest up and come back ready.</div>
+                    </div>
+                  );
                   const _items=[
-                    ...(["Mon","Fri"].includes(_day)?[{time:_day==="Mon"?"9:00am":"9:00am",label:_day==="Mon"?"Mindset Monday":"Fellowship Friday",detail:_preClass,color:_day==="Mon"?GOLD:PUR,dur:"30 min"}]:[]),
+                    ...(_day==="Mon"?[{time:"9:00am",label:"Mindset Monday",detail:"Pre-class · mindset session with Coach Ant & Kevin",color:GOLD,dur:"30 min"}]:[]),
+                    ...(_day==="Fri"?[{time:"9:00am",label:"Fellowship Friday",detail:"Pre-class · devotional & discussion with Coach Ant",color:PUR,dur:"30 min"}]:[]),
                     {time:"9:30am",label:"Stretch & mobility",detail:"10 min · dynamic stretching · all athletes together",color:GREEN,dur:"10 min"},
                     {time:"9:40am",label:"Run",detail:"40–50 min · all 4 groups · hand positions enforced · leaders set pace",color:"#854F0B",dur:"40–50 min"},
                     {time:"10:30am",label:"Weight room",detail:"30–50 min · groups by tier",color:PUR,dur:"30–50 min"},
