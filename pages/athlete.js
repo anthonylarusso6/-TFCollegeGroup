@@ -791,6 +791,44 @@ export default function Athlete(){
 
             {tab==="profile"&&(
               <div>
+                {/* Day schedule */}
+                {isClassDay&&(()=>{
+                  const schedules={
+                    Mon:[
+                      {time:"9:00am",label:"Mindset Monday",detail:"Pre-class · mindset session with Coach Ant & Kevin",color:GOLD},
+                      {time:"9:30am",label:"Workout",detail:"Stretch · run · weight room · done by 11:20am",color:GREEN},
+                    ],
+                    Tue:[
+                      {time:"9:30am",label:"Workout",detail:"Stretch · run · weight room · done by 11:20am",color:GREEN},
+                    ],
+                    Thu:[
+                      {time:"9:30am",label:"Workout",detail:"Stretch · run · weight room · done by 11:20am",color:GREEN},
+                    ],
+                    Fri:[
+                      {time:"9:00am",label:"Fellowship Friday",detail:"Pre-class · devotional & discussion with Coach Ant",color:PUR},
+                      {time:"9:30am",label:"Workout",detail:"Stretch · run · weight room · done by 11:20am",color:GREEN},
+                    ],
+                  };
+                  const todaySchedule=schedules[day]||[];
+                  return(
+                    <div style={{background:BG,borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
+                      <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Today's schedule — {["Mon","Fri"].includes(day)?"2 sessions":"Class starts 9:30am"}</div>
+                      {todaySchedule.map((s,i,arr)=>(
+                        <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<arr.length-1?"0.5px solid #222":"none"}}>
+                          <div style={{minWidth:52,fontSize:12,color:"#666",paddingTop:2}}>{s.time}</div>
+                          <div style={{minWidth:8,display:"flex",flexDirection:"column",alignItems:"center"}}>
+                            <div style={{width:8,height:8,borderRadius:"50%",background:s.color,marginTop:4,flexShrink:0}}/>
+                            {i<arr.length-1&&<div style={{width:1,flex:1,background:"#333",marginTop:3}}/>}
+                          </div>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:13,fontWeight:500,color:"#fff",marginBottom:2}}>{s.label}</div>
+                            <div style={{fontSize:12,color:"#888"}}>{s.detail}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
                 {announcement&&(
                   <div style={{background:"#1a1a2a",border:"0.5px solid "+PUR+"66",borderRadius:12,padding:"12px 16px",marginBottom:12}}>
                     <div style={{fontSize:10,color:PUR,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>This week from Coach Ant</div>
