@@ -8,7 +8,7 @@ const supabase = createClient(
 const CLIENT_ID = "d2759b37-57d2-4f8b-8d4a-b12a13288f4b";
 const CLIENT_SECRET = "2b1a2a4d-5a55-452c-9bb9-ef92a0d4e0fe";
 
-async function refreshToken(refreshToken, athleteId) {
+async function refreshPolarToken(refreshToken, athleteId) {
   const res = await fetch("https://polarremote.com/v2/oauth2/token", {
     method: "POST",
     headers: {
@@ -23,7 +23,6 @@ async function refreshToken(refreshToken, athleteId) {
   if (!res.ok) return null;
   const data = await res.json();
   if (!data.access_token) return null;
-  // Save new tokens to Supabase
   await supabase.from("athletes").update({
     polar_token: data.access_token,
     polar_refresh_token: data.refresh_token || refreshToken,
@@ -31,84 +30,79 @@ async function refreshToken(refreshToken, athleteId) {
   return data.access_token;
 }
 
-async function fetchExercises(token) {
-  // Try creating an exercise transaction to pull new workouts
-  const txRes = await fetch("https://www.polaraccesslink.com/v3/users/transaction", {
-    method: "POST",
-    headers: {
-      "Authorization": "Bearer " + token,
-      "Accept": "application/json",
-    },
-  });
-
-  let exercises = [];
-
-  if (txRes.ok) {
-    const tx = await txRes.json();
-    const txId = tx?.transaction_id;
-    if (txId) {
-      const listRes = await fetch(`https://www.polaraccesslink.com/v3/users/transaction/${txId}/exercises`, {
-        headers: { "Authorization": "Bearer " + token, "Accept": "application/json" },
-      });
-      if (listRes.ok) {
-        const listData = await listRes.json();
-        exercises = listData?.exercises || [];
-      }
-      // Commit transaction
-      await fetch(`https://www.polaraccesslink.com/v3/users/transaction/${txId}`, {
-        method: "PUT",
-        headers: { "Authorization": "Bearer " + token },
-      });
-    }
-  }
-
-  // Fallback — try the exercises list endpoint
-  if (exercises.length === 0) {
-    const exRes = await fetch("https://www.polaraccesslink.com/v3/exercises", {
-      headers: { "Authorization": "Bearer " + token, "Accept": "application/json" },
-    });
-    if (exRes.ok) {
-      const exData = await exRes.json();
-      exercises = exData?.data || exData?.exercises || [];
-    }
-  }
-
-  return exercises;
-}
-
 export default async function handler(req, res) {
-  const { token, athleteId, refreshToken: rToken } = req.query;
+  const { token, athleteId, refreshToken } = req.query;
   if (!token) return res.status(400).json({ error: "No token" });
 
   let activeToken = token;
 
   try {
-    // Check if token is valid first
+    // Step 1 — verify token
     const checkRes = await fetch("https://www.polaraccesslink.com/v3/users/me", {
       headers: { "Authorization": "Bearer " + activeToken, "Accept": "application/json" },
     });
 
-    // Token expired — try to refresh
-    if (checkRes.status === 401 && rToken && athleteId) {
-      const newToken = await refreshToken(rToken, athleteId);
-      if (!newToken) {
+    // Token expired — try refresh
+    if (checkRes.status === 401) {
+      if (refreshToken && athleteId) {
+        const newToken = await refreshPolarToken(refreshToken, athleteId);
+        if (newToken) {
+          activeToken = newToken;
+        } else {
+          return res.status(200).json({ tokenExpired: true, connected: false });
+        }
+      } else {
         return res.status(200).json({ tokenExpired: true, connected: false });
       }
-      activeToken = newToken;
-    } else if (checkRes.status === 401) {
-      return res.status(200).json({ tokenExpired: true, connected: false });
     }
 
-    const user = await checkRes.json();
+    const user = checkRes.ok ? await checkRes.json() : null;
+    const polarUserId = user?.polar_user_id;
 
-    // Fetch exercises
-    const exercises = await fetchExercises(activeToken);
+    // Step 2 — create exercise transaction to pull new workouts
+    let exercises = [];
+    let txStatus = "not tried";
+
+    if (polarUserId) {
+      const txRes = await fetch(`https://www.polaraccesslink.com/v3/users/${polarUserId}/exercise-transactions`, {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + activeToken,
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+        },
+      });
+      txStatus = txRes.status;
+
+      if (txRes.ok) {
+        const tx = await txRes.json();
+        const txId = tx?.transaction_id;
+        if (txId) {
+          const listRes = await fetch(`https://www.polaraccesslink.com/v3/users/${polarUserId}/exercise-transactions/${txId}`, {
+            headers: { "Authorization": "Bearer " + activeToken, "Accept": "application/json" },
+          });
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            exercises = listData?.exercises || [];
+          }
+          // Commit transaction
+          await fetch(`https://www.polaraccesslink.com/v3/users/${polarUserId}/exercise-transactions/${txId}`, {
+            method: "PUT",
+            headers: { "Authorization": "Bearer " + activeToken },
+          });
+        }
+      }
+    }
 
     if (!exercises || exercises.length === 0) {
-      return res.status(200).json({ connected: true, noData: true });
+      return res.status(200).json({ 
+        connected: true, 
+        noData: true,
+        debug: { polarUserId, txStatus }
+      });
     }
 
-    // Get most recent exercise detail
+    // Step 3 — get latest exercise detail
     const latestUrl = typeof exercises[0] === "string" ? exercises[0] : exercises[0]?.url || exercises[0]?.href;
     if (!latestUrl) return res.status(200).json({ connected: true, noData: true });
 
@@ -136,6 +130,6 @@ export default async function handler(req, res) {
     });
 
   } catch (e) {
-    return res.status(200).json({ error: e.message, connected: true });
+    return res.status(200).json({ error: e.message, stack: e.stack?.slice(0,200) });
   }
 }
