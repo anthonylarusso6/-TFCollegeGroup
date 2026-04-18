@@ -1750,7 +1750,7 @@ export default function Athlete(){
             {tab==="photos"&&<GroupPhotos/>}
 
 
-            {tab==="calendar"&&(
+            {tab==="attendance"&&(
               <div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
                   {[{label:"Early",val:attendance.filter(a=>a.status==="early").length,color:GREEN,bg:"#EAF3DE"},{label:"Late",val:attendance.filter(a=>a.status==="late").length,color:RED,bg:"#FCEBEB"},{label:"Total",val:attendance.length,color:"#1a1a1a",bg:"#f5f5f5"}].map(s=>(
