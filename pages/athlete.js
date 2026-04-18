@@ -1662,10 +1662,37 @@ export default function Athlete(){
 
             {tab==="anvil"&&<AnvilHistory/>}
 
-            {tab==="calendar"&&<AttendanceCalendar athleteId={selectedAthlete.id}/>}
-
             {tab==="photos"&&<GroupPhotos/>}
 
+
+            {tab==="calendar"&&(
+              <div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+                  {[{label:"Early",val:attendance.filter(a=>a.status==="early").length,color:GREEN,bg:"#EAF3DE"},{label:"Late",val:attendance.filter(a=>a.status==="late").length,color:RED,bg:"#FCEBEB"},{label:"Total",val:attendance.length,color:"#1a1a1a",bg:"#f5f5f5"}].map(s=>(
+                    <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+                      <div style={{fontSize:20,fontWeight:600,color:s.color}}>{s.val}</div>
+                      <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+                <AttendanceCalendar athleteId={selectedAthlete.id}/>
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginTop:12,border:"0.5px solid #e0e0e0"}}>
+                  <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Check-in history</div>
+                  {attendance.length===0&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"1rem 0"}}>No check-ins yet.</div>}
+                  {attendance.slice(0,20).map((rec,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<Math.min(attendance.length,20)-1?"0.5px solid #f0f0f0":"none"}}>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{rec.day} · {rec.date}</div>
+                        <div style={{fontSize:11,color:"#888"}}>{rec.time_logged||""}</div>
+                      </div>
+                      <span style={{fontSize:11,padding:"3px 10px",borderRadius:6,background:rec.status==="early"?"#EAF3DE":rec.status==="late"?"#FFF3CD":"#FCEBEB",color:rec.status==="early"?GREEN:rec.status==="late"?"#854F0B":RED,fontWeight:500}}>
+                        {rec.status==="early"?"Early":rec.status==="late"?"Late":"No show"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {tab==="journey"&&(
               <div>
@@ -1690,70 +1717,7 @@ export default function Athlete(){
                 ))}
               </div>
             )}
-
-            {tab==="attendance"&&(
-              <div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}}>
-                  {[
-                    {label:"Early",count:attendance.filter(a=>a.status==="early").length,bg:"#EAF3DE",color:GREEN},
-                    {label:"Late",count:attendance.filter(a=>a.status==="late").length,bg:"#FCEBEB",color:"#E24B4A"},
-                    {label:"No shows",count:attendance.filter(a=>a.status==="noshow").length,bg:"#FAEEDA",color:"#854F0B"},
-                  ].map(s=>(
-                    <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"12px",textAlign:"center"}}>
-                      <div style={{fontSize:24,fontWeight:500,color:s.color}}>{s.count}</div>
-                      <div style={{fontSize:11,color:s.color,marginTop:2}}>{s.label}</div>
-                    </div>
-                  )
-              <div style={{marginTop:12}}>
-                <AttendanceCalendar athleteId={selectedAthlete.id}/>
-              </div>)}
-                </div>
-                {streak>0&&(
-                  <div style={{background:"#0a1f0a",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"0.5px solid "+GREEN+"44",display:"flex",alignItems:"center",gap:12}}>
-                    <div style={{fontSize:24}}>🔥</div>
-                    <div>
-                      <div style={{fontSize:15,fontWeight:500,color:GREEN}}>{streak} day early streak</div>
-                      <div style={{fontSize:12,color:"#888"}}>Keep it going.</div>
-                    </div>
-                  </div>
-                )}
-                <div style={{background:"#fff",borderRadius:12,padding:"1rem",border:"0.5px solid #e0e0e0"}}>
-                  <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Full history</div>
-                  {attendance.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"10px 0"}}>No attendance logged yet.</div>}
-                  {attendance.map((rec,i)=>(
-                    <div key={i} style={{padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <div>
-                        <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{rec.day} · {rec.date}</div>
-                        {rec.time_logged&&<div style={{fontSize:11,color:"#888"}}>{rec.time_logged}</div>}
-                      </div>
-                      <span style={{fontSize:11,fontWeight:500,padding:"2px 10px",borderRadius:6,background:rec.status==="early"?"#EAF3DE":rec.status==="late"?"#FCEBEB":"#FAEEDA",color:rec.status==="early"?GREEN:rec.status==="late"?"#E24B4A":"#854F0B"}}>{rec.status==="early"?"Early":rec.status==="late"?"Late":"No show"}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {tab==="private"&&(
-              <div>
-                <div style={{fontSize:13,color:"#888",lineHeight:1.7,marginBottom:14}}>This is your private line to Coach Ant. Nobody else sees what you send here.</div>
-                <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-                  <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Message Coach Ant</div>
-                  {feedbackSent?<div style={{fontSize:13,color:GREEN,fontWeight:500,padding:"10px",background:"#EAF3DE",borderRadius:8}}>Message sent to Coach Ant.</div>:(
-                    <><textarea value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="Type your message to Coach Ant..." style={{width:"100%",minHeight:90,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}/><button onClick={sendFeedback} style={{padding:"10px 20px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Send to Coach Ant</button></>
-                  )}
-                </div>
-                <div style={{background:BG,borderRadius:12,padding:"1rem",border:"0.5px solid #2a2a2a"}}>
-                  <div style={{fontSize:13,fontWeight:500,color:"#fff",marginBottom:4}}>Prayer request</div>
-                  {prayerSent?<div style={{fontSize:13,color:"#58B368",fontWeight:500,padding:"10px",background:"#0d1f0f",borderRadius:8}}>Your request has been received.</div>:(
-                    <><textarea value={prayerText} onChange={e=>setPrayerText(e.target.value)} placeholder="Share your prayer request here..." style={{width:"100%",minHeight:90,padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#242424",color:"#fff",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}/><button onClick={sendPrayer} style={{padding:"10px 20px",borderRadius:8,border:"0.5px solid #58B368",background:"transparent",color:"#58B368",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Submit prayer request</button></>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </>
-    );
+;
   }
   return null;
 }
