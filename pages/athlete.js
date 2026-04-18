@@ -1368,20 +1368,18 @@ export default function Athlete(){
 
   if(screen==="profile"&&selectedAthlete){
     const TABS=[
-      {id:"profile",label:"My profile"},
-      {id:"prayer",label:"Prayer"},
-      {id:"leaderboard",label:"Leaderboard"},
-      {id:"bracelets",label:"Bracelets"},
-      {id:"notes",label:"Notes"},
-      {id:"weight",label:"Weight"},
-      {id:"goals",label:"Goals"},
+      {id:"profile",label:"My Profile"},
       {id:"verse",label:"Verse"},
+      ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My Group"}]),
       {id:"anvil",label:"Anvil"},
+      {id:"weight",label:"Weight"},
+      {id:"leaderboard",label:"Leaderboard"},
+      {id:"prayer",label:"Prayer"},
+      {id:"bracelets",label:"Bracelets"},
       {id:"photos",label:"Photos"},
-      {id:"attendance",label:"Attendance"},
-      ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My group"}]),
-      {id:"journey",label:"The journey"},
+      {id:"notes",label:"Notes"},
       {id:"private",label:"Private"},
+      {id:"attendance",label:"Attendance"},
     ];
 
     const myGroupIdx=selectedAthlete.group_idx;
