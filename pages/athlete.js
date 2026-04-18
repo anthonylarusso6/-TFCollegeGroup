@@ -1381,7 +1381,6 @@ export default function Athlete(){
       {id:"photos",label:"Photos"},
       ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My group"}]),
       {id:"journey",label:"The journey"},
-      {id:"attendance",label:"Attendance"},
       {id:"private",label:"Private"},
     ];
 
@@ -1813,27 +1812,6 @@ export default function Athlete(){
 
             {tab==="photos"&&<GroupPhotos/>}
 
-
-            {tab==="attendance"&&(
-              <div>
-                <AttendanceCalendar athleteId={selectedAthlete.id}/>
-                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginTop:12,border:"0.5px solid #e0e0e0"}}>
-                  <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Check-in history</div>
-                  {attendance.length===0&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"1rem 0"}}>No check-ins yet.</div>}
-                  {attendance.slice(0,20).map((rec,i)=>(
-                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<Math.min(attendance.length,20)-1?"0.5px solid #f0f0f0":"none"}}>
-                      <div>
-                        <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{rec.day} · {rec.date}</div>
-                        <div style={{fontSize:11,color:"#888"}}>{rec.time_logged||""}</div>
-                      </div>
-                      <span style={{fontSize:11,padding:"3px 10px",borderRadius:6,background:rec.status==="early"?"#EAF3DE":rec.status==="late"?"#FFF3CD":"#FCEBEB",color:rec.status==="early"?GREEN:rec.status==="late"?"#854F0B":RED,fontWeight:500}}>
-                        {rec.status==="early"?"Early":rec.status==="late"?"Late":"No show"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {tab==="journey"&&(
               <div>
