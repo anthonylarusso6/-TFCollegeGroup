@@ -600,8 +600,10 @@ export default function Coach(){
               </div>
             </div>
           )}
-
-
+        </div>
+      </div>
+    </>
+  );
 }
 
 function InboxItem({item,color,bg,type,onReply,onGenerate,genLoading,loadKey}){
