@@ -872,28 +872,43 @@ function AttendanceCalendar({athleteId}){
   const[records,setRecords]=useState([]);
   const GREEN="#1E6B3A",RED="#C0392B",GOLD="#D4AF37";
   useEffect(()=>{
-    supabase.from("attendance").select("*").eq("athlete_id",athleteId).order("date",{ascending:false}).then(({data})=>setRecords(data||[])).catch(()=>setRecords([]));
+    supabase.from("attendance").select("*").eq("athlete_id",athleteId).order("date",{ascending:true}).then(({data})=>setRecords(data||[])).catch(()=>setRecords([]));
   },[]);
-  const byDate={};
-  records.forEach(r=>{byDate[r.date]=r.status;});
-  const today=new Date();
-  const weeks=[];
-  for(let w=11;w>=0;w--){
-    const week=[];
-    for(let d=0;d<7;d++){
-      const date=new Date(today);
-      date.setDate(today.getDate()-w*7-d);
-      const dateStr=date.toISOString().split("T")[0];
-      const day=date.getDay();
-      const isClassDay=[1,2,4,5].includes(day);
-      week.push({dateStr,day:date.getDate(),isClassDay,status:byDate[dateStr]||null});
-    }
-    weeks.push(week);
-  }
+
   const totalEarly=records.filter(r=>r.status==="early").length;
   const totalLate=records.filter(r=>r.status==="late").length;
+
+  // Group by month
+  const byDate={};
+  records.forEach(r=>{byDate[r.date]=r.status;});
+
+  const today=new Date();
+  const months=[];
+  for(let m=5;m>=0;m--){
+    const d=new Date(today.getFullYear(),today.getMonth()-m,1);
+    const monthName=d.toLocaleString("default",{month:"long"});
+    const year=d.getFullYear();
+    const monthKey=`${year}-${String(d.getMonth()+1).padStart(2,"0")}`;
+    const daysInMonth=new Date(year,d.getMonth()+1,0).getDate();
+    const days=[];
+    for(let day=1;day<=daysInMonth;day++){
+      const dateStr=`${monthKey}-${String(day).padStart(2,"0")}`;
+      const dayOfWeek=new Date(year,d.getMonth(),day).getDay();
+      const isClassDay=[1,2,4,5].includes(dayOfWeek);
+      const isFuture=new Date(dateStr)>today;
+      days.push({dateStr,day,isClassDay,isFuture,status:byDate[dateStr]||null});
+    }
+    const monthEarly=days.filter(d=>d.status==="early").length;
+    const monthLate=days.filter(d=>d.status==="late").length;
+    const monthTotal=monthEarly+monthLate;
+    months.push({monthName,year,days,monthEarly,monthLate,monthTotal});
+  }
+
+  const DAYS_SHORT=["S","M","T","W","T","F","S"];
+
   return(
     <div>
+      {/* Stats */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
         {[{label:"Early",val:totalEarly,color:GREEN,bg:"#EAF3DE"},{label:"Late",val:totalLate,color:RED,bg:"#FCEBEB"},{label:"Total",val:records.length,color:"#1a1a1a",bg:"#f5f5f5"}].map(s=>(
           <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
@@ -902,23 +917,58 @@ function AttendanceCalendar({athleteId}){
           </div>
         ))}
       </div>
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:12}}>Last 12 weeks</div>
-        <div style={{display:"flex",gap:3,flexWrap:"nowrap",overflowX:"auto"}}>
-          {weeks.map((week,wi)=>(
-            <div key={wi} style={{display:"flex",flexDirection:"column",gap:3}}>
-              {week.map((day,di)=>(
-                <div key={di} title={day.dateStr} style={{width:14,height:14,borderRadius:3,background:!day.isClassDay?"#f0f0f0":day.status==="early"?GREEN:day.status==="late"?GOLD:"#e0e0e0",flexShrink:0}}/>
-              ))}
+
+      {/* Monthly calendars */}
+      {months.map((month,mi)=>(
+        <div key={mi} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:10,border:"0.5px solid #e0e0e0"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{month.monthName} {month.year}</div>
+            <div style={{fontSize:12,color:"#888"}}>
+              <span style={{color:GREEN,fontWeight:500}}>{month.monthEarly} early</span>
+              {month.monthLate>0&&<span style={{color:GOLD,fontWeight:500}}> · {month.monthLate} late</span>}
+              {month.monthTotal===0&&<span>No classes</span>}
             </div>
-          ))}
+          </div>
+          {/* Day headers */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:4}}>
+            {DAYS_SHORT.map((d,i)=>(
+              <div key={i} style={{fontSize:9,color:"#aaa",textAlign:"center",fontWeight:500}}>{d}</div>
+            ))}
+          </div>
+          {/* Calendar grid */}
+          {(()=>{
+            const firstDay=new Date(month.days[0].dateStr).getDay();
+            const cells=[];
+            for(let i=0;i<firstDay;i++) cells.push(null);
+            month.days.forEach(d=>cells.push(d));
+            const rows=[];
+            for(let i=0;i<cells.length;i+=7) rows.push(cells.slice(i,i+7));
+            return rows.map((row,ri)=>(
+              <div key={ri} style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:3}}>
+                {row.map((cell,ci)=>(
+                  <div key={ci} style={{
+                    height:28,borderRadius:6,
+                    background:!cell?"transparent":cell.isFuture?"#fafafa":!cell.isClassDay?"#f5f5f5":cell.status==="early"?GREEN:cell.status==="late"?GOLD:"#e8e8e8",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    border:cell&&cell.isClassDay&&!cell.isFuture&&!cell.status?"0.5px solid #ddd":"none",
+                  }}>
+                    {cell&&<span style={{fontSize:10,color:!cell.isClassDay||cell.isFuture?"#ccc":cell.status?"#fff":"#888",fontWeight:cell.status?600:400}}>{cell.day}</span>}
+                  </div>
+                ))}
+              </div>
+            ));
+          })()}
+          {/* Legend */}
+          {mi===0&&(
+            <div style={{display:"flex",gap:12,marginTop:8,fontSize:10,color:"#888"}}>
+              <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:GREEN}}/> Early</div>
+              <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:GOLD}}/> Late</div>
+              <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:"#e8e8e8",border:"0.5px solid #ddd"}}/> Missed</div>
+              <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:"#f5f5f5"}}/> Off</div>
+            </div>
+          )}
         </div>
-        <div style={{display:"flex",gap:12,marginTop:10,fontSize:11,color:"#888"}}>
-          <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:GREEN}}/> Early</div>
-          <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:GOLD}}/> Late</div>
-          <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:"#e0e0e0"}}/> Missed</div>
-        </div>
-      </div>
+      ))}
     </div>
   );
 }
@@ -1752,14 +1802,6 @@ export default function Athlete(){
 
             {tab==="attendance"&&(
               <div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-                  {[{label:"Early",val:attendance.filter(a=>a.status==="early").length,color:GREEN,bg:"#EAF3DE"},{label:"Late",val:attendance.filter(a=>a.status==="late").length,color:RED,bg:"#FCEBEB"},{label:"Total",val:attendance.length,color:"#1a1a1a",bg:"#f5f5f5"}].map(s=>(
-                    <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-                      <div style={{fontSize:20,fontWeight:600,color:s.color}}>{s.val}</div>
-                      <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
-                    </div>
-                  ))}
-                </div>
                 <AttendanceCalendar athleteId={selectedAthlete.id}/>
                 <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginTop:12,border:"0.5px solid #e0e0e0"}}>
                   <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Check-in history</div>
