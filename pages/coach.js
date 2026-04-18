@@ -37,7 +37,13 @@ export default function Coach(){
   const[newGender,setNewGender]=useState("");
   const[newRole,setNewRole]=useState("iron");
   const[genLoading,setGenLoading]=useState(null);
-  const[anvilWinner,setAnvilWinner]=useState("");
+  const[coachPrayers,setCoachPrayers]=useState([]);
+  const[prayedFor,setPrayedFor]=useState({});
+  const[weightLogs,setWeightLogs]=useState([]);
+  const[photoAthletes,setPhotoAthletes]=useState([]);
+  const[uploadingPhoto,setUploadingPhoto]=useState(null);
+  const[engAthletes,setEngAthletes]=useState([]);
+    const[anvilWinner,setAnvilWinner]=useState("");
   const[anvilNote,setAnvilNote]=useState("");
   const[anvilDate,setAnvilDate]=useState("");
 
@@ -45,13 +51,16 @@ export default function Coach(){
 
   const loadAll=async()=>{
     setLoading(true);
-    const[{data:aths},{data:att},{data:inb},{data:anv},{data:lb},{data:ann}]=await Promise.all([
+    const[{data:aths},{data:att},{data:inb},{data:anv},{data:lb},{data:ann},{data:prays},{data:wlogs},{data:engaths}]=await Promise.all([
       supabase.from("athletes").select("*").order("name"),
       supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200),
       supabase.from("inbox").select("*,athletes(name)").eq("done",false).order("created_at",{ascending:false}),
       supabase.from("anvil").select("*").order("created_at",{ascending:false}),
       supabase.from("leaderboard").select("*,athletes(name)").order("early_count",{ascending:false}),
       supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1),
+      supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false}),
+      supabase.from("weight_log").select("*,athletes(name)").order("date",{ascending:false}),
+      supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6,fellowship_note_1,fellowship_note_2,fellowship_note_3").eq("status","active").order("name"),
     ]);
     if(aths)setAthletes(aths);
     if(att)setAttendance(att);
@@ -59,6 +68,9 @@ export default function Coach(){
     if(anv)setAnvil(anv);
     if(lb)setLeaderboard(lb);
     if(ann&&ann.length>0){setCurrentAnnouncement(ann[0]);setAnnouncement(ann[0].message);}
+    if(prays)setCoachPrayers(prays);
+    if(wlogs)setWeightLogs(wlogs);
+    if(engaths)setEngAthletes(engaths);
     setLoading(false);
   };
 
@@ -158,8 +170,12 @@ export default function Coach(){
     {id:"leaderboard",label:"Leaderboard"},
     {id:"goals",label:"Goals"},
     {id:"fellowship",label:"Fellowship Friday"},
-{id:"mindset",label:"Mindset Monday"},
-{id:"culture",label:"Culture & Events"},
+    {id:"mindset",label:"Mindset Monday"},
+    {id:"culture",label:"Culture & Events"},
+    {id:"prayers",label:"Prayers"},
+    {id:"weights",label:"Weights"},
+    {id:"photos",label:"Photos"},
+    {id:"engagement",label:"Engagement"},
   ];
 
   // Kevin PIN stored in localStorage
@@ -465,6 +481,263 @@ export default function Coach(){
 {tab==="fellowship"&&<FellowshipFriday/>}
 {tab==="mindset"&&<MindsetMonday/>}
 {tab==="culture"&&<CultureEvents/>}
+
+          {tab==="prayers"&&(
+            <div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>🙏 Prayer Wall</div>
+                <div style={{fontSize:12,color:"#888"}}>{coachPrayers.length} prayer request{coachPrayers.length!==1?"s":""} from your athletes</div>
+              </div>
+              {coachPrayers.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No prayer requests yet.</div></div>}
+              {coachPrayers.map((p,i)=>(
+                <div key={i} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0",borderLeft:"4px solid "+(prayedFor[p.id]?GREEN:PUR),opacity:prayedFor[p.id]?0.6:1}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                    <div style={{fontSize:12,fontWeight:600,color:PUR}}>{p.anonymous?"Anonymous":p.athletes?.name||"Athlete"}</div>
+                    <div style={{fontSize:11,color:"#aaa"}}>{new Date(p.created_at).toLocaleDateString()}</div>
+                  </div>
+                  <div style={{fontSize:13,color:"#1a1a1a",lineHeight:1.6,marginBottom:10}}>{p.message}</div>
+                  <button onClick={()=>setPrayedFor(prev=>({...prev,[p.id]:true}))} style={{padding:"6px 14px",borderRadius:8,border:"none",background:prayedFor[p.id]?"#EAF3DE":PUR,color:prayedFor[p.id]?GREEN:"#fff",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                    {prayedFor[p.id]?"✓ Prayed for":"Mark as prayed →"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab==="weights"&&(
+            <div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>⚖️ Weight Log</div>
+                <div style={{fontSize:12,color:"#888"}}>
+                  {Object.keys(weightLogs.reduce((a,l)=>{a[l.athletes?.name||"?"]=1;return a;},{})).length} athletes logging weight
+                </div>
+              </div>
+              {weightLogs.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No weight logs yet.</div></div>}
+              {(()=>{
+                const byAthlete={};
+                weightLogs.forEach(l=>{const n=l.athletes?.name||"Unknown";if(!byAthlete[n])byAthlete[n]=[];byAthlete[n].push(l);});
+                return Object.entries(byAthlete).map(([name,entries],i)=>{
+                  const first=entries[entries.length-1]?.weight;
+                  const latest=entries[0]?.weight;
+                  const diff=first&&latest?parseFloat((latest-first).toFixed(1)):null;
+                  return(
+                    <div key={i} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{name}</div>
+                        <div style={{fontSize:13,fontWeight:600,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#888"}}>{diff===null?"—":(diff>0?"+":"")+diff+" lbs"}</div>
+                      </div>
+                      <div style={{display:"flex",gap:8}}>
+                        {[{l:"Start",v:first},{l:"Latest",v:latest},{l:"Entries",v:entries.length}].map(s=>(
+                          <div key={s.l} style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                            <div style={{fontSize:13,fontWeight:500}}>{s.v||"—"}{typeof s.v==="number"&&s.l!=="Entries"?" lbs":""}</div>
+                            <div style={{fontSize:10,color:"#888"}}>{s.l}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          )}
+
+          {tab==="photos"&&(
+            <div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+STEEL}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>📸 Group Photos</div>
+                <div style={{fontSize:12,color:"#888"}}>Manage athlete profile photos — these show on the athlete photo wall.</div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                {athletes.filter(a=>a.status==="active").map((a,i)=>(
+                  <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",border:"0.5px solid #e0e0e0",textAlign:"center"}}>
+                    <div style={{width:64,height:64,borderRadius:"50%",background:STEEL,margin:"0 auto 8px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"#fff"}}>
+                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
+                    </div>
+                    <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a",marginBottom:8}}>{a.name}</div>
+                    <label style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid #e0e0e0",background:"#f9f9f9",fontSize:11,cursor:"pointer",color:"#555"}}>
+                      {uploadingPhoto===a.id?"Uploading...":a.photo_url?"Change photo":"Add photo"}
+                      <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
+                        const file=e.target.files[0];
+                        if(!file)return;
+                        setUploadingPhoto(a.id);
+                        const reader=new FileReader();
+                        reader.onload=async ev=>{
+                          await supabase.from("athletes").update({photo_url:ev.target.result}).eq("id",a.id);
+                          setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:ev.target.result}:x));
+                          setUploadingPhoto(null);
+                        };
+                        reader.readAsDataURL(file);
+                      }}/>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab==="engagement"&&(
+            <div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>📊 Athlete Engagement</div>
+                <div style={{fontSize:12,color:"#888"}}>See who's using the app, filling out goals, and writing notes.</div>
+              </div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+                <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:8,marginBottom:8,padding:"0 4px"}}>
+                  {["Athlete","Goals","Notes","Photo"].map(h=>(
+                    <div key={h} style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em",textAlign:h==="Athlete"?"left":"center"}}>{h}</div>
+                  ))}
+                </div>
+                {engAthletes.map((a,i)=>{
+                  const hasGoal=!!(a.athletic_goal||a.character_goal);
+                  const noteCount=[1,2,3,4,5,6].filter(n=>a[`mindset_note_${n}`]||a[`fellowship_note_${n}`]).length;
+                  const hasPhoto=!!a.photo_url;
+                  return(
+                    <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:8,padding:"10px 4px",borderBottom:i<engAthletes.length-1?"0.5px solid #f0f0f0":"none",alignItems:"center"}}>
+                      <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{a.name}</div>
+                      <div style={{textAlign:"center",fontSize:14}}>{hasGoal?"✅":"⬜"}</div>
+                      <div style={{textAlign:"center"}}><span style={{fontSize:12,fontWeight:600,color:noteCount>0?PUR:"#ccc"}}>{noteCount}</span></div>
+                      <div style={{textAlign:"center",fontSize:14}}>{hasPhoto?"📸":"⬜"}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+
+          {tab==="weights"&&(()=>{
+            const[logs,setLogs]=useState([]);
+            useEffect(()=>{
+              supabase.from("weight_log").select("*,athletes(name)").order("date",{ascending:false}).then(({data})=>setLogs(data||[]));
+            },[]);
+            // Group by athlete
+            const byAthlete={};
+            logs.forEach(l=>{
+              const name=l.athletes?.name||"Unknown";
+              if(!byAthlete[name]) byAthlete[name]=[];
+              byAthlete[name].push(l);
+            });
+            return(
+              <div>
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>⚖️ Weight Log</div>
+                  <div style={{fontSize:12,color:"#888"}}>{Object.keys(byAthlete).length} athletes logging weight</div>
+                </div>
+                {Object.keys(byAthlete).length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No weight logs yet.</div></div>}
+                {Object.entries(byAthlete).map(([name,entries],i)=>{
+                  const first=entries[entries.length-1]?.weight;
+                  const latest=entries[0]?.weight;
+                  const diff=first&&latest?parseFloat((latest-first).toFixed(1)):null;
+                  return(
+                    <div key={i} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{name}</div>
+                        <div style={{fontSize:12,fontWeight:600,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#888"}}>
+                          {diff===null?"—":(diff>0?"+":"")+diff+" lbs"}
+                        </div>
+                      </div>
+                      <div style={{display:"flex",gap:8}}>
+                        <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                          <div style={{fontSize:13,fontWeight:500}}>{first||"—"} lbs</div>
+                          <div style={{fontSize:10,color:"#888"}}>Start</div>
+                        </div>
+                        <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                          <div style={{fontSize:13,fontWeight:500}}>{latest||"—"} lbs</div>
+                          <div style={{fontSize:10,color:"#888"}}>Latest</div>
+                        </div>
+                        <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                          <div style={{fontSize:13,fontWeight:500}}>{entries.length}</div>
+                          <div style={{fontSize:10,color:"#888"}}>Entries</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {tab==="photos"&&(()=>{
+            const[uploading,setUploading]=useState(null);
+            const[photoAthletes,setPhotoAthletes]=useState([]);
+            useEffect(()=>{
+              supabase.from("athletes").select("id,name,photo_url").eq("status","active").order("name").then(({data})=>setPhotoAthletes(data||[]));
+            },[]);
+            const uploadPhoto=async(athleteId,file)=>{
+              setUploading(athleteId);
+              const reader=new FileReader();
+              reader.onload=async(e)=>{
+                const base64=e.target.result;
+                await supabase.from("athletes").update({photo_url:base64}).eq("id",athleteId);
+                setPhotoAthletes(p=>p.map(a=>a.id===athleteId?{...a,photo_url:base64}:a));
+                setUploading(null);
+              };
+              reader.readAsDataURL(file);
+            };
+            return(
+              <div>
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+STEEL}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>📸 Group Photos</div>
+                  <div style={{fontSize:12,color:"#888"}}>Manage athlete profile photos. These show on the athlete photo wall.</div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  {photoAthletes.map((a,i)=>(
+                    <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",border:"0.5px solid #e0e0e0",textAlign:"center"}}>
+                      <div style={{width:64,height:64,borderRadius:"50%",background:STEEL,margin:"0 auto 8px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"#fff"}}>
+                        {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
+                      </div>
+                      <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a",marginBottom:8}}>{a.name}</div>
+                      <label style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid #e0e0e0",background:"#f9f9f9",fontSize:11,cursor:"pointer",color:"#555"}}>
+                        {uploading===a.id?"Uploading...":a.photo_url?"Change photo":"Add photo"}
+                        <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&uploadPhoto(a.id,e.target.files[0])}/>
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {tab==="engagement"&&(()=>{
+            const[engAthletes,setEngAthletes]=useState([]);
+            const[lb,setLb]=useState([]);
+            useEffect(()=>{
+              supabase.from("athletes").select("*").eq("status","active").order("name").then(({data})=>setEngAthletes(data||[]));
+              supabase.from("leaderboard").select("*").then(({data})=>setLb(data||[]));
+            },[]);
+            return(
+              <div>
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>📊 Athlete Engagement</div>
+                  <div style={{fontSize:12,color:"#888"}}>See which athletes are using the app and filling out their notes.</div>
+                </div>
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:8,marginBottom:8,padding:"0 4px"}}>
+                    <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em"}}>Athlete</div>
+                    <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em",textAlign:"center"}}>Goals</div>
+                    <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em",textAlign:"center"}}>Notes</div>
+                    <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em",textAlign:"center"}}>Photo</div>
+                  </div>
+                  {engAthletes.map((a,i)=>{
+                    const hasGoal=!!(a.athletic_goal||a.character_goal);
+                    const noteCount=[1,2,3,4,5,6,7,8,9,10,11,12].filter(n=>a[`mindset_note_${n}`]||a[`fellowship_note_${n}`]).length;
+                    const hasPhoto=!!a.photo_url;
+                    return(
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:8,padding:"10px 4px",borderBottom:i<engAthletes.length-1?"0.5px solid #f0f0f0":"none",alignItems:"center"}}>
+                        <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{a.name}</div>
+                        <div style={{textAlign:"center",fontSize:16}}>{hasGoal?"✅":"⬜"}</div>
+                        <div style={{textAlign:"center"}}>
+                          <span style={{fontSize:12,fontWeight:600,color:noteCount>0?PUR:"#ccc"}}>{noteCount}/24</span>
+                        </div>
+                        <div style={{textAlign:"center",fontSize:16}}>{hasPhoto?"📸":"⬜"}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
 
           {tab==="anvil"&&(
             <div>
