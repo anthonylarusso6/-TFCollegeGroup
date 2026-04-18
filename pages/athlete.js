@@ -643,6 +643,318 @@ function MindsetNotes({athleteId, athlete}){
 }
 
 
+// ── Accountability Partner ──────────────────────────────────────
+function AccountabilityPartner({athleteId, athletes}){
+  const myPartner=athletes.find(a=>a.accountability_partner===athleteId||athleteId===a.accountability_partner);
+  const partner=athletes.find(a=>a.id===myPartner?.accountability_partner||a.accountability_partner===athleteId);
+  const[lb,setLb]=useState(null);
+  useEffect(()=>{
+    if(partner){
+      supabase.from("leaderboard").select("*").eq("athlete_id",partner.id).single().then(({data})=>setLb(data));
+    }
+  },[partner]);
+  const GOLD="#D4AF37",GREEN="#1E6B3A",RED="#C0392B",STEEL="#708090",BG="#0f0f0f";
+  if(!partner) return(
+    <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+      <div style={{fontSize:32,marginBottom:12}}>🤝</div>
+      <div style={{fontSize:15,fontWeight:500,color:"#1a1a1a",marginBottom:8}}>No partner yet</div>
+      <div style={{fontSize:13,color:"#888"}}>Coach Ant will assign your accountability partner. Check back soon!</div>
+    </div>
+  );
+  return(
+    <div>
+      <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
+        <div style={{fontSize:11,color:GREEN,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Your accountability partner</div>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{width:56,height:56,borderRadius:"50%",background:partner.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+            {partner.photo_url?<img src={partner.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:partner.name[0]}
+          </div>
+          <div>
+            <div style={{fontSize:18,fontWeight:500,color:"#fff"}}>{partner.name}</div>
+            <div style={{fontSize:12,color:"#888"}}>{partner.sport} · {partner.role==="forge"?"The Forge":"The Iron"}</div>
+          </div>
+        </div>
+      </div>
+      {lb&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Their stats</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            {[{label:"Early",val:lb.early_count||0,color:GREEN},{label:"Streak 🔥",val:lb.current_streak||0,color:GOLD},{label:"Anvils",val:lb.anvil_count||0,color:GOLD}].map(s=>(
+              <div key={s.label} style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+                <div style={{fontSize:20,fontWeight:600,color:s.color}}>{s.val}</div>
+                <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:12,padding:"10px 14px",background:"#f9f9f9",borderRadius:10,border:"0.5px solid #e0e0e0"}}>
+            <div style={{fontSize:12,color:"#888",fontStyle:"italic"}}>"Iron sharpens iron. Hold each other to the standard."</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Body Weight Tracker ─────────────────────────────────────────
+function WeightTracker({athleteId}){
+  const[entries,setEntries]=useState([]);
+  const[weight,setWeight]=useState("");
+  const[saving,setSaving]=useState(false);
+  const[saved,setSaved]=useState(false);
+  useEffect(()=>{
+    supabase.from("weight_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true}).then(({data})=>setEntries(data||[])).catch(()=>setEntries([]));
+  },[]);
+  const save=async()=>{
+    if(!weight)return;
+    setSaving(true);
+    const today=new Date().toISOString().split("T")[0];
+    await supabase.from("weight_log").upsert({athlete_id:athleteId,date:today,weight:parseFloat(weight)},{onConflict:"athlete_id,date"}).catch(()=>{});
+    const{data}=await supabase.from("weight_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true}).catch(()=>({data:[]}));
+    setEntries(data||[]);
+    setWeight("");setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),3000);
+  };
+  const first=entries[0]?.weight;
+  const latest=entries[entries.length-1]?.weight;
+  const diff=first&&latest?parseFloat((latest-first).toFixed(1)):null;
+  const GREEN="#1E6B3A",RED="#C0392B",BG="#0f0f0f";
+  return(
+    <div>
+      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Log today's weight</div>
+        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+          <input type="number" value={weight} onChange={e=>setWeight(e.target.value)} placeholder="lbs" style={{flex:1,padding:"12px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:16,fontFamily:"Georgia,serif",background:"#fafafa",textAlign:"center"}}/>
+          <button onClick={save} disabled={!weight||saving} style={{padding:"12px 20px",borderRadius:8,border:"none",background:weight?GREEN:"#e0e0e0",color:weight?"#fff":"#aaa",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+            {saved?"✓":saving?"...":"Save"}
+          </button>
+        </div>
+        <div style={{fontSize:11,color:"#888",marginTop:8,textAlign:"center"}}>Private — only you can see this</div>
+      </div>
+      {entries.length>0&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center"}}>
+              <div style={{fontSize:18,fontWeight:600,color:"#1a1a1a"}}>{first} lbs</div>
+              <div style={{fontSize:11,color:"#888"}}>Start</div>
+            </div>
+            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center"}}>
+              <div style={{fontSize:18,fontWeight:600,color:"#1a1a1a"}}>{latest} lbs</div>
+              <div style={{fontSize:11,color:"#888"}}>Current</div>
+            </div>
+            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center"}}>
+              <div style={{fontSize:18,fontWeight:600,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#1a1a1a"}}>{diff===null?"—":(diff>0?"+":"")+diff+" lbs"}</div>
+              <div style={{fontSize:11,color:"#888"}}>Change</div>
+            </div>
+          </div>
+          <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>History</div>
+          {[...entries].reverse().slice(0,10).map((e,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"0.5px solid #f0f0f0"}}>
+              <div style={{fontSize:12,color:"#888"}}>{e.date}</div>
+              <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{e.weight} lbs</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Goals Countdown ─────────────────────────────────────────────
+function GoalsCountdown({athlete}){
+  const GREEN="#1E6B3A",PUR="#534AB7",GOLD="#D4AF37",BG="#0f0f0f";
+  const[deadline,setDeadline]=useState(athlete?.goal_deadline||"");
+  const[saving,setSaving]=useState(false);
+  const daysLeft=deadline?Math.max(0,Math.ceil((new Date(deadline)-new Date())/(1000*60*60*24))):null;
+  const save=async()=>{
+    setSaving(true);
+    await supabase.from("athletes").update({goal_deadline:deadline}).eq("id",athlete.id).catch(()=>{});
+    setSaving(false);
+  };
+  return(
+    <div>
+      {daysLeft!==null&&(
+        <div style={{background:BG,borderRadius:12,padding:"2rem",textAlign:"center",marginBottom:12,border:"2px solid "+GOLD}}>
+          <div style={{fontSize:64,fontWeight:700,color:GOLD,lineHeight:1}}>{daysLeft}</div>
+          <div style={{fontSize:14,color:"#fff",marginTop:4}}>days until your goal deadline</div>
+          <div style={{fontSize:11,color:"#555",marginTop:4}}>{deadline}</div>
+        </div>
+      )}
+      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Athletic goal</div>
+        <div style={{fontSize:13,color:"#555",fontStyle:"italic",lineHeight:1.6,marginBottom:12}}>{athlete?.athletic_goal||"No goal set yet — go to My Profile to set one."}</div>
+        <div style={{fontSize:11,color:"#888",marginBottom:6}}>Goal deadline</div>
+        <input type="date" value={deadline} onChange={e=>setDeadline(e.target.value)} style={{width:"100%",padding:"10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",background:"#fafafa",boxSizing:"border-box",marginBottom:10}}/>
+        <button onClick={save} disabled={!deadline||saving} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:GOLD,color:"#1a1a1a",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+          {saving?"Saving...":"Set deadline →"}
+        </button>
+      </div>
+      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>Character goal</div>
+        <div style={{fontSize:13,color:"#555",fontStyle:"italic",lineHeight:1.6}}>{athlete?.character_goal||"No goal set yet."}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Verse of the Day ────────────────────────────────────────────
+function VerseOfDay(){
+  const VERSES=[
+    {ref:"Proverbs 27:17",text:"As iron sharpens iron, so one person sharpens another."},
+    {ref:"Philippians 4:13",text:"I can do all this through him who gives me strength."},
+    {ref:"Joshua 1:9",text:"Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go."},
+    {ref:"Isaiah 40:31",text:"Those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary."},
+    {ref:"Romans 8:28",text:"And we know that in all things God works for the good of those who love him, who have been called according to his purpose."},
+    {ref:"Jeremiah 29:11",text:"For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future."},
+    {ref:"2 Timothy 1:7",text:"For the Spirit God gave us does not make us timid, but gives us power, love and self-discipline."},
+    {ref:"Galatians 6:9",text:"Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up."},
+    {ref:"Psalm 46:10",text:"He says, Be still, and know that I am God; I will be exalted among the nations, I will be exalted in the earth."},
+    {ref:"Matthew 6:33",text:"But seek first his kingdom and his righteousness, and all these things will be given to you as well."},
+    {ref:"Micah 6:8",text:"Act justly, love mercy, and walk humbly with your God."},
+    {ref:"2 Corinthians 5:17",text:"If anyone is in Christ, the new creation has come: The old has gone, the new is here."},
+    {ref:"Psalm 34:18",text:"The Lord is close to the brokenhearted and saves those who are crushed in spirit."},
+    {ref:"James 1:2-4",text:"Consider it pure joy whenever you face trials of many kinds, because you know that the testing of your faith produces perseverance."},
+  ];
+  const dayIdx=new Date().getDay()+Math.floor(new Date().getDate()/7);
+  const verse=VERSES[dayIdx%VERSES.length];
+  const PUR="#534AB7",BG="#0f0f0f";
+  return(
+    <div>
+      <div style={{background:BG,borderRadius:12,padding:"2rem",marginBottom:12,border:"0.5px solid "+PUR+"44",textAlign:"center"}}>
+        <div style={{fontSize:11,color:PUR,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:16}}>Verse of the Day</div>
+        <div style={{fontSize:16,color:"#fff",fontStyle:"italic",lineHeight:1.8,marginBottom:16}}>"{verse.text}"</div>
+        <div style={{fontSize:13,fontWeight:500,color:PUR}}>{verse.ref}</div>
+      </div>
+      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>More scriptures</div>
+        {VERSES.filter((_,i)=>i!==dayIdx%VERSES.length).slice(0,6).map((v,i)=>(
+          <div key={i} style={{padding:"10px 0",borderBottom:i<5?"0.5px solid #f0f0f0":"none"}}>
+            <div style={{fontSize:11,fontWeight:500,color:PUR,marginBottom:3}}>{v.ref}</div>
+            <div style={{fontSize:12,color:"#555",fontStyle:"italic",lineHeight:1.6}}>"{v.text}"</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Anvil History ───────────────────────────────────────────────
+function AnvilHistory(){
+  const[anvils,setAnvils]=useState([]);
+  const GOLD="#D4AF37",BG="#0f0f0f";
+  useEffect(()=>{
+    supabase.from("anvil").select("*").order("created_at",{ascending:false}).then(({data})=>setAnvils(data||[])).catch(()=>setAnvils([]));
+  },[]);
+  return(
+    <div>
+      <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid "+GOLD+"44",textAlign:"center"}}>
+        <div style={{fontSize:32,marginBottom:8}}>⚒</div>
+        <div style={{fontSize:15,fontWeight:500,color:GOLD,marginBottom:4}}>The Anvil</div>
+        <div style={{fontSize:12,color:"#888"}}>Awarded each week to the athlete who did what nobody else did.</div>
+      </div>
+      {anvils.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No anvil winners yet.</div></div>}
+      {anvils.map((a,i)=>(
+        <div key={i} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0",borderLeft:"4px solid "+GOLD}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:a.note?8:0}}>
+            <div>
+              <div style={{fontSize:15,fontWeight:600,color:"#1a1a1a"}}>{a.athlete_name}</div>
+              <div style={{fontSize:11,color:"#888"}}>{a.date_awarded}</div>
+            </div>
+            <div style={{fontSize:24}}>⚒</div>
+          </div>
+          {a.note&&<div style={{fontSize:13,color:"#555",fontStyle:"italic",lineHeight:1.6}}>"{a.note}"</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Attendance Calendar ─────────────────────────────────────────
+function AttendanceCalendar({athleteId}){
+  const[records,setRecords]=useState([]);
+  const GREEN="#1E6B3A",RED="#C0392B",GOLD="#D4AF37";
+  useEffect(()=>{
+    supabase.from("attendance").select("*").eq("athlete_id",athleteId).order("date",{ascending:false}).then(({data})=>setRecords(data||[])).catch(()=>setRecords([]));
+  },[]);
+  const byDate={};
+  records.forEach(r=>{byDate[r.date]=r.status;});
+  const today=new Date();
+  const weeks=[];
+  for(let w=11;w>=0;w--){
+    const week=[];
+    for(let d=0;d<7;d++){
+      const date=new Date(today);
+      date.setDate(today.getDate()-w*7-d);
+      const dateStr=date.toISOString().split("T")[0];
+      const day=date.getDay();
+      const isClassDay=[1,2,4,5].includes(day);
+      week.push({dateStr,day:date.getDate(),isClassDay,status:byDate[dateStr]||null});
+    }
+    weeks.push(week);
+  }
+  const totalEarly=records.filter(r=>r.status==="early").length;
+  const totalLate=records.filter(r=>r.status==="late").length;
+  return(
+    <div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+        {[{label:"Early",val:totalEarly,color:GREEN,bg:"#EAF3DE"},{label:"Late",val:totalLate,color:RED,bg:"#FCEBEB"},{label:"Total",val:records.length,color:"#1a1a1a",bg:"#f5f5f5"}].map(s=>(
+          <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+            <div style={{fontSize:20,fontWeight:600,color:s.color}}>{s.val}</div>
+            <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+        <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:12}}>Last 12 weeks</div>
+        <div style={{display:"flex",gap:3,flexWrap:"nowrap",overflowX:"auto"}}>
+          {weeks.map((week,wi)=>(
+            <div key={wi} style={{display:"flex",flexDirection:"column",gap:3}}>
+              {week.map((day,di)=>(
+                <div key={di} title={day.dateStr} style={{width:14,height:14,borderRadius:3,background:!day.isClassDay?"#f0f0f0":day.status==="early"?GREEN:day.status==="late"?GOLD:"#e0e0e0",flexShrink:0}}/>
+              ))}
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",gap:12,marginTop:10,fontSize:11,color:"#888"}}>
+          <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:GREEN}}/> Early</div>
+          <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:GOLD}}/> Late</div>
+          <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:"#e0e0e0"}}/> Missed</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Group Photos ────────────────────────────────────────────────
+function GroupPhotos(){
+  const[photos,setPhotos]=useState([]);
+  const[selected,setSelected]=useState(null);
+  useEffect(()=>{
+    supabase.from("athletes").select("name,photo_url").not("photo_url","is",null).then(({data})=>setPhotos(data||[])).catch(()=>setPhotos([]));
+  },[]);
+  return(
+    <div>
+      <div style={{background:"#0f0f0f",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:4}}>📸 Group Photos</div>
+        <div style={{fontSize:12,color:"#888"}}>Your crew.</div>
+      </div>
+      {selected&&(
+        <div onClick={()=>setSelected(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}>
+          <img src={selected.photo_url} style={{maxWidth:"90vw",maxHeight:"80vh",borderRadius:12,objectFit:"contain"}} alt={selected.name}/>
+          <div style={{fontSize:14,color:"#fff"}}>{selected.name}</div>
+        </div>
+      )}
+      {photos.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No photos yet. Coach Ant can add them from the roster.</div></div>}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+        {photos.map((p,i)=>(
+          <div key={i} onClick={()=>setSelected(p)} style={{cursor:"pointer",borderRadius:10,overflow:"hidden",aspectRatio:"1",background:"#f0f0f0"}}>
+            <img src={p.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={p.name}/>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 export default function Athlete(){
   const[athletes,setAthletes]=useState([]);
   const[announcement,setAnnouncement]=useState(null);
@@ -909,6 +1221,13 @@ export default function Athlete(){
       {id:"leaderboard",label:"Leaderboard"},
       {id:"bracelets",label:"Bracelets"},
       {id:"mindset",label:"Mindset"},
+      {id:"partner",label:"Partner"},
+      {id:"weight",label:"Weight"},
+      {id:"goals",label:"Goals"},
+      {id:"verse",label:"Verse"},
+      {id:"anvil",label:"Anvil"},
+      {id:"calendar",label:"Calendar"},
+      {id:"photos",label:"Photos"},
       ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My group"}]),
       {id:"journey",label:"The journey"},
       {id:"attendance",label:"Attendance"},
@@ -1331,6 +1650,21 @@ export default function Athlete(){
             {tab==="bracelets"&&<BraceletWall athleteBracelet={selectedAthlete.bracelet}/>}
 
             {tab==="mindset"&&<MindsetNotes athleteId={selectedAthlete.id} athlete={selectedAthlete}/>}
+
+
+            {tab==="partner"&&<AccountabilityPartner athleteId={selectedAthlete.id} athletes={athletes}/>}
+
+            {tab==="weight"&&<WeightTracker athleteId={selectedAthlete.id}/>}
+
+            {tab==="goals"&&<GoalsCountdown athlete={selectedAthlete}/>}
+
+            {tab==="verse"&&<VerseOfDay/>}
+
+            {tab==="anvil"&&<AnvilHistory/>}
+
+            {tab==="calendar"&&<AttendanceCalendar athleteId={selectedAthlete.id}/>}
+
+            {tab==="photos"&&<GroupPhotos/>}
 
 
             {tab==="journey"&&(
