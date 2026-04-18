@@ -1370,6 +1370,7 @@ export default function Athlete(){
     const TABS=[
       {id:"profile",label:"My Profile"},
       {id:"verse",label:"Verse"},
+      {id:"attendance",label:"Attendance"},
       ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My Group"}]),
       {id:"anvil",label:"Anvil"},
       {id:"weight",label:"Weight"},
@@ -1379,7 +1380,6 @@ export default function Athlete(){
       {id:"photos",label:"Photos"},
       {id:"notes",label:"Notes"},
       {id:"private",label:"Private"},
-      {id:"attendance",label:"Attendance"},
     ];
 
     const myGroupIdx=selectedAthlete.group_idx;
