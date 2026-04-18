@@ -51,16 +51,13 @@ export default function Coach(){
 
   const loadAll=async()=>{
     setLoading(true);
-    const[{data:aths},{data:att},{data:inb},{data:anv},{data:lb},{data:ann},{data:prays},{data:wlogs},{data:engaths}]=await Promise.all([
+    const[{data:aths},{data:att},{data:inb},{data:anv},{data:lb},{data:ann}]=await Promise.all([
       supabase.from("athletes").select("*").order("name"),
       supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200),
       supabase.from("inbox").select("*,athletes(name)").eq("done",false).order("created_at",{ascending:false}),
       supabase.from("anvil").select("*").order("created_at",{ascending:false}),
       supabase.from("leaderboard").select("*,athletes(name)").order("early_count",{ascending:false}),
       supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1),
-      supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false}),
-      supabase.from("weight_log").select("*,athletes(name)").order("date",{ascending:false}),
-      supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6,fellowship_note_1,fellowship_note_2,fellowship_note_3").eq("status","active").order("name"),
     ]);
     if(aths)setAthletes(aths);
     if(att)setAttendance(att);
