@@ -1377,7 +1377,6 @@ export default function Athlete(){
       {id:"goals",label:"Goals"},
       {id:"verse",label:"Verse"},
       {id:"anvil",label:"Anvil"},
-      {id:"calendar",label:"Calendar"},
       {id:"photos",label:"Photos"},
       ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My group"}]),
       {id:"journey",label:"The journey"},
