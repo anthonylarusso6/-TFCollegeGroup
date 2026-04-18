@@ -1802,7 +1802,6 @@ export default function Athlete(){
                 ))}
               </div>
             )}
-;
   }
   return null;
 }
