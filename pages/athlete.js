@@ -463,14 +463,16 @@ function PrayerWall({athleteId, athleteName}){
   const[submitting,setSubmitting]=useState(false);
   const[submitted,setSubmitted]=useState(false);
   useEffect(()=>{
-    supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false}).then(({data})=>setPrayers(data||[]));
+    supabase.from("inbox").select("*").eq("type","prayer").order("created_at",{ascending:false}).then(({data})=>setPrayers(data||[])).catch(()=>setPrayers([]));
   },[]);
   const submit=async()=>{
     if(!text.trim())return;
     setSubmitting(true);
-    await supabase.from("inbox").insert({athlete_id:athleteId,type:"prayer",message:text,anonymous:anon});
-    const{data}=await supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false});
-    setPrayers(data||[]);
+    try{
+      await supabase.from("inbox").insert({athlete_id:athleteId,type:"prayer",message:text,anonymous:anon});
+      const{data}=await supabase.from("inbox").select("*").eq("type","prayer").order("created_at",{ascending:false});
+      setPrayers(data||[]);
+    }catch(e){}
     setText("");setSubmitting(false);setSubmitted(true);setTimeout(()=>setSubmitted(false),3000);
   };
   const PUR="#534AB7",GREEN="#1E6B3A",BG="#0f0f0f";
@@ -497,7 +499,7 @@ function PrayerWall({athleteId, athleteName}){
         {prayers.length===0&&<div style={{fontSize:12,color:"#888",textAlign:"center",padding:"1rem 0"}}>No prayer requests yet. Be the first to share.</div>}
         {prayers.map((p,i)=>(
           <div key={i} style={{padding:"10px 0",borderBottom:i<prayers.length-1?"0.5px solid #f0f0f0":"none"}}>
-            <div style={{fontSize:11,color:PUR,fontWeight:500,marginBottom:3}}>{p.anonymous?"Anonymous":p.athletes?.name||"Athlete"}</div>
+            <div style={{fontSize:11,color:PUR,fontWeight:500,marginBottom:3}}>{p.anonymous?"Anonymous":athleteName||"Athlete"}</div>
             <div style={{fontSize:13,color:"#1a1a1a",lineHeight:1.6}}>{p.message}</div>
           </div>
         ))}
