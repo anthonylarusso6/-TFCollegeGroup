@@ -1703,7 +1703,10 @@ export default function Athlete(){
                       <div style={{fontSize:24,fontWeight:500,color:s.color}}>{s.count}</div>
                       <div style={{fontSize:11,color:s.color,marginTop:2}}>{s.label}</div>
                     </div>
-                  ))}
+                  )
+              <div style={{marginTop:12}}>
+                <AttendanceCalendar athleteId={selectedAthlete.id}/>
+              </div>)}
                 </div>
                 {streak>0&&(
                   <div style={{background:"#0a1f0a",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"0.5px solid "+GREEN+"44",display:"flex",alignItems:"center",gap:12}}>
