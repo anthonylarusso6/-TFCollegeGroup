@@ -37,9 +37,6 @@ export default function Coach(){
   const[newGender,setNewGender]=useState("");
   const[newRole,setNewRole]=useState("iron");
   const[genLoading,setGenLoading]=useState(null);
-  const[rosterSearch,setRosterSearch]=useState("");
-  const[rosterStatus,setRosterStatus]=useState("active");
-  const[rosterExpanded,setRosterExpanded]=useState(null);
   const[coachPrayers,setCoachPrayers]=useState([]);
   const[prayedFor,setPrayedFor]=useState({});
   const[weightLogs,setWeightLogs]=useState([]);
@@ -435,147 +432,72 @@ export default function Coach(){
 
           {tab==="draft"&&<Draft athletes={athletes.filter(a=>a.status==="active")}/>}
 
-          {tab==="roster"&&(()=>{
-            const filtered=(athletes||[]).filter(a=>{
-              if(!a||!a.name)return false;
-              const matchStatus=a.status===rosterStatus;
-              const matchSearch=!rosterSearch||a.name.toLowerCase().includes(rosterSearch.toLowerCase())||a.sport?.toLowerCase().includes(rosterSearch.toLowerCase());
-              return matchStatus&&matchSearch;
-            });
-            return(
+          {tab==="roster"&&(
             <div>
-              {/* Status filter tabs */}
-              <div style={{display:"flex",gap:6,marginBottom:12}}>
-                {["active","sleeping","archived"].map(s=>(
-                  <button key={s} onClick={()=>setRosterStatus(s)} style={{flex:1,padding:"8px",borderRadius:8,border:"0.5px solid "+(rosterStatus===s?PUR:"#e0e0e0"),background:rosterStatus===s?PUR:"#fff",color:rosterStatus===s?"#fff":"#888",fontSize:12,fontWeight:rosterStatus===s?600:400,cursor:"pointer",fontFamily:"Georgia,serif",textTransform:"capitalize"}}>
-                    {s} ({(athletes||[]).filter(a=>a&&a.status===s).length})
-                  </button>
-                ))}
-              </div>
-
-              {/* Search bar */}
-              <div style={{position:"relative",marginBottom:12}}>
-                <input value={rosterSearch} onChange={e=>setRosterSearch(e.target.value)} placeholder="Search by name or sport..." style={{width:"100%",padding:"10px 12px 10px 36px",borderRadius:10,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",background:"#fafafa",color:"#1a1a1a",boxSizing:"border-box"}}/>
-                <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:14,color:"#aaa"}}>🔍</div>
-                {rosterSearch&&<button onClick={()=>setRosterSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:14,color:"#aaa",cursor:"pointer"}}>✕</button>}
-              </div>
-
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>
-                  {rosterStatus.charAt(0).toUpperCase()+statusFilter.slice(1)} athletes — {filtered.length}
-                </div>
-
-                {filtered.length===0&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"1rem 0"}}>No athletes found.</div>}
-
-                {filtered.map(a=>{
-                  const isExpanded=rosterExpanded===a.id;
-                  const hasInjury=!!(a.injury||a.injury_note);
-                  return(
-                    <div key={a.id} style={{borderBottom:"0.5px solid #f0f0f0"}}>
-                      {/* Main row */}
-                      <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",cursor:"pointer"}} onClick={()=>setRosterExpanded(isExpanded?null:a.id)}>
-                        <label style={{width:38,height:38,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden",position:"relative"}} onClick={e=>e.stopPropagation()}>
-                          {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
-                          <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
-                            const file=e.target.files[0];
-                            if(!file)return;
-                            const reader=new FileReader();
-                            reader.onload=async ev=>{
-                              await supabase.from("athletes").update({photo_url:ev.target.result}).eq("id",a.id);
-                              setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:ev.target.result}:x));
-                            };
-                            reader.readAsDataURL(file);
-                          }}/>
-                        </label>
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{display:"flex",alignItems:"center",gap:6}}>
-                            <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{a.name}</div>
-                            {hasInjury&&<span style={{fontSize:10,background:"#FCEBEB",color:RED,padding:"1px 6px",borderRadius:4,fontWeight:500}}>🤕 Injured</span>}
-                          </div>
-                          <div style={{fontSize:11,color:"#888"}}>{a.sport} · {a.gender} · <span style={{color:a.role==="forge"?RED:STEEL}}>{a.role==="forge"?"The Forge":"The Iron"}</span></div>
-                        </div>
-                        <div style={{display:"flex",alignItems:"center",gap:6}} onClick={e=>e.stopPropagation()}>
-                          <select value={a.status} onChange={e=>updateAthlete(a.id,"status",e.target.value)} style={{padding:"3px 6px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fff",color:a.status==="active"?GREEN:a.status==="sleeping"?"#854F0B":RED}}>
-                            <option value="active">Active</option>
-                            <option value="sleeping">Sleeping</option>
-                            <option value="archived">Archived</option>
-                          </select>
-                          <button onClick={e=>{e.stopPropagation();deleteAthlete(a.id,a.name);}} style={{padding:"3px 8px",borderRadius:6,border:"0.5px solid #ffcccc",background:"transparent",color:RED,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>
-                        </div>
-                        <div style={{fontSize:14,color:"#ccc",marginLeft:4}}>{isExpanded?"▲":"▼"}</div>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Athletes — {athletes.filter(a=>a.status==="active").length} active</div>
+               {athletes.map(a=>(
+                  <div key={a.id} style={{padding:"10px 0",borderBottom:"0.5px solid #f0f0f0"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
+                   <label style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden",position:"relative"}}>
+                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:a.name[0]}
+                      <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
+                        const file=e.target.files[0];
+                        if(!file)return;
+                        const reader=new FileReader();
+                        reader.onload=async ev=>{
+                          await supabase.from("athletes").update({photo_url:ev.target.result}).eq("id",a.id);
+                          setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:ev.target.result}:x));
+                        };
+                        reader.readAsDataURL(file);
+                      }}/>
+                    </label>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{a.name}</div>
+                        <div style={{fontSize:11,color:"#888"}}>{a.sport} · {a.gender}</div>
                       </div>
-
-                      {/* Expanded card */}
-                      {isExpanded&&(
-                        <div style={{paddingBottom:14,paddingLeft:48}}>
-                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
-                            {/* Role */}
-                            <div>
-                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Role</div>
-                              <select value={a.role} onChange={e=>updateAthlete(a.id,"role",e.target.value)} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:a.role==="forge"?RED:STEEL}}>
-                                <option value="iron">The Iron</option>
-                                <option value="forge">The Forge</option>
-                              </select>
-                            </div>
-                            {/* Bracelet */}
-                            <div>
-                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Bracelet</div>
-                              <input defaultValue={a.bracelet||""} placeholder="Bracelet ref..." onBlur={async e=>{await supabase.from("athletes").update({bracelet:e.target.value||null}).eq("id",a.id);setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,bracelet:e.target.value}:x));}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
-                            </div>
-                            {/* PIN */}
-                            <div>
-                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>PIN</div>
-                              <input defaultValue={a.pin||""} placeholder="4-digit PIN" onBlur={async e=>{await supabase.from("athletes").update({pin:e.target.value||null}).eq("id",a.id);}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
-                            </div>
-                            {/* Accountability partner */}
-                            <div>
-                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Partner</div>
-                              <select value={a.accountability_partner||""} onChange={async e=>{await supabase.from("athletes").update({accountability_partner:e.target.value||null}).eq("id",a.id);setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,accountability_partner:e.target.value}:x));}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
-                                <option value="">No partner</option>
-                                {(athletes||[]).filter(x=>x&&x.id!==a.id&&x.status==="active").map(x=><option key={x.id} value={x.id}>{x.name}</option>)}
-                              </select>
-                            </div>
-                          </div>
-                          {/* Athletic goal */}
-                          <div style={{marginBottom:8}}>
-                            <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Athletic goal</div>
-                            <div style={{fontSize:12,color:a.athletic_goal?"#1a1a1a":"#ccc",fontStyle:a.athletic_goal?"normal":"italic",padding:"6px 8px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #e0e0e0"}}>{a.athletic_goal||"No goal set"}</div>
-                          </div>
-                          {/* Injury */}
-                          {hasInjury&&(
-                            <div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 10px",border:"0.5px solid #ffcccc"}}>
-                              <div style={{fontSize:11,fontWeight:600,color:RED,marginBottom:2}}>🤕 Injury report</div>
-                              <div style={{fontSize:12,color:"#555"}}>{a.injury_note||a.injury}</div>
-                            </div>
-                          )}
-                          {/* Vitruve ID */}
-                          <div style={{marginTop:8}}>
-                            <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Vitruve ID</div>
-                            <input defaultValue={a.vitruve_id||""} placeholder="Paste Vitruve ID..." onBlur={async e=>{const val=e.target.value.trim();if(val!==a.vitruve_id){await supabase.from("athletes").update({vitruve_id:val||null}).eq("id",a.id);}}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
-                          </div>
-                        </div>
-                      )}
+                      <select value={a.role} onChange={e=>updateAthlete(a.id,"role",e.target.value)} style={{padding:"4px 8px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fff",color:a.role==="forge"?RED:STEEL}}>
+                        <option value="iron">The Iron</option>
+                        <option value="forge">The Forge</option>
+                      </select>
+                      <select value={a.status} onChange={e=>updateAthlete(a.id,"status",e.target.value)} style={{padding:"4px 8px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fff",color:a.status==="active"?GREEN:a.status==="sleeping"?"#854F0B":RED}}>
+                        <option value="active">Active</option>
+                        <option value="sleeping">Sleeping</option>
+                        <option value="archived">Archived</option>
+                      </select>
+                      <button onClick={()=>deleteAthlete(a.id,a.name)} style={{padding:"4px 8px",borderRadius:6,border:"0.5px solid #ffcccc",background:"transparent",color:RED,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>
                     </div>
-                  );
-                })}
-
-                {/* Add athlete form */}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 50px 70px 70px auto",gap:6,marginTop:16}}>
-                  <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif"}}/>
-                  <input value={newSport} onChange={e=>setNewSport(e.target.value)} placeholder="Sport" style={{padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif"}}/>
-                  <select value={newGender} onChange={e=>setNewGender(e.target.value)} style={{padding:"6px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6,paddingLeft:48}}>
+                      <div style={{fontSize:10,color:"#aaa",flexShrink:0}}>Vitruve ID:</div>
+                      <input
+                        defaultValue={a.vitruve_id||""}
+                        placeholder="Paste Vitruve ID from URL..."
+                        onBlur={async e=>{
+                          const val=e.target.value.trim();
+                          if(val!==a.vitruve_id){
+                            await supabase.from("athletes").update({vitruve_id:val||null}).eq("id",a.id);
+                          }
+                        }}
+                        style={{flex:1,padding:"3px 8px",fontSize:11,border:"0.5px solid #e0e0e0",borderRadius:6,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif"}}
+                      />
+                      {a.vitruve_id&&<div style={{width:8,height:8,borderRadius:"50%",background:"#1E6B3A",flexShrink:0}}/>}
+                    </div>
+                  </div>
+                ))}
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 60px 80px 80px auto",gap:8,marginTop:16}}>
+                  <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Name" style={{padding:"6px 8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif"}}/>
+                  <input value={newSport} onChange={e=>setNewSport(e.target.value)} placeholder="Sport" style={{padding:"6px 8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif"}}/>
+                  <select value={newGender} onChange={e=>setNewGender(e.target.value)} style={{padding:"6px 8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
                     <option value="">M/F</option><option value="M">M</option><option value="F">F</option>
                   </select>
-                  <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={{padding:"6px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
+                  <select value={newRole} onChange={e=>setNewRole(e.target.value)} style={{padding:"6px 8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
                     <option value="iron">Iron</option><option value="forge">Forge</option>
                   </select>
-                  <button onClick={addAthlete} disabled={!newName.trim()} style={{padding:"6px 12px",borderRadius:8,border:"none",background:newName.trim()?PUR:"#e0e0e0",color:"#fff",fontSize:12,fontWeight:500,cursor:newName.trim()?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>Add</button>
+                  <button onClick={addAthlete} disabled={!newName.trim()} style={{padding:"6px 16px",borderRadius:8,border:"none",background:newName.trim()?PUR:"#e0e0e0",color:"#fff",fontSize:13,fontWeight:500,cursor:newName.trim()?"pointer":"not-allowed",fontFamily:"Georgia, serif"}}>Add</button>
                 </div>
               </div>
             </div>
-            );
-          })()}
-
+          )}
 
           {tab==="attendance"&&(
             <div>
