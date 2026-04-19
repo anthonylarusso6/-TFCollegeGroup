@@ -112,11 +112,19 @@ export default function Coach(){
 
   const deleteAthlete=async(id,name)=>{
     if(!window.confirm("Delete "+name+"? This cannot be undone."))return;
-    const{error}=await supabase.from("athletes").delete().eq("id",id);
-    if(error){
-      alert("Delete failed: "+error.message+". Go to Supabase and disable RLS on the athletes table.");
+    const result=await supabase.from("athletes").delete().eq("id",id);
+    console.log("Delete result:",JSON.stringify(result));
+    if(result.error){
+      alert("Delete error: "+result.error.message);
     }else{
-      setAthletes(p=>p.filter(x=>x.id!==id));
+      // Verify it's actually gone
+      const{data:check}=await supabase.from("athletes").select("id").eq("id",id);
+      if(check&&check.length>0){
+        alert("Delete ran but athlete still exists in DB — please check Supabase.");
+      }else{
+        setAthletes(p=>p.filter(x=>x.id!==id));
+        alert(name+" deleted successfully.");
+      }
     }
   };
 
