@@ -444,14 +444,12 @@ export default function Coach(){
                       <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
                         const file=e.target.files[0];
                         if(!file)return;
-                        const ext=file.name.split(".").pop();
-                        const path=`${a.id}.${ext}`;
-                        const{error}=await supabase.storage.from("athlete-photos").upload(path,file,{upsert:true});
-                        if(!error){
-                          const{data}=supabase.storage.from("athlete-photos").getPublicUrl(path);
-                          await supabase.from("athletes").update({photo_url:data.publicUrl}).eq("id",a.id);
-                          loadAthletes();
-                        }
+                        const reader=new FileReader();
+                        reader.onload=async ev=>{
+                          await supabase.from("athletes").update({photo_url:ev.target.result}).eq("id",a.id);
+                          setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:ev.target.result}:x));
+                        };
+                        reader.readAsDataURL(file);
                       }}/>
                     </label>
                       <div style={{flex:1}}>
