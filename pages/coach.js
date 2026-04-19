@@ -436,7 +436,8 @@ export default function Coach(){
           {tab==="draft"&&<Draft athletes={athletes.filter(a=>a.status==="active")}/>}
 
           {tab==="roster"&&(()=>{
-            const filtered=athletes.filter(a=>{
+            const filtered=(athletes||[]).filter(a=>{
+              if(!a||!a.name)return false;
               const matchStatus=a.status===rosterStatus;
               const matchSearch=!rosterSearch||a.name.toLowerCase().includes(rosterSearch.toLowerCase())||a.sport?.toLowerCase().includes(rosterSearch.toLowerCase());
               return matchStatus&&matchSearch;
@@ -447,7 +448,7 @@ export default function Coach(){
               <div style={{display:"flex",gap:6,marginBottom:12}}>
                 {["active","sleeping","archived"].map(s=>(
                   <button key={s} onClick={()=>setRosterStatus(s)} style={{flex:1,padding:"8px",borderRadius:8,border:"0.5px solid "+(rosterStatus===s?PUR:"#e0e0e0"),background:rosterStatus===s?PUR:"#fff",color:rosterStatus===s?"#fff":"#888",fontSize:12,fontWeight:rosterStatus===s?600:400,cursor:"pointer",fontFamily:"Georgia,serif",textTransform:"capitalize"}}>
-                    {s} ({athletes.filter(a=>a.status===s).length})
+                    {s} ({(athletes||[]).filter(a=>a&&a.status===s).length})
                   </button>
                 ))}
               </div>
@@ -531,7 +532,7 @@ export default function Coach(){
                               <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Partner</div>
                               <select value={a.accountability_partner||""} onChange={async e=>{await supabase.from("athletes").update({accountability_partner:e.target.value||null}).eq("id",a.id);setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,accountability_partner:e.target.value}:x));}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
                                 <option value="">No partner</option>
-                                {athletes.filter(x=>x.id!==a.id&&x.status==="active").map(x=><option key={x.id} value={x.id}>{x.name}</option>)}
+                                {(athletes||[]).filter(x=>x&&x.id!==a.id&&x.status==="active").map(x=><option key={x.id} value={x.id}>{x.name}</option>)}
                               </select>
                             </div>
                           </div>
