@@ -4,7 +4,9 @@ const nextConfig = {
   images: {
     domains: ['kluuoibuhkxukbqodfet.supabase.co'],
   },
+  env: {
+    BUILD_TIME: '1776642680',
+  },
 }
 
 module.exports = nextConfig
-// cache bust 1776642403
