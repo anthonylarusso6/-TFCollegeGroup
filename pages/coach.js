@@ -37,13 +37,7 @@ export default function Coach(){
   const[newGender,setNewGender]=useState("");
   const[newRole,setNewRole]=useState("iron");
   const[genLoading,setGenLoading]=useState(null);
-  const[coachPrayers,setCoachPrayers]=useState([]);
-  const[prayedFor,setPrayedFor]=useState({});
-  const[weightLogs,setWeightLogs]=useState([]);
-  const[photoAthletes,setPhotoAthletes]=useState([]);
-  const[uploadingPhoto,setUploadingPhoto]=useState(null);
-  const[engAthletes,setEngAthletes]=useState([]);
-    const[anvilWinner,setAnvilWinner]=useState("");
+  const[anvilWinner,setAnvilWinner]=useState("");
   const[anvilNote,setAnvilNote]=useState("");
   const[anvilDate,setAnvilDate]=useState("");
 
@@ -51,25 +45,20 @@ export default function Coach(){
 
   const loadAll=async()=>{
     setLoading(true);
-    const q=async(fn)=>{try{const{data}=await fn();return data||[];}catch{return[];}};
-    const[aths,att,inb,anv,lb,ann]=await Promise.all([
-      q(()=>supabase.from("athletes").select("*").order("name")),
-      q(()=>supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200)),
-      q(()=>supabase.from("inbox").select("*,athletes(name)").order("created_at",{ascending:false})),
-      q(()=>supabase.from("anvil").select("*").order("created_at",{ascending:false})),
-      q(()=>supabase.from("leaderboard").select("*,athletes(name)").order("early_count",{ascending:false})),
-      q(()=>supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1)),
+    const[{data:aths},{data:att},{data:inb},{data:anv},{data:lb},{data:ann}]=await Promise.all([
+      supabase.from("athletes").select("*").order("name"),
+      supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200),
+      supabase.from("inbox").select("*,athletes(name)").eq("done",false).order("created_at",{ascending:false}),
+      supabase.from("anvil").select("*").order("created_at",{ascending:false}),
+      supabase.from("leaderboard").select("*,athletes(name)").order("early_count",{ascending:false}),
+      supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1),
     ]);
-    setAthletes(aths);
-    setAttendance(att);
-    setInbox(inb);
-    setAnvil(anv);
-    setLeaderboard(lb);
-    if(ann.length>0){setCurrentAnnouncement(ann[0]);setAnnouncement(ann[0].message);}
-    // Secondary data — won't block main load
-    q(()=>supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false})).then(d=>setCoachPrayers(d));
-    q(()=>supabase.from("weight_log").select("*,athletes(name)").order("date",{ascending:false})).then(d=>setWeightLogs(d));
-    q(()=>supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name")).then(d=>setEngAthletes(d));
+    if(aths)setAthletes(aths);
+    if(att)setAttendance(att);
+    if(inb)setInbox(inb);
+    if(anv)setAnvil(anv);
+    if(lb)setLeaderboard(lb);
+    if(ann&&ann.length>0){setCurrentAnnouncement(ann[0]);setAnnouncement(ann[0].message);}
     setLoading(false);
   };
 
@@ -169,12 +158,8 @@ export default function Coach(){
     {id:"leaderboard",label:"Leaderboard"},
     {id:"goals",label:"Goals"},
     {id:"fellowship",label:"Fellowship Friday"},
-    {id:"mindset",label:"Mindset Monday"},
-    {id:"culture",label:"Culture & Events"},
-    {id:"prayers",label:"Prayers"},
-    {id:"weights",label:"Weights"},
-    {id:"photos",label:"Photos"},
-    {id:"engagement",label:"Engagement"},
+{id:"mindset",label:"Mindset Monday"},
+{id:"culture",label:"Culture & Events"},
   ];
 
   // Kevin PIN stored in localStorage
@@ -481,125 +466,131 @@ export default function Coach(){
 {tab==="mindset"&&<MindsetMonday/>}
 {tab==="culture"&&<CultureEvents/>}
 
-          {tab==="prayers"&&(
+          {tab==="anvil"&&(
             <div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Award this week's Anvil</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                  <div>
+                    <div style={{fontSize:11,color:"#888",marginBottom:4}}>Athlete</div>
+                    <select value={anvilWinner} onChange={e=>setAnvilWinner(e.target.value)} style={{width:"100%",padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
+                      <option value="">Select athlete...</option>
+                      {athletes.filter(a=>a.status==="active").map(a=><option key={a.id} value={a.name}>{a.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div style={{fontSize:11,color:"#888",marginBottom:4}}>Week / date</div>
+                    <input value={anvilDate} onChange={e=>setAnvilDate(e.target.value)} placeholder="e.g. Week 1 · June 2" style={{width:"100%",padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",boxSizing:"border-box"}}/>
+                  </div>
+                </div>
+                <div style={{marginBottom:8}}>
+                  <div style={{fontSize:11,color:"#888",marginBottom:4}}>Why they earned it</div>
+                  <textarea value={anvilNote} onChange={e=>setAnvilNote(e.target.value)} placeholder="What did this person do that nobody else did this week?" style={{width:"100%",minHeight:70,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box"}}/>
+                </div>
+                <button onClick={awardAnvil} disabled={!anvilWinner} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:anvilWinner?GOLD:"#e0e0e0",color:anvilWinner?"#1a1a1a":"#aaa",fontSize:14,fontWeight:600,cursor:anvilWinner?"pointer":"not-allowed",fontFamily:"Georgia, serif"}}>Award The Anvil →</button>
+              </div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Hall of Fame</div>
+                {anvil.filter(a=>a.type==="individual").map((w,i)=>(
+                  <div key={i} style={{display:"flex",gap:12,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"center"}}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:i===0?"#1f1700":BG,border:"2px solid "+(i===0?GOLD:"#333"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:i===0?GOLD:"#666",fontWeight:600,flexShrink:0}}>{w.athlete_name[0]}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:500,color:i===0?GOLD:"#1a1a1a"}}>{w.athlete_name} {i===0&&"⚡"}</div>
+                      <div style={{fontSize:11,color:"#888"}}>{w.date_awarded}</div>
+                      {w.note&&<div style={{fontSize:12,color:"#aaa",fontStyle:"italic"}}>"{w.note}"</div>}
+                    </div>
+                    {i===0&&<span style={{fontSize:10,background:"#1f1700",color:GOLD,padding:"2px 7px",borderRadius:5}}>Current</span>}
+                  </div>
+                ))}
+                {anvil.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No Anvil winners yet.</div>}
+              </div>
+            </div>
+          )}
+
+          {tab==="inbox"&&(
+            <div>
+              {injuries.length>0&&(
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
+                  <div style={{fontSize:13,fontWeight:600,color:RED,marginBottom:10}}>Injury flags</div>
+                  {injuries.map((item,i)=>(
+                    <InboxItem key={i} item={item} color={RED} bg="#FCEBEB" type="injury" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"inj-"+item.id)} genLoading={genLoading} loadKey={"inj-"+item.id}/>
+                  ))}
+                </div>
+              )}
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>🙏 Prayer Wall</div>
-                <div style={{fontSize:12,color:"#888"}}>{coachPrayers.length} prayer request{coachPrayers.length!==1?"s":""} from your athletes</div>
+                <div style={{fontSize:13,fontWeight:600,color:PUR,marginBottom:10}}>Messages from athletes</div>
+                {messages.length===0&&<div style={{fontSize:13,color:"#aaa"}}>No messages.</div>}
+                {messages.map((item,i)=>(
+                  <InboxItem key={i} item={item} color={PUR} bg="#EEEDFE" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"msg-"+item.id)} genLoading={genLoading} loadKey={"msg-"+item.id}/>
+                ))}
               </div>
-              {coachPrayers.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No prayer requests yet.</div></div>}
-              {coachPrayers.map((p,i)=>(
-                <div key={i} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0",borderLeft:"4px solid "+(prayedFor[p.id]?GREEN:PUR),opacity:prayedFor[p.id]?0.6:1}}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                    <div style={{fontSize:12,fontWeight:600,color:PUR}}>{p.anonymous?"Anonymous":p.athletes?.name||"Athlete"}</div>
-                    <div style={{fontSize:11,color:"#aaa"}}>{new Date(p.created_at).toLocaleDateString()}</div>
-                  </div>
-                  <div style={{fontSize:13,color:"#1a1a1a",lineHeight:1.6,marginBottom:10}}>{p.message}</div>
-                  <button onClick={()=>setPrayedFor(prev=>({...prev,[p.id]:true}))} style={{padding:"6px 14px",borderRadius:8,border:"none",background:prayedFor[p.id]?"#EAF3DE":PUR,color:prayedFor[p.id]?GREEN:"#fff",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                    {prayedFor[p.id]?"✓ Prayed for":"Mark as prayed →"}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {tab==="weights"&&(
-            <div>
-              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>⚖️ Weight Log</div>
-                <div style={{fontSize:12,color:"#888"}}>
-                  {Object.keys(weightLogs.reduce((a,l)=>{a[l.athletes?.name||"?"]=1;return a;},{})).length} athletes logging weight
-                </div>
-              </div>
-              {weightLogs.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No weight logs yet.</div></div>}
-              {(()=>{
-                const byAthlete={};
-                weightLogs.forEach(l=>{const n=l.athletes?.name||"Unknown";if(!byAthlete[n])byAthlete[n]=[];byAthlete[n].push(l);});
-                return Object.entries(byAthlete).map(([name,entries],i)=>{
-                  const first=entries[entries.length-1]?.weight;
-                  const latest=entries[0]?.weight;
-                  const diff=first&&latest?parseFloat((latest-first).toFixed(1)):null;
-                  return(
-                    <div key={i} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0"}}>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{name}</div>
-                        <div style={{fontSize:13,fontWeight:600,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#888"}}>{diff===null?"—":(diff>0?"+":"")+diff+" lbs"}</div>
-                      </div>
-                      <div style={{display:"flex",gap:8}}>
-                        {[{l:"Start",v:first},{l:"Latest",v:latest},{l:"Entries",v:entries.length}].map(s=>(
-                          <div key={s.l} style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
-                            <div style={{fontSize:13,fontWeight:500}}>{s.v||"—"}{typeof s.v==="number"&&s.l!=="Entries"?" lbs":""}</div>
-                            <div style={{fontSize:10,color:"#888"}}>{s.l}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-          )}
-
-          {tab==="photos"&&(
-            <div>
-              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+STEEL}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>📸 Group Photos</div>
-                <div style={{fontSize:12,color:"#888"}}>Manage athlete profile photos — these show on the athlete photo wall.</div>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                {athletes.filter(a=>a.status==="active").map((a,i)=>(
-                  <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",border:"0.5px solid #e0e0e0",textAlign:"center"}}>
-                    <div style={{width:64,height:64,borderRadius:"50%",background:STEEL,margin:"0 auto 8px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"#fff"}}>
-                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
-                    </div>
-                    <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a",marginBottom:8}}>{a.name}</div>
-                    <label style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid #e0e0e0",background:"#f9f9f9",fontSize:11,cursor:"pointer",color:"#555"}}>
-                      {uploadingPhoto===a.id?"Uploading...":a.photo_url?"Change photo":"Add photo"}
-                      <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
-                        const file=e.target.files[0];
-                        if(!file)return;
-                        setUploadingPhoto(a.id);
-                        const reader=new FileReader();
-                        reader.onload=async ev=>{
-                          await supabase.from("athletes").update({photo_url:ev.target.result}).eq("id",a.id);
-                          setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:ev.target.result}:x));
-                          setUploadingPhoto(null);
-                        };
-                        reader.readAsDataURL(file);
-                      }}/>
-                    </label>
-                  </div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
+                <div style={{fontSize:13,fontWeight:600,color:GREEN,marginBottom:10}}>Prayer requests</div>
+                {prayers.length===0&&<div style={{fontSize:13,color:"#aaa"}}>No prayer requests.</div>}
+                {prayers.map((item,i)=>(
+                  <InboxItem key={i} item={item} color={GREEN} bg="#EAF3DE" type="prayer" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"pry-"+item.id)} genLoading={genLoading} loadKey={"pry-"+item.id}/>
                 ))}
               </div>
             </div>
           )}
 
-          {tab==="engagement"&&(
-            <div>
-              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>📊 Athlete Engagement</div>
-                <div style={{fontSize:12,color:"#888"}}>See who's using the app, filling out goals, and writing notes.</div>
-              </div>
-              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-                <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:8,marginBottom:8,padding:"0 4px"}}>
-                  {["Athlete","Goals","Notes","Photo"].map(h=>(
-                    <div key={h} style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em",textAlign:h==="Athlete"?"left":"center"}}>{h}</div>
-                  ))}
-                </div>
-                {engAthletes.map((a,i)=>{
-                  const hasGoal=!!(a.athletic_goal||a.character_goal);
-                  const noteCount=[1,2,3,4,5,6].filter(n=>a[`mindset_note_${n}`]||a[`fellowship_note_${n}`]).length;
-                  const hasPhoto=!!a.photo_url;
-                  return(
-                    <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:8,padding:"10px 4px",borderBottom:i<engAthletes.length-1?"0.5px solid #f0f0f0":"none",alignItems:"center"}}>
-                      <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{a.name}</div>
-                      <div style={{textAlign:"center",fontSize:14}}>{hasGoal?"✅":"⬜"}</div>
-                      <div style={{textAlign:"center"}}><span style={{fontSize:12,fontWeight:600,color:noteCount>0?PUR:"#ccc"}}>{noteCount}</span></div>
-                      <div style={{textAlign:"center",fontSize:14}}>{hasPhoto?"📸":"⬜"}</div>
+          {tab==="leaderboard"&&(
+            <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
+              <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Summer leaderboard</div>
+              {leaderboard.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No data yet. Leaderboard builds as athletes check in.</div>}
+              {leaderboard.map((lb,i)=>(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0"}}>
+                  <div style={{width:28,height:28,borderRadius:"50%",background:i===0?GOLD:i===1?"#aaa":i===2?"#CD7F32":"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:i<3?"#fff":"#888",flexShrink:0}}>{i+1}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{lb.athletes?.name}</div>
+                    <div style={{display:"flex",gap:10,marginTop:2}}>
+                      <span style={{fontSize:11,color:GREEN}}>🟢 {lb.early_count||0} early</span>
+                      <span style={{fontSize:11,color:"#854F0B"}}>🔥 {lb.current_streak||0} streak</span>
+                      <span style={{fontSize:11,color:GOLD}}>⚡ {lb.anvil_count||0} anvil</span>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:11,color:RED}}>{lb.late_count||0} late</div>
+                    <div style={{fontSize:11,color:"#aaa"}}>{lb.callout_count||0} callouts</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab==="goals"&&(
+            <div>
+              {athletes.filter(a=>a.status==="active").map(a=>(
+                <div key={a.id} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:10,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+(a.role==="forge"?RED:STEEL)}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0}}>{a.name[0]}</div>
+                    <div><div style={{fontSize:14,fontWeight:600,color:"#1a1a1a"}}>{a.name}</div><div style={{fontSize:12,color:"#888"}}>{a.sport}</div></div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    {[{label:"Athletic goal",goalKey:"athletic_goal",taskKey:"coach_athletic_task",type:"athletic",color:GREEN},{label:"Character goal",goalKey:"character_goal",taskKey:"coach_character_task",type:"character",color:PUR}].map(({label,goalKey,taskKey,type,color})=>(
+                      <div key={goalKey}>
+                        <div style={{fontSize:11,color:"#888",marginBottom:4}}>{label}</div>
+                        <div style={{fontSize:12,color:"#1a1a1a",padding:"6px 8px",background:"#f9f9f9",borderRadius:6,minHeight:40,marginBottom:6}}>{a[goalKey]||<span style={{color:"#ccc"}}>Not set</span>}</div>
+                       <textarea id={a.id+"-"+type} defaultValue={a[taskKey]||""} placeholder="Type your response or generate one..." style={{width:"100%",minHeight:70,padding:"8px",fontSize:12,border:"0.5px solid "+color,borderRadius:6,background:BG,color:"#fff",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
+                        <div style={{display:"flex",gap:6,marginBottom:6}}>
+                          <button onClick={()=>generateTask(a,type)} disabled={!a[goalKey]||genLoading===a.id+"-"+type} style={{flex:1,padding:"6px",borderRadius:6,border:"0.5px solid "+color,background:"transparent",color:color,fontSize:11,cursor:a[goalKey]?"pointer":"not-allowed",fontFamily:"Georgia,serif",opacity:a[goalKey]?1:0.4}}>
+                            {genLoading===a.id+"-"+type?"Generating...":"Generate response"}
+                          </button>
+                          <button onClick={async()=>{const val=document.getElementById(a.id+"-"+type)?.value;if(val){await supabase.from("athletes").update({[taskKey]:val}).eq("id",a.id);alert("Sent to "+a.name+"!");}}} style={{flex:1,padding:"6px",borderRadius:6,border:"none",background:color,color:"#fff",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                            Send →
+                          </button>
+                        </div>
+                        {a[taskKey]&&(
+                          <div style={{padding:"8px",background:BG,borderRadius:6,borderLeft:"3px solid "+color}}>
+                            <div style={{fontSize:10,color:color,marginBottom:3}}>Task from Coach Ant</div>
+                            <div style={{fontSize:11,color:"#ccc",lineHeight:1.5}}>{a[taskKey]}</div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
