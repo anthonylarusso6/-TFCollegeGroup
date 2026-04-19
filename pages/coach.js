@@ -112,19 +112,16 @@ export default function Coach(){
 
   const deleteAthlete=async(id,name)=>{
     if(!window.confirm("Delete "+name+"? This cannot be undone."))return;
-    const result=await supabase.from("athletes").delete().eq("id",id);
-    console.log("Delete result:",JSON.stringify(result));
-    if(result.error){
-      alert("Delete error: "+result.error.message);
+    // Delete related records first to avoid foreign key errors
+    await supabase.from("inbox").delete().eq("athlete_id",id);
+    await supabase.from("attendance").delete().eq("athlete_id",id);
+    await supabase.from("leaderboard").delete().eq("athlete_id",id);
+    await supabase.from("weight_log").delete().eq("athlete_id",id).catch(()=>{});
+    const{error}=await supabase.from("athletes").delete().eq("id",id);
+    if(error){
+      alert("Delete error: "+error.message);
     }else{
-      // Verify it's actually gone
-      const{data:check}=await supabase.from("athletes").select("id").eq("id",id);
-      if(check&&check.length>0){
-        alert("Delete ran but athlete still exists in DB — please check Supabase.");
-      }else{
-        setAthletes(p=>p.filter(x=>x.id!==id));
-        alert(name+" deleted successfully.");
-      }
+      setAthletes(p=>p.filter(x=>x.id!==id));
     }
   };
 
