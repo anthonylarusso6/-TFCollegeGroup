@@ -350,6 +350,58 @@ export default function Coach(){
                   ))}
                 </div>
               )}
+              {/* This week attendance chart */}
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:2}}>This week's attendance</div>
+                <div style={{fontSize:12,color:"#888",marginBottom:14}}>Daily check-ins · Mon, Tue, Thu, Fri</div>
+                {(()=>{
+                  const now=new Date();
+                  const monday=new Date(now);
+                  const dow=now.getDay();
+                  const diff=dow===0?-6:1-dow;
+                  monday.setDate(now.getDate()+diff);
+                  const days=[];
+                  for(let i=0;i<5;i++){
+                    const d=new Date(monday);
+                    d.setDate(monday.getDate()+i);
+                    const dayName=["Mon","Tue","Wed","Thu","Fri"][i];
+                    if(dayName==="Wed")continue;
+                    const dateStr=d.toISOString().split("T")[0];
+                    const recs=attendance.filter(a=>a.date===dateStr);
+                    days.push({dayName,date:d.getDate(),early:recs.filter(r=>r.status==="early").length,late:recs.filter(r=>r.status==="late").length,isToday:dateStr===now.toISOString().split("T")[0]});
+                  }
+                  const maxVal=Math.max(...days.map(d=>d.early+d.late),5);
+                  return(
+                    <div>
+                      <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-around",gap:8,height:140,marginBottom:12,borderBottom:"0.5px solid #e0e0e0",paddingBottom:4}}>
+                        {days.map((d,i)=>{
+                          const total=d.early+d.late;
+                          const earlyPct=total>0?(d.early/maxVal)*100:0;
+                          const latePct=total>0?(d.late/maxVal)*100:0;
+                          return(
+                            <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,height:"100%"}}>
+                              <div style={{flex:1,width:"100%",display:"flex",flexDirection:"column",justifyContent:"flex-end",alignItems:"center",gap:1}}>
+                                {total>0&&(
+                                  <>
+                                    {d.late>0&&<div style={{width:"70%",height:`${latePct}%`,background:RED,borderRadius:"4px 4px 0 0",minHeight:latePct>0?4:0}}/>}
+                                    {d.early>0&&<div style={{width:"70%",height:`${earlyPct}%`,background:GREEN,borderRadius:d.late>0?"0":"4px 4px 0 0",minHeight:earlyPct>0?4:0}}/>}
+                                  </>
+                                )}
+                                {total>0&&<div style={{fontSize:11,fontWeight:600,color:"#1a1a1a",marginBottom:2}}>{total}</div>}
+                              </div>
+                              <div style={{fontSize:11,fontWeight:d.isToday?600:400,color:d.isToday?GREEN:"#888"}}>{d.dayName}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div style={{display:"flex",gap:16,justifyContent:"center",fontSize:11,color:"#888"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:2,background:GREEN}}/> Early</div>
+                        <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:2,background:RED}}/> Late</div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Class flow — 2 hours · done by 11:20am</div>
                 {[
