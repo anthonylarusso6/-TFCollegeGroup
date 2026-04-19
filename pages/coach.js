@@ -112,14 +112,19 @@ export default function Coach(){
 
   const deleteAthlete=async(id,name)=>{
     if(!window.confirm("Delete "+name+"? This cannot be undone."))return;
-    // Delete related records first to avoid foreign key errors
-    await supabase.from("inbox").delete().eq("athlete_id",id);
-    await supabase.from("attendance").delete().eq("athlete_id",id);
-    await supabase.from("leaderboard").delete().eq("athlete_id",id);
-    await supabase.from("weight_log").delete().eq("athlete_id",id).catch(()=>{});
+    // Delete all related records first
+    const tables=["inbox","attendance","leaderboard","weight_log","polar_sessions","vitruve_sessions","callouts","goal_reviews"];
+    for(const t of tables){
+      try{await supabase.from(t).delete().eq("athlete_id",id);}catch(e){}
+    }
+    // Small delay to ensure deletes propagate
+    await new Promise(r=>setTimeout(r,500));
     const{error}=await supabase.from("athletes").delete().eq("id",id);
     if(error){
-      alert("Delete error: "+error.message);
+      // If still failing, just archive instead
+      await supabase.from("athletes").update({status:"archived"}).eq("id",id);
+      setAthletes(p=>p.map(x=>x.id===id?{...x,status:"archived"}:x));
+      alert(name+" could not be fully deleted due to linked records — archived instead.");
     }else{
       setAthletes(p=>p.filter(x=>x.id!==id));
     }
