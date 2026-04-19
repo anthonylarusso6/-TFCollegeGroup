@@ -596,6 +596,7 @@ export default function Coach(){
               {(()=>{
                 const thisMonth=new Date().toISOString().slice(0,7);
                 const classDates=[...new Set(attendance.filter(r=>r.date&&r.date.startsWith(thisMonth)).map(r=>r.date))];
+                if(!classDates.length)return null;
                 const activeAthletes=athletes.filter(a=>a.status==="active");
                 const missed=activeAthletes.map(a=>{
                   const attended=attendance.filter(r=>r.athlete_id===a.id&&r.date&&r.date.startsWith(thisMonth)).length;
