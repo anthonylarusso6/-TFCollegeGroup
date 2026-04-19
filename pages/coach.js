@@ -175,6 +175,18 @@ export default function Coach(){
   const todayAtt=attendance.filter(a=>a.date===today.toISOString().split("T")[0]);
   const earlyToday=todayAtt.filter(a=>a.status==="early").length;
   const lateToday=todayAtt.filter(a=>a.status==="late").length;
+  const thisMonth=new Date().toISOString().slice(0,7);
+  const _monday=new Date(today);
+  _monday.setDate(today.getDate()+(today.getDay()===0?-6:1-today.getDay()));
+  const weekDays=["Mon","Tue","Thu","Fri"].map((dn,idx)=>{
+    const d=new Date(_monday);
+    d.setDate(_monday.getDate()+[0,1,3,4][idx]);
+    const ds=d.toISOString().split("T")[0];
+    const recs=attendance.filter(r=>r.date===ds);
+    return{dn,ds,early:recs.filter(r=>r.status==="early").length,late:recs.filter(r=>r.status==="late").length};
+  });
+  const monthClassDates=[...new Set(attendance.filter(r=>r.date&&r.date.startsWith(thisMonth)).map(r=>r.date))];
+  const mostMissed=monthClassDates.length>=2?athletes.filter(a=>a.status==="active").map(a=>({name:a.name,missed:monthClassDates.length-attendance.filter(r=>r.athlete_id===a.id&&r.date&&r.date.startsWith(thisMonth)).length})).filter(a=>a.missed>0).sort((a,b)=>b.missed-a.missed).slice(0,5):[];
 
   const TABS=[
     {id:"overview",label:"Overview"},
@@ -560,62 +572,31 @@ export default function Coach(){
 
           {tab==="attendance"&&(
             <div>
-              {/* Weekly summary */}
-              {(()=>{
-                const now=new Date();
-                const monday=new Date(now);
-                const diff=now.getDay()===0?-6:1-now.getDay();
-                monday.setDate(now.getDate()+diff);
-                const days=[];
-                for(let i=0;i<5;i++){
-                  const d=new Date(monday);
-                  d.setDate(monday.getDate()+i);
-                  const dn=["Mon","Tue","Wed","Thu","Fri"][i];
-                  if(dn==="Wed")continue;
-                  const ds=d.toISOString().split("T")[0];
-                  const recs=attendance.filter(r=>r.date===ds);
-                  days.push({dn,ds,early:recs.filter(r=>r.status==="early").length,late:recs.filter(r=>r.status==="late").length,total:recs.length});
-                }
-                return(
-                  <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
-                    <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>This week's summary</div>
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
-                      {days.map((d,i)=>(
-                        <div key={i} onClick={()=>setAttDate(d.ds)} style={{borderRadius:10,padding:"10px 6px",textAlign:"center",cursor:"pointer",background:attDate===d.ds?GREEN:"#f9f9f9",border:"0.5px solid "+(attDate===d.ds?GREEN:"#e0e0e0")}}>
-                          <div style={{fontSize:11,fontWeight:600,color:attDate===d.ds?"#fff":"#888",marginBottom:4}}>{d.dn}</div>
-                          <div style={{fontSize:16,fontWeight:700,color:attDate===d.ds?"#fff":GREEN}}>{d.early}</div>
-                          <div style={{fontSize:10,color:attDate===d.ds?"#cfffcc":"#888"}}>early</div>
-                          {d.late>0&&<div style={{fontSize:10,color:attDate===d.ds?"#ffcccc":RED}}>{d.late} late</div>}
-                        </div>
-                      ))}
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>This week's summary</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+                  {weekDays.map((d,i)=>(
+                    <div key={i} onClick={()=>setAttDate(d.ds)} style={{borderRadius:10,padding:"10px 6px",textAlign:"center",cursor:"pointer",background:attDate===d.ds?GREEN:"#f9f9f9",border:"0.5px solid "+(attDate===d.ds?GREEN:"#e0e0e0")}}>
+                      <div style={{fontSize:11,fontWeight:600,color:attDate===d.ds?"#fff":"#888",marginBottom:4}}>{d.dn}</div>
+                      <div style={{fontSize:16,fontWeight:700,color:attDate===d.ds?"#fff":GREEN}}>{d.early}</div>
+                      <div style={{fontSize:10,color:attDate===d.ds?"#cfffcc":"#888"}}>early</div>
+                      {d.late>0&&<div style={{fontSize:10,color:attDate===d.ds?"#ffcccc":RED}}>{d.late} late</div>}
                     </div>
-                  </div>
-                );
-              })()}
+                  ))}
+                </div>
+              </div>
 
-              {/* Most missed athletes */}
-              {(()=>{
-                const thisMonth=new Date().toISOString().slice(0,7);
-                const classDates=[...new Set(attendance.filter(r=>r.date&&r.date.startsWith(thisMonth)).map(r=>r.date))];
-                if(classDates.length<2)return null;
-                const activeAthletes=athletes.filter(a=>a.status==="active");
-                const missed=activeAthletes.map(a=>{
-                  const attended=attendance.filter(r=>r.athlete_id===a.id&&r.date&&r.date.startsWith(thisMonth)).length;
-                  return{name:a.name,missed:classDates.length-attended};
-                }).filter(a=>a.missed>0).sort((a,b)=>b.missed-a.missed).slice(0,5);
-                if(!missed.length)return null;
-                return(
-                  <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
-                    <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>Most missed this month</div>
-                    {missed.map((a,i)=>(
-                      <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<missed.length-1?"0.5px solid #f0f0f0":"none"}}>
-                        <div style={{fontSize:13,color:"#1a1a1a"}}>{a.name}</div>
-                        <div style={{fontSize:12,fontWeight:600,color:RED}}>{a.missed} missed</div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
+              {mostMissed.length>0&&(
+                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>Most missed this month</div>
+                  {mostMissed.map((a,i)=>(
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<mostMissed.length-1?"0.5px solid #f0f0f0":"none"}}>
+                      <div style={{fontSize:13,color:"#1a1a1a"}}>{a.name}</div>
+                      <div style={{fontSize:12,fontWeight:600,color:RED}}>{a.missed} missed</div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Date selector + attendance list */}
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
@@ -626,24 +607,16 @@ export default function Coach(){
                   <input type="date" value={attDate} onChange={e=>setAttDate(e.target.value)} style={{padding:"4px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}/>
                 </div>
 
-                {/* Stats for selected day */}
-                {(()=>{
-                  const dayRecs=attendance.filter(r=>r.date===attDate);
-                  const earlyN=dayRecs.filter(r=>r.status==="early").length;
-                  const lateN=dayRecs.filter(r=>r.status==="late").length;
-                  const totalActive=athletes.filter(a=>a.status==="active").length;
-                  if(!dayRecs.length)return null;
-                  return(
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-                      {[{l:"Early",v:earlyN,c:GREEN,bg:"#EAF3DE"},{l:"Late",v:lateN,c:RED,bg:"#FCEBEB"},{l:"Absent",v:totalActive-dayRecs.length,c:"#888",bg:"#f5f5f5"}].map(s=>(
-                        <div key={s.l} style={{background:s.bg,borderRadius:10,padding:"10px",textAlign:"center"}}>
-                          <div style={{fontSize:18,fontWeight:600,color:s.c}}>{s.v}</div>
-                          <div style={{fontSize:11,color:"#888"}}>{s.l}</div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
+                {attendance.filter(r=>r.date===attDate).length>0&&(
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+                    {[{l:"Early",v:attendance.filter(r=>r.date===attDate&&r.status==="early").length,c:GREEN,bg:"#EAF3DE"},{l:"Late",v:attendance.filter(r=>r.date===attDate&&r.status==="late").length,c:RED,bg:"#FCEBEB"},{l:"Absent",v:athletes.filter(a=>a.status==="active").length-attendance.filter(r=>r.date===attDate).length,c:"#888",bg:"#f5f5f5"}].map(s=>(
+                      <div key={s.l} style={{background:s.bg,borderRadius:10,padding:"10px",textAlign:"center"}}>
+                        <div style={{fontSize:18,fontWeight:600,color:s.c}}>{s.v}</div>
+                        <div style={{fontSize:11,color:"#888"}}>{s.l}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {athletes.filter(a=>a.status==="active").map(a=>{
                   const rec=attendance.find(r=>r.athlete_id===a.id&&r.date===attDate);
