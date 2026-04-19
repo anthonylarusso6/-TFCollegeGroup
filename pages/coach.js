@@ -596,7 +596,7 @@ export default function Coach(){
               {(()=>{
                 const thisMonth=new Date().toISOString().slice(0,7);
                 const classDates=[...new Set(attendance.filter(r=>r.date&&r.date.startsWith(thisMonth)).map(r=>r.date))];
-                if(!classDates.length)return null;
+                if(classDates.length<2)return null;
                 const activeAthletes=athletes.filter(a=>a.status==="active");
                 const missed=activeAthletes.map(a=>{
                   const attended=attendance.filter(r=>r.athlete_id===a.id&&r.date&&r.date.startsWith(thisMonth)).length;
@@ -838,17 +838,22 @@ export default function Coach(){
               </div>
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Hall of Fame</div>
-                {anvil.filter(a=>a.type==="individual").map((w,i)=>(
+                {anvil.filter(a=>a.type==="individual").map((w,i)=>{
+                  const ath=athletes.find(a=>a.name===w.athlete_name);
+                  return(
                   <div key={i} style={{display:"flex",gap:12,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"center"}}>
-                    <div style={{width:36,height:36,borderRadius:"50%",background:i===0?"#1f1700":BG,border:"2px solid "+(i===0?GOLD:"#333"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:i===0?GOLD:"#666",fontWeight:600,flexShrink:0}}>{w.athlete_name[0]}</div>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:i===0?"#1f1700":BG,border:"2px solid "+(i===0?GOLD:"#333"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:i===0?GOLD:"#666",fontWeight:600,flexShrink:0,overflow:"hidden"}}>
+                      {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:w.athlete_name[0]}
+                    </div>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:500,color:i===0?GOLD:"#1a1a1a"}}>{w.athlete_name} {i===0&&"⚡"}</div>
+                      <div style={{fontSize:13,fontWeight:600,color:i===0?GOLD:RED}}>{w.athlete_name} {i===0&&"⚡"}</div>
                       <div style={{fontSize:11,color:"#888"}}>{w.date_awarded}</div>
                       {w.note&&<div style={{fontSize:12,color:"#aaa",fontStyle:"italic"}}>"{w.note}"</div>}
                     </div>
                     {i===0&&<span style={{fontSize:10,background:"#1f1700",color:GOLD,padding:"2px 7px",borderRadius:5}}>Current</span>}
                   </div>
-                ))}
+                  );
+                })}
                 {anvil.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No Anvil winners yet.</div>}
               </div>
             </div>
@@ -972,4 +977,3 @@ function InboxItem({item,color,bg,type,onReply,onGenerate,genLoading,loadKey}){
     </div>
   );
 }
-// Sun Apr 19 23:38:21 UTC 2026
