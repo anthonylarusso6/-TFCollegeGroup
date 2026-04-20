@@ -676,7 +676,7 @@ export default function Coach(){
           {tab==="accountability"&&<Accountability athletes={athletes.filter(a=>a.status==="active")}/>}
 {tab==="fellowship"&&<FellowshipFriday/>}
 {tab==="mindset"&&<MindsetMonday/>}
-{tab==="culture"&&<CultureEvents/>}
+{tab==="culture"&&<CultureEvents athletes={athletes}/>}
 
           {tab==="prayers"&&(
             <div>
