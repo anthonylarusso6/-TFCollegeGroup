@@ -40,6 +40,7 @@ export default function Coach(){
   const[genLoading,setGenLoading]=useState(null);
   const[attDate,setAttDate]=useState(new Date().toISOString().split("T")[0]);
   const[attRecords,setAttRecords]=useState(null);
+  const[lbSort,setLbSort]=useState("early");
   const[inboxFilter,setInboxFilter]=useState("all");
   const[inboxAthFilter,setInboxAthFilter]=useState("");
   const[rosterSearch,setRosterSearch]=useState("");
@@ -986,26 +987,88 @@ export default function Coach(){
           )}
 
           {tab==="leaderboard"&&(
-            <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
-              <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Summer leaderboard</div>
-              {leaderboard.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No data yet. Leaderboard builds as athletes check in.</div>}
-              {leaderboard.map((lb,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0"}}>
-                  <div style={{width:28,height:28,borderRadius:"50%",background:i===0?GOLD:i===1?"#aaa":i===2?"#CD7F32":"#f5f5f5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:i<3?"#fff":"#888",flexShrink:0}}>{i+1}</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{lb.athletes?.name}</div>
-                    <div style={{display:"flex",gap:10,marginTop:2}}>
-                      <span style={{fontSize:11,color:GREEN}}>🟢 {lb.early_count||0} early</span>
-                      <span style={{fontSize:11,color:"#854F0B"}}>🔥 {lb.current_streak||0} streak</span>
-                      <span style={{fontSize:11,color:GOLD}}>⚡ {lb.anvil_count||0} anvil</span>
+            <div>
+              {/* Sort options */}
+              <div style={{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}}>
+                {[
+                  {id:"early",label:"Early arrivals"},
+                  {id:"streak",label:"Current streak"},
+                  {id:"best",label:"Best streak"},
+                  {id:"callout",label:"Most callouts"},
+                ].map(s=>(
+                  <button key={s.id} onClick={()=>setLbSort(s.id)} style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid "+(lbSort===s.id?GOLD:"#e0e0e0"),background:lbSort===s.id?GOLD:"#fff",color:lbSort===s.id?"#1a1a1a":"#888",fontSize:12,fontWeight:lbSort===s.id?600:400,cursor:"pointer",fontFamily:"Georgia,serif",flexShrink:0}}>
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Most improved */}
+              {(()=>{
+                const improved=leaderboard.filter(lb=>lb.current_streak>=3&&lb.current_streak>=(lb.best_streak||0)*0.8).sort((a,b)=>(b.current_streak||0)-(a.current_streak||0))[0];
+                if(!improved)return null;
+                const ath=athletes.find(a=>a.name===improved.athletes?.name);
+                return(
+                  <div style={{background:"linear-gradient(135deg,#1f1700,#2a2000)",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid "+GOLD+"44"}}>
+                    <div style={{fontSize:11,color:GOLD,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>🔥 Most improved — on fire</div>
+                    <div style={{display:"flex",alignItems:"center",gap:12}}>
+                      <div style={{width:44,height:44,borderRadius:"50%",background:STEEL,overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:500,color:"#fff",border:"2px solid "+GOLD}}>
+                        {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(improved.athletes?.name||"?")[0]}
+                      </div>
+                      <div>
+                        <div style={{fontSize:15,fontWeight:600,color:GOLD}}>{improved.athletes?.name}</div>
+                        <div style={{fontSize:12,color:"#888"}}>🔥 {improved.current_streak} day streak · {improved.early_count||0} early total</div>
+                      </div>
                     </div>
                   </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:11,color:RED}}>{lb.late_count||0} late</div>
-                    <div style={{fontSize:11,color:"#aaa"}}>{lb.callout_count||0} callouts</div>
-                  </div>
+                );
+              })()}
+
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>
+                  {lbSort==="early"?"Early arrivals":lbSort==="streak"?"Current streak":lbSort==="best"?"Best streak":"Most callouts"}
                 </div>
-              ))}
+                {leaderboard.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No data yet.</div>}
+                {[...leaderboard].sort((a,b)=>{
+                  if(lbSort==="early")return(b.early_count||0)-(a.early_count||0);
+                  if(lbSort==="streak")return(b.current_streak||0)-(a.current_streak||0);
+                  if(lbSort==="best")return(b.best_streak||0)-(a.best_streak||0);
+                  return(b.callout_count||0)-(a.callout_count||0);
+                }).map((lb,i)=>{
+                  const ath=athletes.find(a=>a.name===lb.athletes?.name);
+                  const maxVal=Math.max(...leaderboard.map(x=>lbSort==="early"?x.early_count||0:lbSort==="streak"?x.current_streak||0:lbSort==="best"?x.best_streak||0:x.callout_count||0),1);
+                  const val=lbSort==="early"?lb.early_count||0:lbSort==="streak"?lb.current_streak||0:lbSort==="best"?lb.best_streak||0:lb.callout_count||0;
+                  const pct=Math.round((val/maxVal)*100);
+                  return(
+                    <div key={i} style={{padding:"10px 0",borderBottom:"0.5px solid #f0f0f0"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                        <div style={{width:24,fontSize:13,fontWeight:700,color:i===0?GOLD:i===1?"#999":i===2?"#CD7F32":"#888",textAlign:"center",flexShrink:0}}>
+                          {i===0?"🥇":i===1?"🥈":i===2?"🥉":"#"+(i+1)}
+                        </div>
+                        <div style={{width:34,height:34,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff"}}>
+                          {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(lb.athletes?.name||"?")[0]}
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
+                            <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{lb.athletes?.name}</div>
+                            <div style={{fontSize:13,fontWeight:700,color:lbSort==="callout"?RED:GOLD}}>{val}</div>
+                          </div>
+                          {/* Progress bar */}
+                          <div style={{height:5,background:"#f0f0f0",borderRadius:3,overflow:"hidden"}}>
+                            <div style={{height:"100%",width:pct+"%",background:lbSort==="callout"?RED:i===0?GOLD:GREEN,borderRadius:3,transition:"width 0.3s"}}/>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{display:"flex",gap:10,paddingLeft:68,flexWrap:"wrap"}}>
+                        <span style={{fontSize:11,color:GREEN}}>🟢 {lb.early_count||0} early</span>
+                        <span style={{fontSize:11,color:"#854F0B"}}>🔥 {lb.current_streak||0} streak</span>
+                        <span style={{fontSize:11,color:"#aaa"}}>best {lb.best_streak||0}</span>
+                        {(lb.late_count||0)>0&&<span style={{fontSize:11,color:RED}}>{lb.late_count} late</span>}
+                        {(lb.callout_count||0)>0&&<span style={{fontSize:11,color:"#aaa"}}>{lb.callout_count} callouts</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
