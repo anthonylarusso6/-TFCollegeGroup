@@ -44,25 +44,24 @@ export default function CultureEvents({athletes=[]}){
 
   const loadAll=async()=>{
     setLoading(true);
-    // Load events
-    const{data:evData}=await supabase.from("culture_events").select("*").order("date",{ascending:true}).catch(()=>({data:[]}));
-    if(evData)setEvents(evData);
-    // Load RSVPs
-    const{data:rsvpData}=await supabase.from("culture_rsvps").select("*").catch(()=>({data:[]}));
-    if(rsvpData){
+    try{
+      const safe=async(fn)=>{try{const r=await fn();return r.data||[];}catch{return[];}};
+      const[evData,rsvpData,photoData,tmplData]=await Promise.all([
+        safe(()=>supabase.from("culture_events").select("*").order("date",{ascending:true})),
+        safe(()=>supabase.from("culture_rsvps").select("*")),
+        safe(()=>supabase.from("culture_photos").select("*").order("created_at",{ascending:false})),
+        safe(()=>supabase.from("culture_templates").select("*")),
+      ]);
+      setEvents(evData);
+      setPhotos(photoData);
+      if(tmplData.length>0)setTemplates([...DEFAULT_TEMPLATES,...tmplData]);
       const map={};
       rsvpData.forEach(r=>{
         if(!map[r.event_id])map[r.event_id]=[];
         map[r.event_id].push(r.athlete_name);
       });
       setRsvpMap(map);
-    }
-    // Load photos
-    const{data:photoData}=await supabase.from("culture_photos").select("*").order("created_at",{ascending:false}).catch(()=>({data:[]}));
-    if(photoData)setPhotos(photoData);
-    // Load custom templates
-    const{data:tmplData}=await supabase.from("culture_templates").select("*").catch(()=>({data:[]}));
-    if(tmplData&&tmplData.length>0)setTemplates([...DEFAULT_TEMPLATES,...tmplData]);
+    }catch(e){console.error("CultureEvents load error:",e);}
     setLoading(false);
   };
 
