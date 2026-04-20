@@ -40,6 +40,9 @@ export default function Coach(){
   const[genLoading,setGenLoading]=useState(null);
   const[attDate,setAttDate]=useState(new Date().toISOString().split("T")[0]);
   const[attRecords,setAttRecords]=useState(null);
+  const[goalsSearch,setGoalsSearch]=useState("");
+  const[goalsFilter,setGoalsFilter]=useState("all");
+  const[goalReviews,setGoalReviews]=useState({});
   const[lbSort,setLbSort]=useState("early");
   const[inboxFilter,setInboxFilter]=useState("all");
   const[inboxAthFilter,setInboxAthFilter]=useState("");
@@ -1074,29 +1077,81 @@ export default function Coach(){
 
           {tab==="goals"&&(
             <div>
-              {athletes.filter(a=>a.status==="active").map(a=>(
-                <div key={a.id} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:10,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+(a.role==="forge"?RED:STEEL)}}>
+              {/* Search + filter */}
+              <div style={{position:"relative",marginBottom:10}}>
+                <input value={goalsSearch} onChange={e=>setGoalsSearch(e.target.value)} placeholder="Search athlete..." style={{width:"100%",padding:"10px 12px 10px 34px",borderRadius:10,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",background:"#fafafa",color:"#1a1a1a",boxSizing:"border-box"}}/>
+                <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#aaa"}}>🔍</div>
+                {goalsSearch&&<button onClick={()=>setGoalsSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:14,color:"#aaa",cursor:"pointer"}}>✕</button>}
+              </div>
+              <div style={{display:"flex",gap:6,marginBottom:12}}>
+                {[
+                  {id:"all",label:"All"},
+                  {id:"missing",label:"⚠ No goals"},
+                  {id:"set",label:"✓ Has goals"},
+                ].map(f=>(
+                  <button key={f.id} onClick={()=>setGoalsFilter(f.id)} style={{flex:1,padding:"7px",borderRadius:8,border:"0.5px solid "+(goalsFilter===f.id?PUR:"#e0e0e0"),background:goalsFilter===f.id?PUR:"#fff",color:goalsFilter===f.id?"#fff":"#888",fontSize:12,fontWeight:goalsFilter===f.id?600:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {athletes.filter(a=>{
+                if(a.status!=="active")return false;
+                if(goalsSearch&&!a.name?.toLowerCase().includes(goalsSearch.toLowerCase()))return false;
+                if(goalsFilter==="missing")return!a.athletic_goal&&!a.character_goal;
+                if(goalsFilter==="set")return!!(a.athletic_goal||a.character_goal);
+                return true;
+              }).map(a=>{
+                const hasGoal=!!(a.athletic_goal||a.character_goal);
+                const review=goalReviews[a.id]||"";
+                return(
+                <div key={a.id} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:10,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+(hasGoal?GREEN:RED)}}>
+                  {/* Header with photo */}
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                    <div style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0}}>{a.name[0]}</div>
-                    <div><div style={{fontSize:14,fontWeight:600,color:"#1a1a1a"}}>{a.name}</div><div style={{fontSize:12,color:"#888"}}>{a.sport}</div></div>
+                    <div style={{width:38,height:38,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:14,fontWeight:600,color:"#1a1a1a"}}>{a.name}</div>
+                      <div style={{fontSize:12,color:"#888"}}>{a.sport}</div>
+                    </div>
+                    {/* Review status */}
+                    <div style={{display:"flex",gap:4}}>
+                      {[{id:"on_track",label:"✓",color:GREEN,bg:"#EAF3DE"},{id:"needs_work",label:"!",color:"#854F0B",bg:"#FAEEDA"},{id:"reviewed",label:"👁",color:PUR,bg:"#EEEDFE"}].map(r=>(
+                        <button key={r.id} onClick={async()=>{
+                          const newVal=review===r.id?"":r.id;
+                          setGoalReviews(p=>({...p,[a.id]:newVal}));
+                          await supabase.from("athletes").update({goal_review_status:newVal||null}).eq("id",a.id).catch(()=>{});
+                        }} title={r.id.replace("_"," ")} style={{width:28,height:28,borderRadius:6,border:"0.5px solid "+(review===r.id?r.color:"#e0e0e0"),background:review===r.id?r.bg:"#fafafa",color:review===r.id?r.color:"#aaa",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                          {r.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
+                  {!hasGoal&&(
+                    <div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:10,border:"0.5px solid #ffcccc"}}>
+                      <div style={{fontSize:12,color:RED}}>⚠ No goals set yet — follow up with {a.name.split(" ")[0]}</div>
+                    </div>
+                  )}
+
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                     {[{label:"Athletic goal",goalKey:"athletic_goal",taskKey:"coach_athletic_task",type:"athletic",color:GREEN},{label:"Character goal",goalKey:"character_goal",taskKey:"coach_character_task",type:"character",color:PUR}].map(({label,goalKey,taskKey,type,color})=>(
                       <div key={goalKey}>
                         <div style={{fontSize:11,color:"#888",marginBottom:4}}>{label}</div>
-                        <div style={{fontSize:12,color:"#1a1a1a",padding:"6px 8px",background:"#f9f9f9",borderRadius:6,minHeight:40,marginBottom:6}}>{a[goalKey]||<span style={{color:"#ccc"}}>Not set</span>}</div>
-                       <textarea id={a.id+"-"+type} defaultValue={a[taskKey]||""} placeholder="Type your response or generate one..." style={{width:"100%",minHeight:70,padding:"8px",fontSize:12,border:"0.5px solid "+color,borderRadius:6,background:BG,color:"#fff",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
-                        <div style={{display:"flex",gap:6,marginBottom:6}}>
+                        <div style={{fontSize:12,color:a[goalKey]?"#1a1a1a":"#ccc",fontStyle:a[goalKey]?"normal":"italic",padding:"6px 8px",background:"#f9f9f9",borderRadius:6,minHeight:36,marginBottom:6}}>{a[goalKey]||"Not set"}</div>
+                        <textarea id={a.id+"-"+type} defaultValue={a[taskKey]||""} placeholder="Write or generate a task..." style={{width:"100%",minHeight:60,padding:"8px",fontSize:12,border:"0.5px solid "+color,borderRadius:6,background:BG,color:"#fff",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
+                        <div style={{display:"flex",gap:6}}>
                           <button onClick={()=>generateTask(a,type)} disabled={!a[goalKey]||genLoading===a.id+"-"+type} style={{flex:1,padding:"6px",borderRadius:6,border:"0.5px solid "+color,background:"transparent",color:color,fontSize:11,cursor:a[goalKey]?"pointer":"not-allowed",fontFamily:"Georgia,serif",opacity:a[goalKey]?1:0.4}}>
-                            {genLoading===a.id+"-"+type?"Generating...":"Generate response"}
+                            {genLoading===a.id+"-"+type?"Generating...":"AI task"}
                           </button>
                           <button onClick={async()=>{const val=document.getElementById(a.id+"-"+type)?.value;if(val){await supabase.from("athletes").update({[taskKey]:val}).eq("id",a.id);alert("Sent to "+a.name+"!");}}} style={{flex:1,padding:"6px",borderRadius:6,border:"none",background:color,color:"#fff",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>
                             Send →
                           </button>
                         </div>
                         {a[taskKey]&&(
-                          <div style={{padding:"8px",background:BG,borderRadius:6,borderLeft:"3px solid "+color}}>
-                            <div style={{fontSize:10,color:color,marginBottom:3}}>Task from Coach Ant</div>
+                          <div style={{padding:"6px 8px",background:BG,borderRadius:6,borderLeft:"3px solid "+color,marginTop:6}}>
+                            <div style={{fontSize:10,color:color,marginBottom:2}}>Current task</div>
                             <div style={{fontSize:11,color:"#ccc",lineHeight:1.5}}>{a[taskKey]}</div>
                           </div>
                         )}
@@ -1104,7 +1159,8 @@ export default function Coach(){
                     ))}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
