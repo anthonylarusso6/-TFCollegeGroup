@@ -74,15 +74,32 @@ export default function Accountability({athletes}){
   };
 
   const todayCallouts=callouts.filter(c=>new Date(c.logged_at).toDateString()===new Date().toDateString());
+  const totalCrunchesToday=todayCallouts.reduce((sum,c)=>sum+(c.crunches||0),0);
   const patternMap={};
   callouts.forEach(c=>{
     const name=c.athletes?.name;
     if(name)patternMap[name]=(patternMap[name]||0)+(c.count||1);
   });
   const patterns=Object.entries(patternMap).sort((a,b)=>b[1]-a[1]);
+  // Crunch leaderboard — total crunches per athlete all time
+  const crunchMap={};
+  callouts.forEach(c=>{
+    const name=c.athletes?.name;
+    if(name)crunchMap[name]=(crunchMap[name]||0)+(c.crunches||0);
+  });
+  const crunchLb=Object.entries(crunchMap).sort((a,b)=>b[1]-a[1]);
 
   return(
     <div>
+      {/* Today's total crunches */}
+      {totalCrunchesToday>0&&(
+        <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"2px solid "+RED+"66",textAlign:"center"}}>
+          <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>Total crunches owed today</div>
+          <div style={{fontSize:56,fontWeight:700,color:RED,lineHeight:1}}>{totalCrunchesToday}</div>
+          <div style={{fontSize:12,color:"#888",marginTop:4}}>{todayCallouts.length} callout{todayCallouts.length!==1?"s":""} across {[...new Set(todayCallouts.map(c=>c.athlete_id))].length} athlete{[...new Set(todayCallouts.map(c=>c.athlete_id))].length!==1?"s":""}</div>
+        </div>
+      )}
+
       {/* Rules reference */}
       <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
         <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>Rules & standards</div>
@@ -139,11 +156,15 @@ export default function Accountability({athletes}){
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(100px,1fr))",gap:8}}>
               {athletes.map(a=>{
                 const todayCount=todayCallouts.filter(c=>c.athlete_id===a.id).reduce((n,c)=>n+(c.count||1),0);
+                const todayCrunches=todayCallouts.filter(c=>c.athlete_id===a.id).reduce((n,c)=>n+(c.crunches||0),0);
                 return(
-                  <button key={a.id} onClick={()=>{setSelectedAthlete(a);setStep("violation");}} style={{padding:"10px 8px",borderRadius:10,border:"0.5px solid #e0e0e0",background:"#f9f9f9",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",position:"relative"}}>
-                    <div style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",margin:"0 auto 6px"}}>{a.name[0]}</div>
+                  <button key={a.id} onClick={()=>{setSelectedAthlete(a);setStep("violation");}} style={{padding:"10px 8px",borderRadius:10,border:"0.5px solid "+(todayCount>0?RED+"66":"#e0e0e0"),background:todayCount>0?"#fff5f5":"#f9f9f9",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",position:"relative"}}>
+                    <div style={{width:40,height:40,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:500,color:"#fff",margin:"0 auto 6px",overflow:"hidden",flexShrink:0}}>
+                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
+                    </div>
                     <div style={{fontSize:11,fontWeight:500,color:"#1a1a1a"}}>{a.name.split(" ")[0]}</div>
-                    {todayCount>0&&<div style={{position:"absolute",top:6,right:6,width:18,height:18,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:600}}>{todayCount}</div>}
+                    {todayCrunches>0&&<div style={{fontSize:10,color:RED,marginTop:2}}>{todayCrunches} 💪</div>}
+                    {todayCount>0&&<div style={{position:"absolute",top:4,right:4,width:18,height:18,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:600}}>{todayCount}</div>}
                   </button>
                 );
               })}
@@ -232,6 +253,35 @@ export default function Accountability({athletes}){
               {total>=3&&<span style={{fontSize:10,background:"#FCEBEB",color:RED,padding:"2px 7px",borderRadius:5}}>⚠ Conversation needed</span>}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Crunch leaderboard */}
+      {crunchLb.length>0&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>💪 Crunch leaderboard</div>
+          <div style={{fontSize:12,color:"#888",marginBottom:12}}>Total crunches owed all season</div>
+          {crunchLb.map(([name,total],i)=>{
+            const ath=athletes.find(a=>a.name===name);
+            const max=crunchLb[0][1];
+            return(
+              <div key={name} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<crunchLb.length-1?"0.5px solid #f0f0f0":"none"}}>
+                <div style={{width:28,fontSize:13,fontWeight:600,color:i===0?"#D4AF37":i===1?"#999":i===2?"#CD7F32":"#888",textAlign:"center",flexShrink:0}}>
+                  {i===0?"🥇":i===1?"🥈":i===2?"🥉":"#"+(i+1)}
+                </div>
+                <div style={{width:32,height:32,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                  {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(name||"?")[0]}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{name}</div>
+                  <div style={{marginTop:3,height:4,borderRadius:2,background:"#f0f0f0",overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${(total/max)*100}%`,background:i===0?"#D4AF37":RED,borderRadius:2}}/>
+                  </div>
+                </div>
+                <div style={{fontSize:14,fontWeight:700,color:i===0?"#D4AF37":RED,flexShrink:0}}>{total}</div>
+              </div>
+            );
+          })}
         </div>
       )}
 
