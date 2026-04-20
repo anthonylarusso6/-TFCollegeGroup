@@ -789,49 +789,112 @@ export default function Coach(){
 
           {tab==="anvil"&&(
             <div>
+              {/* Award form — photo grid picker */}
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Award this week's Anvil</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
-                  <div>
-                    <div style={{fontSize:11,color:"#888",marginBottom:4}}>Athlete</div>
-                    <select value={anvilWinner} onChange={e=>setAnvilWinner(e.target.value)} style={{width:"100%",padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}>
-                      <option value="">Select athlete...</option>
-                      {athletes.filter(a=>a.status==="active").map(a=><option key={a.id} value={a.name}>{a.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <div style={{fontSize:11,color:"#888",marginBottom:4}}>Week / date</div>
-                    <input value={anvilDate} onChange={e=>setAnvilDate(e.target.value)} placeholder="e.g. Week 1 · June 2" style={{width:"100%",padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",boxSizing:"border-box"}}/>
-                  </div>
+
+                {/* Athlete photo grid */}
+                <div style={{fontSize:11,color:"#888",marginBottom:8}}>Tap to select athlete</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:12}}>
+                  {athletes.filter(a=>a.status==="active").map(a=>{
+                    const isSelected=anvilWinner===a.name;
+                    const timesWon=anvil.filter(w=>w.athlete_name===a.name&&w.type==="individual").length;
+                    return(
+                      <button key={a.id} onClick={()=>setAnvilWinner(isSelected?"":a.name)} style={{padding:"8px 4px",borderRadius:10,border:"2px solid "+(isSelected?GOLD:"#e0e0e0"),background:isSelected?"#1f1700":"#f9f9f9",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",position:"relative"}}>
+                        <div style={{width:40,height:40,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,margin:"0 auto 4px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:500,color:"#fff",border:isSelected?"2px solid "+GOLD:"none"}}>
+                          {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
+                        </div>
+                        <div style={{fontSize:10,fontWeight:500,color:isSelected?GOLD:"#1a1a1a",lineHeight:1.2}}>{a.name.split(" ")[0]}</div>
+                        {timesWon>0&&<div style={{fontSize:9,color:GOLD}}>⚒ ×{timesWon}</div>}
+                        {isSelected&&<div style={{position:"absolute",top:3,right:3,fontSize:12}}>⭐</div>}
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {anvilWinner&&(
+                  <div style={{background:"#1f1700",borderRadius:10,padding:"10px 12px",marginBottom:12,border:"0.5px solid "+GOLD+"44"}}>
+                    <div style={{fontSize:12,color:GOLD,fontWeight:600}}>⚒ {anvilWinner}</div>
+                    <div style={{fontSize:11,color:"#888",marginTop:2}}>
+                      {anvil.filter(w=>w.athlete_name===anvilWinner&&w.type==="individual").length>0
+                        ?"Has won "+(anvil.filter(w=>w.athlete_name===anvilWinner&&w.type==="individual").length)+" time"+(anvil.filter(w=>w.athlete_name===anvilWinner&&w.type==="individual").length!==1?"s":"")+" before"
+                        :"First time winner"}
+                    </div>
+                  </div>
+                )}
+
                 <div style={{marginBottom:8}}>
-                  <div style={{fontSize:11,color:"#888",marginBottom:4}}>Why they earned it</div>
-                  <textarea value={anvilNote} onChange={e=>setAnvilNote(e.target.value)} placeholder="What did this person do that nobody else did this week?" style={{width:"100%",minHeight:70,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box"}}/>
+                  <div style={{fontSize:11,color:"#888",marginBottom:4}}>Week / date</div>
+                  <input value={anvilDate} onChange={e=>setAnvilDate(e.target.value)} placeholder="e.g. Week 1 · June 2" style={{width:"100%",padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
                 </div>
-                <button onClick={awardAnvil} disabled={!anvilWinner} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:anvilWinner?GOLD:"#e0e0e0",color:anvilWinner?"#1a1a1a":"#aaa",fontSize:14,fontWeight:600,cursor:anvilWinner?"pointer":"not-allowed",fontFamily:"Georgia, serif"}}>Award The Anvil →</button>
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:11,color:"#888",marginBottom:4}}>Why they earned it</div>
+                  <textarea value={anvilNote} onChange={e=>setAnvilNote(e.target.value)} placeholder="What did this person do that nobody else did this week?" style={{width:"100%",minHeight:70,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}/>
+                </div>
+                <button onClick={awardAnvil} disabled={!anvilWinner} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:anvilWinner?GOLD:"#e0e0e0",color:anvilWinner?"#1a1a1a":"#aaa",fontSize:14,fontWeight:600,cursor:anvilWinner?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
+                  Award The Anvil →
+                </button>
               </div>
+
+              {/* Who's never won */}
+              {(()=>{
+                const winners=new Set(anvil.filter(w=>w.type==="individual").map(w=>w.athlete_name));
+                const neverWon=athletes.filter(a=>a.status==="active"&&!winners.has(a.name));
+                if(!neverWon.length)return null;
+                return(
+                  <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>Never won the Anvil</div>
+                    <div style={{fontSize:12,color:"#888",marginBottom:10}}>{neverWon.length} athlete{neverWon.length!==1?"s":""} waiting to be recognized</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                      {neverWon.map((a,i)=>(
+                        <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",borderRadius:20,background:"#f9f9f9",border:"0.5px solid #e0e0e0"}}>
+                          <div style={{width:22,height:22,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",fontWeight:500,flexShrink:0}}>
+                            {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
+                          </div>
+                          <span style={{fontSize:12,color:"#1a1a1a"}}>{a.name.split(" ")[0]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Hall of Fame */}
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Hall of Fame</div>
+                {anvil.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No Anvil winners yet.</div>}
                 {anvil.filter(a=>a.type==="individual").map((w,i)=>{
                   const ath=athletes.find(a=>a.name===w.athlete_name);
+                  const timesWon=anvil.filter(x=>x.athlete_name===w.athlete_name&&x.type==="individual").length;
+                  const prevWinner=i>0?anvil.filter(a=>a.type==="individual")[i-1]:null;
+                  const isStreak=prevWinner&&prevWinner.athlete_name===w.athlete_name;
                   return(
-                  <div key={i} style={{display:"flex",gap:12,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"center"}}>
-                    <div style={{width:36,height:36,borderRadius:"50%",background:i===0?"#1f1700":BG,border:"2px solid "+(i===0?GOLD:"#333"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:i===0?GOLD:"#666",fontWeight:600,flexShrink:0,overflow:"hidden"}}>
-                      {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:w.athlete_name[0]}
+                    <div key={i} style={{display:"flex",gap:12,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"center"}}>
+                      <div style={{width:38,height:38,borderRadius:"50%",background:i===0?"#1f1700":BG,border:"2px solid "+(i===0?GOLD:"#333"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,color:i===0?GOLD:"#666",fontWeight:600,flexShrink:0,overflow:"hidden"}}>
+                        {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(w.athlete_name||"?")[0]}
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                          <div style={{fontSize:13,fontWeight:600,color:i===0?GOLD:RED}}>{w.athlete_name}</div>
+                          {i===0&&<span style={{fontSize:10,background:"#1f1700",color:GOLD,padding:"1px 6px",borderRadius:4}}>Current ⚡</span>}
+                          {isStreak&&<span style={{fontSize:10,background:"#FAEEDA",color:"#854F0B",padding:"1px 6px",borderRadius:4}}>🔥 Back to back</span>}
+                          {timesWon>1&&<span style={{fontSize:10,background:"#f9f9f9",color:"#888",padding:"1px 6px",borderRadius:4}}>×{timesWon} all time</span>}
+                        </div>
+                        <div style={{fontSize:11,color:"#888"}}>{w.date_awarded}</div>
+                        {w.note&&<div style={{fontSize:12,color:"#555",fontStyle:"italic",marginTop:2}}>"{w.note}"</div>}
+                      </div>
+                      <button onClick={async()=>{
+                        if(!window.confirm("Remove this Anvil award?"))return;
+                        await supabase.from("anvil").delete().eq("id",w.id);
+                        setAnvil(p=>p.filter(x=>x.id!==w.id));
+                      }} style={{background:"transparent",border:"none",color:"#ddd",cursor:"pointer",fontSize:14,padding:"4px",flexShrink:0}}>✕</button>
                     </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:600,color:i===0?GOLD:RED}}>{w.athlete_name} {i===0&&"⚡"}</div>
-                      <div style={{fontSize:11,color:"#888"}}>{w.date_awarded}</div>
-                      {w.note&&<div style={{fontSize:12,color:"#aaa",fontStyle:"italic"}}>"{w.note}"</div>}
-                    </div>
-                    {i===0&&<span style={{fontSize:10,background:"#1f1700",color:GOLD,padding:"2px 7px",borderRadius:5}}>Current</span>}
-                  </div>
                   );
                 })}
-                {anvil.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"16px 0"}}>No Anvil winners yet.</div>}
               </div>
             </div>
           )}
+
 
           {tab==="inbox"&&(
             <div>
