@@ -40,6 +40,8 @@ export default function Coach(){
   const[genLoading,setGenLoading]=useState(null);
   const[attDate,setAttDate]=useState(new Date().toISOString().split("T")[0]);
   const[attRecords,setAttRecords]=useState(null);
+  const[inboxFilter,setInboxFilter]=useState("all");
+  const[inboxAthFilter,setInboxAthFilter]=useState("");
   const[rosterSearch,setRosterSearch]=useState("");
   const[rosterStatus,setRosterStatus]=useState("active");
   const[rosterExpanded,setRosterExpanded]=useState(null);
@@ -898,28 +900,88 @@ export default function Coach(){
 
           {tab==="inbox"&&(
             <div>
-              {injuries.length>0&&(
-                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
-                  <div style={{fontSize:13,fontWeight:600,color:RED,marginBottom:10}}>Injury flags</div>
-                  {injuries.map((item,i)=>(
-                    <InboxItem key={i} item={item} color={RED} bg="#FCEBEB" type="injury" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"inj-"+item.id)} genLoading={genLoading} loadKey={"inj-"+item.id}/>
-                  ))}
-                </div>
-              )}
-              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
-                <div style={{fontSize:13,fontWeight:600,color:PUR,marginBottom:10}}>Messages from athletes</div>
-                {messages.length===0&&<div style={{fontSize:13,color:"#aaa"}}>No messages.</div>}
-                {messages.map((item,i)=>(
-                  <InboxItem key={i} item={item} color={PUR} bg="#EEEDFE" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"msg-"+item.id)} genLoading={genLoading} loadKey={"msg-"+item.id}/>
+              {/* Unread counts + filter */}
+              <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+                {[
+                  {id:"all",label:"All",count:inbox.length},
+                  {id:"injury",label:"🤕 Injuries",count:injuries.length,color:RED},
+                  {id:"message",label:"💬 Messages",count:messages.length,color:PUR},
+                  {id:"prayer",label:"🙏 Prayers",count:prayers.length,color:GREEN},
+                ].map(f=>(
+                  <button key={f.id} onClick={()=>setInboxFilter(f.id)} style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid "+(inboxFilter===f.id?(f.color||"#1a1a1a"):"#e0e0e0"),background:inboxFilter===f.id?(f.color||"#1a1a1a"):"#fff",color:inboxFilter===f.id?"#fff":"#888",fontSize:12,fontWeight:inboxFilter===f.id?600:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                    {f.label} {f.count>0&&<span style={{background:inboxFilter===f.id?"rgba(255,255,255,0.3)":"#f0f0f0",borderRadius:10,padding:"0 5px",fontSize:10,color:inboxFilter===f.id?"#fff":"#888"}}>{f.count}</span>}
+                  </button>
                 ))}
               </div>
-              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
-                <div style={{fontSize:13,fontWeight:600,color:GREEN,marginBottom:10}}>Prayer requests</div>
-                {prayers.length===0&&<div style={{fontSize:13,color:"#aaa"}}>No prayer requests.</div>}
-                {prayers.map((item,i)=>(
-                  <InboxItem key={i} item={item} color={GREEN} bg="#EAF3DE" type="prayer" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"pry-"+item.id)} genLoading={genLoading} loadKey={"pry-"+item.id}/>
-                ))}
+
+              {/* Athlete filter */}
+              <div style={{marginBottom:12,display:"flex",gap:8,alignItems:"center"}}>
+                <select value={inboxAthFilter} onChange={e=>setInboxAthFilter(e.target.value)} style={{flex:1,padding:"8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif"}}>
+                  <option value="">All athletes</option>
+                  {athletes.filter(a=>a.status==="active").map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
+                </select>
+                <button onClick={async()=>{
+                  if(!window.confirm("Mark all as done and clear inbox?"))return;
+                  await Promise.all(inbox.map(item=>supabase.from("inbox").update({done:true}).eq("id",item.id)));
+                  setInbox([]);
+                }} style={{padding:"8px 12px",borderRadius:8,border:"0.5px solid #e0e0e0",background:"#fff",color:"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",flexShrink:0}}>
+                  Mark all done
+                </button>
               </div>
+
+              {/* Filtered inbox */}
+              {(()=>{
+                const archiveItem=async(item)=>{
+                  await supabase.from("inbox").update({done:true}).eq("id",item.id);
+                  setInbox(p=>p.filter(x=>x.id!==item.id));
+                };
+                const priorityItem=async(item)=>{
+                  const newPriority=!item.priority;
+                  await supabase.from("inbox").update({priority:newPriority}).eq("id",item.id).catch(()=>{});
+                  setInbox(p=>p.map(x=>x.id===item.id?{...x,priority:newPriority}:x));
+                };
+                let filtered=[...inbox].sort((a,b)=>(b.priority?1:0)-(a.priority?1:0));
+                if(inboxFilter!=="all") filtered=filtered.filter(x=>x.type===inboxFilter);
+                if(inboxAthFilter) filtered=filtered.filter(x=>x.athlete_id===inboxAthFilter);
+                const inj=filtered.filter(x=>x.type==="injury");
+                const msgs=filtered.filter(x=>x.type==="message");
+                const prays=filtered.filter(x=>x.type==="prayer");
+                const other=filtered.filter(x=>!["injury","message","prayer"].includes(x.type));
+                return(
+                  <>
+                    {inj.length>0&&(
+                      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
+                        <div style={{fontSize:13,fontWeight:600,color:RED,marginBottom:10}}>🤕 Injury flags · {inj.length}</div>
+                        {inj.map((item,i)=><InboxItem key={i} item={item} color={RED} bg="#FCEBEB" type="injury" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"inj-"+item.id)} genLoading={genLoading} loadKey={"inj-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
+                      </div>
+                    )}
+                    {msgs.length>0&&(
+                      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
+                        <div style={{fontSize:13,fontWeight:600,color:PUR,marginBottom:10}}>💬 Messages · {msgs.length}</div>
+                        {msgs.map((item,i)=><InboxItem key={i} item={item} color={PUR} bg="#EEEDFE" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"msg-"+item.id)} genLoading={genLoading} loadKey={"msg-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
+                      </div>
+                    )}
+                    {prays.length>0&&(
+                      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
+                        <div style={{fontSize:13,fontWeight:600,color:GREEN,marginBottom:10}}>🙏 Prayer requests · {prays.length}</div>
+                        {prays.map((item,i)=><InboxItem key={i} item={item} color={GREEN} bg="#EAF3DE" type="prayer" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"pry-"+item.id)} genLoading={genLoading} loadKey={"pry-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
+                      </div>
+                    )}
+                    {other.length>0&&(
+                      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+                        <div style={{fontSize:13,fontWeight:600,color:"#888",marginBottom:10}}>Other · {other.length}</div>
+                        {other.map((item,i)=><InboxItem key={i} item={item} color="#888" bg="#f5f5f5" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"oth-"+item.id)} genLoading={genLoading} loadKey={"oth-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
+                      </div>
+                    )}
+                    {filtered.length===0&&(
+                      <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+                        <div style={{fontSize:32,marginBottom:8}}>✓</div>
+                        <div style={{fontSize:14,color:"#888"}}>Inbox is clear</div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
 
@@ -988,29 +1050,64 @@ export default function Coach(){
   );
 }
 
-function InboxItem({item,color,bg,type,onReply,onGenerate,genLoading,loadKey}){
+function InboxItem({item,color,bg,type,onReply,onGenerate,genLoading,loadKey,onArchive,onPriority,athletes}){
   const[reply,setReply]=useState(item.reply||"");
   const[sent,setSent]=useState(item.reply_sent||false);
+  const[showReply,setShowReply]=useState(!item.reply_sent);
+  const ath=athletes?.find(a=>a.id===item.athlete_id);
   const prompts={
     injury:`You are Coach Ant, a faith-based strength coach. Athlete ${item.athletes?.name} reported: "${item.message}". Write a caring professional response as Coach Ant. Acknowledge the injury, tell them what to do, encourage them. Under 60 words.`,
     message:`You are Coach Ant, a faith-based strength coach. Athlete ${item.athletes?.name} sent: "${item.message}". Write a warm personal reply as Coach Ant. Encouraging, real, grounded in faith. Under 60 words.`,
     prayer:`You are Coach Ant, a faith-based coach who prays for athletes. ${item.athletes?.name} submitted: "${item.message}". Write a warm faith-filled response as Coach Ant. Include a short scripture if natural. Under 70 words.`,
   };
+  const RED="#C0392B",GREEN="#1E6B3A",GOLD="#D4AF37",STEEL="#708090";
   return(
-    <div style={{padding:"10px 0",borderBottom:"0.5px solid #f0f0f0"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-        <span style={{fontSize:13,fontWeight:500,color}}>{item.athletes?.name}</span>
-        <span style={{fontSize:11,color:"#aaa"}}>{new Date(item.created_at).toLocaleDateString()}</span>
+    <div style={{padding:"12px 0",borderBottom:"0.5px solid #f0f0f0",opacity:item.archived?0.5:1}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+        {/* Photo */}
+        <div style={{width:34,height:34,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff"}}>
+          {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(item.athletes?.name||"?")[0]}
+        </div>
+        <div style={{flex:1}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:13,fontWeight:600,color}}>{item.anonymous?"Anonymous":item.athletes?.name}</span>
+            {item.priority&&<span style={{fontSize:9,background:RED,color:"#fff",padding:"1px 5px",borderRadius:3,fontWeight:600}}>URGENT</span>}
+            {item.reply_sent&&<span style={{fontSize:10,color:GREEN}}>✓ Replied</span>}
+          </div>
+          <span style={{fontSize:11,color:"#aaa"}}>{new Date(item.created_at).toLocaleDateString()}</span>
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          <button onClick={()=>onPriority&&onPriority(item)} title="Mark urgent" style={{background:"transparent",border:"none",fontSize:14,cursor:"pointer",opacity:item.priority?1:0.3}}>🚨</button>
+          <button onClick={()=>onArchive&&onArchive(item)} title="Archive" style={{background:"transparent",border:"none",fontSize:14,cursor:"pointer",opacity:0.5}}>📁</button>
+        </div>
       </div>
       <div style={{fontSize:13,color:"#555",marginBottom:8,padding:"8px 10px",background:bg,borderRadius:8,borderLeft:"3px solid "+color}}>{item.message}</div>
-      <textarea value={reply} onChange={e=>setReply(e.target.value)} placeholder="Write a reply..." style={{width:"100%",minHeight:50,padding:"6px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-        <button onClick={()=>onGenerate(prompts[type],text=>setReply(text))} style={{padding:"5px 12px",borderRadius:8,border:"0.5px solid "+color,background:"transparent",color,fontSize:11,cursor:"pointer",fontFamily:"Georgia, serif"}}>
-          {genLoading===loadKey?"Generating...":"Generate reply"}
-        </button>
-        <button onClick={async()=>{await onReply(item,reply);setSent(true);}} style={{padding:"5px 14px",borderRadius:8,border:"none",background:color,color:"#fff",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Send reply</button>
-        {sent&&<span style={{fontSize:12,color:GREEN,fontWeight:500}}>✓ Sent</span>}
-      </div>
+      {/* Reply history */}
+      {item.reply&&(
+        <div style={{marginBottom:8}}>
+          <div onClick={()=>setShowReply(!showReply)} style={{fontSize:11,color:GREEN,cursor:"pointer",marginBottom:4}}>
+            {showReply?"▼ Hide reply":"▶ Show your reply"}
+          </div>
+          {showReply&&(
+            <div style={{fontSize:12,color:"#555",padding:"6px 10px",background:"#EAF3DE",borderRadius:8,borderLeft:"3px solid "+GREEN,fontStyle:"italic"}}>
+              "{item.reply}"
+            </div>
+          )}
+        </div>
+      )}
+      {/* Reply box */}
+      {!item.archived&&(
+        <>
+          <textarea value={reply} onChange={e=>setReply(e.target.value)} placeholder="Write a reply..." style={{width:"100%",minHeight:50,padding:"6px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            <button onClick={()=>onGenerate(prompts[type],text=>setReply(text))} style={{padding:"5px 12px",borderRadius:8,border:"0.5px solid "+color,background:"transparent",color,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+              {genLoading===loadKey?"Generating...":"Generate reply"}
+            </button>
+            <button onClick={async()=>{await onReply(item,reply);setSent(true);}} style={{padding:"5px 14px",borderRadius:8,border:"none",background:color,color:"#fff",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>Send reply</button>
+            {sent&&<span style={{fontSize:12,color:GREEN,fontWeight:500}}>✓ Sent</span>}
+          </div>
+        </>
+      )}
     </div>
   );
 }
