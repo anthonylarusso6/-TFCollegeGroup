@@ -80,7 +80,15 @@ export default function Coach(){
     setLoading(false);
     // Load secondary data independently — won't block main load
     supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false}).then(({data})=>{if(data)setCoachPrayers(data);}).catch(()=>{});
-    supabase.from("weight_log").select("*,athletes(name)").order("date",{ascending:false}).then(({data})=>{if(data)setWeightLogs(data);}).catch(()=>{});
+    supabase.from("weight_log").select("*").order("date",{ascending:false}).then(async({data})=>{
+      if(!data)return;
+      // Enrich with athlete names
+      const enriched=data.map(l=>{
+        const ath=athletes.find(a=>a.id===l.athlete_id);
+        return{...l,athletes:{name:ath?.name||"Unknown"}};
+      });
+      setWeightLogs(enriched);
+    }).catch(()=>{});
     supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name").then(({data})=>{if(data)setEngAthletes(data);}).catch(()=>{});
   };
 
