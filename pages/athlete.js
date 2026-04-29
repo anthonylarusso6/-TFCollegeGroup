@@ -818,7 +818,7 @@ function WeightTracker({athleteId}){
 
         {/* Log input */}
         <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:8}}>
-          <input type="number" value={weight} onChange={e=>setWeight(e.target.value)} placeholder="Enter lbs..." style={{flex:1,padding:"14px",borderRadius:10,border:"1px solid #333",fontSize:18,fontFamily:"Georgia,serif",background:"#1a1a1a",color:"#fff",textAlign:"center"}}/>
+          <input type="text" inputMode="decimal" value={weight} onChange={e=>setWeight(e.target.value)} placeholder="Enter lbs..." style={{flex:1,padding:"14px",borderRadius:10,border:"1px solid #333",fontSize:18,fontFamily:"Georgia,serif",background:"#1a1a1a",color:"#fff",textAlign:"center"}}/>
           <button onClick={save} disabled={!weight||saving} style={{padding:"14px 20px",borderRadius:10,border:"none",background:weight?"linear-gradient(135deg,"+GREEN+",#0d4a29)":"#222",color:weight?"#fff":"#444",fontSize:14,fontWeight:600,cursor:weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:80}}>
             {saved?"✓":saving?"...":"Save"}
           </button>
