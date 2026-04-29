@@ -701,57 +701,106 @@ function WeightTracker({athleteId}){
   const[weight,setWeight]=useState("");
   const[saving,setSaving]=useState(false);
   const[saved,setSaved]=useState(false);
-  useEffect(()=>{
-    supabase.from("weight_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true}).then(({data})=>setEntries(data||[])).catch(()=>setEntries([]));
-  },[]);
+  const[error,setError]=useState("");
+  const GREEN="#1E6B3A",RED="#C0392B";
+
+  const loadEntries=async()=>{
+    const{data,error:err}=await supabase.from("weight_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true});
+    if(err){setError("Could not load: "+err.message);return;}
+    setEntries(data||[]);
+  };
+
+  useEffect(()=>{loadEntries();},[]);
+
   const save=async()=>{
     if(!weight)return;
-    setSaving(true);
+    setSaving(true);setError("");
     const today=new Date().toISOString().split("T")[0];
-    await supabase.from("weight_log").upsert({athlete_id:athleteId,date:today,weight:parseFloat(weight)},{onConflict:"athlete_id,date"}).catch(()=>{});
-    const{data}=await supabase.from("weight_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true}).catch(()=>({data:[]}));
-    setEntries(data||[]);
+    // Check if entry already exists for today
+    const existing=entries.find(e=>e.date===today);
+    if(existing){
+      const{error:err}=await supabase.from("weight_log").update({weight:parseFloat(weight)}).eq("id",existing.id);
+      if(err){setError("Save failed: "+err.message);setSaving(false);return;}
+    }else{
+      const{error:err}=await supabase.from("weight_log").insert({athlete_id:athleteId,date:today,weight:parseFloat(weight)});
+      if(err){setError("Save failed: "+err.message);setSaving(false);return;}
+    }
+    await loadEntries();
     setWeight("");setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),3000);
   };
+
   const first=entries[0]?.weight;
   const latest=entries[entries.length-1]?.weight;
   const diff=first&&latest?parseFloat((latest-first).toFixed(1)):null;
-  const GREEN="#1E6B3A",RED="#C0392B",BG="#0f0f0f";
+
+  // Group by week
+  const byWeek=[];
+  const sorted=[...entries].reverse();
+  sorted.forEach(e=>{
+    const d=new Date(e.date);
+    const weekStart=new Date(d);
+    weekStart.setDate(d.getDate()-d.getDay());
+    const key=weekStart.toISOString().split("T")[0];
+    const existing=byWeek.find(w=>w.key===key);
+    if(existing)existing.entries.push(e);
+    else byWeek.push({key,label:"Week of "+weekStart.toLocaleDateString("en-US",{month:"short",day:"numeric"}),entries:[e]});
+  });
+
   return(
     <div>
+      {/* Log today */}
       <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
         <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Log today's weight</div>
-        <div style={{display:"flex",gap:10,alignItems:"center"}}>
+        <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:8}}>
           <input type="number" value={weight} onChange={e=>setWeight(e.target.value)} placeholder="lbs" style={{flex:1,padding:"12px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:16,fontFamily:"Georgia,serif",background:"#fafafa",textAlign:"center"}}/>
           <button onClick={save} disabled={!weight||saving} style={{padding:"12px 20px",borderRadius:8,border:"none",background:weight?GREEN:"#e0e0e0",color:weight?"#fff":"#aaa",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-            {saved?"✓":saving?"...":"Save"}
+            {saved?"✓ Saved":saving?"Saving...":"Save"}
           </button>
         </div>
-        <div style={{fontSize:11,color:"#888",marginTop:8,textAlign:"center"}}>Private — only you can see this</div>
+        {error&&<div style={{fontSize:12,color:RED,marginTop:4}}>{error}</div>}
+        <div style={{fontSize:11,color:"#888",textAlign:"center"}}>Private — only you can see this</div>
       </div>
+
+      {/* Stats */}
       {entries.length>0&&(
-        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center"}}>
-              <div style={{fontSize:18,fontWeight:600,color:"#1a1a1a"}}>{first} lbs</div>
-              <div style={{fontSize:11,color:"#888"}}>Start</div>
-            </div>
-            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center"}}>
-              <div style={{fontSize:18,fontWeight:600,color:"#1a1a1a"}}>{latest} lbs</div>
-              <div style={{fontSize:11,color:"#888"}}>Current</div>
-            </div>
-            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center"}}>
-              <div style={{fontSize:18,fontWeight:600,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#1a1a1a"}}>{diff===null?"—":(diff>0?"+":"")+diff+" lbs"}</div>
-              <div style={{fontSize:11,color:"#888"}}>Change</div>
-            </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+          <div style={{background:"#fff",borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+            <div style={{fontSize:18,fontWeight:600,color:"#1a1a1a"}}>{first} lbs</div>
+            <div style={{fontSize:11,color:"#888"}}>Start</div>
           </div>
-          <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>History</div>
-          {[...entries].reverse().slice(0,10).map((e,i)=>(
-            <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"0.5px solid #f0f0f0"}}>
-              <div style={{fontSize:12,color:"#888"}}>{e.date}</div>
-              <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{e.weight} lbs</div>
+          <div style={{background:"#fff",borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+            <div style={{fontSize:18,fontWeight:600,color:"#1a1a1a"}}>{latest} lbs</div>
+            <div style={{fontSize:11,color:"#888"}}>Current</div>
+          </div>
+          <div style={{background:"#fff",borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+            <div style={{fontSize:18,fontWeight:600,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#1a1a1a"}}>{diff===null?"—":(diff>0?"+":"")+diff+" lbs"}</div>
+            <div style={{fontSize:11,color:"#888"}}>Change</div>
+          </div>
+        </div>
+      )}
+
+      {/* Weekly log */}
+      {byWeek.length>0&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Weekly log</div>
+          {byWeek.map((week,wi)=>(
+            <div key={wi} style={{marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:600,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:6}}>{week.label}</div>
+              {week.entries.map((e,ei)=>(
+                <div key={ei} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:"#f9f9f9",borderRadius:8,marginBottom:4}}>
+                  <div style={{fontSize:12,color:"#888"}}>{new Date(e.date).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</div>
+                  <div style={{fontSize:14,fontWeight:600,color:"#1a1a1a"}}>{e.weight} lbs</div>
+                </div>
+              ))}
             </div>
           ))}
+        </div>
+      )}
+
+      {entries.length===0&&!saving&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+          <div style={{fontSize:32,marginBottom:8}}>⚖️</div>
+          <div style={{fontSize:13,color:"#888"}}>No weight logs yet. Log your first weight above!</div>
         </div>
       )}
     </div>
