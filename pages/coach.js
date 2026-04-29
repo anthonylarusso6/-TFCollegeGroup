@@ -716,9 +716,10 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
               </div>
               {weightLogs.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No weight logs yet. Create the weight_log table in Supabase.</div></div>}
               {Object.entries(weightLogs.reduce((a,l)=>{const n=l.athletes?.name||"Unknown";if(!a[n])a[n]=[];a[n].push(l);return a;},{})).map(([name,entries],i)=>{
-                const first=entries[entries.length-1]?.weight;
-                const latest=entries[0]?.weight;
-                const diff=first&&latest?parseFloat((latest-first).toFixed(1)):null;
+                const sortedEntries=[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date));
+                const first=sortedEntries[0]?.weight!=null?parseFloat(sortedEntries[0].weight):null;
+                const latest=sortedEntries[sortedEntries.length-1]?.weight!=null?parseFloat(sortedEntries[sortedEntries.length-1].weight):null;
+                const diff=first!=null&&latest!=null?parseFloat((latest-first).toFixed(1)):null;
                 return(
                   <div key={i} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0"}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
@@ -726,8 +727,8 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                       <div style={{fontSize:13,fontWeight:600,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#888"}}>{diff===null?"—":(diff>0?"+":"")+diff+" lbs"}</div>
                     </div>
                     <div style={{display:"flex",gap:8}}>
-                      <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:13,fontWeight:500}}>{first||"—"} lbs</div><div style={{fontSize:10,color:"#888"}}>Start</div></div>
-                      <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:13,fontWeight:500}}>{latest||"—"} lbs</div><div style={{fontSize:10,color:"#888"}}>Latest</div></div>
+                      <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:13,fontWeight:500}}>{first!=null?first+"lbs":"—"}</div><div style={{fontSize:10,color:"#888"}}>Start</div></div>
+                      <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:13,fontWeight:500}}>{latest!=null?latest+" lbs":"—"}</div><div style={{fontSize:10,color:"#888"}}>Latest</div></div>
                       <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:13,fontWeight:500}}>{entries.length}</div><div style={{fontSize:10,color:"#888"}}>Entries</div></div>
                     </div>
                   </div>
