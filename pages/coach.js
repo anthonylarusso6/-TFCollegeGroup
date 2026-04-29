@@ -80,10 +80,11 @@ export default function Coach(){
     setLoading(false);
     // Load secondary data independently — won't block main load
     supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false}).then(({data})=>{if(data)setCoachPrayers(data);}).catch(()=>{});
-supabase.from("weight_log").select("*,athletes(name,photo_url,role)").order("date",{ascending:false}).then(({data,error})=>{
-      if(error||!data)return;
+supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({data,error})=>{
+      if(error||!data){console.log("weight_log error:",error);return;}
+      console.log("weight_log raw:",data);
       setWeightLogs(data);
-    }).catch(()=>{});
+    }).catch(e=>{console.log("weight_log catch:",e);});
     supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name").then(({data})=>{if(data)setEngAthletes(data);}).catch(()=>{});
   };
 
@@ -711,7 +712,11 @@ supabase.from("weight_log").select("*,athletes(name,photo_url,role)").order("dat
                 <div style={{fontSize:12,color:"#888"}}>{weightLogs.length} total entries · {Object.keys(weightLogs.reduce((a,l)=>{a[l.athletes?.name||"?"]=1;return a;},{})).length} athletes</div>
               </div>
               {weightLogs.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No weight logs yet. Create the weight_log table in Supabase.</div></div>}
-              {Object.entries(weightLogs.reduce((a,l)=>{const n=l.athletes?.name||"Unknown";if(!a[n])a[n]=[];a[n].push(l);return a;},{})).map(([name,entries],i)=>{
+              {Object.entries(weightLogs.reduce((a,l)=>{
+                  const ath=athletes.find(x=>x.id===l.athlete_id);
+                  const n=l.athletes?.name||ath?.name||l.athlete_id||"Unknown";
+                  if(!a[n])a[n]=[];a[n].push(l);return a;
+                },{})).map(([name,entries],i)=>{
                 const sortedEntries=[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date));
                 const first=sortedEntries[0]?.weight!=null?parseFloat(sortedEntries[0].weight):null;
                 const latest=sortedEntries[sortedEntries.length-1]?.weight!=null?parseFloat(sortedEntries[sortedEntries.length-1].weight):null;
