@@ -40,6 +40,7 @@ export default function Coach(){
   const[genLoading,setGenLoading]=useState(null);
   const[attDate,setAttDate]=useState(new Date().toISOString().split("T")[0]);
   const[attRecords,setAttRecords]=useState(null);
+  const[weightSort,setWeightSort]=useState("change");
   const[goalsSearch,setGoalsSearch]=useState("");
   const[goalsFilter,setGoalsFilter]=useState("all");
   const[goalReviews,setGoalReviews]=useState({});

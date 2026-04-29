@@ -699,15 +699,20 @@ function AccountabilityPartner({athleteId, athletes}){
 function WeightTracker({athleteId}){
   const[entries,setEntries]=useState([]);
   const[weight,setWeight]=useState("");
+  const[goalWeight,setGoalWeight]=useState("");
   const[saving,setSaving]=useState(false);
   const[saved,setSaved]=useState(false);
   const[error,setError]=useState("");
-  const GREEN="#1E6B3A",RED="#C0392B";
+  const[showGoalInput,setShowGoalInput]=useState(false);
+  const GREEN="#1E6B3A",RED="#C0392B",PUR="#534AB7",GOLD="#D4AF37";
 
   const loadEntries=async()=>{
     const{data,error:err}=await supabase.from("weight_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true});
     if(err){setError("Could not load: "+err.message);return;}
     setEntries(data||[]);
+    // Load goal weight from localStorage
+    const saved=localStorage.getItem("goal_weight_"+athleteId);
+    if(saved)setGoalWeight(saved);
   };
 
   useEffect(()=>{loadEntries();},[]);
@@ -716,7 +721,6 @@ function WeightTracker({athleteId}){
     if(!weight)return;
     setSaving(true);setError("");
     const today=new Date().toISOString().split("T")[0];
-    // Check if entry already exists for today
     const existing=entries.find(e=>e.date===today);
     if(existing){
       const{error:err}=await supabase.from("weight_log").update({weight:parseFloat(weight)}).eq("id",existing.id);
@@ -732,19 +736,33 @@ function WeightTracker({athleteId}){
   const first=entries[0]?.weight;
   const latest=entries[entries.length-1]?.weight;
   const diff=first&&latest?parseFloat((latest-first).toFixed(1)):null;
+  const goal=parseFloat(goalWeight)||null;
+  const goalDiff=goal&&latest?parseFloat((goal-latest).toFixed(1)):null;
+  const goalPct=goal&&first?Math.min(100,Math.max(0,Math.round(Math.abs((latest-first)/(goal-first))*100))):0;
 
-  // Group by week
+  // Weekly averages
   const byWeek=[];
-  const sorted=[...entries].reverse();
-  sorted.forEach(e=>{
+  entries.forEach(e=>{
     const d=new Date(e.date);
     const weekStart=new Date(d);
     weekStart.setDate(d.getDate()-d.getDay());
     const key=weekStart.toISOString().split("T")[0];
-    const existing=byWeek.find(w=>w.key===key);
-    if(existing)existing.entries.push(e);
-    else byWeek.push({key,label:"Week of "+weekStart.toLocaleDateString("en-US",{month:"short",day:"numeric"}),entries:[e]});
+    const ex=byWeek.find(w=>w.key===key);
+    if(ex){ex.entries.push(e);ex.avg=parseFloat((ex.entries.reduce((s,x)=>s+x.weight,0)/ex.entries.length).toFixed(1));}
+    else byWeek.push({key,label:"Week of "+weekStart.toLocaleDateString("en-US",{month:"short",day:"numeric"}),entries:[e],avg:e.weight});
   });
+
+  // Mini trend chart data
+  const chartData=entries.slice(-10);
+  const chartMin=chartData.length?Math.min(...chartData.map(e=>e.weight))-2:0;
+  const chartMax=chartData.length?Math.max(...chartData.map(e=>e.weight))+2:100;
+  const chartH=80;
+  const chartW=100;
+  const pts=chartData.map((e,i)=>{
+    const x=(i/(Math.max(chartData.length-1,1)))*chartW;
+    const y=chartH-((e.weight-chartMin)/(chartMax-chartMin))*chartH;
+    return`${x},${y}`;
+  }).join(" ");
 
   return(
     <div>
@@ -761,39 +779,112 @@ function WeightTracker({athleteId}){
         <div style={{fontSize:11,color:"#888",textAlign:"center"}}>Private — only you can see this</div>
       </div>
 
-      {/* Stats */}
+      {/* Stats + mini chart */}
       {entries.length>0&&(
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-          <div style={{background:"#fff",borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-            <div style={{fontSize:18,fontWeight:600,color:"#1a1a1a"}}>{first} lbs</div>
-            <div style={{fontSize:11,color:"#888"}}>Start</div>
+        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center"}}>
+              <div style={{fontSize:17,fontWeight:600,color:"#1a1a1a"}}>{first}</div>
+              <div style={{fontSize:10,color:"#888"}}>Start (lbs)</div>
+            </div>
+            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center"}}>
+              <div style={{fontSize:17,fontWeight:600,color:"#1a1a1a"}}>{latest}</div>
+              <div style={{fontSize:10,color:"#888"}}>Current (lbs)</div>
+            </div>
+            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center"}}>
+              <div style={{fontSize:17,fontWeight:600,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#1a1a1a"}}>{diff===null?"—":(diff>0?"+":"")+diff}</div>
+              <div style={{fontSize:10,color:"#888"}}>Change (lbs)</div>
+            </div>
           </div>
-          <div style={{background:"#fff",borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-            <div style={{fontSize:18,fontWeight:600,color:"#1a1a1a"}}>{latest} lbs</div>
-            <div style={{fontSize:11,color:"#888"}}>Current</div>
-          </div>
-          <div style={{background:"#fff",borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-            <div style={{fontSize:18,fontWeight:600,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#1a1a1a"}}>{diff===null?"—":(diff>0?"+":"")+diff+" lbs"}</div>
-            <div style={{fontSize:11,color:"#888"}}>Change</div>
+
+          {/* Trend chart */}
+          {chartData.length>1&&(
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:8}}>Trend</div>
+              <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",position:"relative"}}>
+                <svg viewBox={`0 0 ${chartW} ${chartH}`} style={{width:"100%",height:80,overflow:"visible"}}>
+                  <defs>
+                    <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={GREEN} stopOpacity="0.3"/>
+                      <stop offset="100%" stopColor={GREEN} stopOpacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  {/* Area fill */}
+                  <polygon points={`0,${chartH} ${pts} ${chartW},${chartH}`} fill="url(#wGrad)"/>
+                  {/* Line */}
+                  <polyline points={pts} fill="none" stroke={GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  {/* Dots */}
+                  {chartData.map((e,i)=>{
+                    const x=(i/(Math.max(chartData.length-1,1)))*chartW;
+                    const y=chartH-((e.weight-chartMin)/(chartMax-chartMin))*chartH;
+                    return<circle key={i} cx={x} cy={y} r="2.5" fill={GREEN}/>;
+                  })}
+                  {/* Goal line */}
+                  {goal&&(
+                    <line x1="0" y1={chartH-((goal-chartMin)/(chartMax-chartMin))*chartH} x2={chartW} y2={chartH-((goal-chartMin)/(chartMax-chartMin))*chartH} stroke={GOLD} strokeWidth="1.5" strokeDasharray="4,3"/>
+                  )}
+                </svg>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+                  <div style={{fontSize:10,color:"#aaa"}}>{chartData[0]?.date}</div>
+                  <div style={{fontSize:10,color:"#aaa"}}>{chartData[chartData.length-1]?.date}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Goal weight */}
+          <div style={{marginBottom:4}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+              <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em"}}>Goal weight</div>
+              <button onClick={()=>setShowGoalInput(!showGoalInput)} style={{fontSize:11,color:PUR,background:"none",border:"none",cursor:"pointer",fontFamily:"Georgia,serif"}}>{goal?"Edit goal":"Set goal"}</button>
+            </div>
+            {showGoalInput&&(
+              <div style={{display:"flex",gap:8,marginBottom:8}}>
+                <input type="number" value={goalWeight} onChange={e=>setGoalWeight(e.target.value)} placeholder="Target lbs" style={{flex:1,padding:"8px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",background:"#fafafa"}}/>
+                <button onClick={()=>{localStorage.setItem("goal_weight_"+athleteId,goalWeight);setShowGoalInput(false);}} style={{padding:"8px 14px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Save</button>
+              </div>
+            )}
+            {goal&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <div style={{fontSize:12,color:"#555"}}>{latest} lbs → {goal} lbs</div>
+                  <div style={{fontSize:12,fontWeight:600,color:goalDiff!==null&&goalDiff<=0?GREEN:PUR}}>{goalDiff!==null?(goalDiff<=0?"✓ Goal reached!":(goalDiff>0?"+":"")+goalDiff+" lbs to go"):"—"}</div>
+                </div>
+                <div style={{height:6,background:"#f0f0f0",borderRadius:3,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:goalPct+"%",background:goalPct>=100?GREEN:PUR,borderRadius:3,transition:"width 0.3s"}}/>
+                </div>
+                <div style={{fontSize:10,color:"#aaa",marginTop:3}}>{goalPct}% of the way there</div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Weekly log */}
+      {/* Weekly log with averages */}
       {byWeek.length>0&&(
         <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
           <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Weekly log</div>
-          {byWeek.map((week,wi)=>(
-            <div key={wi} style={{marginBottom:12}}>
-              <div style={{fontSize:11,fontWeight:600,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:6}}>{week.label}</div>
-              {week.entries.map((e,ei)=>(
-                <div key={ei} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",background:"#f9f9f9",borderRadius:8,marginBottom:4}}>
-                  <div style={{fontSize:12,color:"#888"}}>{new Date(e.date).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</div>
-                  <div style={{fontSize:14,fontWeight:600,color:"#1a1a1a"}}>{e.weight} lbs</div>
+          {[...byWeek].reverse().map((week,wi)=>{
+            const prevWeek=[...byWeek].reverse()[wi+1];
+            const weekDiff=prevWeek?parseFloat((week.avg-prevWeek.avg).toFixed(1)):null;
+            return(
+              <div key={wi} style={{marginBottom:12,paddingBottom:12,borderBottom:wi<byWeek.length-1?"0.5px solid #f0f0f0":"none"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <div style={{fontSize:11,fontWeight:600,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em"}}>{week.label}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:12,fontWeight:600,color:"#1a1a1a"}}>avg {week.avg} lbs</span>
+                    {weekDiff!==null&&<span style={{fontSize:11,color:weekDiff<0?GREEN:weekDiff>0?RED:"#888"}}>{weekDiff>0?"↑":weekDiff<0?"↓":"→"}{Math.abs(weekDiff)}</span>}
+                  </div>
                 </div>
-              ))}
-            </div>
-          ))}
+                {week.entries.map((e,ei)=>(
+                  <div key={ei} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 10px",background:"#f9f9f9",borderRadius:8,marginBottom:3}}>
+                    <div style={{fontSize:12,color:"#888"}}>{new Date(e.date).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{e.weight} lbs</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
 
