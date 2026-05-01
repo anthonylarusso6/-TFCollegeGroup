@@ -21,6 +21,7 @@ export default function Coach(){
   const[coachRole,setCoachRole]=useState("ant");
   const[selectedCoach,setSelectedCoach]=useState(null); // "ant" or "kevin"
   const[pin,setPin]=useState("");
+  const pinRef=useRef(null);
   const[pinStep,setPinStep]=useState("select"); // "select" | "enter" | "create" | "confirm"
   const[pinConfirm,setPinConfirm]=useState("");
   const[pinError,setPinError]=useState("");
@@ -304,8 +305,9 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
               <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:24}}>
                 {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD),background:i<pin.length?(coaches.find(x=>x.id===selectedCoach)?.color||GOLD):"transparent"}}/>)}
               </div>
-              {/* Hidden keyboard input — invisible but auto-focused */}
+              {/* Hidden keyboard input */}
               <input
+                ref={pinRef}
                 autoFocus
                 type="tel"
                 inputMode="numeric"
@@ -334,14 +336,15 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                 }}
                 style={{position:"fixed",top:-100,left:-100,width:1,height:1,opacity:0,pointerEvents:"none"}}
               />
-              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
+              <div onClick={()=>pinRef.current&&pinRef.current.focus()} style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
                 {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
-                  <button key={i} onClick={()=>handlePinKey(k)} style={{padding:"16px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#333"),background:k===null?"transparent":"#141414",fontSize:20,fontWeight:500,cursor:k===null?"default":"pointer",color:"#fff",fontFamily:"Georgia, serif"}}>
+                  <button key={i} onClick={()=>{handlePinKey(k);pinRef.current&&pinRef.current.focus();}} style={{padding:"16px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#333"),background:k===null?"transparent":"#141414",fontSize:20,fontWeight:500,cursor:k===null?"default":"pointer",color:"#fff",fontFamily:"Georgia, serif"}}>
                     {k===null?"":k}
                   </button>
                 ))}
               </div>
-              {pinError&&<div style={{marginTop:14,fontSize:13,color:RED}}>{pinError}</div>}
+              <div onClick={()=>pinRef.current&&pinRef.current.focus()} style={{marginTop:12,fontSize:11,color:"#555",textAlign:"center",cursor:"pointer"}}>tap here then type on keyboard</div>
+              {pinError&&<div style={{marginTop:10,fontSize:13,color:RED}}>{pinError}</div>}
             </>
           )}
         </div>
