@@ -41,6 +41,7 @@ export default function Coach(){
   const[attDate,setAttDate]=useState(new Date().toISOString().split("T")[0]);
   const[attRecords,setAttRecords]=useState(null);
   const[weightSort,setWeightSort]=useState("change");
+  const[weightData,setWeightData]=useState(null);
   const[goalsSearch,setGoalsSearch]=useState("");
   const[goalsFilter,setGoalsFilter]=useState("all");
   const[goalReviews,setGoalReviews]=useState({});
@@ -705,38 +706,100 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
             </div>
           )}
 
-          {tab==="weights"&&(
+          {tab==="weights"&&(()=>{
+            if(!weightData){
+              supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({data,error})=>{
+                if(error){setWeightData([]);return;}
+                setWeightData(data||[]);
+              }).catch(()=>setWeightData([]));
+              return <div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading weights...</div>;
+            }
+            const byAthlete={};
+            weightData.forEach(l=>{
+              const ath=athletes.find(a=>a.id===l.athlete_id);
+              const name=ath?.name||"Unknown";
+              if(!byAthlete[name])byAthlete[name]={ath,entries:[]};
+              byAthlete[name].entries.push(l);
+            });
+            const rows=Object.entries(byAthlete).map(([name,{ath,entries}])=>{
+              const sorted=[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date));
+              const first=sorted[0]?.weight!=null?parseFloat(sorted[0].weight):null;
+              const latest=sorted[sorted.length-1]?.weight!=null?parseFloat(sorted[sorted.length-1].weight):null;
+              const diff=first!=null&&latest!=null?parseFloat((latest-first).toFixed(1)):null;
+              return{name,ath,entries:sorted,first,latest,diff};
+            }).sort((a,b)=>{
+              if(weightSort==="change")return Math.abs(b.diff||0)-Math.abs(a.diff||0);
+              if(weightSort==="loss")return(a.diff||0)-(b.diff||0);
+              if(weightSort==="gain")return(b.diff||0)-(a.diff||0);
+              return b.entries.length-a.entries.length;
+            });
+            return(
             <div>
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>⚖️ Weight Log</div>
-                <div style={{fontSize:12,color:"#888"}}>{weightLogs.length} total entries · {Object.keys(weightLogs.reduce((a,l)=>{a[l.athletes?.name||"?"]=1;return a;},{})).length} athletes</div>
+                <div style={{fontSize:12,color:"#888",marginBottom:10}}>{weightData.length} entries · {rows.length} athletes</div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {[{id:"change",label:"Most change"},{id:"loss",label:"Most loss"},{id:"gain",label:"Most gain"},{id:"entries",label:"Most active"}].map(s=>(
+                    <button key={s.id} onClick={()=>setWeightSort(s.id)} style={{padding:"5px 10px",borderRadius:8,border:"0.5px solid "+(weightSort===s.id?GREEN:"#e0e0e0"),background:weightSort===s.id?GREEN:"transparent",color:weightSort===s.id?"#fff":"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              {weightLogs.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No weight logs yet. Create the weight_log table in Supabase.</div></div>}
-              {Object.entries(weightLogs.reduce((a,l)=>{
-                  const ath=athletes.find(x=>x.id===l.athlete_id);
-                  const n=l.athletes?.name||ath?.name||l.athlete_id||"Unknown";
-                  if(!a[n])a[n]=[];a[n].push(l);return a;
-                },{})).map(([name,entries],i)=>{
-                const sortedEntries=[...entries].sort((a,b)=>new Date(a.date)-new Date(b.date));
-                const first=sortedEntries[0]?.weight!=null?parseFloat(sortedEntries[0].weight):null;
-                const latest=sortedEntries[sortedEntries.length-1]?.weight!=null?parseFloat(sortedEntries[sortedEntries.length-1].weight):null;
-                const diff=first!=null&&latest!=null?parseFloat((latest-first).toFixed(1)):null;
-                return(
-                  <div key={i} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0"}}>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                      <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{name}</div>
-                      <div style={{fontSize:13,fontWeight:600,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#888"}}>{diff===null?"—":(diff>0?"+":"")+diff+" lbs"}</div>
+              {rows.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No weight logs yet.</div></div>}
+              {rows.map(({name,ath,entries,first,latest,diff},i)=>(
+                <div key={i} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff"}}>
+                      {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(name||"?")[0]}
                     </div>
-                    <div style={{display:"flex",gap:8}}>
-                      <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:13,fontWeight:500}}>{first!=null?first+"lbs":"—"}</div><div style={{fontSize:10,color:"#888"}}>Start</div></div>
-                      <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:13,fontWeight:500}}>{latest!=null?latest+" lbs":"—"}</div><div style={{fontSize:10,color:"#888"}}>Latest</div></div>
-                      <div style={{flex:1,background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}><div style={{fontSize:13,fontWeight:500}}>{entries.length}</div><div style={{fontSize:10,color:"#888"}}>Entries</div></div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{name}</div>
+                      <div style={{fontSize:11,color:"#888"}}>{entries.length} log{entries.length!==1?"s":""}</div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:16,fontWeight:700,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#888"}}>
+                        {diff===null?"—":(diff>0?"↑ +":"↓ ")+Math.abs(diff)+" lbs"}
+                      </div>
+                      <div style={{fontSize:10,color:"#aaa"}}>total change</div>
                     </div>
                   </div>
-                );
-              })}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                    <div style={{background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                      <div style={{fontSize:14,fontWeight:600,color:"#1a1a1a"}}>{first!=null?first+" lbs":"—"}</div>
+                      <div style={{fontSize:10,color:"#888"}}>Start</div>
+                    </div>
+                    <div style={{background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                      <div style={{fontSize:14,fontWeight:600,color:"#1a1a1a"}}>{latest!=null?latest+" lbs":"—"}</div>
+                      <div style={{fontSize:10,color:"#888"}}>Latest</div>
+                    </div>
+                    <div style={{background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
+                      <div style={{fontSize:14,fontWeight:600,color:"#1a1a1a"}}>{entries.length}</div>
+                      <div style={{fontSize:10,color:"#888"}}>Entries</div>
+                    </div>
+                  </div>
+                  {entries.length>1&&(
+                    <div style={{marginTop:8,display:"flex",gap:4,overflowX:"auto"}}>
+                      {entries.map((e,ei)=>{
+                        const prev=ei>0?parseFloat(entries[ei-1].weight):null;
+                        const cur=parseFloat(e.weight);
+                        const wd=prev!=null?parseFloat((cur-prev).toFixed(1)):null;
+                        return(
+                          <div key={ei} style={{flexShrink:0,background:"#f9f9f9",borderRadius:8,padding:"5px 8px",textAlign:"center",minWidth:55}}>
+                            <div style={{fontSize:11,fontWeight:600,color:"#1a1a1a"}}>{cur}</div>
+                            {wd!=null&&<div style={{fontSize:10,color:wd<0?GREEN:wd>0?RED:"#888"}}>{wd>0?"↑":wd<0?"↓":"→"}{Math.abs(wd)}</div>}
+                            <div style={{fontSize:9,color:"#aaa"}}>{e.date.slice(5)}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-          )}
+            );
+          })()}
+
 
           {tab==="photos"&&(
             <div>
