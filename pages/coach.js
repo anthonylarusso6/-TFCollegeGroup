@@ -336,14 +336,14 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                 }}
                 style={{position:"fixed",top:-100,left:-100,width:1,height:1,opacity:0,pointerEvents:"none"}}
               />
-              <div onClick={()=>pinRef.current&&pinRef.current.focus()} style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
                 {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
                   <button key={i} onClick={()=>{handlePinKey(k);pinRef.current&&pinRef.current.focus();}} style={{padding:"16px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#333"),background:k===null?"transparent":"#141414",fontSize:20,fontWeight:500,cursor:k===null?"default":"pointer",color:"#fff",fontFamily:"Georgia, serif"}}>
                     {k===null?"":k}
                   </button>
                 ))}
               </div>
-              <div onClick={()=>pinRef.current&&pinRef.current.focus()} style={{marginTop:12,fontSize:11,color:"#555",textAlign:"center",cursor:"pointer"}}>tap here then type on keyboard</div>
+              <div style={{marginTop:14,fontSize:11,color:"#444",textAlign:"center"}}>Tap the dots or numpad · type on keyboard</div>
               {pinError&&<div style={{marginTop:10,fontSize:13,color:RED}}>{pinError}</div>}
             </>
           )}
