@@ -816,7 +816,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                             <div key={ei} style={{flexShrink:0,background:ei===entries.length-1?"#1a1a1a":"#f9f9f9",borderRadius:8,padding:"6px 10px",textAlign:"center",minWidth:54,border:"0.5px solid "+(ei===entries.length-1?"#333":"#f0f0f0")}}>
                               <div style={{fontSize:13,fontWeight:700,color:ei===entries.length-1?"#fff":"#1a1a1a"}}>{cur}</div>
                               {wd!=null&&<div style={{fontSize:10,color:wd<0?GREEN:wd>0?RED:"#888",fontWeight:600}}>{wd>0?"↑":wd<0?"↓":"→"}{Math.abs(wd)}</div>}
-                              <div style={{fontSize:9,color:ei===entries.length-1?"#555":"#aaa"}}>{e.date?.slice(5)}</div>
+                              <div style={{fontSize:9,color:ei===entries.length-1?"#aaa":"#1a1a1a",fontWeight:500}}>{e.date?.slice(5)}</div>
                             </div>
                           );
                         })}
