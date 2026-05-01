@@ -304,21 +304,37 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
               <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:24}}>
                 {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD),background:i<pin.length?(coaches.find(x=>x.id===selectedCoach)?.color||GOLD):"transparent"}}/>)}
               </div>
-              {/* Keyboard input */}
+              {/* Keyboard PIN input */}
               <input
                 autoFocus
-                type="password"
+                type="tel"
                 inputMode="numeric"
                 maxLength={4}
                 value={pin}
                 onChange={e=>{
-                  const val=e.target.value.replace(/\D/g,"").slice(0,4);
+                  const val=e.target.value.replace(/[^0-9]/g,"").slice(0,4);
                   setPin(val);
                   if(val.length===4){
-                    setTimeout(()=>handlePinKey("AUTO_"+val),100);
+                    const c=coaches.find(x=>x.id===selectedCoach);
+                    if(pinStep==="enter"){
+                      if(selectedCoach==="ant"){
+                        if(val===COACH_PIN){setAuthed(true);setCoachRole("ant");setPin("");}
+                        else{setPinError("Wrong PIN. Try again.");setPin("");}
+                      }else{
+                        const kp=getKevinPin();
+                        if(kp&&val===kp){setAuthed(true);setCoachRole("kevin");setPin("");}
+                        else{setPinError("Wrong PIN. Try again.");setPin("");}
+                      }
+                    }else if(pinStep==="create"){
+                      setPinConfirm(val);setPinStep("confirm");setPin("");
+                    }else if(pinStep==="confirm"){
+                      if(val===pinConfirm){saveKevinPin(val);setAuthed(true);setCoachRole("kevin");setPin("");}
+                      else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+                    }
                   }
                 }}
-                style={{opacity:0,position:"absolute",width:1,height:1,pointerEvents:"none"}}
+                placeholder="····"
+                style={{width:160,padding:"14px",borderRadius:12,border:"1px solid #333",background:"#141414",color:"#fff",fontSize:24,textAlign:"center",fontFamily:"Georgia,serif",letterSpacing:"0.3em",marginBottom:20,display:"block",marginLeft:"auto",marginRight:"auto"}}
               />
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
                 {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
@@ -327,8 +343,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                   </button>
                 ))}
               </div>
-              <div style={{marginTop:12,fontSize:11,color:"#555",textAlign:"center"}}>or type your PIN on your keyboard</div>
-              {pinError&&<div style={{marginTop:10,fontSize:13,color:RED}}>{pinError}</div>}
+              {pinError&&<div style={{marginTop:14,fontSize:13,color:RED}}>{pinError}</div>}
             </>
           )}
         </div>
