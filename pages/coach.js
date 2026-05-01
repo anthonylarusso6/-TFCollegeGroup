@@ -304,7 +304,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
               <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:24}}>
                 {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD),background:i<pin.length?(coaches.find(x=>x.id===selectedCoach)?.color||GOLD):"transparent"}}/>)}
               </div>
-              {/* Keyboard PIN input */}
+              {/* Hidden keyboard input — invisible but auto-focused */}
               <input
                 autoFocus
                 type="tel"
@@ -315,7 +315,6 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                   const val=e.target.value.replace(/[^0-9]/g,"").slice(0,4);
                   setPin(val);
                   if(val.length===4){
-                    const c=coaches.find(x=>x.id===selectedCoach);
                     if(pinStep==="enter"){
                       if(selectedCoach==="ant"){
                         if(val===COACH_PIN){setAuthed(true);setCoachRole("ant");setPin("");}
@@ -333,8 +332,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                     }
                   }
                 }}
-                placeholder="····"
-                style={{width:160,padding:"14px",borderRadius:12,border:"1px solid #333",background:"#141414",color:"#fff",fontSize:24,textAlign:"center",fontFamily:"Georgia,serif",letterSpacing:"0.3em",marginBottom:20,display:"block",marginLeft:"auto",marginRight:"auto"}}
+                style={{position:"fixed",top:-100,left:-100,width:1,height:1,opacity:0,pointerEvents:"none"}}
               />
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
                 {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
