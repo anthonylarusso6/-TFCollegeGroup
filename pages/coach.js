@@ -708,63 +708,119 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
 
           {tab==="weights"&&(
             <div>
-              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>⚖️ Weight Log</div>
-                <div style={{fontSize:12,color:"#888"}}>{weightLogs.length} entries across {[...new Set(weightLogs.map(l=>l.athlete_id))].length} athletes</div>
+              {/* Header stat bar */}
+              <div style={{background:"#0f0f0f",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
+                <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+PUR+")"}}/>
+                <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>⚖️ Weight Log</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <div>
+                    <div style={{fontSize:28,fontWeight:700,color:"#fff"}}>{[...new Set(weightLogs.map(l=>l.athlete_id))].length}</div>
+                    <div style={{fontSize:11,color:"#555"}}>athletes tracking</div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:28,fontWeight:700,color:"#fff"}}>{weightLogs.length}</div>
+                    <div style={{fontSize:11,color:"#555"}}>total entries</div>
+                  </div>
+                </div>
               </div>
+
               {weightLogs.length===0&&(
                 <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+                  <div style={{fontSize:32,marginBottom:8}}>⚖️</div>
                   <div style={{fontSize:13,color:"#888"}}>No weight logs yet.</div>
-                  <div style={{fontSize:11,color:"#aaa",marginTop:4}}>Athletes log their weight from their Weight tab.</div>
+                  <div style={{fontSize:11,color:"#aaa",marginTop:4}}>Athletes log from their Weight tab.</div>
                 </div>
               )}
+
               {[...new Set(weightLogs.map(l=>l.athlete_id))].map(aid=>{
                 const ath=athletes.find(a=>a.id===aid);
                 const entries=[...weightLogs.filter(l=>l.athlete_id===aid)].sort((a,b)=>new Date(a.date)-new Date(b.date));
                 const first=entries[0]?.weight!=null?parseFloat(entries[0].weight):null;
                 const latest=entries[entries.length-1]?.weight!=null?parseFloat(entries[entries.length-1].weight):null;
                 const diff=first!=null&&latest!=null?parseFloat((latest-first).toFixed(1)):null;
+                const trending=diff===null?"flat":diff<0?"down":diff>0?"up":"flat";
+                const trendColor=trending==="down"?GREEN:trending==="up"?RED:"#888";
+
+                // Mini sparkline
+                const sparkH=40,sparkW=100;
+                const weights=entries.map(e=>parseFloat(e.weight));
+                const sMin=Math.min(...weights)-1;
+                const sMax=Math.max(...weights)+1;
+                const sparkPts=weights.map((w,i)=>{
+                  const x=(i/(Math.max(weights.length-1,1)))*sparkW;
+                  const y=sparkH-((w-sMin)/(sMax-sMin||1))*sparkH;
+                  return`${x},${y}`;
+                }).join(" ");
+
                 return(
-                  <div key={aid} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                      <div style={{width:36,height:36,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff"}}>
-                        {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(ath?.name||"?")[0]}
-                      </div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{ath?.name||"Unknown"}</div>
-                        <div style={{fontSize:11,color:"#888"}}>{entries.length} log{entries.length!==1?"s":""}</div>
-                      </div>
-                      <div style={{fontSize:16,fontWeight:700,color:diff===null?"#888":diff<0?GREEN:diff>0?RED:"#888"}}>
-                        {diff===null?"—":(diff>0?"↑ +":"↓ ")+Math.abs(diff)+" lbs"}
-                      </div>
-                    </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-                      <div style={{background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
-                        <div style={{fontSize:15,fontWeight:600,color:"#1a1a1a"}}>{first!=null?first:"-"}</div>
-                        <div style={{fontSize:10,color:"#888"}}>Start (lbs)</div>
-                      </div>
-                      <div style={{background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
-                        <div style={{fontSize:15,fontWeight:600,color:"#1a1a1a"}}>{latest!=null?latest:"-"}</div>
-                        <div style={{fontSize:10,color:"#888"}}>Latest (lbs)</div>
-                      </div>
-                      <div style={{background:"#f9f9f9",borderRadius:8,padding:"8px",textAlign:"center"}}>
-                        <div style={{fontSize:15,fontWeight:600,color:"#1a1a1a"}}>{entries.length}</div>
-                        <div style={{fontSize:10,color:"#888"}}>Entries</div>
-                      </div>
-                    </div>
-                    <div style={{marginTop:8,display:"flex",gap:4,overflowX:"auto"}}>
-                      {entries.map((e,ei)=>{
-                        const prev=ei>0?parseFloat(entries[ei-1].weight):null;
-                        const cur=parseFloat(e.weight);
-                        const wd=prev!=null?parseFloat((cur-prev).toFixed(1)):null;
-                        return(
-                          <div key={ei} style={{flexShrink:0,background:"#f9f9f9",borderRadius:8,padding:"5px 8px",textAlign:"center",minWidth:52}}>
-                            <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a"}}>{cur}</div>
-                            {wd!=null&&<div style={{fontSize:10,color:wd<0?GREEN:wd>0?RED:"#888"}}>{wd>0?"↑":wd<0?"↓":"→"}{Math.abs(wd)}</div>}
-                            <div style={{fontSize:9,color:"#aaa"}}>{e.date?.slice(5)}</div>
+                  <div key={aid} style={{background:"#fff",borderRadius:12,marginBottom:10,border:"0.5px solid #e0e0e0",overflow:"hidden"}}>
+                    {/* Colored top bar based on trend */}
+                    <div style={{height:3,background:trendColor}}/>
+                    <div style={{padding:"1rem 1.25rem"}}>
+                      {/* Athlete header */}
+                      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:12}}>
+                        <div style={{width:44,height:44,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:600,color:"#fff",border:"2px solid #f0f0f0"}}>
+                          {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(ath?.name||"?")[0]}
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:15,fontWeight:700,color:"#1a1a1a"}}>{ath?.name||"Unknown"}</div>
+                          <div style={{fontSize:11,color:"#888"}}>{entries.length} log{entries.length!==1?"s":""} · {ath?.sport||""}</div>
+                        </div>
+                        {/* Big trend badge */}
+                        <div style={{background:trendColor+"15",borderRadius:10,padding:"6px 12px",border:"1px solid "+trendColor+"44",textAlign:"center"}}>
+                          <div style={{fontSize:18,fontWeight:800,color:trendColor}}>
+                            {diff===null?"—":(diff>0?"↑":diff<0?"↓":"→")+" "+Math.abs(diff)}
                           </div>
-                        );
-                      })}
+                          <div style={{fontSize:9,color:trendColor,textTransform:"uppercase",letterSpacing:"0.05em"}}>lbs</div>
+                        </div>
+                      </div>
+
+                      {/* Stats row */}
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+                        {[{label:"Start",val:first,color:"#888"},{label:"Current",val:latest,color:"#1a1a1a"},{label:"Entries",val:entries.length,color:PUR}].map(s=>(
+                          <div key={s.label} style={{background:"#f9f9f9",borderRadius:10,padding:"10px 8px",textAlign:"center",border:"0.5px solid #f0f0f0"}}>
+                            <div style={{fontSize:18,fontWeight:700,color:s.color}}>{s.val!=null?s.val:"—"}</div>
+                            <div style={{fontSize:10,color:"#aaa",marginTop:2}}>{s.label}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Sparkline */}
+                      {weights.length>1&&(
+                        <div style={{background:"#f9f9f9",borderRadius:10,padding:"10px 12px",marginBottom:10}}>
+                          <svg viewBox={`0 0 ${sparkW} ${sparkH}`} style={{width:"100%",height:40,overflow:"visible"}}>
+                            <defs>
+                              <linearGradient id={"sg"+aid} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={trendColor} stopOpacity="0.3"/>
+                                <stop offset="100%" stopColor={trendColor} stopOpacity="0"/>
+                              </linearGradient>
+                            </defs>
+                            <polygon points={`0,${sparkH} ${sparkPts} ${sparkW},${sparkH}`} fill={`url(#sg${aid})`}/>
+                            <polyline points={sparkPts} fill="none" stroke={trendColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            {weights.map((w,i)=>{
+                              const x=(i/(Math.max(weights.length-1,1)))*sparkW;
+                              const y=sparkH-((w-sMin)/(sMax-sMin||1))*sparkH;
+                              return<circle key={i} cx={x} cy={y} r={i===weights.length-1?3:1.5} fill={i===weights.length-1?"#1a1a1a":trendColor}/>;
+                            })}
+                          </svg>
+                        </div>
+                      )}
+
+                      {/* Entry history pills */}
+                      <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
+                        {entries.map((e,ei)=>{
+                          const prev=ei>0?parseFloat(entries[ei-1].weight):null;
+                          const cur=parseFloat(e.weight);
+                          const wd=prev!=null?parseFloat((cur-prev).toFixed(1)):null;
+                          return(
+                            <div key={ei} style={{flexShrink:0,background:ei===entries.length-1?"#1a1a1a":"#f9f9f9",borderRadius:8,padding:"6px 10px",textAlign:"center",minWidth:54,border:"0.5px solid "+(ei===entries.length-1?"#333":"#f0f0f0")}}>
+                              <div style={{fontSize:13,fontWeight:700,color:ei===entries.length-1?"#fff":"#1a1a1a"}}>{cur}</div>
+                              {wd!=null&&<div style={{fontSize:10,color:wd<0?GREEN:wd>0?RED:"#888",fontWeight:600}}>{wd>0?"↑":wd<0?"↓":"→"}{Math.abs(wd)}</div>}
+                              <div style={{fontSize:9,color:ei===entries.length-1?"#555":"#aaa"}}>{e.date?.slice(5)}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 );
