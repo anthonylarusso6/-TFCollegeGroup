@@ -5,8 +5,10 @@ const nextConfig = {
     domains: ['kluuoibuhkxukbqodfet.supabase.co'],
   },
   env: {
-    BUILD_TIME: '1776642680',
+    BUILD_TIME_OLD: '1776642680',
   },
 }
 
 module.exports = nextConfig
+
+// force 1777646072
