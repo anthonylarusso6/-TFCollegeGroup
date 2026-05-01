@@ -301,9 +301,25 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
               <div style={{fontSize:13,color:"#888",marginBottom:28}}>
                 {pinStep==="create"?"Create your 4-digit PIN":pinStep==="confirm"?"Confirm your PIN":"Enter your PIN"}
               </div>
-              <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:28}}>
+              <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:24}}>
                 {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD),background:i<pin.length?(coaches.find(x=>x.id===selectedCoach)?.color||GOLD):"transparent"}}/>)}
               </div>
+              {/* Keyboard input */}
+              <input
+                autoFocus
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                value={pin}
+                onChange={e=>{
+                  const val=e.target.value.replace(/\D/g,"").slice(0,4);
+                  setPin(val);
+                  if(val.length===4){
+                    setTimeout(()=>handlePinKey("AUTO_"+val),100);
+                  }
+                }}
+                style={{opacity:0,position:"absolute",width:1,height:1,pointerEvents:"none"}}
+              />
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
                 {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
                   <button key={i} onClick={()=>handlePinKey(k)} style={{padding:"16px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#333"),background:k===null?"transparent":"#141414",fontSize:20,fontWeight:500,cursor:k===null?"default":"pointer",color:"#fff",fontFamily:"Georgia, serif"}}>
@@ -311,7 +327,8 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                   </button>
                 ))}
               </div>
-              {pinError&&<div style={{marginTop:14,fontSize:13,color:RED}}>{pinError}</div>}
+              <div style={{marginTop:12,fontSize:11,color:"#555",textAlign:"center"}}>or type your PIN on your keyboard</div>
+              {pinError&&<div style={{marginTop:10,fontSize:13,color:RED}}>{pinError}</div>}
             </>
           )}
         </div>
@@ -816,7 +833,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                             <div key={ei} style={{flexShrink:0,background:ei===entries.length-1?"#1a1a1a":"#f9f9f9",borderRadius:8,padding:"6px 10px",textAlign:"center",minWidth:54,border:"0.5px solid "+(ei===entries.length-1?"#333":"#f0f0f0")}}>
                               <div style={{fontSize:13,fontWeight:700,color:ei===entries.length-1?"#fff":"#1a1a1a"}}>{cur}</div>
                               {wd!=null&&<div style={{fontSize:10,color:wd<0?GREEN:wd>0?RED:"#888",fontWeight:600}}>{wd>0?"↑":wd<0?"↓":"→"}{Math.abs(wd)}</div>}
-                              <div style={{fontSize:9,color:ei===entries.length-1?"#aaa":"#1a1a1a",fontWeight:500}}>{e.date?.slice(5)}</div>
+                              <div style={{fontSize:10,color:ei===entries.length-1?"#ccc":"#555",fontWeight:600}}>{e.date?.slice(5)}</div>
                             </div>
                           );
                         })}
