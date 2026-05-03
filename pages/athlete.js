@@ -1891,11 +1891,10 @@ export default function Athlete(){
                     </div>
                   );
                   const _items=[
-                    ...(_day==="Mon"?[{time:"9:00am",label:"Mindset Monday",detail:"Pre-class · mindset session with Coach Ant & Kevin",color:GOLD,dur:"30 min"}]:[]),
-                    ...(_day==="Fri"?[{time:"9:00am",label:"Fellowship Friday",detail:"Pre-class · devotional & discussion with Coach Ant",color:PUR,dur:"30 min"}]:[]),
+                    {time:"9:00am",label:_day==="Mon"?"Mindset Monday":_day==="Fri"?"Fellowship Friday":"Pre-class",detail:_day==="Mon"?"Pre-class · mindset session with Coach Ant & Kevin":_day==="Fri"?"Pre-class · devotional & discussion with Coach Ant":"30 min · Polar sign-in · stretch prep",color:_day==="Mon"?GOLD:_day==="Fri"?PUR:"#708090",dur:"30 min"},
                     {time:"9:30am",label:"Stretch & mobility",detail:"10 min · dynamic stretching · all athletes together",color:GREEN,dur:"10 min"},
                     {time:"9:40am",label:"Run",detail:"40–50 min · all 4 groups · hand positions enforced · leaders set pace",color:"#854F0B",dur:"40–50 min"},
-                    {time:"10:30am",label:"Weight room",detail:"30–50 min · groups by tier",color:PUR,dur:"30–50 min"},
+                    {time:"10:30am",label:"Weight room",detail:"30–50 min · 2 groups Tier 1 · 1 group Tier 2 · 1 group Tier 3",color:PUR,dur:"30–50 min"},
                     {time:"11:15am",label:"Closeout & prayer",detail:"5 min · all together · coach or athlete prays",color:RED,dur:"5 min"},
                   ];
                   return(
