@@ -1301,31 +1301,34 @@ function ClassCountdown(){
 }
 
 // ── Group Streak ────────────────────────────────────────────────
-function GroupStreak({attendance,athletes}){
+function GroupStreak(){
   const GREEN="#1E6B3A",BG="#0f0f0f";
+  const[data,setData]=useState(null);
   const today=new Date();
-  const activeAthletes=(athletes||[]).filter(a=>a.status==="active");
-  if(!activeAthletes.length)return null;
 
-  // Find last class day
-  const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  let checkDate=new Date(today);
-  let lastClassDate=null;
-  for(let i=0;i<7;i++){
-    const d=new Date(checkDate);
-    d.setDate(checkDate.getDate()-i);
-    const dow=d.getDay();
-    if([1,2,4,5].includes(dow)){lastClassDate=d.toISOString().split("T")[0];break;}
-  }
-  if(!lastClassDate)return null;
+  useEffect(()=>{
+    // Find last class day
+    let lastClassDate=null;
+    for(let i=0;i<7;i++){
+      const d=new Date(today);
+      d.setDate(today.getDate()-i);
+      if([1,2,4,5].includes(d.getDay())){lastClassDate=d.toISOString().split("T")[0];break;}
+    }
+    if(!lastClassDate){setData({earlyCount:0,totalActive:0});return;}
+    Promise.all([
+      supabase.from("attendance").select("*").eq("date",lastClassDate),
+      supabase.from("athletes").select("id").eq("status","active"),
+    ]).then(([{data:att},{data:aths}])=>{
+      const earlyCount=(att||[]).filter(r=>r.status==="early").length;
+      const totalActive=(aths||[]).length;
+      setData({earlyCount,totalActive,lastClassDate});
+    }).catch(()=>setData({earlyCount:0,totalActive:0}));
+  },[]);
 
-  const lastRecs=(attendance||[]).filter(r=>r.date===lastClassDate);
-  const earlyCount=lastRecs.filter(r=>r.status==="early").length;
-  const totalActive=activeAthletes.length;
+  if(!data||!data.earlyCount)return null;
+  const{earlyCount,totalActive}=data;
   const allEarly=earlyCount>0&&earlyCount===totalActive;
   const pct=totalActive>0?Math.round((earlyCount/totalActive)*100):0;
-
-  if(!earlyCount)return null;
   return(
     <div style={{background:allEarly?"linear-gradient(135deg,#0d1f0f,#1a3a1f)":BG,borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,border:"1px solid "+(allEarly?GREEN+"66":"#222")}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -1877,7 +1880,7 @@ export default function Athlete(){
                 {/* Countdown to class */}
                 <ClassCountdown/>
                 {/* Group streak */}
-                <GroupStreak attendance={attendance} athletes={athletes}/>
+                <GroupStreak/>
                 {/* Day schedule — always shows */}
                 {(()=>{
                   const _days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
