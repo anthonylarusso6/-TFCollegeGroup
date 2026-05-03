@@ -898,25 +898,6 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
 
           {tab==="engagement"&&(
             <div>
-              {/* Daily word editor */}
-              <div style={{background:"#0f0f0f",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid #222",borderTop:"3px solid #D4AF37"}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#D4AF37",marginBottom:4}}>📢 Daily Announcement</div>
-                <div style={{fontSize:12,color:"#555",marginBottom:10}}>This shows at the top of every athlete's profile today.</div>
-                <textarea
-                  defaultValue={currentAnnouncement?.message||""}
-                  onBlur={async e=>{
-                    const msg=e.target.value.trim();
-                    if(!msg)return;
-                    if(currentAnnouncement?.id){
-                      await supabase.from("announcements").update({message:msg}).eq("id",currentAnnouncement.id);
-                    }else{
-                      await supabase.from("announcements").insert({message:msg,active:true});
-                    }
-                  }}
-                  placeholder="Type today's message for athletes..."
-                  style={{width:"100%",minHeight:70,padding:"10px",borderRadius:8,border:"1px solid #333",background:"#1a1a1a",color:"#fff",fontSize:13,fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}
-                />
-              </div>
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>📊 Athlete Engagement</div>
                 <div style={{fontSize:12,color:"#888"}}>See who's using the app, setting goals, and writing notes.</div>
