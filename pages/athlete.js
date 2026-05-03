@@ -1296,6 +1296,139 @@ function ClassCountdown(){
 }
 
 
+function PRLog({athleteId}){
+  const[prs,setPrs]=useState([]);
+  const[lift,setLift]=useState("");
+  const[weight,setPRWeight]=useState("");
+  const[saving,setSaving]=useState(false);
+  const[saved,setSaved]=useState(false);
+  const GREEN="#1E6B3A",GOLD="#D4AF37",RED="#C0392B";
+  const LIFTS=["Squat","Bench Press","Deadlift","Power Clean","Overhead Press","Pull-ups","Push-ups","400m","Mile"];
+  useEffect(()=>{
+    supabase.from("pr_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:false}).then(({data})=>setPrs(data||[])).catch(()=>{});
+  },[]);
+  const save=async()=>{
+    if(!lift||!weight)return;
+    setSaving(true);
+    const today=new Date().toISOString().split("T")[0];
+    await supabase.from("pr_log").insert({athlete_id:athleteId,lift,weight:parseFloat(weight),date:today}).catch(()=>{});
+    const{data}=await supabase.from("pr_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:false}).catch(()=>({data:[]}));
+    setPrs(data||[]);
+    setLift("");setPRWeight("");setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2000);
+  };
+  const bests={};
+  prs.forEach(p=>{if(!bests[p.lift]||p.weight>bests[p.lift].weight)bests[p.lift]=p;});
+  return(
+    <div>
+      <div style={{background:"#0f0f0f",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+RED+")"}}/>
+        <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>🏋️ Log a PR</div>
+        <select value={lift} onChange={e=>setLift(e.target.value)} style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #333",background:"#1a1a1a",color:lift?"#fff":"#555",fontSize:13,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box"}}>
+          <option value="">Select lift...</option>
+          {LIFTS.map(l=><option key={l} value={l}>{l}</option>)}
+        </select>
+        <div style={{display:"flex",gap:8}}>
+          <input type="text" inputMode="decimal" value={weight} onChange={e=>setPRWeight(e.target.value)} placeholder="Weight / reps / time" style={{flex:1,padding:"10px",borderRadius:8,border:"1px solid #333",background:"#1a1a1a",color:"#fff",fontSize:14,fontFamily:"Georgia,serif"}}/>
+          <button onClick={save} disabled={!lift||!weight||saving} style={{padding:"10px 16px",borderRadius:8,border:"none",background:lift&&weight?GOLD:"#222",color:lift&&weight?"#1a1a1a":"#444",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+            {saved?"✓":saving?"...":"Save"}
+          </button>
+        </div>
+      </div>
+      {Object.keys(bests).length>0&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Personal records</div>
+          {Object.entries(bests).map(([lft,pr],i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<Object.keys(bests).length-1?"0.5px solid #f0f0f0":"none"}}>
+              <div style={{fontSize:13,color:"#1a1a1a"}}>{lft}</div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{fontSize:15,fontWeight:700,color:GOLD}}>{pr.weight}</div>
+                <div style={{fontSize:11,color:"#aaa"}}>{pr.date}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {prs.length>0&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>History</div>
+          {prs.slice(0,15).map((p,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<Math.min(prs.length,15)-1?"0.5px solid #f0f0f0":"none"}}>
+              <div style={{fontSize:12,color:"#888"}}>{p.lift} · {p.date}</div>
+              <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{p.weight}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      {prs.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:32,marginBottom:8}}>🏋️</div><div style={{fontSize:13,color:"#888"}}>No PRs logged yet. Log your first one above!</div></div>}
+    </div>
+  );
+}
+
+function AchievementBadges({athlete,anvils}){
+  const GOLD="#D4AF37",GREEN="#1E6B3A",RED="#C0392B",PUR="#534AB7";
+  const[lb,setLb]=useState(null);
+  useEffect(()=>{
+    if(athlete?.id){
+      supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id).single().then(({data})=>setLb(data||{})).catch(()=>setLb({}));
+    }
+  },[athlete?.id]);
+  const streak=lb?.current_streak||0;
+  const early=lb?.early_count||0;
+  const anvilCount=(anvils||[]).filter(a=>a.athlete_name===athlete?.name).length;
+  const BADGES=[
+    {icon:"🌅",label:"First Light",desc:"First early check-in",earned:early>=1,color:GREEN},
+    {icon:"🔥",label:"On Fire",desc:"5-day streak",earned:streak>=5,color:RED},
+    {icon:"💥",label:"Unstoppable",desc:"10-day streak",earned:streak>=10,color:RED},
+    {icon:"⚡",label:"Consistent",desc:"10 early check-ins",earned:early>=10,color:PUR},
+    {icon:"💪",label:"Iron Standard",desc:"25 early check-ins",earned:early>=25,color:PUR},
+    {icon:"⚒",label:"The Anvil",desc:"Won the Anvil award",earned:anvilCount>=1,color:GOLD},
+    {icon:"👑",label:"Anvil Legend",desc:"Won Anvil 3 times",earned:anvilCount>=3,color:GOLD},
+    {icon:"🙏",label:"Iron & Faith",desc:"Part of TF College Group",earned:true,color:PUR},
+  ];
+  const earned=BADGES.filter(b=>b.earned);
+  const locked=BADGES.filter(b=>!b.earned);
+  return(
+    <div>
+      <div style={{background:"#0f0f0f",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #222"}}>
+        <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>🏅 Achievements</div>
+        <div style={{fontSize:13,color:"#fff",marginBottom:8}}>{earned.length} of {BADGES.length} badges earned</div>
+        <div style={{height:4,background:"#222",borderRadius:2,overflow:"hidden"}}>
+          <div style={{height:"100%",width:(earned.length/BADGES.length*100)+"%",background:"linear-gradient(90deg,"+GOLD+","+RED+")",borderRadius:2}}/>
+        </div>
+      </div>
+      {earned.length>0&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Earned</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+            {earned.map((b,i)=>(
+              <div key={i} style={{textAlign:"center",padding:"12px 8px",background:b.color+"11",borderRadius:10,border:"1px solid "+b.color+"33"}}>
+                <div style={{fontSize:28,marginBottom:4}}>{b.icon}</div>
+                <div style={{fontSize:11,fontWeight:600,color:b.color,marginBottom:2}}>{b.label}</div>
+                <div style={{fontSize:10,color:"#888"}}>{b.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {locked.length>0&&(
+        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Locked</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+            {locked.map((b,i)=>(
+              <div key={i} style={{textAlign:"center",padding:"12px 8px",background:"#f9f9f9",borderRadius:10,border:"0.5px solid #e0e0e0",opacity:0.5}}>
+                <div style={{fontSize:28,marginBottom:4,filter:"grayscale(1)"}}>{b.icon}</div>
+                <div style={{fontSize:11,fontWeight:600,color:"#888",marginBottom:2}}>{b.label}</div>
+                <div style={{fontSize:10,color:"#aaa"}}>{b.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function Athlete(){
   const[athletes,setAthletes]=useState([]);
   const[announcement,setAnnouncement]=useState(null);
@@ -1666,6 +1799,7 @@ export default function Athlete(){
 
             {tab==="profile"&&(
               <div>
+                {(()=>{const _d=new Date().getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><div style={{fontSize:24}}>🔥</div></div>);})()}
                 <DailyWord announcement={announcement}/>
                 <ClassCountdown/>
                 {/* Day schedule — always shows */}
@@ -2021,6 +2155,9 @@ export default function Athlete(){
                 </div>
               </div>
             )}
+
+            {tab==="prs"&&<PRLog athleteId={selectedAthlete.id}/>}
+            {tab==="badges"&&<AchievementBadges athlete={selectedAthlete} anvils={anvils}/>}
 
             {tab==="journey"&&(
               <div>
