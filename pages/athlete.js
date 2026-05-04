@@ -1920,7 +1920,6 @@ export default function Athlete(){
       ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My Group"}]),
       {id:"anvil",label:"Anvil"},
       {id:"weight",label:"Weight"},
-      {id:"prs",label:"Iron Room"},
       {id:"leaderboard",label:"Leaderboard"},
       {id:"prayer",label:"Prayer"},
       {id:"bracelets",label:"Bracelets"},
@@ -2389,7 +2388,6 @@ export default function Athlete(){
               </div>
             )}
 
-            {tab==="prs"&&<PRLog athleteId={selectedAthlete.id}/>}
 
             {tab==="journey"&&(
               <div>
