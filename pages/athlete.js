@@ -2014,10 +2014,17 @@ export default function Athlete(){
                 {streak>0&&<div style={{fontSize:11,color:GREEN,marginTop:2}}>🔥 {streak} day streak</div>}
               </div>
             </div>
-            <div style={{display:"flex",overflowX:"auto"}}>
-              {TABS.map(t=>(
-                <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"8px 14px",background:"transparent",border:"none",borderBottom:"2px solid "+(tab===t.id?"#fff":"transparent"),color:tab===t.id?"#fff":"#555",fontSize:13,fontWeight:tab===t.id?500:400,cursor:"pointer",fontFamily:"Georgia, serif",whiteSpace:"nowrap"}}>{t.label}</button>
-              ))}
+            <div style={{display:"flex",overflowX:"auto",gap:4,padding:"0 4px",scrollbarWidth:"none"}}>
+              {TABS.map(t=>{
+                const icons={"profile":"👤","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","private":"🔒","journey":"🛤"};
+                const isActive=tab===t.id;
+                return(
+                <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 12px",background:isActive?"#fff":"transparent",border:"none",borderRadius:10,color:isActive?"#1a1a1a":"#666",fontSize:11,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.15s",boxShadow:isActive?"0 2px 8px rgba(0,0,0,0.15)":"none"}}>
+                  <span style={{fontSize:16}}>{icons[t.id]||"•"}</span>
+                  <span>{t.label}</span>
+                </button>
+                );
+              })}
             </div>
           </div>
 
