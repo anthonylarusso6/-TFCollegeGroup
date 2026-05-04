@@ -1308,9 +1308,9 @@ function PRLog({athleteId}){
   const[selectedLift,setSelectedLift]=useState(null);
   const GREEN="#1E6B3A",GOLD="#D4AF37",RED="#C0392B",PUR="#534AB7",BG="#0f0f0f";
   const LIFT_CATEGORIES=[
-    {label:"Upper Body",color:"#534AB7",lifts:["Bench Press","Push Press","Overhead Press","Pull-ups","Bent Over Row"]},
+    {label:"Upper Body",color:"#534AB7",lifts:["Bench Press","Overhead Press","Pull-ups","Bent Over Row"]},
     {label:"Lower Body",color:"#1E6B3A",lifts:["Back Squat","Front Squat","Deadlift","Romanian Deadlift","Bulgarian Split Squat"]},
-    {label:"Full Body",color:"#C0392B",lifts:["Power Clean","Hang Clean","Power Snatch","Push Jerk"]},
+    {label:"Full Body",color:"#C0392B",lifts:["Power Clean","Hang Clean","Push Press","Power Snatch","Push Jerk"]},
   ];
   const LIFTS=LIFT_CATEGORIES.flatMap(c=>c.lifts);
   const getLiftCategory=(liftName)=>LIFT_CATEGORIES.find(c=>c.lifts.includes(liftName));
@@ -1438,51 +1438,60 @@ function PRLog({athleteId}){
                 </div>
               )}
 
-              {/* Goal progress */}
+              {/* Goal progress — visual slider + ring */}
               <div style={{marginBottom:10}}>
                 {liftGoal?(
-                  <div style={{background:"#f9f9f9",borderRadius:10,padding:"10px 12px",border:"0.5px solid #e0e0e0"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <div style={{fontSize:11,color:"#888",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.04em"}}>Goal progress</div>
-                      <button onClick={()=>{setShowGoal(liftName);setGoalInput(String(liftGoal));}} style={{fontSize:10,color:"#aaa",background:"none",border:"none",cursor:"pointer",fontFamily:"Georgia,serif"}}>Edit</button>
+                  <div style={{background:"#0f0f0f",borderRadius:12,padding:"14px",border:"1px solid #222"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em"}}>Goal progress</div>
+                      <button onClick={()=>{setShowGoal(liftName);setGoalInput(String(liftGoal));}} style={{fontSize:10,color:"#444",background:"none",border:"none",cursor:"pointer",fontFamily:"Georgia,serif"}}>edit</button>
                     </div>
-                    {/* Circular progress */}
-                    <div style={{display:"flex",alignItems:"center",gap:14}}>
-                      <div style={{position:"relative",width:64,height:64,flexShrink:0}}>
-                        <svg viewBox="0 0 64 64" style={{width:64,height:64,transform:"rotate(-90deg)"}}>
-                          <circle cx="32" cy="32" r="26" fill="none" stroke="#e8e8e8" strokeWidth="6"/>
-                          <circle cx="32" cy="32" r="26" fill="none"
+                    {/* Main stats row */}
+                    <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:14}}>
+                      {/* Circle */}
+                      <div style={{position:"relative",width:72,height:72,flexShrink:0}}>
+                        <svg viewBox="0 0 72 72" style={{width:72,height:72,transform:"rotate(-90deg)"}}>
+                          <circle cx="36" cy="36" r="30" fill="none" stroke="#222" strokeWidth="7"/>
+                          <circle cx="36" cy="36" r="30" fill="none"
                             stroke={goalPct>=100?GREEN:goalPct>=75?GOLD:PUR}
-                            strokeWidth="6"
-                            strokeDasharray={`${Math.min(goalPct,100)*1.634} 163.4`}
-                            strokeLinecap="round"/>
+                            strokeWidth="7"
+                            strokeDasharray={`${Math.min(goalPct,100)*1.885} 188.5`}
+                            strokeLinecap="round"
+                            style={{filter:`drop-shadow(0 0 6px ${goalPct>=100?GREEN:goalPct>=75?GOLD:PUR})`}}/>
                         </svg>
-                        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                          <div style={{fontSize:12,fontWeight:800,color:goalPct>=100?GREEN:goalPct>=75?GOLD:PUR}}>{Math.min(goalPct,100)}%</div>
+                        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                          <div style={{fontSize:16,fontWeight:900,color:goalPct>=100?GREEN:goalPct>=75?GOLD:PUR,lineHeight:1}}>{Math.min(goalPct,100)}</div>
+                          <div style={{fontSize:9,color:"#555"}}>%</div>
                         </div>
                       </div>
                       <div style={{flex:1}}>
-                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                          <div style={{textAlign:"center"}}>
-                            <div style={{fontSize:16,fontWeight:700,color:"#1a1a1a"}}>{best?.weight||0}</div>
-                            <div style={{fontSize:9,color:"#aaa"}}>Current</div>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:6}}>
+                          <div>
+                            <div style={{fontSize:24,fontWeight:800,color:"#fff",lineHeight:1}}>{best?.weight||0}</div>
+                            <div style={{fontSize:9,color:"#555",marginTop:2}}>current</div>
                           </div>
-                          <div style={{display:"flex",alignItems:"center",color:"#ccc",fontSize:16}}>→</div>
-                          <div style={{textAlign:"center"}}>
-                            <div style={{fontSize:16,fontWeight:700,color:goalPct>=100?GREEN:PUR}}>{liftGoal}</div>
-                            <div style={{fontSize:9,color:"#aaa"}}>Goal</div>
+                          <div style={{fontSize:13,color:"#333"}}>→</div>
+                          <div style={{textAlign:"right"}}>
+                            <div style={{fontSize:24,fontWeight:800,color:goalPct>=100?GREEN:PUR,lineHeight:1}}>{liftGoal}</div>
+                            <div style={{fontSize:9,color:"#555",marginTop:2}}>goal</div>
                           </div>
                         </div>
-                        {goalPct>=100?(
-                          <div style={{fontSize:12,fontWeight:700,color:GREEN,textAlign:"center"}}>🎉 Goal reached!</div>
-                        ):(
-                          <div style={{fontSize:11,color:"#888",textAlign:"center"}}>{(liftGoal-(best?.weight||0)).toFixed(1)} lbs to go</div>
-                        )}
+                        {/* Slider track */}
+                        <div style={{position:"relative",height:8,background:"#222",borderRadius:4,overflow:"visible"}}>
+                          <div style={{position:"absolute",left:0,top:0,height:"100%",width:Math.min(goalPct,100)+"%",background:goalPct>=100?"linear-gradient(90deg,"+GREEN+",#0d4a29)":goalPct>=75?"linear-gradient(90deg,"+GOLD+",#b8960e)":"linear-gradient(90deg,"+PUR+",#3d35a0)",borderRadius:4,transition:"width 0.5s",boxShadow:goalPct>=100?"0 0 8px "+GREEN:goalPct>=75?"0 0 8px "+GOLD:"0 0 8px "+PUR}}/>
+                          {/* Thumb */}
+                          <div style={{position:"absolute",top:"50%",left:Math.min(goalPct,100)+"%",transform:"translate(-50%,-50%)",width:16,height:16,borderRadius:"50%",background:goalPct>=100?GREEN:goalPct>=75?GOLD:PUR,border:"2px solid #0f0f0f",boxShadow:"0 0 8px "+(goalPct>=100?GREEN:goalPct>=75?GOLD:PUR),transition:"left 0.5s"}}/>
+                        </div>
                       </div>
                     </div>
+                    {goalPct>=100?(
+                      <div style={{textAlign:"center",fontSize:13,fontWeight:700,color:GREEN}}>🎉 Goal crushed! Set a new one.</div>
+                    ):(
+                      <div style={{textAlign:"center",fontSize:12,color:"#444"}}>{(liftGoal-(best?.weight||0)).toFixed(1)} lbs away from your goal</div>
+                    )}
                   </div>
                 ):(
-                  <button onClick={()=>{setShowGoal(liftName);setGoalInput("");}} style={{fontSize:12,color:PUR,background:"#EEEDFE",border:"0.5px solid "+PUR+"44",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:500,width:"100%"}}>+ Set a strength goal →</button>
+                  <button onClick={()=>{setShowGoal(liftName);setGoalInput("");}} style={{fontSize:12,color:PUR,background:"#EEEDFE",border:"0.5px solid "+PUR+"44",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:500,width:"100%",boxSizing:"border-box"}}>+ Set a goal for {liftName} →</button>
                 )}
                 {showGoal===liftName&&(
                   <div style={{display:"flex",gap:6,marginTop:8}}>
