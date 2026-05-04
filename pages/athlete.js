@@ -1425,26 +1425,57 @@ function PRLog({athleteId}){
                 </div>
               )}
 
-              {/* Goal */}
-              <div style={{marginBottom:8}}>
+              {/* Goal progress */}
+              <div style={{marginBottom:10}}>
                 {liftGoal?(
-                  <div>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                      <div style={{fontSize:11,color:"#888"}}>Goal: {liftGoal} lbs</div>
-                      <div style={{fontSize:11,fontWeight:600,color:goalPct>=100?GREEN:PUR}}>{goalPct>=100?"✓ Goal reached!":(liftGoal-best?.weight)+" lbs to go"}</div>
+                  <div style={{background:"#f9f9f9",borderRadius:10,padding:"10px 12px",border:"0.5px solid #e0e0e0"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <div style={{fontSize:11,color:"#888",fontWeight:500,textTransform:"uppercase",letterSpacing:"0.04em"}}>Goal progress</div>
+                      <button onClick={()=>{setShowGoal(liftName);setGoalInput(String(liftGoal));}} style={{fontSize:10,color:"#aaa",background:"none",border:"none",cursor:"pointer",fontFamily:"Georgia,serif"}}>Edit</button>
                     </div>
-                    <div style={{height:5,background:"#f0f0f0",borderRadius:3,overflow:"hidden"}}>
-                      <div style={{height:"100%",width:goalPct+"%",background:goalPct>=100?GREEN:PUR,borderRadius:3}}/>
+                    {/* Circular progress */}
+                    <div style={{display:"flex",alignItems:"center",gap:14}}>
+                      <div style={{position:"relative",width:64,height:64,flexShrink:0}}>
+                        <svg viewBox="0 0 64 64" style={{width:64,height:64,transform:"rotate(-90deg)"}}>
+                          <circle cx="32" cy="32" r="26" fill="none" stroke="#e8e8e8" strokeWidth="6"/>
+                          <circle cx="32" cy="32" r="26" fill="none"
+                            stroke={goalPct>=100?GREEN:goalPct>=75?GOLD:PUR}
+                            strokeWidth="6"
+                            strokeDasharray={`${Math.min(goalPct,100)*1.634} 163.4`}
+                            strokeLinecap="round"/>
+                        </svg>
+                        <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          <div style={{fontSize:12,fontWeight:800,color:goalPct>=100?GREEN:goalPct>=75?GOLD:PUR}}>{Math.min(goalPct,100)}%</div>
+                        </div>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                          <div style={{textAlign:"center"}}>
+                            <div style={{fontSize:16,fontWeight:700,color:"#1a1a1a"}}>{best?.weight||0}</div>
+                            <div style={{fontSize:9,color:"#aaa"}}>Current</div>
+                          </div>
+                          <div style={{display:"flex",alignItems:"center",color:"#ccc",fontSize:16}}>→</div>
+                          <div style={{textAlign:"center"}}>
+                            <div style={{fontSize:16,fontWeight:700,color:goalPct>=100?GREEN:PUR}}>{liftGoal}</div>
+                            <div style={{fontSize:9,color:"#aaa"}}>Goal</div>
+                          </div>
+                        </div>
+                        {goalPct>=100?(
+                          <div style={{fontSize:12,fontWeight:700,color:GREEN,textAlign:"center"}}>🎉 Goal reached!</div>
+                        ):(
+                          <div style={{fontSize:11,color:"#888",textAlign:"center"}}>{(liftGoal-(best?.weight||0)).toFixed(1)} lbs to go</div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ):(
-                  <button onClick={()=>{setShowGoal(liftName);setGoalInput("");}} style={{fontSize:11,color:PUR,background:"none",border:"none",cursor:"pointer",fontFamily:"Georgia,serif",padding:0}}>+ Set a goal →</button>
+                  <button onClick={()=>{setShowGoal(liftName);setGoalInput("");}} style={{fontSize:12,color:PUR,background:"#EEEDFE",border:"0.5px solid "+PUR+"44",borderRadius:8,padding:"7px 12px",cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:500,width:"100%"}}>+ Set a strength goal →</button>
                 )}
                 {showGoal===liftName&&(
-                  <div style={{display:"flex",gap:6,marginTop:6}}>
-                    <input type="text" inputMode="decimal" value={goalInput} onChange={e=>setGoalInput(e.target.value)} placeholder="Goal weight (lbs)" style={{flex:1,padding:"6px 8px",borderRadius:6,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",background:"#fafafa"}}/>
-                    <button onClick={()=>saveGoal(liftName,goalInput)} style={{padding:"6px 12px",borderRadius:6,border:"none",background:PUR,color:"#fff",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>Save</button>
-                    <button onClick={()=>setShowGoal(null)} style={{padding:"6px 10px",borderRadius:6,border:"0.5px solid #e0e0e0",background:"transparent",color:"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>
+                  <div style={{display:"flex",gap:6,marginTop:8}}>
+                    <input type="text" inputMode="decimal" value={goalInput} onChange={e=>setGoalInput(e.target.value)} placeholder="Goal (lbs)" style={{flex:1,padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",background:"#fafafa"}}/>
+                    <button onClick={()=>saveGoal(liftName,goalInput)} style={{padding:"8px 14px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>Save</button>
+                    <button onClick={()=>setShowGoal(null)} style={{padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",background:"transparent",color:"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>
                   </div>
                 )}
               </div>
