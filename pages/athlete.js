@@ -1303,7 +1303,7 @@ function PRLog({athleteId}){
   const[saving,setSaving]=useState(false);
   const[saved,setSaved]=useState(false);
   const GREEN="#1E6B3A",GOLD="#D4AF37",RED="#C0392B";
-  const LIFTS=["Squat","Bench Press","Deadlift","Power Clean","Overhead Press","Pull-ups","Push-ups","400m","Mile"];
+  const LIFTS=["Power Clean","Hang Clean","Back Squat","Front Squat","Deadlift","Bench Press","Push Press"];
   useEffect(()=>{
     supabase.from("pr_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:false}).then(({data})=>setPrs(data||[])).catch(()=>{});
   },[]);
