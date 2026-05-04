@@ -1360,7 +1360,7 @@ function PRLog({athleteId}){
       {/* Log input */}
       <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+RED+")"}}/>
-        <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>🏋️ Strength Log</div>
+        <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>⚒ Iron Room</div>
         <select value={lift} onChange={e=>setLift(e.target.value)} style={{width:"100%",padding:"12px",borderRadius:8,border:"1px solid #333",background:"#1a1a1a",color:lift?"#fff":"#555",fontSize:13,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box"}}>
           <option value="">Select lift...</option>
           {LIFT_CATEGORIES.map(cat=>(
@@ -1865,6 +1865,7 @@ export default function Athlete(){
       ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My Group"}]),
       {id:"anvil",label:"Anvil"},
       {id:"weight",label:"Weight"},
+      {id:"prs",label:"Iron Room"},
       {id:"leaderboard",label:"Leaderboard"},
       {id:"prayer",label:"Prayer"},
       {id:"bracelets",label:"Bracelets"},
