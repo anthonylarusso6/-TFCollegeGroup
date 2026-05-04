@@ -1307,7 +1307,13 @@ function PRLog({athleteId}){
   const[saved,setSaved]=useState(false);
   const[selectedLift,setSelectedLift]=useState(null);
   const GREEN="#1E6B3A",GOLD="#D4AF37",RED="#C0392B",PUR="#534AB7",BG="#0f0f0f";
-  const LIFTS=["Power Clean","Hang Clean","Back Squat","Front Squat","Deadlift","Bench Press","Push Press"];
+  const LIFT_CATEGORIES=[
+    {label:"Upper Body",color:"#534AB7",lifts:["Bench Press","Push Press","Overhead Press","Pull-ups","Bent Over Row"]},
+    {label:"Lower Body",color:"#1E6B3A",lifts:["Back Squat","Front Squat","Deadlift","Romanian Deadlift","Bulgarian Split Squat"]},
+    {label:"Full Body",color:"#C0392B",lifts:["Power Clean","Hang Clean","Power Snatch","Push Jerk"]},
+  ];
+  const LIFTS=LIFT_CATEGORIES.flatMap(c=>c.lifts);
+  const getLiftCategory=(liftName)=>LIFT_CATEGORIES.find(c=>c.lifts.includes(liftName));
 
   useEffect(()=>{
     supabase.from("pr_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true}).then(({data,error})=>{
@@ -1357,7 +1363,11 @@ function PRLog({athleteId}){
         <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>🏋️ Strength Log</div>
         <select value={lift} onChange={e=>setLift(e.target.value)} style={{width:"100%",padding:"12px",borderRadius:8,border:"1px solid #333",background:"#1a1a1a",color:lift?"#fff":"#555",fontSize:13,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box"}}>
           <option value="">Select lift...</option>
-          {LIFTS.map(l=><option key={l} value={l}>{l}</option>)}
+          {LIFT_CATEGORIES.map(cat=>(
+            <optgroup key={cat.label} label={cat.label}>
+              {cat.lifts.map(l=><option key={l} value={l}>{l}</option>)}
+            </optgroup>
+          ))}
         </select>
         <div style={{display:"flex",gap:8}}>
           <input type="text" inputMode="decimal" value={weight} onChange={e=>setPRWeight(e.target.value)} placeholder="Weight (lbs)" style={{flex:1,padding:"12px",borderRadius:8,border:"1px solid #333",background:"#1a1a1a",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",textAlign:"center"}}/>
@@ -1388,11 +1398,14 @@ function PRLog({athleteId}){
 
         return(
           <div key={li} style={{background:"#fff",borderRadius:12,marginBottom:10,border:"0.5px solid #e0e0e0",overflow:"hidden"}}>
-            <div style={{height:3,background:"linear-gradient(90deg,"+GOLD+","+RED+")"}}/>
+            <div style={{height:3,background:(()=>{const cat=getLiftCategory(liftName);return cat?"linear-gradient(90deg,"+cat.color+","+cat.color+"99)":"linear-gradient(90deg,"+GOLD+","+RED+")";})()}}/>
             <div style={{padding:"1rem 1.25rem"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
                 <div>
-                  <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a",cursor:"pointer"}} onClick={()=>setSelectedLift(isSelected?null:liftName)}>{liftName}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+                    <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a",cursor:"pointer"}} onClick={()=>setSelectedLift(isSelected?null:liftName)}>{liftName}</div>
+                    {(()=>{const cat=getLiftCategory(liftName);return cat?<span style={{fontSize:9,padding:"2px 7px",borderRadius:4,background:cat.color+"22",color:cat.color,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.04em"}}>{cat.label}</span>:null;})()}
+                  </div>
                   <div style={{fontSize:11,color:"#888"}}>{entries.length} log{entries.length!==1?"s":""}</div>
                 </div>
                 <div style={{textAlign:"right"}}>
