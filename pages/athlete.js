@@ -1872,7 +1872,6 @@ export default function Athlete(){
       {id:"notes",label:"Notes"},
       {id:"private",label:"Private"},
       {id:"prs",label:"Strength Log"},
-      {id:"badges",label:"Badges"},
     ];
 
     const myGroupIdx=selectedAthlete.group_idx;
@@ -2328,7 +2327,6 @@ export default function Athlete(){
             )}
 
             {tab==="prs"&&<PRLog athleteId={selectedAthlete.id}/>}
-            {tab==="badges"&&<AchievementBadges athlete={selectedAthlete}/>}
 
             {tab==="journey"&&(
               <div>
