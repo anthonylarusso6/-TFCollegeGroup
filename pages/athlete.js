@@ -1927,7 +1927,6 @@ export default function Athlete(){
       {id:"photos",label:"Photos"},
       {id:"notes",label:"Notes"},
       {id:"private",label:"Private"},
-      {id:"prs",label:"Strength Log"},
     ];
 
     const myGroupIdx=selectedAthlete.group_idx;
