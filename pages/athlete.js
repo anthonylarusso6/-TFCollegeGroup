@@ -1308,9 +1308,9 @@ function PRLog({athleteId}){
   const[selectedLift,setSelectedLift]=useState(null);
   const GREEN="#1E6B3A",GOLD="#D4AF37",RED="#C0392B",PUR="#534AB7",BG="#0f0f0f";
   const LIFT_CATEGORIES=[
-    {label:"Upper Body",color:"#534AB7",lifts:["Bench Press","Overhead Press","Pull-ups","Bent Over Row"]},
-    {label:"Lower Body",color:"#1E6B3A",lifts:["Back Squat","Front Squat","Deadlift","Romanian Deadlift","Bulgarian Split Squat"]},
-    {label:"Full Body",color:"#C0392B",lifts:["Power Clean","Hang Clean","Push Press","Power Snatch","Push Jerk"]},
+    {label:"Upper Body",color:"#534AB7",lifts:["Bench Press","Military Press","Pull-ups"]},
+    {label:"Lower Body",color:"#1E6B3A",lifts:["Back Squat","Front Squat","Deadlift"]},
+    {label:"Full Body",color:"#C0392B",lifts:["Power Clean","Hang Clean","Push Press"]},
   ];
   const LIFTS=LIFT_CATEGORIES.flatMap(c=>c.lifts);
   const getLiftCategory=(liftName)=>LIFT_CATEGORIES.find(c=>c.lifts.includes(liftName));
