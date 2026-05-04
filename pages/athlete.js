@@ -1536,22 +1536,14 @@ function AchievementBadges({athlete}){
   const GOLD="#D4AF37",GREEN="#1E6B3A",RED="#C0392B",PUR="#534AB7";
   const[lb,setLb]=useState(null);
   const[myAnvils,setMyAnvils]=useState([]);
-  const[ready,setReady]=useState(false);
   useEffect(()=>{
     if(!athlete?.id)return;
-    Promise.all([
-      supabase.from("leaderboard").select("current_streak,early_count").eq("athlete_id",athlete.id).single().catch(()=>({data:{}})),
-      supabase.from("anvil").select("athlete_name").catch(()=>({data:[]})),
-    ]).then(([{data:lbData},{data:anvData}])=>{
-      setLb(lbData||{});
-      setMyAnvils((anvData||[]).filter(a=>a.athlete_name===athlete.name));
-      setReady(true);
-    });
+    supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id).single().then(({data})=>setLb(data||{})).catch(()=>setLb({}));
+    supabase.from("anvil").select("*").then(({data})=>setMyAnvils((data||[]).filter(a=>a.athlete_name===athlete.name))).catch(()=>{});
   },[athlete?.id]);
   const streak=lb?.current_streak||0;
   const early=lb?.early_count||0;
   const anvilCount=myAnvils.length;
-  if(!ready)return<div style={{textAlign:"center",padding:"3rem",color:"#888",fontSize:13}}>Loading badges...</div>;
   const BADGES=[
     {icon:"🌅",label:"First Light",desc:"First early check-in",earned:early>=1,color:GREEN},
     {icon:"🔥",label:"On Fire",desc:"5-day streak",earned:streak>=5,color:RED},
