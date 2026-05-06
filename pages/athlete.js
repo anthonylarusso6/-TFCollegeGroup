@@ -478,44 +478,32 @@ function PrayerWall({athleteId, athleteName}){
   const PUR="#534AB7",GREEN="#1E6B3A",BG="#0f0f0f";
   return(
     <div>
-      {/* Submit card */}
-      <div style={{background:"linear-gradient(135deg,#0d0d1f,#141428)",borderRadius:16,padding:"1.5rem",marginBottom:12,border:"1px solid "+PUR+"33",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+PUR+",transparent)"}}/>
-        <div style={{position:"absolute",top:-30,right:-30,width:100,height:100,borderRadius:"50%",background:PUR,opacity:0.08,filter:"blur(20px)"}}/>
-        <div style={{fontSize:22,marginBottom:8}}>🙏</div>
-        <div style={{fontSize:15,fontWeight:700,color:"#fff",marginBottom:4}}>Prayer Wall</div>
-        <div style={{fontSize:12,color:"#555",marginBottom:16,lineHeight:1.6}}>Share what's on your heart. Coach Ant and your teammates are praying for you.</div>
-        <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="What can we pray for you about?" style={{width:"100%",minHeight:90,padding:"12px",borderRadius:10,border:"1px solid "+(text.trim()?PUR+"66":"#222"),background:"#0a0a1a",color:"#fff",fontSize:13,fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",marginBottom:10,outline:"none"}}/>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-          <button onClick={()=>setAnon(!anon)} style={{display:"flex",alignItems:"center",gap:8,background:"transparent",border:"none",cursor:"pointer",padding:0}}>
-            <div style={{width:20,height:20,borderRadius:6,border:"1.5px solid "+(anon?PUR:"#333"),background:anon?PUR:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.15s"}}>
-              {anon&&<span style={{color:"#fff",fontSize:12}}>✓</span>}
+      <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:4}}>🙏 Prayer Wall</div>
+        <div style={{fontSize:12,color:"#888",marginBottom:12}}>Submit a prayer request. Coach Ant and the group are praying for you.</div>
+        <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="What can the group pray for you about?" style={{width:"100%",minHeight:80,padding:"10px",borderRadius:8,border:"0.5px solid #333",background:"#141414",color:"#fff",fontSize:13,fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",marginBottom:10}}/>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+          <button onClick={()=>setAnon(!anon)} style={{display:"flex",alignItems:"center",gap:6,background:"transparent",border:"none",cursor:"pointer",padding:0}}>
+            <div style={{width:18,height:18,borderRadius:4,border:"1.5px solid "+(anon?PUR:"#555"),background:anon?PUR:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              {anon&&<span style={{color:"#fff",fontSize:11}}>✓</span>}
             </div>
-            <span style={{fontSize:12,color:"#555"}}>Keep me anonymous</span>
+            <span style={{fontSize:12,color:"#888"}}>Submit anonymously</span>
           </button>
         </div>
-        <button onClick={submit} disabled={submitting||!text.trim()} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:text.trim()?"linear-gradient(135deg,"+PUR+",#3d35a0)":"#1a1a1a",color:text.trim()?"#fff":"#333",fontSize:14,fontWeight:600,cursor:text.trim()?"pointer":"not-allowed",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+        <button onClick={submit} disabled={submitting||!text.trim()} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:text.trim()?PUR:"#333",color:text.trim()?"#fff":"#666",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
           {submitted?"✓ Submitted — we're praying for you":submitting?"Submitting...":"Submit prayer request →"}
         </button>
       </div>
-      {/* Prayer feed */}
-      {prayers.length>0&&(
-        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>🙏 Group is praying for</div>
-          {prayers.map((p,i)=>(
-            <div key={i} style={{padding:"12px",marginBottom:8,background:"#fafafa",borderRadius:10,border:"0.5px solid #f0f0f0",borderLeft:"3px solid "+PUR}}>
-              <div style={{fontSize:10,fontWeight:700,color:PUR,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>{p.anonymous?"🙏 Anonymous":p.athletes?.name||athleteName||"Athlete"}</div>
-              <div style={{fontSize:13,color:"#1a1a1a",lineHeight:1.7}}>{p.message}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      {prayers.length===0&&(
-        <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-          <div style={{fontSize:32,marginBottom:8}}>🙏</div>
-          <div style={{fontSize:13,color:"#888"}}>Be the first to share a prayer request.</div>
-        </div>
-      )}
+      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Group prayer requests</div>
+        {prayers.length===0&&<div style={{fontSize:12,color:"#888",textAlign:"center",padding:"1rem 0"}}>No prayer requests yet. Be the first to share.</div>}
+        {prayers.map((p,i)=>(
+          <div key={i} style={{padding:"10px 0",borderBottom:i<prayers.length-1?"0.5px solid #f0f0f0":"none"}}>
+            <div style={{fontSize:11,color:PUR,fontWeight:500,marginBottom:3}}>{p.anonymous?"Anonymous":athleteName||"Athlete"}</div>
+            <div style={{fontSize:13,color:"#1a1a1a",lineHeight:1.6}}>{p.message}</div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -642,29 +630,23 @@ function BraceletWall({athleteBracelet}){
   ];
   return(
     <div>
-      {/* Header */}
-      <div style={{background:"#0f0f0f",borderRadius:16,padding:"1.5rem",marginBottom:12,border:"0.5px solid #222",position:"relative",overflow:"hidden",textAlign:"center"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,#1A4F8A,#534AB7,#C0392B,#D4AF37,#0F6E56)"}}/>
-        <div style={{fontSize:32,marginBottom:8}}>📿</div>
-        <div style={{fontSize:16,fontWeight:700,color:"#fff",marginBottom:4}}>Bracelet Wall</div>
-        <div style={{fontSize:12,color:"#555"}}>12 bracelets · 12 scriptures · one for each member of the group</div>
+      <div style={{background:"#0f0f0f",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:4}}>📿 Bracelet Wall</div>
+        <div style={{fontSize:12,color:"#888"}}>All 12 bracelets — one scripture for the group.</div>
       </div>
       {BRACELETS_LIST.map((b,i)=>{
         const isMe=athleteBracelet===b.ref;
         return(
-          <div key={i} style={{borderRadius:14,padding:"1rem 1.25rem",marginBottom:8,background:isMe?"linear-gradient(135deg,"+b.hex+"22,"+b.hex+"11)":"#fff",border:"1px solid "+(isMe?b.hex+"66":"#f0f0f0"),position:"relative",overflow:"hidden"}}>
-            {isMe&&<div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+b.hex+","+b.hex+"66)"}}/>}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:14,height:14,borderRadius:"50%",background:b.hex,boxShadow:isMe?"0 0 8px "+b.hex+"88":"none",flexShrink:0}}/>
-                <div>
-                  <div style={{fontSize:12,fontWeight:700,color:isMe?b.hex:"#1a1a1a"}}>{b.color}</div>
-                  <div style={{fontSize:10,color:"#aaa"}}>{b.ref}</div>
-                </div>
+          <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:8,border:"0.5px solid "+(isMe?b.hex+"88":"#e0e0e0"),borderLeft:"4px solid "+b.hex}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:10,height:10,borderRadius:"50%",background:b.hex}}/>
+                <span style={{fontSize:12,fontWeight:600,color:b.hex}}>{b.color}</span>
+                {isMe&&<span style={{fontSize:10,background:b.hex,color:"#fff",padding:"1px 6px",borderRadius:4}}>yours</span>}
               </div>
-              {isMe&&<span style={{fontSize:10,background:b.hex,color:"#fff",padding:"3px 10px",borderRadius:6,fontWeight:700,letterSpacing:"0.04em"}}>YOUR BRACELET</span>}
+              <span style={{fontSize:11,color:"#888"}}>{b.ref}</span>
             </div>
-            <div style={{fontSize:12,color:isMe?"#333":"#666",fontStyle:"italic",lineHeight:1.7,paddingLeft:24}}>"{b.text}"</div>
+            <div style={{fontSize:13,color:"#1a1a1a",fontStyle:"italic",lineHeight:1.6}}>"{b.text}"</div>
           </div>
         );
       })}
@@ -1030,34 +1012,17 @@ function VerseOfDay(){
   const PUR="#534AB7",BG="#0f0f0f";
   return(
     <div>
-      {/* Hero verse card */}
-      <div style={{background:"#0f0f0f",borderRadius:16,padding:"2rem",marginBottom:12,position:"relative",overflow:"hidden",border:"1px solid "+PUR+"33"}}>
-        {/* Background glow */}
-        <div style={{position:"absolute",top:-40,right:-40,width:180,height:180,borderRadius:"50%",background:PUR,opacity:0.06,filter:"blur(40px)"}}/>
-        <div style={{position:"absolute",bottom:-40,left:-40,width:120,height:120,borderRadius:"50%",background:"#D4AF37",opacity:0.06,filter:"blur(30px)"}}/>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+PUR+",#D4AF37,transparent)"}}/>
-        <div style={{position:"relative",textAlign:"center"}}>
-          <div style={{fontSize:11,color:"#444",textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:20}}>📖 Verse of the Day</div>
-          <div style={{fontSize:13,color:"#666",fontStyle:"italic",marginBottom:16,lineHeight:1.8,position:"relative"}}>
-            <span style={{fontSize:40,color:PUR,lineHeight:0,verticalAlign:"middle",opacity:0.4}}>"</span>
-            <span style={{color:"#e0e0e0"}}>{verse.text}</span>
-            <span style={{fontSize:40,color:PUR,lineHeight:0,verticalAlign:"middle",opacity:0.4}}>"</span>
-          </div>
-          <div style={{display:"inline-block",padding:"6px 16px",borderRadius:20,background:PUR+"22",border:"1px solid "+PUR+"44"}}>
-            <div style={{fontSize:12,fontWeight:700,color:PUR,letterSpacing:"0.04em"}}>{verse.ref}</div>
-          </div>
-        </div>
+      <div style={{background:BG,borderRadius:12,padding:"2rem",marginBottom:12,border:"0.5px solid "+PUR+"44",textAlign:"center"}}>
+        <div style={{fontSize:11,color:PUR,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:16}}>Verse of the Day</div>
+        <div style={{fontSize:16,color:"#fff",fontStyle:"italic",lineHeight:1.8,marginBottom:16}}>"{verse.text}"</div>
+        <div style={{fontSize:13,fontWeight:500,color:PUR}}>{verse.ref}</div>
       </div>
-      {/* More scriptures */}
       <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
         <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>More scriptures</div>
         {VERSES.filter((_,i)=>i!==dayIdx%VERSES.length).slice(0,6).map((v,i)=>(
-          <div key={i} style={{padding:"12px 0",borderBottom:i<5?"0.5px solid #f5f5f5":"none",display:"flex",gap:12,alignItems:"flex-start"}}>
-            <div style={{width:3,height:"100%",minHeight:40,background:PUR,borderRadius:2,flexShrink:0,marginTop:2}}/>
-            <div>
-              <div style={{fontSize:11,fontWeight:700,color:PUR,marginBottom:4,textTransform:"uppercase",letterSpacing:"0.04em"}}>{v.ref}</div>
-              <div style={{fontSize:12,color:"#666",fontStyle:"italic",lineHeight:1.7}}>"{v.text}"</div>
-            </div>
+          <div key={i} style={{padding:"10px 0",borderBottom:i<5?"0.5px solid #f0f0f0":"none"}}>
+            <div style={{fontSize:11,fontWeight:500,color:PUR,marginBottom:3}}>{v.ref}</div>
+            <div style={{fontSize:12,color:"#555",fontStyle:"italic",lineHeight:1.6}}>"{v.text}"</div>
           </div>
         ))}
       </div>
@@ -1068,40 +1033,28 @@ function VerseOfDay(){
 // ── Anvil History ───────────────────────────────────────────────
 function AnvilHistory(){
   const[anvils,setAnvils]=useState([]);
-  const GOLD="#D4AF37",BG="#0f0f0f",RED="#C0392B";
+  const GOLD="#D4AF37",BG="#0f0f0f";
   useEffect(()=>{
     supabase.from("anvil").select("*").order("created_at",{ascending:false}).then(({data})=>setAnvils(data||[])).catch(()=>setAnvils([]));
   },[]);
   return(
     <div>
-      {/* Hero header */}
-      <div style={{background:"linear-gradient(135deg,#1f1700,#2a2000)",borderRadius:16,padding:"2rem",marginBottom:12,border:"1px solid "+GOLD+"44",textAlign:"center",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+GOLD+",transparent)"}}/>
-        <div style={{position:"absolute",top:-20,left:"50%",transform:"translateX(-50%)",width:200,height:100,borderRadius:"50%",background:GOLD,opacity:0.06,filter:"blur(30px)"}}/>
-        <div style={{fontSize:48,marginBottom:8,filter:"drop-shadow(0 0 20px "+GOLD+"66)"}}>⚒</div>
-        <div style={{fontSize:20,fontWeight:800,color:GOLD,marginBottom:6,letterSpacing:"0.02em"}}>The Anvil</div>
-        <div style={{fontSize:12,color:"#666",lineHeight:1.7}}>Awarded each week to the athlete who did what nobody else did. The one who showed up differently.</div>
-        {anvils.length>0&&<div style={{fontSize:11,color:"#444",marginTop:12}}>{anvils.length} award{anvils.length!==1?"s":""}  handed out</div>}
+      <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid "+GOLD+"44",textAlign:"center"}}>
+        <div style={{fontSize:32,marginBottom:8}}>⚒</div>
+        <div style={{fontSize:15,fontWeight:500,color:GOLD,marginBottom:4}}>The Anvil</div>
+        <div style={{fontSize:12,color:"#888"}}>Awarded each week to the athlete who did what nobody else did.</div>
       </div>
-      {anvils.length===0&&(
-        <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-          <div style={{fontSize:13,color:"#888"}}>No Anvil winners yet — first class is coming.</div>
-        </div>
-      )}
+      {anvils.length===0&&<div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}><div style={{fontSize:13,color:"#888"}}>No anvil winners yet.</div></div>}
       {anvils.map((a,i)=>(
-        <div key={i} style={{background:i===0?"linear-gradient(135deg,#1f1700,#2a2000)":"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"1px solid "+(i===0?GOLD+"66":"#e0e0e0"),position:"relative",overflow:"hidden"}}>
-          {i===0&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+RED+")"}}/>}
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:44,height:44,borderRadius:"50%",background:i===0?"#2a2000":"#f9f9f9",border:"2px solid "+(i===0?GOLD:"#e0e0e0"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,boxShadow:i===0?"0 0 12px "+GOLD+"44":"none"}}>⚒</div>
-            <div style={{flex:1}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-                <div style={{fontSize:15,fontWeight:700,color:i===0?GOLD:"#1a1a1a"}}>{a.athlete_name}</div>
-                {i===0&&<span style={{fontSize:9,background:GOLD,color:"#1a1a1a",padding:"2px 7px",borderRadius:4,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.04em"}}>Current</span>}
-              </div>
-              <div style={{fontSize:11,color:i===0?"#555":"#aaa"}}>{a.date_awarded}</div>
+        <div key={i} style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:8,border:"0.5px solid #e0e0e0",borderLeft:"4px solid "+GOLD}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:a.note?8:0}}>
+            <div>
+              <div style={{fontSize:15,fontWeight:600,color:"#1a1a1a"}}>{a.athlete_name}</div>
+              <div style={{fontSize:11,color:"#888"}}>{a.date_awarded}</div>
             </div>
+            <div style={{fontSize:24}}>⚒</div>
           </div>
-          {a.note&&<div style={{fontSize:13,color:i===0?"#ccc":"#555",fontStyle:"italic",lineHeight:1.7,marginTop:10,paddingTop:10,borderTop:"0.5px solid "+(i===0?"#333":"#f0f0f0")}}>"{a.note}"</div>}
+          {a.note&&<div style={{fontSize:13,color:"#555",fontStyle:"italic",lineHeight:1.6}}>"{a.note}"</div>}
         </div>
       ))}
     </div>
