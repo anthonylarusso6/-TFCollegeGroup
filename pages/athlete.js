@@ -1683,12 +1683,18 @@ export default function Athlete(){
 
   const loadData=async()=>{
     setLoading(true);
-    const{data:aths}=await supabase.from("athletes").select("*").eq("status","active").order("name");
-    if(aths)setAthletes(aths);
-    const{data:ann}=await supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1);
-    if(ann&&ann.length>0)setAnnouncement(ann[0]);
-    const{data:anv}=await supabase.from("anvil").select("*").eq("type","individual").order("created_at",{ascending:false}).limit(1);
-    if(anv&&anv.length>0)setAnvilWinner(anv[0]);
+    try{
+      const{data:aths}=await supabase.from("athletes").select("*").eq("status","active").order("name");
+      if(aths)setAthletes(aths);
+    }catch(e){console.error("Athletes error:",e);}
+    try{
+      const{data:ann}=await supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1);
+      if(ann&&ann.length>0)setAnnouncement(ann[0]);
+    }catch(e){}
+    try{
+      const{data:anv}=await supabase.from("anvil").select("*").eq("type","individual").order("created_at",{ascending:false}).limit(1);
+      if(anv&&anv.length>0)setAnvilWinner(anv[0]);
+    }catch(e){}
     setLoading(false);
   };
 
