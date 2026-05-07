@@ -2147,7 +2147,7 @@ export default function Athlete(){
       {id:"anvil",label:"Anvil"},
       {id:"weight",label:"Weight"},
       {id:"prs",label:"Iron Room"},
-      {id:"stretching",label:"🧘 Stretch"},
+      {id:"stretching",label:"Stretch"},
       {id:"leaderboard",label:"Leaderboard"},
       {id:"prayer",label:"Prayer"},
       {id:"bracelets",label:"Bracelets"},
@@ -2242,7 +2242,7 @@ export default function Athlete(){
             </div>
             <div style={{display:"flex",overflowX:"auto",gap:4,padding:"0 4px",scrollbarWidth:"none"}}>
               {TABS.map(t=>{
-                const icons={"profile":"👤","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","private":"🔒","journey":"🛤"};
+                const icons={"profile":"👤","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","private":"🔒","stretching":"🧘","journey":"🛤"};
                 const isActive=tab===t.id;
                 return(
                 <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 12px",background:isActive?"#fff":"transparent",border:"none",borderRadius:10,color:isActive?"#1a1a1a":"#666",fontSize:11,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.15s",boxShadow:isActive?"0 2px 8px rgba(0,0,0,0.15)":"none"}}>
