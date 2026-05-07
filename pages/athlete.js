@@ -2031,15 +2031,15 @@ export default function Athlete(){
       <Head><title>TF College Group — Athlete</title></Head>
       <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflow:"hidden"}}>
         {/* Background glow effects */}
-        <div style={{position:"fixed",top:-100,left:-100,width:300,height:300,borderRadius:"50%",background:PUR,opacity:0.06,filter:"blur(80px)",pointerEvents:"none"}}/>
-        <div style={{position:"fixed",bottom:-100,right:-100,width:250,height:250,borderRadius:"50%",background:GOLD,opacity:0.06,filter:"blur(60px)",pointerEvents:"none"}}/>
+        <div style={{position:"fixed",top:-100,left:-100,width:300,height:300,borderRadius:"50%",background:"#E8720C",opacity:0.07,filter:"blur(80px)",pointerEvents:"none"}}/>
+        <div style={{position:"fixed",bottom:-100,right:-100,width:250,height:250,borderRadius:"50%",background:GOLD,opacity:0.07,filter:"blur(60px)",pointerEvents:"none"}}/>
 
         <div style={{padding:"3rem 1.5rem 2rem",position:"relative"}}>
           {/* Hero header */}
           <div style={{textAlign:"center",marginBottom:"2rem"}}>
             <div style={{position:"relative",display:"inline-block",marginBottom:16}}>
-              <div style={{width:80,height:80,borderRadius:22,background:"linear-gradient(135deg,"+PUR+",#3d35a0)",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,boxShadow:"0 0 40px "+PUR+"55,0 0 80px "+PUR+"22"}}>⚒</div>
-              <div style={{position:"absolute",inset:-3,borderRadius:25,border:"1px solid "+PUR+"33",pointerEvents:"none"}}/>
+              <div style={{width:80,height:80,borderRadius:22,background:"linear-gradient(135deg,#E8720C,#C0392B)",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,boxShadow:"0 0 40px #E8720C55,0 0 80px #E8720C22"}}>⚒</div>
+              <div style={{position:"absolute",inset:-3,borderRadius:25,border:"1px solid #E8720C33",pointerEvents:"none"}}/>
             </div>
             <div style={{fontSize:26,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",marginBottom:6}}>TF College Group</div>
             <div style={{fontSize:12,color:"#444",textTransform:"uppercase",letterSpacing:"0.15em"}}>Iron sharpens iron · Proverbs 27:17</div>
@@ -2047,9 +2047,9 @@ export default function Athlete(){
 
           {/* Announcement banner */}
           {announcement&&(
-            <div style={{background:"linear-gradient(135deg,#1a1a2a,#12122a)",border:"1px solid "+PUR+"44",borderRadius:14,padding:"14px 16px",marginBottom:16,position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+PUR+",transparent)"}}/>
-              <div style={{fontSize:10,color:PUR,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>📢 This week</div>
+            <div style={{background:"linear-gradient(135deg,#1a1200,#201a00)",border:"1px solid #E8720C44",borderRadius:14,padding:"14px 16px",marginBottom:16,position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#E8720C,transparent)"}}/>
+              <div style={{fontSize:10,color:"#E8720C",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>📢 This week</div>
               <div style={{fontSize:13,color:"#ccc",lineHeight:1.6}}>{announcement.message}</div>
             </div>
           )}
