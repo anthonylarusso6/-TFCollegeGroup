@@ -2147,7 +2147,7 @@ export default function Athlete(){
       {id:"anvil",label:"Anvil"},
       {id:"weight",label:"Weight"},
       {id:"prs",label:"Iron Room"},
-      {id:"stretching",label:"Stretching"},
+      {id:"stretching",label:"🧘 Stretch"},
       {id:"leaderboard",label:"Leaderboard"},
       {id:"prayer",label:"Prayer"},
       {id:"bracelets",label:"Bracelets"},
