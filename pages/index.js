@@ -45,7 +45,7 @@ export default function Landing(){
   const[weather,setWeather]=useState(null);
   const[weekProgress,setWeekProgress]=useState(null);
   const[photo,setPhoto]=useState(null);
-  const[notifGranted,setNotifGranted]=useState(typeof window!=="undefined"&&"Notification" in window&&Notification.permission==="granted");
+  const[notifGranted,setNotifGranted]=useState(typeof window!=="undefined"&&"Notification" in window&&Notification.permission==="granted"&&localStorage.getItem("notif_disabled")!=="true");
   const GROUPME_LINK="https://groupme.com/join_group/YOUR_GROUP_ID/YOUR_TOKEN";
 
   useEffect(()=>{
@@ -126,15 +126,28 @@ export default function Landing(){
     return()=>clearInterval(t);
   },[]);
 
-  const requestNotif=()=>{
+  const toggleNotif=()=>{
     if(!("Notification" in window)){alert("Notifications not supported on this browser.");return;}
-    if(Notification.permission==="granted"){setNotifGranted(true);return;}
-    Notification.requestPermission().then(p=>{
-      if(p==="granted"){
+    if(notifGranted){
+      // Can't revoke programmatically — store a preference in localStorage
+      localStorage.setItem("notif_disabled","true");
+      setNotifGranted(false);
+    }else{
+      localStorage.removeItem("notif_disabled");
+      if(Notification.permission==="granted"){
         setNotifGranted(true);
-        new Notification("TF College Group",{body:"You'll be notified when draft starts and class reminders go out!",icon:"/icon.png"});
+        new Notification("TF College Group",{body:"Notifications back on!",icon:"/icon.png"});
+      }else{
+        Notification.requestPermission().then(p=>{
+          if(p==="granted"){
+            setNotifGranted(true);
+            new Notification("TF College Group",{body:"You'll be notified when draft starts!",icon:"/icon.png"});
+          }else{
+            alert("Notifications blocked. Go to your browser settings to allow them.");
+          }
+        });
       }
-    });
+    }
   };
 
   const day=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][time.getDay()];
@@ -352,7 +365,7 @@ export default function Landing(){
               </div>
             </a>
             <div style={{background:"#111",borderRadius:14,padding:"14px",border:"1px solid "+(notifGranted?GREEN+"44":"#1e1e1e"),textAlign:"center",cursor:"pointer"}}
-              onClick={requestNotif}
+              onClick={toggleNotif}
               onMouseEnter={e=>e.currentTarget.style.borderColor=GREEN+"66"}
               onMouseLeave={e=>e.currentTarget.style.borderColor=notifGranted?GREEN+"44":"#1e1e1e"}>
               <div style={{fontSize:26,marginBottom:6}}>{notifGranted?"🔔":"🔕"}</div>
