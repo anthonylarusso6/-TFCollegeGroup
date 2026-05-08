@@ -45,6 +45,8 @@ export default function Landing(){
   const[weather,setWeather]=useState(null);
   const[weekProgress,setWeekProgress]=useState(null);
   const[photo,setPhoto]=useState(null);
+  const[notifGranted,setNotifGranted]=useState(false);
+  const GROUPME_LINK="https://groupme.com/join_group/YOUR_GROUP_ID/YOUR_TOKEN";
 
   useEffect(()=>{
     setTimeout(()=>setLoaded(true),100);
@@ -123,6 +125,13 @@ export default function Landing(){
     loadData();
     return()=>clearInterval(t);
   },[]);
+
+  const requestNotif=()=>{
+    if(!("Notification" in window)){alert("Notifications not supported on this browser.");return;}
+    Notification.requestPermission().then(p=>{
+      if(p==="granted"){setNotifGranted(true);new Notification("TF College Group",{body:"You'll be notified when draft starts and class reminders go out!",icon:"/icon.png"});}
+    });
+  };
 
   const day=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][time.getDay()];
   const isClassDay=["Mon","Tue","Thu","Fri"].includes(day);
@@ -327,11 +336,87 @@ export default function Landing(){
             ))}
           </div>
 
-          {/* Role progression */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:16}}>
-            {[{l:"The Iron",c:STEEL},{l:"→",c:"#333"},{l:"The Forge",c:RED},{l:"→",c:"#333"},{l:"The Anvil",c:GOLD}].map((x,i)=>(
-              <div key={i} style={{fontSize:11,color:x.c,fontWeight:i%2===0?600:400}}>{x.l}</div>
-            ))}
+          {/* GroupMe + Notifications */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+            <a href="https://groupme.com" target="_blank" rel="noreferrer" style={{textDecoration:"none"}}>
+              <div style={{background:"#111",borderRadius:14,padding:"14px",border:"1px solid #1e1e1e",textAlign:"center",cursor:"pointer"}}
+                onMouseEnter={e=>e.currentTarget.style.borderColor="#00aff0aa"}
+                onMouseLeave={e=>e.currentTarget.style.borderColor="#1e1e1e"}>
+                <div style={{fontSize:26,marginBottom:6}}>💬</div>
+                <div style={{fontSize:12,fontWeight:700,color:"#00aff0",marginBottom:2}}>GroupMe</div>
+                <div style={{fontSize:10,color:"#555"}}>Join the group chat</div>
+              </div>
+            </a>
+            <div style={{background:"#111",borderRadius:14,padding:"14px",border:"1px solid "+(notifGranted?GREEN+"44":"#1e1e1e"),textAlign:"center",cursor:"pointer"}}
+              onClick={requestNotif}
+              onMouseEnter={e=>e.currentTarget.style.borderColor=GREEN+"66"}
+              onMouseLeave={e=>e.currentTarget.style.borderColor=notifGranted?GREEN+"44":"#1e1e1e"}>
+              <div style={{fontSize:26,marginBottom:6}}>{notifGranted?"🔔":"🔕"}</div>
+              <div style={{fontSize:12,fontWeight:700,color:notifGranted?GREEN:"#888",marginBottom:2}}>{notifGranted?"Notifications on":"Get notified"}</div>
+              <div style={{fontSize:10,color:"#555"}}>Draft · class alerts</div>
+            </div>
+          </div>
+
+          {/* Verse of the day */}
+          <div style={{background:"linear-gradient(135deg,#0d0d1f,#12122a)",borderRadius:14,padding:"16px 18px",marginBottom:16,border:"1px solid #534AB722",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#534AB7,"+GOLD+",transparent)"}}/>
+            <div style={{fontSize:10,color:"#534AB7",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:10}}>📖 Verse of the Day</div>
+            {(()=>{
+              const VERSES=[
+                {t:"As iron sharpens iron, so one person sharpens another.",r:"Proverbs 27:17"},
+                {t:"I can do all things through Christ who strengthens me.",r:"Philippians 4:13"},
+                {t:"Be strong and courageous. Do not be afraid. The Lord your God is with you.",r:"Joshua 1:9"},
+                {t:"Do not be anxious about anything, but in every situation present your requests to God.",r:"Philippians 4:6"},
+                {t:"For we are God's handiwork, created in Christ Jesus to do good works.",r:"Ephesians 2:10"},
+                {t:"Let us not become weary in doing good, for at the proper time we will reap a harvest.",r:"Galatians 6:9"},
+                {t:"The Lord is my strength and my shield; my heart trusts in him.",r:"Psalm 28:7"},
+                {t:"Even youths grow tired and weary, but those who hope in the Lord will renew their strength.",r:"Isaiah 40:31"},
+                {t:"No discipline seems pleasant at the time, but painful. Later on, however, it produces righteousness.",r:"Hebrews 12:11"},
+                {t:"Whatever you do, work at it with all your heart, as working for the Lord.",r:"Colossians 3:23"},
+                {t:"The heart of man plans his way, but the Lord establishes his steps.",r:"Proverbs 16:9"},
+                {t:"For God gave us a spirit not of fear but of power and love and self-control.",r:"2 Timothy 1:7"},
+              ];
+              const v=VERSES[new Date().getDate()%VERSES.length];
+              return(
+                <div>
+                  <div style={{fontSize:14,color:"#e0e0e0",fontStyle:"italic",lineHeight:1.8,marginBottom:10}}>"{v.t}"</div>
+                  <div style={{display:"inline-block",padding:"4px 12px",borderRadius:20,background:"#534AB722",border:"1px solid #534AB744"}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#534AB7"}}>{v.r}</div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Program values */}
+          <div style={{background:"#111",borderRadius:14,padding:"14px 18px",marginBottom:16,border:"0.5px solid #1e1e1e"}}>
+            <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>⚒ The three tiers</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {[
+                {icon:"⚙️",title:"The Iron",color:STEEL,desc:"Every athlete enters here. Gray. Unfinished. Ready to be shaped. The work starts now."},
+                {icon:"🔥",title:"The Forge",color:RED,desc:"Four weekly leaders. Drafted. Responsible for setting the standard and leading the group."},
+                {icon:"⚒",title:"The Anvil",color:GOLD,desc:"The highest individual honor. Cannot be drafted. Can only be earned. One per week."},
+              ].map((v,i)=>(
+                <div key={i} style={{display:"flex",gap:14,alignItems:"flex-start",padding:"10px 12px",borderRadius:10,background:v.color+"0a",border:"1px solid "+v.color+"22"}}>
+                  <div style={{fontSize:22,flexShrink:0,marginTop:2}}>{v.icon}</div>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700,color:v.color,marginBottom:3}}>{v.title}</div>
+                    <div style={{fontSize:12,color:"#666",lineHeight:1.6}}>{v.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Animated anvil + role progression */}
+          <div style={{textAlign:"center",marginBottom:16}}>
+            <div style={{fontSize:48,animation:"anvil-pulse 2s ease-in-out infinite",display:"inline-block"}}>⚒</div>
+            <style>{`@keyframes anvil-pulse{0%,100%{filter:drop-shadow(0 0 8px ${GOLD}44);transform:scale(1);}50%{filter:drop-shadow(0 0 20px ${GOLD}88);transform:scale(1.05);}}`}</style>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:8}}>
+              {[{l:"The Iron",c:STEEL},{l:"→",c:"#333"},{l:"The Forge",c:RED},{l:"→",c:"#333"},{l:"The Anvil",c:GOLD}].map((x,i)=>(
+                <div key={i} style={{fontSize:11,color:x.c,fontWeight:i%2===0?600:400}}>{x.l}</div>
+              ))}
+            </div>
           </div>
 
           <div style={{textAlign:"center",fontSize:11,color:"#333",letterSpacing:"0.05em"}}>
