@@ -223,6 +223,9 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
   // Kevin PIN stored in localStorage
   const getKevinPin=()=>typeof window!=="undefined"?localStorage.getItem("kevin_coach_pin"):null;
   const saveKevinPin=(p)=>localStorage.setItem("kevin_coach_pin",p);
+  // Malkmus PIN stored in localStorage
+  const getMalkmusPin=()=>typeof window!=="undefined"?localStorage.getItem("malkmus_coach_pin"):null;
+  const saveMalkmusPin=(p)=>localStorage.setItem("malkmus_coach_pin",p);
 
   function handlePinKey(k){
     if(k===null)return;
@@ -253,6 +256,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
   const coaches=[
     {id:"ant",name:"Coach Ant",sub:"Head Coach",color:GOLD,emoji:"⚒"},
     {id:"kevin",name:"Coach Kevin",sub:"Guest Speaker",color:PUR,emoji:"📖"},
+    {id:"malkmus",name:"Coach Malkmus",sub:"Assistant Coach",color:"#0F6E56",emoji:"💪"},
   ];
 
   if(!authed) return(
@@ -272,7 +276,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                   <button key={c.id} onClick={()=>{
                     setSelectedCoach(c.id);
                     setPin("");setPinError("");
-                    const hasPin=c.id==="ant"||getKevinPin();
+                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin());
                     setPinStep(hasPin?"enter":"create");
                   }} style={{width:"100%",padding:"16px 20px",borderRadius:14,border:"0.5px solid #2a2a2a",background:"#141414",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:14,textAlign:"left"}}>
                     <div style={{width:44,height:44,borderRadius:"50%",background:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,boxShadow:"0 0 18px "+c.color+"66"}}>{c.emoji}</div>
@@ -321,16 +325,25 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                       if(selectedCoach==="ant"){
                         if(val===COACH_PIN){setAuthed(true);setCoachRole("ant");setPin("");}
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
-                      }else{
+                      }else if(selectedCoach==="kevin"){
                         const kp=getKevinPin();
                         if(kp&&val===kp){setAuthed(true);setCoachRole("kevin");setPin("");}
+                        else{setPinError("Wrong PIN. Try again.");setPin("");}
+                      }else if(selectedCoach==="malkmus"){
+                        const mp=getMalkmusPin();
+                        if(mp&&val===mp){setAuthed(true);setCoachRole("malkmus");setPin("");}
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }
                     }else if(pinStep==="create"){
                       setPinConfirm(val);setPinStep("confirm");setPin("");
                     }else if(pinStep==="confirm"){
-                      if(val===pinConfirm){saveKevinPin(val);setAuthed(true);setCoachRole("kevin");setPin("");}
-                      else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+                      if(selectedCoach==="malkmus"){
+                        if(val===pinConfirm){saveMalkmusPin(val);setAuthed(true);setCoachRole("malkmus");setPin("");}
+                        else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+                      }else{
+                        if(val===pinConfirm){saveKevinPin(val);setAuthed(true);setCoachRole("kevin");setPin("");}
+                        else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+                      }
                     }
                   }
                 }}
@@ -367,7 +380,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
             <div>
               <div style={{fontSize:18,fontWeight:400,color:"#fff"}}>TF College Group</div>
-              <div style={{fontSize:12,color:"#555"}}>{coachRole==="kevin"?"Kevin" : "Coach Ant"} · {dayName} · {isClassDay?"Class day":"No class"}</div>
+              <div style={{fontSize:12,color:"#555"}}>{coachRole==="malkmus"?"Coach Malkmus":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · {isClassDay?"Class day":"No class"}</div>
             </div>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:12,color:"#888"}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
