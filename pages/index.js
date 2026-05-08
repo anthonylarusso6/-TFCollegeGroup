@@ -45,7 +45,7 @@ export default function Landing(){
   const[weather,setWeather]=useState(null);
   const[weekProgress,setWeekProgress]=useState(null);
   const[photo,setPhoto]=useState(null);
-  const[notifGranted,setNotifGranted]=useState(false);
+  const[notifGranted,setNotifGranted]=useState(typeof window!=="undefined"&&"Notification" in window&&Notification.permission==="granted");
   const GROUPME_LINK="https://groupme.com/join_group/YOUR_GROUP_ID/YOUR_TOKEN";
 
   useEffect(()=>{
@@ -128,8 +128,12 @@ export default function Landing(){
 
   const requestNotif=()=>{
     if(!("Notification" in window)){alert("Notifications not supported on this browser.");return;}
+    if(Notification.permission==="granted"){setNotifGranted(true);return;}
     Notification.requestPermission().then(p=>{
-      if(p==="granted"){setNotifGranted(true);new Notification("TF College Group",{body:"You'll be notified when draft starts and class reminders go out!",icon:"/icon.png"});}
+      if(p==="granted"){
+        setNotifGranted(true);
+        new Notification("TF College Group",{body:"You'll be notified when draft starts and class reminders go out!",icon:"/icon.png"});
+      }
     });
   };
 
