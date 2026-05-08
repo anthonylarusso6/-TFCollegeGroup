@@ -2109,16 +2109,31 @@ export default function Athlete(){
       <Head><title>Sign In — TF College Group</title></Head>
       <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",padding:"3rem 1.5rem 2rem",textAlign:"center",position:"relative"}}>
         <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:20,left:20,background:"transparent",border:"none",color:"#666",fontSize:13,cursor:"pointer",fontFamily:"Georgia, serif"}}>← Back</button>
-        <div style={{width:48,height:48,borderRadius:"50%",background:isForge?RED:STEEL,margin:"0 auto 1rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:500,color:"#fff"}}>{selectedAthlete?.name[0]}</div>
-        <div style={{fontSize:18,fontWeight:400,color:"#fff",marginBottom:6}}>
-          {!selectedAthlete?.pin?`Hey ${selectedAthlete?.name.split(" ")[0]}, create your passcode`:pinStep==="confirm"?"Confirm your passcode":`Welcome back, ${selectedAthlete?.name.split(" ")[0]}`}
+        <div style={{width:56,height:56,borderRadius:"50%",background:isForge?"linear-gradient(135deg,"+RED+",#8B1A1A)":"linear-gradient(135deg,"+STEEL+",#505a66)",margin:"0 auto 1rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:700,color:"#fff",overflow:"hidden",boxShadow:"0 0 20px "+(isForge?RED:STEEL)+"44"}}>
+          {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
         </div>
-        <div style={{fontSize:13,color:"#888",marginBottom:"2.5rem"}}>
-          {!selectedAthlete?.pin?"You'll use this every time you sign in.":pinStep==="confirm"?"Enter the same 4 digits again.":"Enter your 4-digit passcode."}
+        <div style={{fontSize:20,fontWeight:700,color:"#fff",marginBottom:6}}>
+          {!selectedAthlete?.pin?`Hey ${selectedAthlete?.name.split(" ")[0]}!`:pinStep==="confirm"?"Confirm your PIN":`Welcome back, ${selectedAthlete?.name.split(" ")[0]}!`}
         </div>
-        <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:28}}>
-          {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+PUR,background:i<pin.length?PUR:"transparent"}}/>)}
+        <div style={{fontSize:13,color:"#666",marginBottom:24}}>
+          {!selectedAthlete?.pin?"Create your 4-digit PIN.":pinStep==="confirm"?"Enter the same 4 digits again.":"Enter your 4-digit PIN."}
         </div>
+        <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:16}}>
+          {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(isForge?RED:ORANGE),background:i<pin.length?(isForge?RED:ORANGE):"transparent",transition:"background 0.15s"}}/>)}
+        </div>
+        {/* Visible input for keyboard entry */}
+        <input
+          type="password"
+          inputMode="numeric"
+          maxLength={4}
+          value={pin}
+          onChange={e=>{
+            const val=e.target.value.replace(/[^0-9]/g,"").slice(0,4);
+            setPin(val);
+          }}
+          placeholder="····"
+          style={{display:"block",width:160,margin:"0 auto 20px",padding:"14px",borderRadius:12,border:"1px solid #333",background:"#141414",color:"#fff",fontSize:24,textAlign:"center",fontFamily:"Georgia,serif",letterSpacing:"0.3em",outline:"none",boxSizing:"border-box"}}
+        />
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
           {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
             <button key={i} onClick={()=>{
