@@ -1,13 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 
-const BG="#0f0f0f";
-const PUR="#534AB7";
-const RED="#C0392B";
-const GREEN="#1E6B3A";
-const GOLD="#D4AF37";
-const STEEL="#708090";
-const ORANGE="#E8720C";
 
 export default function DailyWord({announcement}){
   const WORDS=[
@@ -20,8 +14,7 @@ export default function DailyWord({announcement}){
     {quote:"Your body will do what your mind tells it. Train your mind first.",author:"Coach Ant"},
   ];
   const word=WORDS[new Date().getDate()%WORDS.length];
-  const PUR="#534AB7";
-  return(
+    return(
     <div style={{background:"#0f0f0f",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #222",position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+PUR+",#D4AF37)"}}/>
       <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Today's word</div>

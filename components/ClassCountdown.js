@@ -1,20 +1,13 @@
 import { useState, useEffect, useRef } from "react";
+import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 
-const BG="#0f0f0f";
-const PUR="#534AB7";
-const RED="#C0392B";
-const GREEN="#1E6B3A";
-const GOLD="#D4AF37";
-const STEEL="#708090";
-const ORANGE="#E8720C";
 
 export default function ClassCountdown(){
   const CLASS_START=new Date("2025-06-18T09:00:00");
   const now=new Date();
   const diff=CLASS_START-now;
-  const GOLD="#D4AF37";
-  if(diff<=0)return null;
+    if(diff<=0)return null;
   const days=Math.floor(diff/(1000*60*60*24));
   const hours=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
   const mins=Math.floor((diff%(1000*60*60))/(1000*60));

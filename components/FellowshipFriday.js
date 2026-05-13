@@ -1,14 +1,13 @@
 import { useState } from "react";
+import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 
-const BG="#0f0f0f";
-const RED="#C0392B";
 const BLUE="#1A4F8A";
-const GREEN="#0F6E56";
+const TEAL="#0F6E56";
 
 const SERIES_META=[
   {num:1,title:"Leading by Example",color:RED,light:"#FCEBEB",weeks:"Weeks 1–4"},
   {num:2,title:"Built Different",color:BLUE,light:"#E6F1FB",weeks:"Weeks 5–8"},
-  {num:3,title:"Roots and Fruit",color:GREEN,light:"#E1F5EE",weeks:"Weeks 9–12"},
+  {num:3,title:"Roots and Fruit",color:TEAL,light:"#E1F5EE",weeks:"Weeks 9–12"},
 ];
 
 const SERIES=[
@@ -179,7 +178,7 @@ const SERIES=[
     ],
     deepQuestion:"When the heat comes — and it will — what will your roots reveal about where you've been planted?",
     takeaways:["What you're rooted in is revealed by pressure, not by comfort.","You can look fine on the surface while being completely unrooted underneath.","A tree planted by water never fails to bear fruit — even in drought."],
-    color:GREEN,light:"#E1F5EE"},
+    color:TEAL,light:"#E1F5EE"},
   {week:10,series:3,seriesTitle:"Roots and Fruit",title:"When the Storm Hits",scripture:"James 1:2–4 & Romans 5:3–5",
     verse:"Consider it pure joy whenever you face trials of many kinds, because you know that the testing of your faith produces perseverance… Suffering produces perseverance; perseverance, character; and character, hope.",
     bigIdea:"Hardship is not the enemy — it is the teacher. The storm does not come to destroy you. It comes to develop you.",
@@ -198,7 +197,7 @@ const SERIES=[
     ],
     deepQuestion:"What if the hardest thing you're going through right now is not punishment — but preparation?",
     takeaways:["Hardship is not the enemy. It is the teacher. The storm comes to develop you, not destroy you.","Suffering → Perseverance → Character → Hope. Don't skip the process.","Every storm you survive gives you evidence for the next one. That's how hope grows roots."],
-    color:GREEN,light:"#E1F5EE"},
+    color:TEAL,light:"#E1F5EE"},
   {week:11,series:3,seriesTitle:"Roots and Fruit",title:"Fruit That Lasts",scripture:"John 15:16 & Galatians 5:22–23",
     verse:"You did not choose me, but I chose you and appointed you so that you might go and bear fruit — fruit that will last… But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness, gentleness and self-control.",
     bigIdea:"What are you actually producing in people's lives? Trophies fade. Stats get forgotten. But the fruit you bear in people lasts forever.",
@@ -216,7 +215,7 @@ const SERIES=[
     ],
     deepQuestion:"When your time in this program is over — what will people say you produced in them?",
     takeaways:["Trophies fade. Stats get forgotten. But fruit you bear in people lasts forever.","You were chosen and appointed — your impact is not accidental.","The fruit of the Spirit grows naturally when you are rooted in the right place."],
-    color:GREEN,light:"#E1F5EE"},
+    color:TEAL,light:"#E1F5EE"},
   {week:12,series:3,seriesTitle:"Roots and Fruit",title:"Finish Rooted",scripture:"Hebrews 12:1–2 & Micah 6:8",
     verse:"Let us throw off everything that hinders… And let us run with perseverance the race marked out for us, fixing our eyes on Jesus… He has shown you what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God.",
     bigIdea:"Finishing strong is not just athletic — it's spiritual. Staying true to yourself and to God when the world offers shortcuts requires roots that go deep.",
@@ -235,7 +234,7 @@ const SERIES=[
     ],
     deepQuestion:"When this is all over — will the roots you grew this summer hold you through everything that comes next?",
     takeaways:["Finishing strong is not just athletic — it's spiritual. Root yourself deep enough to finish well.","Throw off the weight. Fix your eyes. Run your race — not someone else's.","Act justly. Love mercy. Walk humbly. That's not a complicated life — it's a rooted one."],
-    color:GREEN,light:"#E1F5EE"},
+    color:TEAL,light:"#E1F5EE"},
 ];
 
 export default function FellowshipFriday(){

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import WeightTracker from "../components/WeightTracker";
 import AthleteLeaderboard from "../components/AthleteLeaderboard";
@@ -19,12 +20,6 @@ import AchievementBadges from "../components/AchievementBadges";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 
-const BG="#0f0f0f";
-const PUR="#534AB7";
-const GOLD="#D4AF37";
-const RED="#C0392B";
-const STEEL="#708090";
-const GREEN="#1E6B3A";
 const LC=["#534AB7","#0F6E56","#854F0B","#993556"];
 const LB=["#EEEDFE","#E1F5EE","#FAEEDA","#FBEAF0"];
 

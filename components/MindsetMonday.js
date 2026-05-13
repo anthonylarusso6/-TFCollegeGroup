@@ -1,10 +1,6 @@
 import { useState } from "react";
+import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 
-const BG="#0f0f0f";
-const PUR="#534AB7";
-const RED="#C0392B";
-const GREEN="#1E6B3A";
-const GOLD="#D4AF37";
 
 const SERIES_META=[
   {num:1,title:"Identity & Purpose",color:GOLD,light:"#1f1700",weeks:"Weeks 1–4"},

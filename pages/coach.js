@@ -1,5 +1,6 @@
 // v1776642403
 import { useState, useEffect, useRef } from "react";
+import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
@@ -9,12 +10,6 @@ import FellowshipFriday from "../components/FellowshipFriday";
 import MindsetMonday from "../components/MindsetMonday";
 import CultureEvents from "../components/CultureEvents";
 
-const BG="#0f0f0f";
-const PUR="#534AB7";
-const GOLD="#D4AF37";
-const RED="#C0392B";
-const STEEL="#708090";
-const GREEN="#1E6B3A";
 const COACH_PIN="1803";
 
 export default function Coach(){

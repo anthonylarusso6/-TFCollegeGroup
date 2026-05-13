@@ -1,12 +1,7 @@
 import { useState, useEffect } from "react";
+import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 
-const BG="#0f0f0f";
-const PUR="#534AB7";
-const RED="#C0392B";
-const GREEN="#1E6B3A";
-const GOLD="#D4AF37";
-const STEEL="#708090";
 
 const RECURRING=[
   {label:"Top Golf outing",icon:"⛳",freq:"Once per month",notes:"Book in advance. Split into groups by draft group."},
