@@ -1,5 +1,6 @@
 // v1776642403
 import { useState, useEffect, useRef } from "react";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import Draft from "../components/Draft";
@@ -395,6 +396,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
         </div>
 
         <div style={{padding:"1rem",maxWidth:900,margin:"0 auto"}}>
+          <ErrorBoundary>
 
           {tab==="overview"&&(
             <div>
@@ -1310,6 +1312,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
               })}
             </div>
           )}
+          </ErrorBoundary>
         </div>
       </div>
     </>

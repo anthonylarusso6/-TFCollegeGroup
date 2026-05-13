@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 
