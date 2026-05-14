@@ -41,6 +41,7 @@ export default function Draft({athletes}){
   const[loading,setLoading]=useState(true);
   const[step,setStep]=useState("pool");
   const[pool,setPool]=useState([]);
+  const[groupCount,setGroupCount]=useState(4);
   // Auto-populate pool with all active athletes when draft starts
   useEffect(()=>{
     if(athletes.length>0&&pool.length===0&&!draft){
@@ -130,8 +131,8 @@ export default function Draft({athletes}){
   };
 
   const generateLeaders=()=>{
-    if(pool.length<4){alert("Need at least 4 athletes in the pool.");return;}
-    const chosen=pickRandom(pool,4,[]);
+    if(pool.length<groupCount){alert(`Need at least ${groupCount} athletes in the pool.`);return;}
+    const chosen=pickRandom(pool,groupCount,[]);
     setLeaders(chosen);
     setStep("leaders");
   };
@@ -147,9 +148,10 @@ export default function Draft({athletes}){
     const{data}=await supabase.from("draft").insert({
       week_start:new Date().toISOString().split("T")[0],
       leaders,
-      bracelets:[null,null,null,null],
-      groups:[[],[],[],[]],
-      tiers:[1,1,2,3].sort(()=>Math.random()-0.5),
+      group_count:groupCount,
+      bracelets:Array(groupCount).fill(null),
+      groups:Array(groupCount).fill(null).map(()=>[]),
+      tiers:Array(groupCount).fill(null).map((_,i)=>i<Math.floor(groupCount/2)?1:i<Math.floor(groupCount*0.75)?2:3).sort(()=>Math.random()-0.5),
       phase:"bracelet",
       locked:false,
     }).select();
@@ -197,10 +199,11 @@ export default function Draft({athletes}){
   if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888"}}>Loading draft...</div>;
 
   const phase=draft?.phase;
-  const groups=draft?.groups||[[],[],[],[]]
-  const bracelets=draft?.bracelets||[null,null,null,null];
-  const tiers=draft?.tiers||[null,null,null,null];
-  const draftLeaders=draft?.leaders||[null,null,null,null];
+  const groups=draft?.groups||Array(numGroups).fill(null).map(()=>[]);
+  const bracelets=draft?.bracelets||Array(numGroups).fill(null);
+  const tiers=draft?.tiers||Array(numGroups).fill(null);
+  const numGroups=draft?.group_count||draft?.leaders?.length||4;
+  const draftLeaders=draft?.leaders||Array(numGroups).fill(null);
 
   // Equal picks helper
   const totalPicked=groups.reduce((s,g)=>s+g.length,0);
@@ -218,7 +221,18 @@ export default function Draft({athletes}){
         <div>
           <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
             <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>Step 1 — Select who's in the draft</div>
-            <div style={{fontSize:12,color:"#888",marginBottom:12}}>Check everyone who's here today. Uncheck anyone who's absent or sitting out. Only checked athletes go into the draft pool.</div>
+            <div style={{fontSize:12,color:"#888",marginBottom:12}}>Check everyone who's here today. Uncheck anyone who's absent or sitting out.</div>
+            {/* Group count selector */}
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,padding:"10px 12px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #e0e0e0"}}>
+              <div style={{fontSize:12,color:"#888",flex:1}}>Number of groups:</div>
+              <div style={{display:"flex",gap:6}}>
+                {[2,3,4,5,6].map(n=>(
+                  <button key={n} onClick={()=>setGroupCount(n)} style={{width:32,height:32,borderRadius:8,border:"1px solid "+(groupCount===n?PUR:"#e0e0e0"),background:groupCount===n?PUR:"#fff",color:groupCount===n?"#fff":"#888",fontSize:13,fontWeight:groupCount===n?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Readiness check */}
             <div style={{background:pool.length>=4?"#EAF3DE":"#FCEBEB",borderRadius:10,padding:"10px 12px",marginBottom:12,border:"0.5px solid "+(pool.length>=4?GREEN:RED)+"44"}}>
