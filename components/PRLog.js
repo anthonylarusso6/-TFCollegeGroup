@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 
 export default function PRLog({athleteId}){
   const[prs,setPrs]=useState([]);
+  const[loadError,setLoadError]=useState("");
   const[lift,setLift]=useState("");
   const[weight,setPRWeight]=useState("");
   const[goal,setPRGoal]=useState({});
@@ -39,9 +40,9 @@ export default function PRLog({athleteId}){
 
   useEffect(()=>{
     supabase.from("pr_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true}).then(({data,error})=>{
-      if(error){console.error("pr_log error:",error);return;}
+      if(error){console.error("pr_log error:",error);setLoadError(error.message);return;}
       setPrs(data||[]);
-    });
+    }).catch(e=>{setLoadError(e.message);});
     // Load goals from localStorage
     const saved=localStorage.getItem("pr_goals_"+athleteId);
     if(saved)setPRGoal(JSON.parse(saved));
@@ -80,6 +81,7 @@ export default function PRLog({athleteId}){
   return(
     <div>
       {/* Program phase banner */}
+      {loadError&&<div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>Error: {loadError} — make sure pr_log RLS is disabled in Supabase</div>}
       {programPhase&&(
         <div style={{background:"linear-gradient(135deg,#1a1400,#221b00)",borderRadius:12,padding:"10px 14px",marginBottom:10,border:"1px solid "+GOLD+"33",display:"flex",alignItems:"center",gap:10}}>
           <span style={{fontSize:16}}>⚡</span>
