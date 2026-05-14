@@ -14,11 +14,26 @@ export default function PRLog({athleteId}){
   const[saved,setSaved]=useState(false);
   const[selectedLift,setSelectedLift]=useState(null);
   const GREEN="#1E6B3A",GOLD="#D4AF37",RED="#C0392B",PUR="#534AB7",BG="#0f0f0f";
-  const LIFT_CATEGORIES=[
+  const DEFAULT_CATEGORIES=[
     {label:"Upper Body",color:"#534AB7",lifts:["Bench Press","Military Press","Pull-ups"]},
     {label:"Lower Body",color:"#1E6B3A",lifts:["Back Squat","Front Squat","Deadlift"]},
     {label:"Full Body",color:"#C0392B",lifts:["Power Clean","Hang Clean","Push Press"]},
   ];
+  const[programLifts,setProgramLifts]=useState([]);
+  const[programPhase,setProgramPhase]=useState("");
+  useEffect(()=>{
+    supabase.from("announcements").select("*").eq("type","program").eq("active",true).order("created_at",{ascending:false}).limit(1)
+      .then(({data})=>{
+        if(data&&data[0]){
+          const p=JSON.parse(data[0].message||"{}");
+          if(p.lifts&&p.lifts.length>0){setProgramLifts(p.lifts);setProgramPhase(p.phase||"");}
+        }
+      }).catch(()=>{});
+  },[]);
+  // Build categories — if coach set a program, use those lifts; otherwise use defaults
+  const LIFT_CATEGORIES=programLifts.length>0?[
+    {label:"This Phase",color:ORANGE,lifts:programLifts},
+  ]:DEFAULT_CATEGORIES;
   const LIFTS=LIFT_CATEGORIES.flatMap(c=>c.lifts);
   const getLiftCategory=(liftName)=>LIFT_CATEGORIES.find(c=>c.lifts.includes(liftName));
 
@@ -64,6 +79,16 @@ export default function PRLog({athleteId}){
 
   return(
     <div>
+      {/* Program phase banner */}
+      {programPhase&&(
+        <div style={{background:"linear-gradient(135deg,#1a1400,#221b00)",borderRadius:12,padding:"10px 14px",marginBottom:10,border:"1px solid "+GOLD+"33",display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:16}}>⚡</span>
+          <div>
+            <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.08em"}}>Current phase</div>
+            <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{programPhase}</div>
+          </div>
+        </div>
+      )}
       {/* Log input */}
       <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+RED+")"}}/>

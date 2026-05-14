@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import ProgramUpload from "../components/ProgramUpload";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import Draft from "../components/Draft";
@@ -384,9 +385,15 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
             </div>
           </div>
           <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:1}}>
-            {TABS.map(t=>(
-              <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:"8px 14px",background:"transparent",border:"none",borderBottom:"2px solid "+(tab===t.id?"#fff":"transparent"),color:tab===t.id?"#fff":"#555",fontSize:13,fontWeight:tab===t.id?500:400,cursor:"pointer",fontFamily:"Georgia, serif",whiteSpace:"nowrap"}}>{t.label}</button>
-            ))}
+            {TABS.map(t=>{
+              const ICONS={"overview":"📊","draft":"🎯","roster":"👥","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢"};
+              return(
+              <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 12px",background:tab===t.id?"#fff":"transparent",border:"none",borderRadius:10,color:tab===t.id?"#1a1a1a":"#555",fontSize:10,fontWeight:tab===t.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,boxShadow:tab===t.id?"0 2px 8px rgba(0,0,0,0.2)":"none"}}>
+                <span style={{fontSize:15}}>{ICONS[t.id]||"•"}</span>
+                <span>{t.label}</span>
+              </button>
+              );
+            })}
           </div>
         </div>
 
@@ -751,6 +758,8 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
 
           {tab==="weights"&&(
             <div>
+              <ProgramUpload/>
+              <div style={{height:1,background:"#e0e0e0",margin:"16px 0"}}/>
               {/* Header stat bar */}
               <div style={{background:"#0f0f0f",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
                 <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+PUR+")"}}/>
@@ -870,7 +879,6 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
               })}
             </div>
           )}
-
 
           {tab==="photos"&&(
             <div>
