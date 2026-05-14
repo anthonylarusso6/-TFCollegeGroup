@@ -54,14 +54,14 @@ export default function AthleteLeaderboard({athleteId}){
             if(!r)return<div key={pos}/>;
             const isMe=r.athlete_id===athleteId;
             const podiumColors=[GOLD,"#C0C0C0","#CD7F32"];
-            const heights=["80px","100px","60px"];
+            const displayHeights={0:"100px",1:"80px",2:"60px"};
             return(
               <div key={pos} style={{textAlign:"center"}}>
                 <div style={{width:44,height:44,borderRadius:"50%",background:r.athletes?.role==="forge"?RED:STEEL,margin:"0 auto 6px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:600,color:"#fff",border:"2px solid "+podiumColors[pos],boxShadow:"0 0 10px "+podiumColors[pos]+"66"}}>
                   {r.athletes?.photo_url?<img src={r.athletes.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(r.athletes?.name||"?")[0]}
                 </div>
                 <div style={{fontSize:11,fontWeight:isMe?700:500,color:isMe?GOLD:"#1a1a1a",marginBottom:4}}>{r.athletes?.name?.split(" ")[0]||"—"}{isMe?" ⭐":""}</div>
-                <div style={{background:podiumColors[pos],borderRadius:"8px 8px 0 0",height:heights[pos],display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",padding:"8px 4px"}}>
+                <div style={{background:podiumColors[pos],borderRadius:"8px 8px 0 0",height:displayHeights[pos],display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",padding:"8px 4px"}}>
                   <div style={{fontSize:20,fontWeight:800,color:"#1a1a1a"}}>{pos===0?"🥇":pos===1?"🥈":"🥉"}</div>
                   <div style={{fontSize:12,fontWeight:700,color:"#1a1a1a"}}>{r.early_count||0}</div>
                   <div style={{fontSize:9,color:"#333"}}>early</div>

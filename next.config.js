@@ -2,13 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['kluuoibuhkxukbqodfet.supabase.co'],
-  },
-  env: {
-    BUILD_TIME_OLD: '1776642680',
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'kluuoibuhkxukbqodfet.supabase.co',
+      },
+    ],
   },
 }
 
 module.exports = nextConfig
-
-// force 1777646072
