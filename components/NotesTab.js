@@ -79,6 +79,7 @@ export default function NotesTab({athleteId, athlete}){
             <textarea
               defaultValue={athlete?.[noteKey]||""}
               onBlur={e=>saveNote(noteKey,e.target.value)}
+              onChange={e=>setSaving(noteKey)}
               placeholder="Your personal takeaway from this session..."
               style={{width:"100%",minHeight:55,padding:"8px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",background:"#fafafa",color:"#1a1a1a"}}
             />
