@@ -42,12 +42,13 @@ export default function Draft({athletes}){
   const[step,setStep]=useState("pool");
   const[pool,setPool]=useState([]);
   const[groupCount,setGroupCount]=useState(4);
-  // Auto-populate pool with all active athletes when draft starts
+  // Auto-populate pool with ALL active athletes automatically
   useEffect(()=>{
-    if(athletes.length>0&&pool.length===0&&!draft){
+    if(athletes.length>0&&!draft){
+      // Auto-select everyone - coach can deselect absent athletes
       setPool(athletes.map(a=>a.name));
     }
-  },[athletes]);
+  },[athletes.length]);
   const[leaders,setLeaders]=useState([null,null,null,null]);
   const[swapIdx,setSwapIdx]=useState(null);
   const[editMode,setEditMode]=useState(false);
@@ -133,6 +134,10 @@ export default function Draft({athletes}){
   const generateLeaders=()=>{
     if(pool.length<groupCount){alert(`Need at least ${groupCount} athletes in the pool.`);return;}
     const chosen=pickRandom(pool,groupCount,[]);
+    // Calculate picks per group to ensure equal distribution
+    const totalAthletes=pool.length-groupCount; // exclude leaders
+    const basePicksPerGroup=Math.floor(totalAthletes/groupCount);
+    const extraPicks=totalAthletes%groupCount;
     setLeaders(chosen);
     setStep("leaders");
   };

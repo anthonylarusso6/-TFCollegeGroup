@@ -196,6 +196,7 @@ export default function Athlete(){
   const[streak,setStreak]=useState(0);
   const[draft,setDraft]=useState(null);
   const pollRef=useRef(null);
+  const athleteIdRef=useRef(null);
 
   useEffect(()=>{loadData();},[]);
 
@@ -216,6 +217,9 @@ export default function Athlete(){
     }catch(e){}
     setLoading(false);
   };
+
+  // Keep ref in sync with state
+  useEffect(()=>{athleteIdRef.current=selectedAthlete?.id;},[selectedAthlete]);
 
   const loadDraft=async()=>{
     const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
@@ -295,8 +299,10 @@ export default function Athlete(){
       pollRef.current=setInterval(async()=>{
         await loadDraft();
         // Also refresh athlete data to get latest group_idx
-        const{data}=await supabase.from("athletes").select("*").eq("id",selectedAthlete?.id).single().catch(()=>({data:null}));
-        if(data)setSelectedAthlete(data);
+        if(athleteIdRef.current){
+          const{data}=await supabase.from("athletes").select("*").eq("id",athleteIdRef.current).single().catch(()=>({data:null}));
+          if(data)setSelectedAthlete(data);
+        }
       },5000);
       return()=>clearInterval(pollRef.current);
     }
