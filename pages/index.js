@@ -46,7 +46,7 @@ export default function Landing(){
   const[weekProgress,setWeekProgress]=useState(null);
   const[photo,setPhoto]=useState(null);
   const[notifGranted,setNotifGranted]=useState(typeof window!=="undefined"&&"Notification" in window&&Notification.permission==="granted"&&localStorage.getItem("notif_disabled")!=="true");
-  const GROUPME_LINK="https://groupme.com/join_group/YOUR_GROUP_ID/YOUR_TOKEN";
+  const GROUPME_LINK="https://groupme.com/join_group/111967377/1JobSG7L";
 
   useEffect(()=>{
     setTimeout(()=>setLoaded(true),100);
@@ -355,7 +355,7 @@ export default function Landing(){
 
           {/* GroupMe + Notifications */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-            <a href="https://groupme.com" target="_blank" rel="noreferrer" style={{textDecoration:"none"}}>
+            <a href={GROUPME_LINK} target="_blank" rel="noreferrer" style={{textDecoration:"none"}}>
               <div style={{background:"#111",borderRadius:14,padding:"14px",border:"1px solid #1e1e1e",textAlign:"center",cursor:"pointer"}}
                 onMouseEnter={e=>e.currentTarget.style.borderColor="#00aff0aa"}
                 onMouseLeave={e=>e.currentTarget.style.borderColor="#1e1e1e"}>
