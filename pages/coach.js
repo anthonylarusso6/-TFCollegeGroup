@@ -13,6 +13,64 @@ import CultureEvents from "../components/CultureEvents";
 
 const COACH_PIN="1803";
 
+function DriveLinksManager(){
+  const[links,setLinks]=useState([]);
+  const[title,setTitle]=useState("");
+  const[url,setUrl]=useState("");
+  const[desc,setDesc]=useState("");
+  const[saving,setSaving]=useState(false);
+  const[saved,setSaved]=useState(false);
+
+  useEffect(()=>{
+    supabase.from("announcements").select("*").eq("type","drive_link").eq("active",true)
+      .order("created_at",{ascending:false})
+      .then(({data})=>setLinks(data||[])).catch(()=>{});
+  },[]);
+
+  const addLink=async()=>{
+    if(!title.trim()||!url.trim())return;
+    setSaving(true);
+    const{data}=await supabase.from("announcements").insert({
+      type:"drive_link",active:true,
+      message:JSON.stringify({title,url,description:desc})
+    }).select().single().catch(()=>({data:null}));
+    if(data)setLinks(p=>[data,...p]);
+    setTitle("");setUrl("");setDesc("");setSaving(false);setSaved(true);
+    setTimeout(()=>setSaved(false),2000);
+  };
+
+  const removeLink=async(id)=>{
+    await supabase.from("announcements").update({active:false}).eq("id",id).catch(()=>{});
+    setLinks(p=>p.filter(l=>l.id!==id));
+  };
+
+  return(
+    <div>
+      {links.map((l,i)=>{
+        const data=JSON.parse(l.message||"{}");
+        return(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#f9f9f9",borderRadius:8,marginBottom:8,border:"0.5px solid #e0e0e0"}}>
+            <div style={{fontSize:20}}>📄</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{data.title}</div>
+              {data.description&&<div style={{fontSize:11,color:"#888"}}>{data.description}</div>}
+            </div>
+            <a href={data.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4285f4",textDecoration:"none",fontFamily:"Georgia,serif",padding:"4px 8px",border:"0.5px solid #4285f4",borderRadius:6}}>Open</a>
+            <button onClick={()=>removeLink(l.id)} style={{fontSize:11,color:RED,background:"transparent",border:"0.5px solid "+RED+"44",borderRadius:6,padding:"4px 8px",cursor:"pointer",fontFamily:"Georgia,serif"}}>Remove</button>
+          </div>
+        );
+      })}
+      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Document title (e.g. Summer Program Poster)" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",background:"#fafafa",marginBottom:6,boxSizing:"border-box"}}/>
+      <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="Google Drive link" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",background:"#fafafa",marginBottom:6,boxSizing:"border-box"}}/>
+      <input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Short description (optional)" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",background:"#fafafa",marginBottom:8,boxSizing:"border-box"}}/>
+      <button onClick={addLink} disabled={!title.trim()||!url.trim()||saving} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:title&&url?"#4285f4":"#e0e0e0",color:title&&url?"#fff":"#aaa",fontSize:13,fontWeight:600,cursor:title&&url?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
+        {saved?"✓ Added!":saving?"Saving...":"Add document →"}
+      </button>
+    </div>
+  );
+}
+
+
 export default function Coach(){
   const[authed,setAuthed]=useState(false);
   const[coachRole,setCoachRole]=useState("ant");
@@ -882,6 +940,16 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
 
           {tab==="photos"&&(
             <div>
+              {/* Google Drive link manager */}
+              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid #4285f4"}}>
+                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>📄 Google Drive documents</div>
+                <div style={{fontSize:12,color:"#888",marginBottom:12}}>Add a Google Drive link — athletes will see it in their Photos tab. Great for posters, programs, or any doc you want to share.</div>
+                <div style={{background:"#f0f7ff",borderRadius:8,padding:"10px 12px",marginBottom:12,border:"0.5px solid #4285f422"}}>
+                  <div style={{fontSize:11,color:"#4285f4",fontWeight:600,marginBottom:4}}>How to share from Google Drive:</div>
+                  <div style={{fontSize:11,color:"#666",lineHeight:2}}>1. Open doc in Google Drive &nbsp; 2. Share → Anyone with link &nbsp; 3. Paste below</div>
+                </div>
+                <DriveLinksManager/>
+              </div>
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+STEEL}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>📸 Athlete Photos</div>
                 <div style={{fontSize:12,color:"#888"}}>Manage athlete profile photos — these show on the athlete photo wall.</div>
