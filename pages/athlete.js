@@ -290,8 +290,14 @@ export default function Athlete(){
   useEffect(()=>{if(pin.length===4)submitPin();},[pin]);
 
   useEffect(()=>{
-    if(screen==="profile"&&(tab==="draft"||tab==="mygroup")){
-      pollRef.current=setInterval(loadDraft,3000);
+    if(screen==="profile"){
+      // Always poll draft so group updates automatically after draft ends
+      pollRef.current=setInterval(async()=>{
+        await loadDraft();
+        // Also refresh athlete data to get latest group_idx
+        const{data}=await supabase.from("athletes").select("*").eq("id",selectedAthlete?.id).single().catch(()=>({data:null}));
+        if(data)setSelectedAthlete(data);
+      },5000);
       return()=>clearInterval(pollRef.current);
     }
     return()=>clearInterval(pollRef.current);
@@ -870,15 +876,28 @@ export default function Athlete(){
               </div>
             )}
 
-            {tab==="mygroup"&&!isForge&&(
+            {tab==="mygroup"&&(
               <div>
                 {!draft||draftPhase==="setup"||(myGroupIdx==null&&draftPhase!=="locked")?(
-                  <div style={{background:BG,borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #222"}}>
+                  <div style={{background:BG,borderRadius:12,padding:"1.5rem",textAlign:"center",border:"0.5px solid #222"}}>
                     <div style={{fontSize:32,marginBottom:12}}>⏳</div>
-                    <div style={{fontSize:16,fontWeight:400,color:"#fff",marginBottom:8}}>
+                    <div style={{fontSize:16,fontWeight:600,color:"#fff",marginBottom:8}}>
                       {draftPhase==="bracelet"?"Leaders are picking bracelets...":draftPhase==="draft"?"Draft is live — waiting to be picked...":"Draft pending..."}
                     </div>
-                    <div style={{fontSize:13,color:"#555",lineHeight:1.7}}>You'll see your group, leader, bracelet verse, and tier right here once you've been picked.</div>
+                    <div style={{fontSize:13,color:"#555",lineHeight:1.7,marginBottom:16}}>You'll see your group here once you've been picked.</div>
+                    {/* Show athlete's name so they know they're in the pool */}
+                    {draftPhase==="draft"&&(
+                      <div style={{background:"#1a1a1a",borderRadius:10,padding:"12px 16px",border:"1px solid #333",display:"flex",alignItems:"center",gap:12,textAlign:"left"}}>
+                        <div style={{width:36,height:36,borderRadius:"50%",background:isForge?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                          {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
+                        </div>
+                        <div>
+                          <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{selectedAthlete?.name}</div>
+                          <div style={{fontSize:11,color:"#555"}}>In the draft pool — waiting to be picked</div>
+                        </div>
+                        <div style={{marginLeft:"auto",width:10,height:10,borderRadius:"50%",background:GREEN,boxShadow:"0 0 8px "+GREEN}}/>
+                      </div>
+                    )}
                   </div>
                 ):(
                   <div>

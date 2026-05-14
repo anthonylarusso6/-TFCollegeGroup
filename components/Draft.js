@@ -41,6 +41,12 @@ export default function Draft({athletes}){
   const[loading,setLoading]=useState(true);
   const[step,setStep]=useState("pool");
   const[pool,setPool]=useState([]);
+  // Auto-populate pool with all active athletes when draft starts
+  useEffect(()=>{
+    if(athletes.length>0&&pool.length===0&&!draft){
+      setPool(athletes.map(a=>a.name));
+    }
+  },[athletes]);
   const[leaders,setLeaders]=useState([null,null,null,null]);
   const[swapIdx,setSwapIdx]=useState(null);
   const[editMode,setEditMode]=useState(false);
@@ -191,10 +197,18 @@ export default function Draft({athletes}){
   if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888"}}>Loading draft...</div>;
 
   const phase=draft?.phase;
-  const groups=draft?.groups||[[],[],[],[]];
+  const groups=draft?.groups||[[],[],[],[]]
   const bracelets=draft?.bracelets||[null,null,null,null];
   const tiers=draft?.tiers||[null,null,null,null];
   const draftLeaders=draft?.leaders||[null,null,null,null];
+
+  // Equal picks helper
+  const totalPicked=groups.reduce((s,g)=>s+g.length,0);
+  const totalPool=(draft?.pool_count||groups.reduce((s,g)=>s+g.length,0));
+  const picksPerGroup=groups.map(g=>g.length);
+  const maxPicks=Math.max(...picksPerGroup);
+  const minPicks=Math.min(...picksPerGroup);
+  const picksUnequal=maxPicks-minPicks>1;
 
   return(
     <div>
