@@ -196,7 +196,7 @@ export default function Draft({athletes}){
     if(!window.confirm("Reset the entire draft? This cannot be undone."))return;
     await supabase.from("draft").delete().neq("id","00000000-0000-0000-0000-000000000000");
     setDraft(null);
-    setLeaders([null,null,null,null]);
+    setLeaders(Array(groupCount).fill(null));
     setPool(athletes.map(a=>a.name));
     setStep("pool");
   };
@@ -204,10 +204,10 @@ export default function Draft({athletes}){
   if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888"}}>Loading draft...</div>;
 
   const phase=draft?.phase;
+  const numGroups=draft?.group_count||draft?.leaders?.length||groupCount||4;
   const groups=draft?.groups||Array(numGroups).fill(null).map(()=>[]);
   const bracelets=draft?.bracelets||Array(numGroups).fill(null);
   const tiers=draft?.tiers||Array(numGroups).fill(null);
-  const numGroups=draft?.group_count||draft?.leaders?.length||4;
   const draftLeaders=draft?.leaders||Array(numGroups).fill(null);
 
   // Equal picks helper
