@@ -500,7 +500,7 @@ export default function Athlete(){
       {id:"profile",label:"My Profile"},
       {id:"verse",label:"Verse"},
       {id:"attendance",label:"Attendance"},
-      ...(isForge?[{id:"draft",label:"Draft"}]:[{id:"mygroup",label:"My Group"}]),
+      ...(isForge?[{id:"draft",label:"Draft"},{id:"mygroup",label:"My Group"}]:[{id:"mygroup",label:"My Group"}]),
       {id:"anvil",label:"Anvil"},
       {id:"weight",label:"Weight"},
       {id:"prs",label:"Iron Room"},
@@ -519,10 +519,12 @@ export default function Athlete(){
     const draftBracelets=draft?.bracelets||[];
     const draftTiers=draft?.tiers||[];
     const draftPhase=draft?.phase;
-    const myLeader=myGroupIdx!=null?draftLeaders[myGroupIdx]:null;
-    const myGroup=myGroupIdx!=null?draftGroups[myGroupIdx]:null;
-    const myBracelet=myGroupIdx!=null?BRACELETS.find(b=>b.ref===draftBracelets[myGroupIdx]?.ref):null;
-    const myTier=myGroupIdx!=null?draftTiers[myGroupIdx]:null;
+    // For Forge leaders, use their leader index; for Iron, use group_idx
+    const effectiveGroupIdx=isForge&&myLeaderIdx>=0?myLeaderIdx:myGroupIdx;
+    const myLeader=effectiveGroupIdx!=null?draftLeaders[effectiveGroupIdx]:null;
+    const myGroup=effectiveGroupIdx!=null?draftGroups[effectiveGroupIdx]:null;
+    const myBracelet=effectiveGroupIdx!=null?BRACELETS.find(b=>b.ref===draftBracelets[effectiveGroupIdx]?.ref):null;
+    const myTier=effectiveGroupIdx!=null?draftTiers[effectiveGroupIdx]:null;
 
     const myLeaderIdx=isForge?draftLeaders.indexOf(selectedAthlete.name):-1;
     const takenBracelets=(draftBracelets||[]).filter(Boolean).map(b=>b?.ref);
@@ -884,7 +886,7 @@ export default function Athlete(){
 
             {tab==="mygroup"&&(
               <div>
-                {!draft||draftPhase==="setup"||(myGroupIdx==null&&draftPhase!=="locked")?(
+                {!draft||draftPhase==="setup"||(myGroupIdx==null&&myLeaderIdx<0&&draftPhase!=="locked")?(
                   <div style={{background:BG,borderRadius:12,padding:"1.5rem",textAlign:"center",border:"0.5px solid #222"}}>
                     <div style={{fontSize:32,marginBottom:12}}>⏳</div>
                     <div style={{fontSize:16,fontWeight:600,color:"#fff",marginBottom:8}}>
