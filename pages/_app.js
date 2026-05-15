@@ -1,7 +1,18 @@
 import '../styles/globals.css'
 import Head from 'next/head'
+import { useEffect } from 'react'
 
 export default function App({ Component, pageProps }) {
+  useEffect(()=>{
+    // Catch unhandled promise rejections from Supabase calls
+    const handler=(event)=>{
+      console.warn("Unhandled error caught:",event.reason);
+      event.preventDefault(); // prevent app crash
+    };
+    window.addEventListener("unhandledrejection", handler);
+    return()=>window.removeEventListener("unhandledrejection", handler);
+  },[]);
+
   return (
     <>
       <Head>
@@ -17,4 +28,3 @@ export default function App({ Component, pageProps }) {
     </>
   )
 }
-// BUILD 1778071704
