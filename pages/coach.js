@@ -71,6 +71,47 @@ function DriveLinksManager(){
 }
 
 
+function ResetButton(){
+  const[status,setStatus]=useState("");
+  const[loading,setLoading]=useState(false);
+  const[results,setResults]=useState([]);
+  const[confirm,setConfirm]=useState(false);
+
+  const runReset=async()=>{
+    if(!confirm){setConfirm(true);return;}
+    setLoading(true);setStatus("");setResults([]);
+    try{
+      const res=await fetch("/api/reset",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({secret:"TFCG2025RESET"})
+      });
+      const data=await res.json();
+      setResults([...(data.results||[]),...(data.errors||[])]);
+      setStatus(data.errors?.length>0?"Done with some errors":"✅ Reset complete! App is fresh for June 18th.");
+    }catch(e){
+      setStatus("❌ Reset failed: "+e.message);
+    }
+    setLoading(false);setConfirm(false);
+  };
+
+  return(
+    <div>
+      <button onClick={runReset} disabled={loading} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:loading?"#e0e0e0":confirm?"#8B0000":RED,color:loading?"#aaa":"#fff",fontSize:14,fontWeight:700,cursor:loading?"not-allowed":"pointer",fontFamily:"Georgia,serif",marginBottom:10}}>
+        {loading?"Running reset...":confirm?"⚠️ TAP AGAIN TO CONFIRM RESET":"🔄 Run Hard Reset"}
+      </button>
+      {confirm&&!loading&&<div style={{fontSize:12,color:RED,textAlign:"center",marginBottom:10}}>Are you sure? This will wipe all season data!</div>}
+      {status&&<div style={{fontSize:13,fontWeight:600,color:status.includes("✅")?"#1E6B3A":RED,marginBottom:10}}>{status}</div>}
+      {results.length>0&&(
+        <div style={{background:"#f9f9f9",borderRadius:8,padding:"10px 12px",fontSize:11,color:"#666"}}>
+          {results.map((r,i)=><div key={i} style={{marginBottom:3}}>{r}</div>)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function Coach(){
   const[authed,setAuthed]=useState(false);
   const[coachRole,setCoachRole]=useState("ant");
