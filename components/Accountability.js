@@ -4,14 +4,14 @@ import { supabase } from "../lib/supabase";
 
 
 const VIOLATIONS=[
-  {label:"Hands on head",icon:"🙌"},
-  {label:"Bending over",icon:"🫸"},
-  {label:"Hands on hips",icon:"🤜"},
-  {label:"Walking — stations",icon:"🚶"},
-  {label:"Walking — run",icon:"🏃"},
-  {label:"Talking back",icon:"💬"},
-  {label:"Standing around",icon:"🧍"},
-  {label:"Other",icon:"⚠️"},
+  {label:"Cussing",icon:"🤬",crunches:15},
+  {label:"Talking/Socializing 1min+",icon:"💬",crunches:30},
+  {label:"Walking (jog everywhere)",icon:"🚶",crunches:30},
+  {label:"Hands on head",icon:"🙌",crunches:30},
+  {label:"Bending over",icon:"🫸",crunches:30},
+  {label:"Hands on hips",icon:"🤜",crunches:30},
+  {label:"Standing around",icon:"🧍",crunches:30},
+  {label:"Other",icon:"⚠️",crunches:30},
 ];
 
 export default function Accountability({athletes}){
@@ -35,7 +35,8 @@ export default function Accountability({athletes}){
   const submitLog=async()=>{
     setLoading(true);
     const vLabel=violation==="Other"?otherText:violation;
-    const crunches=type==="selfreport"?25*count:30*count;
+    const baseCrunches=violation?.crunches||30;
+    const crunches=type==="selfreport"?25*count:baseCrunches*count;
     await supabase.from("callouts").insert({
       athlete_id:selectedAthlete.id,
       violation:vLabel,
@@ -113,10 +114,13 @@ export default function Accountability({athletes}){
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           {[
+            {rule:"Cussing",consequence:"15 crunches",color:"#8E44AD",bg:"#F5EEF8"},
+            {rule:"Talking/Socializing 1min+",consequence:"30 crunches",color:RED,bg:"#FCEBEB"},
+            {rule:"Walking (jog everywhere)",consequence:"30 crunches",color:RED,bg:"#FCEBEB"},
             {rule:"Called out",consequence:"30 crunches",color:RED,bg:"#FCEBEB"},
             {rule:"Self-report",consequence:"25 crunches",color:GREEN,bg:"#EAF3DE"},
             {rule:"Late arrival",consequence:"50 crunches",color:"#854F0B",bg:"#FAEEDA"},
-            {rule:"No show",consequence:"2x shred mill 100yd gear 3",color:"#1A4F8A",bg:"#E6F1FB"},
+            {rule:"No show",consequence:"1x shred mill 100yd gear 3 light resistance",color:"#1A4F8A",bg:"#E6F1FB"},
           ].map(r=>(
             <div key={r.rule} style={{background:r.bg,borderRadius:8,padding:"8px 10px",border:"0.5px solid "+r.color+"44"}}>
               <div style={{fontSize:12,fontWeight:500,color:r.color}}>{r.rule}</div>

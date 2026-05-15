@@ -9,14 +9,14 @@ const GREEN="#1E6B3A";
 const GOLD="#D4AF37";
 
 const VIOLATIONS=[
-  {label:"Hands on head",icon:"🙌"},
-  {label:"Bending over",icon:"🫸"},
-  {label:"Hands on hips",icon:"🤜"},
-  {label:"Walking — stations",icon:"🚶"},
-  {label:"Walking — run",icon:"🚶"},
-  {label:"Talking back",icon:"💬"},
-  {label:"Standing around",icon:"🧍"},
-  {label:"Other",icon:"⚠️"},
+  {label:"Cussing",icon:"🤬",crunches:15},
+  {label:"Talking/Socializing 1min+",icon:"💬",crunches:30},
+  {label:"Walking (jog everywhere)",icon:"🚶",crunches:30},
+  {label:"Hands on head",icon:"🙌",crunches:30},
+  {label:"Bending over",icon:"🫸",crunches:30},
+  {label:"Hands on hips",icon:"🤜",crunches:30},
+  {label:"Standing around",icon:"🧍",crunches:30},
+  {label:"Other",icon:"⚠️",crunches:30},
 ];
 
 export default function Callout(){
@@ -44,7 +44,8 @@ export default function Callout(){
 
   const submitLog=async()=>{
     const vLabel=violation==="Other"?otherText:violation;
-    const crunches=type==="selfreport"?25*count:30*count;
+    const baseCrunches=violation?.crunches||30;
+    const crunches=type==="selfreport"?25*count:baseCrunches*count;
     await supabase.from("callouts").insert({
       athlete_id:selected.id,
       violation:vLabel,
