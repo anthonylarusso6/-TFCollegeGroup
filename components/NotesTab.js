@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from "react";
-import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
+import { useState, useEffect } from "react";
+import { GREEN, GOLD, RED } from "../lib/constants";
 import { supabase } from "../lib/supabase";
-
 
 export default function NotesTab({athleteId, athlete}){
   const[category,setCategory]=useState("mindset");
+  const[notes,setNotes]=useState({});
   const[saving,setSaving]=useState(null);
-  const GOLD="#D4AF37",PUR="#534AB7",GREEN="#1E6B3A";
+  const[saveError,setSaveError]=useState(null);
 
   const MINDSET_WEEKS=[
     {week:1,title:"Who Are You Now?",scripture:"2 Cor 5:17",takeaway:"Your past is not your ceiling.",color:GOLD},
@@ -38,9 +38,27 @@ export default function NotesTab({athleteId, athlete}){
     {week:12,title:"Sent — Go and Do",scripture:"Matt 28:19–20",takeaway:"Go and make disciples.",color:"#0F6E56"},
   ];
 
+  // Load notes from athlete prop when it arrives
+  useEffect(()=>{
+    if(!athlete)return;
+    const loaded={};
+    [...MINDSET_WEEKS,...FELLOWSHIP_WEEKS].forEach(w=>{
+      const mk="mindset_note_"+w.week;
+      const fk="fellowship_note_"+w.week;
+      if(athlete[mk])loaded[mk]=athlete[mk];
+      if(athlete[fk])loaded[fk]=athlete[fk];
+    });
+    setNotes(loaded);
+  },[athlete]);
+
   const saveNote=async(key,val)=>{
-    setSaving(key);
-    await supabase.from("athletes").update({[key]:val}).eq("id",athleteId).catch(()=>{});
+    setSaving(key);setSaveError(null);
+    setNotes(prev=>({...prev,[key]:val}));
+    const{error}=await supabase.from("athletes").update({[key]:val}).eq("id",athleteId);
+    if(error){
+      console.error("Note save error:",error);
+      setSaveError("Save failed — try again");
+    }
     setSaving(null);
   };
 
@@ -65,25 +83,37 @@ export default function NotesTab({athleteId, athlete}){
         <div style={{fontSize:12,color:"#888"}}>Write your personal takeaway from each week. Only you can see these.</div>
       </div>
 
+      {saveError&&<div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>{saveError}</div>}
+
       {/* Week cards */}
       {weeks.map((w,i)=>{
         const noteKey=notePrefix+w.week;
+        const val=notes[noteKey]||"";
+        const isSaving=saving===noteKey;
+        const hasSaved=!isSaving&&val.length>0;
         return(
           <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:8,border:"0.5px solid #e0e0e0",borderLeft:"4px solid "+w.color}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
               <div style={{fontSize:11,color:w.color,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.04em"}}>Week {w.week}</div>
-              <div style={{fontSize:11,color:"#888"}}>{w.scripture}</div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                {isSaving&&<div style={{fontSize:10,color:"#aaa"}}>saving...</div>}
+                {hasSaved&&!isSaving&&<div style={{fontSize:10,color:GREEN}}>✓ saved</div>}
+                <div style={{fontSize:11,color:"#888"}}>{w.scripture}</div>
+              </div>
             </div>
             <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a",marginBottom:2}}>{w.title}</div>
             <div style={{fontSize:12,color:"#888",fontStyle:"italic",marginBottom:8}}>"{w.takeaway}"</div>
             <textarea
-              defaultValue={athlete?.[noteKey]||""}
+              value={val}
+              onChange={e=>{
+                const newVal=e.target.value;
+                setNotes(prev=>({...prev,[noteKey]:newVal}));
+                setSaving(noteKey);
+              }}
               onBlur={e=>saveNote(noteKey,e.target.value)}
-              onChange={e=>setSaving(noteKey)}
               placeholder="Your personal takeaway from this session..."
-              style={{width:"100%",minHeight:55,padding:"8px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",background:"#fafafa",color:"#1a1a1a"}}
+              style={{width:"100%",minHeight:55,padding:"8px",borderRadius:8,border:"0.5px solid "+(isSaving?catColor:"#e0e0e0"),fontSize:12,fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",background:"#fafafa",color:"#1a1a1a",transition:"border-color 0.2s"}}
             />
-            {saving===noteKey&&<div style={{fontSize:11,color:GREEN,marginTop:3}}>Saving...</div>}
           </div>
         );
       })}
