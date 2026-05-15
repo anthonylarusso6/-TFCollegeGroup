@@ -42,6 +42,7 @@ export default function Draft({athletes}){
   const[step,setStep]=useState("pool");
   const[pool,setPool]=useState([]);
   const[groupCount,setGroupCount]=useState(4);
+  const[picksPerGroup,setPicksPerGroup]=useState(4);
   // Auto-populate pool with ALL active athletes automatically
   useEffect(()=>{
     if(athletes.length>0&&!draft){
@@ -154,6 +155,7 @@ export default function Draft({athletes}){
       week_start:new Date().toISOString().split("T")[0],
       leaders,
       group_count:groupCount,
+      picks_per_group:picksPerGroup,
       bracelets:Array(groupCount).fill(null),
       groups:Array(groupCount).fill(null).map(()=>[]),
       tiers:Array(groupCount).fill(null).map((_,i)=>i<Math.floor(groupCount/2)?1:i<Math.floor(groupCount*0.75)?2:3).sort(()=>Math.random()-0.5),
@@ -213,11 +215,12 @@ export default function Draft({athletes}){
   // Equal picks helper
   const totalPicked=groups.reduce((s,g)=>s+g.length,0);
   const totalPool=(draft?.pool_count||groups.reduce((s,g)=>s+g.length,0));
-  const picksPerGroup=groups.map(g=>g.length);
-  const maxPicks=Math.max(...picksPerGroup);
-  const minPicks=Math.min(...picksPerGroup);
+  const groupPickCounts=groups.map(g=>g.length);
+  const maxPicks=Math.max(...groupPickCounts);
+  const minPicks=Math.min(...groupPickCounts);
   const picksUnequal=maxPicks-minPicks>1;
-  const anyGroupFull=picksPerGroup.some(p=>p>=4);
+  const maxPerGroup=draft?.picks_per_group||picksPerGroup||4;
+  const anyGroupFull=groupPickCounts.some(p=>p>=maxPerGroup);
   // Target picks per group for equal distribution
   const athletesLeft=(groups.reduce((s,g)=>s+g.length,0));
   const targetPerGroup=pool.length>0?Math.floor((pool.length-groups.length)/groups.length):0;
@@ -232,7 +235,7 @@ export default function Draft({athletes}){
             <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>Step 1 — Select who's in the draft</div>
             <div style={{fontSize:12,color:"#888",marginBottom:12}}>Check everyone who's here today. Uncheck anyone who's absent or sitting out.</div>
             {/* Group count selector */}
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12,padding:"10px 12px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #e0e0e0"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,padding:"10px 12px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #e0e0e0"}}>
               <div style={{fontSize:12,color:"#888",flex:1}}>Number of groups:</div>
               <div style={{display:"flex",gap:6}}>
                 {[2,3,4,5,6].map(n=>(
@@ -240,6 +243,20 @@ export default function Draft({athletes}){
                     {n}
                   </button>
                 ))}
+              </div>
+            </div>
+            {/* Athletes per group slider */}
+            <div style={{padding:"10px 12px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #e0e0e0",marginBottom:12}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                <div style={{fontSize:12,color:"#888"}}>Athletes per group:</div>
+                <div style={{fontSize:14,fontWeight:700,color:PUR}}>{picksPerGroup}</div>
+              </div>
+              <input type="range" min={2} max={10} value={picksPerGroup} onChange={e=>setPicksPerGroup(parseInt(e.target.value))}
+                style={{width:"100%",accentColor:PUR,cursor:"pointer"}}/>
+              <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+                <div style={{fontSize:10,color:"#aaa"}}>2</div>
+                <div style={{fontSize:10,color:"#aaa"}}>{groupCount} groups × {picksPerGroup} athletes = {groupCount*picksPerGroup} total</div>
+                <div style={{fontSize:10,color:"#aaa"}}>10</div>
               </div>
             </div>
 
@@ -480,7 +497,7 @@ export default function Draft({athletes}){
                 {[0,1,2,3].map(i=>(
                   <div key={i} style={{background:LB[i],borderRadius:10,padding:"10px",border:"0.5px solid "+LC[i]+"44"}}>
                     <div style={{fontSize:12,fontWeight:500,color:LC[i],marginBottom:8}}>Group {i+1} — {draftLeaders[i]}</div>
-                    {(editGroups[i]||[]).length>=4&&<div style={{fontSize:10,color:"#1E6B3A",fontWeight:700,marginBottom:6,padding:"3px 8px",background:"#EAF3DE",borderRadius:6,display:"inline-block"}}>✓ Full (4/4)</div>}
+                    {(editGroups[i]||[]).length>=(draft?.picks_per_group||4)&&<div style={{fontSize:10,color:"#1E6B3A",fontWeight:700,marginBottom:6,padding:"3px 8px",background:"#EAF3DE",borderRadius:6,display:"inline-block"}}>✓ Full ({draft?.picks_per_group||4}/{draft?.picks_per_group||4})</div>}
                     {editGroups[i].map((name,j)=>(
                       <div key={name} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                         <div style={{flex:1,fontSize:12,padding:"4px 8px",background:"#fff",borderRadius:6,color:"#1a1a1a"}}>{name}</div>
