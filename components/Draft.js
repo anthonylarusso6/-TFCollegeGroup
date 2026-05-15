@@ -217,6 +217,7 @@ export default function Draft({athletes}){
   const maxPicks=Math.max(...picksPerGroup);
   const minPicks=Math.min(...picksPerGroup);
   const picksUnequal=maxPicks-minPicks>1;
+  const anyGroupFull=picksPerGroup.some(p=>p>=4);
   // Target picks per group for equal distribution
   const athletesLeft=(groups.reduce((s,g)=>s+g.length,0));
   const targetPerGroup=pool.length>0?Math.floor((pool.length-groups.length)/groups.length):0;
@@ -479,6 +480,7 @@ export default function Draft({athletes}){
                 {[0,1,2,3].map(i=>(
                   <div key={i} style={{background:LB[i],borderRadius:10,padding:"10px",border:"0.5px solid "+LC[i]+"44"}}>
                     <div style={{fontSize:12,fontWeight:500,color:LC[i],marginBottom:8}}>Group {i+1} — {draftLeaders[i]}</div>
+                    {(editGroups[i]||[]).length>=4&&<div style={{fontSize:10,color:"#1E6B3A",fontWeight:700,marginBottom:6,padding:"3px 8px",background:"#EAF3DE",borderRadius:6,display:"inline-block"}}>✓ Full (4/4)</div>}
                     {editGroups[i].map((name,j)=>(
                       <div key={name} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                         <div style={{flex:1,fontSize:12,padding:"4px 8px",background:"#fff",borderRadius:6,color:"#1a1a1a"}}>{name}</div>

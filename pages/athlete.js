@@ -565,9 +565,15 @@ export default function Athlete(){
       await loadDraft();
     };
 
+    const MAX_PICKS_PER_GROUP=4;
     const pickAthlete=async(name)=>{
       if(!isMyTurn)return;
       const ng=(draftGroups||[[],[],[],[]]).map(g=>[...g]);
+      // Enforce 4-pick max per group
+      if(ng[myLeaderIdx].length>=MAX_PICKS_PER_GROUP){
+        alert("Your group is full! Each group can only have 4 athletes.");
+        return;
+      }
       ng[myLeaderIdx].push(name);
       const newAvailable=available.filter(n=>n!==name);
       const newPickIdx=pickIdx+1;
@@ -818,7 +824,7 @@ export default function Athlete(){
                         }}/>
                         <div style={{display:"flex",flexDirection:"column",gap:8}}>
                           {available.map(name=>(
-                            <button key={name} onClick={()=>pickAthlete(name)} style={{padding:"14px 18px",borderRadius:12,border:"0.5px solid "+LC[myLeaderIdx],background:LB[myLeaderIdx],color:"#1a1a1a",cursor:"pointer",fontSize:14,fontWeight:500,textAlign:"left",fontFamily:"Georgia,serif"}}>
+                            <button key={name} onClick={()=>pickAthlete(name)} disabled={(draftGroups[myLeaderIdx]||[]).length>=4} style={{padding:"14px 18px",borderRadius:12,border:"0.5px solid "+LC[myLeaderIdx],background:(draftGroups[myLeaderIdx]||[]).length>=4?"#e0e0e0":LB[myLeaderIdx],color:(draftGroups[myLeaderIdx]||[]).length>=4?"#aaa":"#1a1a1a",cursor:(draftGroups[myLeaderIdx]||[]).length>=4?"not-allowed":"pointer",fontSize:14,fontWeight:500,textAlign:"left",fontFamily:"Georgia,serif"}}>
                               {name}
                             </button>
                           ))}
