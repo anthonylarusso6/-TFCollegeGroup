@@ -1,265 +1,254 @@
-import { useState, useEffect, useRef } from "react";
-import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
+import { useState, useEffect } from "react";
+import { BG, RED, GREEN, GOLD, STEEL, ORANGE, PUR } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 
+const DAYS=["Mon","Tue","Thu","Fri"];
+const DAY_LABELS={Mon:"Monday",Tue:"Tuesday",Thu:"Thursday",Fri:"Friday"};
+const TIER_COLORS={
+  1:{bg:"#EEEDFE",border:PUR,color:PUR,label:"Tier 1 — Primary"},
+  2:{bg:"#E1F5EE",border:GREEN,color:GREEN,label:"Tier 2 — Secondary"},
+  3:{bg:"#FFF4E0",border:ORANGE,color:ORANGE,label:"Tier 3 — Accessory"},
+};
+
+const DEFAULT_PROGRAM={
+  Mon:[
+    {name:"Power Clean",tier:1},{name:"Back Squat",tier:1},
+    {name:"Bench Press",tier:2},{name:"Romanian Deadlift",tier:3},
+  ],
+  Tue:[
+    {name:"Deadlift",tier:1},{name:"Military Press",tier:1},
+    {name:"Pull-ups",tier:2},{name:"Bent Over Row",tier:3},
+  ],
+  Thu:[
+    {name:"Front Squat",tier:1},{name:"Push Press",tier:1},
+    {name:"Incline Bench",tier:2},{name:"Hang Clean",tier:3},
+  ],
+  Fri:[
+    {name:"Power Clean",tier:1},{name:"Back Squat",tier:1},
+    {name:"Bench Press",tier:2},{name:"Pull-ups",tier:3},
+  ],
+};
 
 export default function PRLog({athleteId}){
-  const[prs,setPrs]=useState([]);
+  const today=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date().getDay()];
+  const defaultDay=DAYS.includes(today)?today:"Mon";
+  const[activeDay,setActiveDay]=useState(defaultDay);
+  const[program,setProgram]=useState(null);
+  const[phase,setPhase]=useState("");
+  const[logs,setLogs]=useState({});// {liftName: [{weight,reps,date,id}]}
+  const[inputs,setInputs]=useState({});// {liftName: {weight:"",reps:""}}
+  const[saving,setSaving]=useState(null);
+  const[saved,setSaved]=useState(null);
   const[loadError,setLoadError]=useState("");
-  const[lift,setLift]=useState("");
-  const[weight,setPRWeight]=useState("");
-  const[goal,setPRGoal]=useState({});
-  const[showGoal,setShowGoal]=useState(null);
-  const[goalInput,setGoalInput]=useState("");
-  const[saving,setSaving]=useState(false);
-  const[saved,setSaved]=useState(false);
-  const[selectedLift,setSelectedLift]=useState(null);
-  const GREEN="#1E6B3A",GOLD="#D4AF37",RED="#C0392B",PUR="#534AB7",BG="#0f0f0f";
-  const DEFAULT_CATEGORIES=[
-    {label:"Upper Body",color:"#534AB7",lifts:["Bench Press","Military Press","Pull-ups"]},
-    {label:"Lower Body",color:"#1E6B3A",lifts:["Back Squat","Front Squat","Deadlift"]},
-    {label:"Full Body",color:"#C0392B",lifts:["Power Clean","Hang Clean","Push Press"]},
-  ];
-  const[programLifts,setProgramLifts]=useState([]);
-  const[programPhase,setProgramPhase]=useState("");
+  const[expanded,setExpanded]=useState(null);
+
+  // Load coach program
   useEffect(()=>{
-    supabase.from("announcements").select("*").eq("type","program").eq("active",true).order("created_at",{ascending:false}).limit(1)
+    supabase.from("announcements").select("*").eq("type","program").eq("active",true)
+      .order("created_at",{ascending:false}).limit(1)
       .then(({data})=>{
         if(data&&data[0]){
           const p=JSON.parse(data[0].message||"{}");
-          if(p.lifts&&p.lifts.length>0){setProgramLifts(p.lifts);setProgramPhase(p.phase||"");}
-        }
-      }).catch(()=>{});
+          if(p.days){setProgram(p.days);setPhase(p.phase||"");}
+          else if(p.lifts){
+            // Legacy format — spread across days
+            const spread={Mon:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Tue:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Thu:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Fri:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3}))};
+            setProgram(spread);setPhase(p.phase||"");
+          }else{setProgram(DEFAULT_PROGRAM);}
+        }else{setProgram(DEFAULT_PROGRAM);}
+      }).catch(()=>setProgram(DEFAULT_PROGRAM));
   },[]);
-  // Build categories — if coach set a program, use those lifts; otherwise use defaults
-  const LIFT_CATEGORIES=programLifts.length>0?[
-    {label:"This Phase",color:ORANGE,lifts:programLifts},
-  ]:DEFAULT_CATEGORIES;
-  const LIFTS=LIFT_CATEGORIES.flatMap(c=>c.lifts);
-  const getLiftCategory=(liftName)=>LIFT_CATEGORIES.find(c=>c.lifts.includes(liftName));
 
+  // Load existing logs for this athlete
   useEffect(()=>{
-    supabase.from("pr_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true}).then(({data,error})=>{
-      if(error){console.error("pr_log error:",error);setLoadError(error.message);return;}
-      setPrs(data||[]);
-    }).catch(e=>{setLoadError(e.message);});
-    // Load goals from localStorage
-    const saved=localStorage.getItem("pr_goals_"+athleteId);
-    if(saved)setPRGoal(JSON.parse(saved));
-  },[]);
+    if(!athleteId)return;
+    supabase.from("pr_log").select("*").eq("athlete_id",athleteId)
+      .order("date",{ascending:false})
+      .then(({data,error})=>{
+        if(error){setLoadError(error.message);return;}
+        // Group by lift name
+        const grouped={};
+        (data||[]).forEach(r=>{
+          if(!grouped[r.lift])grouped[r.lift]=[];
+          grouped[r.lift].push(r);
+        });
+        setLogs(grouped);
+      }).catch(e=>setLoadError(e.message));
+  },[athleteId]);
 
-  const save=async()=>{
-    if(!lift||!weight)return;
-    setSaving(true);
+  const todayLifts=(program&&program[activeDay])||[];
+
+  const setInput=(liftName,field,val)=>{
+    setInputs(prev=>({...prev,[liftName]:{...prev[liftName],[field]:val}}));
+  };
+
+  const saveLog=async(liftName,tier)=>{
+    const inp=inputs[liftName]||{};
+    if(!inp.weight)return;
+    setSaving(liftName);
     const today=new Date().toISOString().split("T")[0];
-    const{data,error}=await supabase.from("pr_log").insert({athlete_id:athleteId,lift,weight:parseFloat(weight),date:today}).select();
-    if(error){console.error("save error:",error);setSaving(false);return;}
-    const{data:all}=await supabase.from("pr_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true});
-    setPrs(all||[]);
-    setLift("");setPRWeight("");setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2000);
+    const entry={
+      athlete_id:athleteId,
+      lift:liftName,
+      weight:parseFloat(inp.weight),
+      reps:parseInt(inp.reps)||1,
+      date:today,
+      day:activeDay,
+      tier:tier||1,
+    };
+    const{data,error}=await supabase.from("pr_log").insert(entry).select().single();
+    if(error){setLoadError(error.message);setSaving(null);return;}
+    setLogs(prev=>{
+      const existing=prev[liftName]||[];
+      return{...prev,[liftName]:[data,...existing]};
+    });
+    setInputs(prev=>({...prev,[liftName]:{weight:"",reps:""}}));
+    setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);
   };
 
-  const saveGoal=(liftName,val)=>{
-    const newGoals={...goal,[liftName]:parseFloat(val)};
-    setPRGoal(newGoals);
-    localStorage.setItem("pr_goals_"+athleteId,JSON.stringify(newGoals));
-    setShowGoal(null);setGoalInput("");
+  // Personal record for a lift
+  const getPR=(liftName)=>{
+    const liftLogs=logs[liftName]||[];
+    if(!liftLogs.length)return null;
+    return Math.max(...liftLogs.map(l=>parseFloat(l.weight)||0));
   };
 
-  // Group by lift
-  const byLift={};
-  prs.forEach(p=>{if(!byLift[p.lift])byLift[p.lift]=[];byLift[p.lift].push(p);});
+  // Last logged weight
+  const getLast=(liftName)=>{
+    const liftLogs=logs[liftName]||[];
+    return liftLogs[0]?.weight||null;
+  };
 
-  // Best per lift
-  const bests={};
-  Object.entries(byLift).forEach(([lft,entries])=>{
-    bests[lft]=entries.reduce((best,e)=>e.weight>best.weight?e:best,entries[0]);
-  });
-
-  const activeLiftData=selectedLift?byLift[selectedLift]:null;
+  if(!program)return(
+    <div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading program...</div>
+  );
 
   return(
     <div>
-      {/* Program phase banner */}
-      {loadError&&<div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>Error: {loadError} — make sure pr_log RLS is disabled in Supabase</div>}
-      {programPhase&&(
+      {/* Phase banner */}
+      {phase&&(
         <div style={{background:"linear-gradient(135deg,#1a1400,#221b00)",borderRadius:12,padding:"10px 14px",marginBottom:10,border:"1px solid "+GOLD+"33",display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:16}}>⚡</span>
+          <span style={{fontSize:18}}>⚡</span>
           <div>
             <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.08em"}}>Current phase</div>
-            <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{programPhase}</div>
+            <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{phase}</div>
           </div>
         </div>
       )}
-      {/* Log input */}
-      <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+RED+")"}}/>
-        <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>⚒ Iron Room</div>
-        <select value={lift} onChange={e=>setLift(e.target.value)} style={{width:"100%",padding:"12px",borderRadius:8,border:"1px solid #333",background:"#1a1a1a",color:lift?"#fff":"#555",fontSize:13,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box"}}>
-          <option value="">Select lift...</option>
-          {LIFT_CATEGORIES.map(cat=>(
-            <optgroup key={cat.label} label={cat.label}>
-              {cat.lifts.map(l=><option key={l} value={l}>{l}</option>)}
-            </optgroup>
-          ))}
-        </select>
-        <div style={{display:"flex",gap:8}}>
-          <input type="text" inputMode="decimal" value={weight} onChange={e=>setPRWeight(e.target.value)} placeholder="Weight (lbs)" style={{flex:1,padding:"12px",borderRadius:8,border:"1px solid #333",background:"#1a1a1a",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",textAlign:"center"}}/>
-          <button onClick={save} disabled={!lift||!weight||saving} style={{padding:"12px 20px",borderRadius:8,border:"none",background:lift&&weight?"linear-gradient(135deg,"+GOLD+",#b8960e)":"#222",color:lift&&weight?"#1a1a1a":"#444",fontSize:14,fontWeight:700,cursor:lift&&weight?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
-            {saved?"✓":saving?"...":"Log"}
-          </button>
+
+      {loadError&&(
+        <div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>
+          Error: {loadError}
         </div>
+      )}
+
+      {/* Day selector */}
+      <div style={{display:"flex",gap:6,marginBottom:12}}>
+        {DAYS.map(d=>{
+          const isActive=activeDay===d;
+          const isToday=d===defaultDay;
+          return(
+            <button key={d} onClick={()=>setActiveDay(d)} style={{flex:1,padding:"10px 4px",borderRadius:10,border:"1px solid "+(isActive?ORANGE:"#e0e0e0"),background:isActive?ORANGE:"#fff",color:isActive?"#fff":"#888",fontSize:12,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",position:"relative"}}>
+              {isToday&&!isActive&&<div style={{position:"absolute",top:3,right:3,width:6,height:6,borderRadius:"50%",background:GREEN}}/>}
+              {d}
+            </button>
+          );
+        })}
       </div>
 
-      {/* PR cards by lift */}
-      {LIFTS.filter(l=>byLift[l]).map((liftName,li)=>{
-        const entries=byLift[liftName]||[];
-        const best=bests[liftName];
-        const liftGoal=goal[liftName]||null;
-        const isSelected=selectedLift===liftName;
-        const goalPct=liftGoal&&best?Math.min(100,Math.round((best.weight/liftGoal)*100)):0;
+      {/* Day header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+        <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{DAY_LABELS[activeDay]}'s Lifts</div>
+        <div style={{fontSize:11,color:"#aaa"}}>{todayLifts.length} lifts</div>
+      </div>
 
-        // Sparkline
-        const sparkW=100,sparkH=40;
-        const weights=entries.map(e=>parseFloat(e.weight));
-        const sMin=Math.min(...weights)-5;
-        const sMax=Math.max(...weights)+5;
-        const pts=weights.map((w,i)=>{
-          const x=(i/(Math.max(weights.length-1,1)))*sparkW;
-          const y=sparkH-((w-sMin)/(Math.max(sMax-sMin,1)))*sparkH;
-          return`${x},${y}`;
-        }).join(" ");
+      {/* Lift cards */}
+      {todayLifts.map((lift,i)=>{
+        const tc=TIER_COLORS[lift.tier]||TIER_COLORS[1];
+        const pr=getPR(lift.name);
+        const last=getLast(lift.name);
+        const inp=inputs[lift.name]||{weight:"",reps:""};
+        const isSaving=saving===lift.name;
+        const isSaved=saved===lift.name;
+        const liftHistory=logs[lift.name]||[];
+        const isExpanded=expanded===lift.name;
 
         return(
-          <div key={li} style={{background:"#fff",borderRadius:12,marginBottom:10,border:"0.5px solid #e0e0e0",overflow:"hidden"}}>
-            <div style={{height:3,background:(()=>{const cat=getLiftCategory(liftName);return cat?"linear-gradient(90deg,"+cat.color+","+cat.color+"99)":"linear-gradient(90deg,"+GOLD+","+RED+")";})()}}/>
-            <div style={{padding:"1rem 1.25rem"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          <div key={i} style={{background:"#fff",borderRadius:12,marginBottom:8,border:"1px solid "+tc.border+"33",overflow:"hidden",borderTop:"3px solid "+tc.border}}>
+            {/* Lift header */}
+            <div style={{padding:"12px 14px"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                 <div>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
-                    <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a",cursor:"pointer"}} onClick={()=>setSelectedLift(isSelected?null:liftName)}>{liftName}</div>
-                    {(()=>{const cat=getLiftCategory(liftName);return cat?<span style={{fontSize:9,padding:"2px 7px",borderRadius:4,background:cat.color+"22",color:cat.color,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.04em"}}>{cat.label}</span>:null;})()}
-                  </div>
-                  <div style={{fontSize:11,color:"#888"}}>{entries.length} log{entries.length!==1?"s":""}</div>
+                  <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{lift.name}</div>
+                  <div style={{fontSize:10,fontWeight:600,color:tc.color,marginTop:2}}>{tc.label}</div>
                 </div>
                 <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:22,fontWeight:800,color:GOLD}}>{best?.weight} <span style={{fontSize:12,fontWeight:400,color:"#aaa"}}>lbs</span></div>
-                  <div style={{fontSize:10,color:"#aaa"}}>best · {best?.date}</div>
+                  {pr&&<div style={{fontSize:12,fontWeight:700,color:GOLD}}>PR: {pr} lbs</div>}
+                  {last&&<div style={{fontSize:11,color:"#aaa"}}>Last: {last} lbs</div>}
                 </div>
               </div>
 
-              {/* Sparkline */}
-              {weights.length>1&&(
-                <div style={{background:"#f9f9f9",borderRadius:8,padding:"8px 10px",marginBottom:10}}>
-                  <svg viewBox={`0 0 ${sparkW} ${sparkH}`} style={{width:"100%",height:40,overflow:"visible"}}>
-                    <defs>
-                      <linearGradient id={"pg"+li} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={GOLD} stopOpacity="0.3"/>
-                        <stop offset="100%" stopColor={GOLD} stopOpacity="0"/>
-                      </linearGradient>
-                    </defs>
-                    <polygon points={`0,${sparkH} ${pts} ${sparkW},${sparkH}`} fill={`url(#pg${li})`}/>
-                    <polyline points={pts} fill="none" stroke={GOLD} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    {weights.map((w,i)=>{
-                      const x=(i/(Math.max(weights.length-1,1)))*sparkW;
-                      const y=sparkH-((w-sMin)/(Math.max(sMax-sMin,1)))*sparkH;
-                      return<circle key={i} cx={x} cy={y} r={i===weights.length-1?3.5:2} fill={i===weights.length-1?"#1a1a1a":GOLD}/>;
-                    })}
-                    {liftGoal&&sMax>=liftGoal&&(
-                      <line x1="0" y1={sparkH-((liftGoal-sMin)/(Math.max(sMax-sMin,1)))*sparkH} x2={sparkW} y2={sparkH-((liftGoal-sMin)/(Math.max(sMax-sMin,1)))*sparkH} stroke={GREEN} strokeWidth="1.5" strokeDasharray="4,3"/>
-                    )}
-                  </svg>
+              {/* Input row */}
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Weight (lbs)</div>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={inp.weight}
+                    onChange={e=>setInput(lift.name,"weight",e.target.value)}
+                    placeholder={last?`Last: ${last}`:"0"}
+                    style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}
+                  />
                 </div>
-              )}
-
-              {/* Goal progress — visual slider + ring */}
-              <div style={{marginBottom:10}}>
-                {liftGoal?(
-                  <div style={{background:"#0f0f0f",borderRadius:12,padding:"14px",border:"1px solid #222"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em"}}>Goal progress</div>
-                      <button onClick={()=>{setShowGoal(liftName);setGoalInput(String(liftGoal));}} style={{fontSize:10,color:"#444",background:"none",border:"none",cursor:"pointer",fontFamily:"Georgia,serif"}}>edit</button>
-                    </div>
-                    {/* Main stats row */}
-                    <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:14}}>
-                      {/* Circle */}
-                      <div style={{position:"relative",width:72,height:72,flexShrink:0}}>
-                        <svg viewBox="0 0 72 72" style={{width:72,height:72,transform:"rotate(-90deg)"}}>
-                          <circle cx="36" cy="36" r="30" fill="none" stroke="#222" strokeWidth="7"/>
-                          <circle cx="36" cy="36" r="30" fill="none"
-                            stroke={goalPct>=100?GREEN:goalPct>=75?GOLD:PUR}
-                            strokeWidth="7"
-                            strokeDasharray={`${Math.min(goalPct,100)*1.885} 188.5`}
-                            strokeLinecap="round"
-                            style={{filter:`drop-shadow(0 0 6px ${goalPct>=100?GREEN:goalPct>=75?GOLD:PUR})`}}/>
-                        </svg>
-                        <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-                          <div style={{fontSize:16,fontWeight:900,color:goalPct>=100?GREEN:goalPct>=75?GOLD:PUR,lineHeight:1}}>{Math.min(goalPct,100)}</div>
-                          <div style={{fontSize:9,color:"#555"}}>%</div>
-                        </div>
-                      </div>
-                      <div style={{flex:1}}>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:6}}>
-                          <div>
-                            <div style={{fontSize:24,fontWeight:800,color:"#fff",lineHeight:1}}>{best?.weight||0}</div>
-                            <div style={{fontSize:9,color:"#555",marginTop:2}}>current</div>
-                          </div>
-                          <div style={{fontSize:13,color:"#333"}}>→</div>
-                          <div style={{textAlign:"right"}}>
-                            <div style={{fontSize:24,fontWeight:800,color:goalPct>=100?GREEN:PUR,lineHeight:1}}>{liftGoal}</div>
-                            <div style={{fontSize:9,color:"#555",marginTop:2}}>goal</div>
-                          </div>
-                        </div>
-                        {/* Slider track */}
-                        <div style={{position:"relative",height:8,background:"#222",borderRadius:4,overflow:"visible"}}>
-                          <div style={{position:"absolute",left:0,top:0,height:"100%",width:Math.min(goalPct,100)+"%",background:goalPct>=100?"linear-gradient(90deg,"+GREEN+",#0d4a29)":goalPct>=75?"linear-gradient(90deg,"+GOLD+",#b8960e)":"linear-gradient(90deg,"+PUR+",#3d35a0)",borderRadius:4,transition:"width 0.5s",boxShadow:goalPct>=100?"0 0 8px "+GREEN:goalPct>=75?"0 0 8px "+GOLD:"0 0 8px "+PUR}}/>
-                          {/* Thumb */}
-                          <div style={{position:"absolute",top:"50%",left:Math.min(goalPct,100)+"%",transform:"translate(-50%,-50%)",width:16,height:16,borderRadius:"50%",background:goalPct>=100?GREEN:goalPct>=75?GOLD:PUR,border:"2px solid #0f0f0f",boxShadow:"0 0 8px "+(goalPct>=100?GREEN:goalPct>=75?GOLD:PUR),transition:"left 0.5s"}}/>
-                        </div>
-                      </div>
-                    </div>
-                    {goalPct>=100?(
-                      <div style={{textAlign:"center",fontSize:13,fontWeight:700,color:GREEN}}>🎉 Goal crushed! Set a new one.</div>
-                    ):(
-                      <div style={{textAlign:"center",fontSize:12,color:"#444"}}>{(liftGoal-(best?.weight||0)).toFixed(1)} lbs away from your goal</div>
-                    )}
-                  </div>
-                ):(
-                  <button onClick={()=>{setShowGoal(liftName);setGoalInput("");}} style={{fontSize:12,color:PUR,background:"#EEEDFE",border:"0.5px solid "+PUR+"44",borderRadius:8,padding:"8px 14px",cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:500,width:"100%",boxSizing:"border-box"}}>+ Set a goal for {liftName} →</button>
-                )}
-                {showGoal===liftName&&(
-                  <div style={{display:"flex",gap:6,marginTop:8}}>
-                    <input type="text" inputMode="decimal" value={goalInput} onChange={e=>setGoalInput(e.target.value)} placeholder="Goal (lbs)" style={{flex:1,padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",background:"#fafafa"}}/>
-                    <button onClick={()=>saveGoal(liftName,goalInput)} style={{padding:"8px 14px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>Save</button>
-                    <button onClick={()=>setShowGoal(null)} style={{padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",background:"transparent",color:"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>
-                  </div>
-                )}
+                <div style={{flex:1}}>
+                  <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Reps</div>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={inp.reps}
+                    onChange={e=>setInput(lift.name,"reps",e.target.value)}
+                    placeholder="0"
+                    style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}
+                  />
+                </div>
+                <div style={{paddingTop:18}}>
+                  <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving} style={{padding:"10px 14px",borderRadius:8,border:"none",background:inp.weight?(isSaved?GREEN:tc.border):"#e0e0e0",color:inp.weight?"#fff":"#aaa",fontSize:13,fontWeight:700,cursor:inp.weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:52}}>
+                    {isSaved?"✓":isSaving?"...":"Log"}
+                  </button>
+                </div>
               </div>
-
-              {/* History — tap to expand */}
-              {isSelected&&(
-                <div style={{borderTop:"0.5px solid #f0f0f0",paddingTop:8}}>
-                  {[...entries].reverse().map((e,i)=>(
-                    <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 0",borderBottom:i<entries.length-1?"0.5px solid #f5f5f5":"none"}}>
-                      <div style={{fontSize:12,color:"#888"}}>{e.date}</div>
-                      <div style={{fontSize:13,fontWeight:600,color:e.weight===best?.weight?GOLD:"#1a1a1a"}}>{e.weight} lbs {e.weight===best?.weight?"⭐":""}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <button onClick={()=>setSelectedLift(isSelected?null:liftName)} style={{fontSize:11,color:"#aaa",background:"none",border:"none",cursor:"pointer",fontFamily:"Georgia,serif",padding:"4px 0 0"}}>
-                {isSelected?"▲ Hide history":"▼ Show history"}
-              </button>
             </div>
+
+            {/* History toggle */}
+            {liftHistory.length>0&&(
+              <div>
+                <button onClick={()=>setExpanded(isExpanded?null:lift.name)} style={{width:"100%",padding:"8px 14px",background:"#fafafa",border:"none",borderTop:"0.5px solid #f0f0f0",fontSize:11,color:"#888",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",display:"flex",justifyContent:"space-between"}}>
+                  <span>History ({liftHistory.length} sessions)</span>
+                  <span>{isExpanded?"▲":"▼"}</span>
+                </button>
+                {isExpanded&&(
+                  <div style={{padding:"8px 14px",background:"#fafafa",borderTop:"0.5px solid #f0f0f0"}}>
+                    {liftHistory.slice(0,5).map((h,hi)=>(
+                      <div key={hi} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:hi<Math.min(liftHistory.length,5)-1?"0.5px solid #f0f0f0":"none"}}>
+                        <div style={{fontSize:11,color:"#888"}}>{new Date(h.date).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
+                        <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a"}}>{h.weight} lbs × {h.reps||1} reps</div>
+                        {h.weight===pr&&<div style={{fontSize:10,color:GOLD,fontWeight:700}}>PR 🏆</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
       })}
 
-      {Object.keys(byLift).length===0&&(
+      {todayLifts.length===0&&(
         <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-          <div style={{fontSize:40,marginBottom:12}}>🏋️</div>
-          <div style={{fontSize:14,fontWeight:500,color:"#1a1a1a",marginBottom:6}}>Start tracking your lifts</div>
-          <div style={{fontSize:12,color:"#888"}}>Log your first set above and watch your strength grow week by week.</div>
+          <div style={{fontSize:32,marginBottom:8}}>🏋️</div>
+          <div style={{fontSize:13,color:"#888"}}>No lifts programmed for {DAY_LABELS[activeDay]} yet.</div>
+          <div style={{fontSize:12,color:"#aaa",marginTop:4}}>Coach Ant will update the program soon.</div>
         </div>
       )}
     </div>
