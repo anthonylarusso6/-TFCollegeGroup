@@ -12,20 +12,49 @@ const TIER_COLORS={
 
 const DEFAULT_PROGRAM={
   Mon:[
-    {name:"Power Clean",tier:1},{name:"Back Squat",tier:1},
-    {name:"Bench Press",tier:2},{name:"Romanian Deadlift",tier:3},
+    {name:"Chain Bench Press",tier:1,sets:"3 x 5",reps:"12, 8"},
+    {name:"DB Front to Lat Raise",tier:1,sets:"4 x 8e"},
+    {name:"KB Bent Over Rows",tier:1,sets:"4 x 12"},
+    {name:"DB Reserve Lunge to Step Up",tier:2,sets:"7,7,6,5"},
+    {name:"ISOphit Hamstring Holds",tier:2,sets:"3 x 20s ea"},
+    {name:"Partner Leg Throws",tier:2,sets:"3 x 12"},
+    {name:"Mini Band Walks",tier:3,sets:"3 x 20yds ea"},
+    {name:"Banded KB Swings",tier:3,sets:"3 x 10"},
+    {name:"DB Prone W Press",tier:3,sets:"3 x 10"},
   ],
   Tue:[
-    {name:"Deadlift",tier:1},{name:"Military Press",tier:1},
-    {name:"Pull-ups",tier:2},{name:"Bent Over Row",tier:3},
+    {name:"BB Back Squat",tier:1,sets:"8,6,6,5,4"},
+    {name:"PVC Max Vert",tier:1,sets:"4 x 4"},
+    {name:"Standing SA DB Shoulder Press",tier:2,sets:"4 x 7e"},
+    {name:"Cable Underhand Row",tier:2,sets:"4 x 10"},
+    {name:"KB Lateral Lunge",tier:2,sets:"3 x 7e"},
+    {name:"AB Rollout",tier:3,sets:"3 x 10"},
+    {name:"KB Seated Twist",tier:3,sets:"3 x 15e"},
+    {name:"DB Hinge",tier:3,sets:"3 x 9"},
   ],
   Thu:[
-    {name:"Front Squat",tier:1},{name:"Push Press",tier:1},
-    {name:"Incline Bench",tier:2},{name:"Hang Clean",tier:3},
+    {name:"Pull Ups",tier:1,sets:"8,7,6,5,4"},
+    {name:"DB Lat High Step Ups",tier:1,sets:"3 x 6e"},
+    {name:"MB OH Sit Up Throw",tier:1,sets:"3 x 12"},
+    {name:"Trap Bar Deadlift",tier:2,sets:"9,8,7,6"},
+    {name:"DB Squat Jump",tier:2,sets:"4 x 6"},
+    {name:"Cable SS Rot Punch",tier:2,sets:"3 x 14e"},
+    {name:"LM Grappler Twist",tier:3,sets:"30s on 15s off"},
+    {name:"PUP KB Drag Through",tier:3,sets:"30s on 15s off"},
+    {name:"Dead Hangs",tier:3,sets:"30s on 15s off"},
+    {name:"Box Jumps",tier:3,sets:"30s on 15s off"},
   ],
   Fri:[
-    {name:"Power Clean",tier:1},{name:"Back Squat",tier:1},
-    {name:"Bench Press",tier:2},{name:"Pull-ups",tier:3},
+    {name:"SSB Split Squat",tier:1,sets:"5 x 6e"},
+    {name:"DB Split Squat Jump",tier:1,sets:"3 x 7e"},
+    {name:"MB Slam to Shotput",tier:1,sets:"3 x 8e"},
+    {name:"LM SA Split Jerk",tier:2,sets:"4 x 7e"},
+    {name:"Lateral Sled Drag",tier:2,sets:"3 x 20yds ea"},
+    {name:"DB Floor Press",tier:2,sets:"4 x 12"},
+    {name:"Plate Curl to Press",tier:3,sets:"16,14,12"},
+    {name:"SA Cable Pushdown",tier:3,sets:"16,14,12"},
+    {name:"DB Spider Curl w/Twist",tier:3,sets:"16,14,12"},
+    {name:"Weighted Box Dips",tier:3,sets:"16,14,12"},
   ],
 };
 
@@ -54,8 +83,8 @@ export default function PRLog({athleteId}){
             // Legacy format — spread across days
             const spread={Mon:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Tue:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Thu:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Fri:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3}))};
             setProgram(spread);setPhase(p.phase||"");
-          }else{setProgram(DEFAULT_PROGRAM);}
-        }else{setProgram(DEFAULT_PROGRAM);}
+          }else{setProgram(DEFAULT_PROGRAM);setPhase("College Group Summer");}
+        }else{setProgram(DEFAULT_PROGRAM);setPhase("College Group Summer");}
       }).catch(()=>setProgram(DEFAULT_PROGRAM));
   },[]);
 
