@@ -587,8 +587,12 @@ export default function Athlete(){
         <div style={{minHeight:"100vh",background:"#f5f5f5",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
           <div style={{background:BG,padding:"1rem 1.25rem 0"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-              <button onClick={()=>setScreen("roster")} style={{background:"transparent",border:"none",color:"#666",fontSize:13,cursor:"pointer",fontFamily:"Georgia, serif"}}>← Sign out</button>
-              <div style={{fontSize:12,color:"#555"}}>TF College Group</div>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <button onClick={()=>setScreen("roster")} style={{background:"transparent",border:"none",color:"#666",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 10px",borderRadius:8,border:"0.5px solid #222"}}>← Switch</button>
+                <a href="/" style={{background:"transparent",border:"0.5px solid #222",borderRadius:8,color:"#666",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 10px",textDecoration:"none"}}>🏠 Home</a>
+                <a href="/coach" style={{background:"transparent",border:"0.5px solid #222",borderRadius:8,color:"#666",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 10px",textDecoration:"none"}}>⚒ Coach</a>
+              </div>
+              <div style={{fontSize:11,color:"#444"}}>TF College Group</div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
              <div style={{width:50,height:50,borderRadius:"50%",background:isForge?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
