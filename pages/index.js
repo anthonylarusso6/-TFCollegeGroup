@@ -289,17 +289,27 @@ export default function Landing(){
           )}
 
           {/* Anvil winner */}
-          <div style={{background:"linear-gradient(135deg,#1f1700,#2a2000)",border:"1px solid "+GOLD+"33",borderRadius:14,padding:"14px 18px",marginBottom:16,position:"relative",overflow:"hidden"}}>
+          <div style={{background:"linear-gradient(135deg,#1f1700,#2a2000)",border:"1px solid "+GOLD+"33",borderRadius:14,padding:"16px 18px",marginBottom:16,position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+GOLD+",transparent)"}}/>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{fontSize:26,filter:"drop-shadow(0 0 8px "+GOLD+"66)"}}>⚒</div>
-              <div>
-                <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:2}}>This week's Anvil</div>
-                <div style={{fontSize:15,fontWeight:700,color:GOLD}}>{anvilWinner?anvilWinner.athlete_name:"To be announced"}</div>
-                {anvilWinner?.note&&<div style={{fontSize:11,color:"#666",fontStyle:"italic",marginTop:2}}>"{anvilWinner.note}"</div>}
-                {!anvilWinner&&<div style={{fontSize:11,color:"#555",fontStyle:"italic",marginTop:2}}>"The anvil does not move."</div>}
+            <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:12,textAlign:"center"}}>⚒ This week's Anvil</div>
+            {anvilWinner?(
+              <div style={{textAlign:"center"}}>
+                <div style={{width:72,height:72,borderRadius:"50%",margin:"0 auto 10px",border:"2px solid "+GOLD,overflow:"hidden",background:"#333",boxShadow:"0 0 20px "+GOLD+"55",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:700,color:GOLD}}>
+                  {anvilWinner.photo_url?
+                    <img src={anvilWinner.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={anvilWinner.athlete_name}/>
+                    :(anvilWinner.athlete_name||"?")[0]
+                  }
+                </div>
+                <div style={{fontSize:17,fontWeight:800,color:GOLD,marginBottom:4}}>{anvilWinner.athlete_name}</div>
+                {anvilWinner.note&&<div style={{fontSize:12,color:"#888",fontStyle:"italic",lineHeight:1.6}}>"{anvilWinner.note}"</div>}
               </div>
-            </div>
+            ):(
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:36,marginBottom:6,filter:"drop-shadow(0 0 8px "+GOLD+"44)"}}>⚒</div>
+                <div style={{fontSize:14,fontWeight:600,color:GOLD,marginBottom:2}}>To be announced</div>
+                <div style={{fontSize:11,color:"#555",fontStyle:"italic"}}>"The anvil does not move."</div>
+              </div>
+            )}
           </div>
 
           {/* Photo of the week */}
