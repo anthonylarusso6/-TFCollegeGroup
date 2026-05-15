@@ -244,9 +244,11 @@ export default function Athlete(){
     const late=now.getHours()>cut.h||(now.getHours()===cut.h&&now.getMinutes()>=cut.m);
     const status=late?"late":"early";
     const today_date=now.toISOString().split("T")[0];
-    const{data:existing}=await supabase.from("attendance").select("*").eq("athlete_id",athlete.id).eq("date",today_date);
+    const{data:existing,error:existErr}=await supabase.from("attendance").select("*").eq("athlete_id",athlete.id).eq("date",today_date);
+    if(existErr)console.error("Attendance check error:",existErr);
     if(existing&&existing.length>0)return{status:existing[0].status,time:existing[0].time_logged,already:true};
-    await supabase.from("attendance").insert({athlete_id:athlete.id,date:today_date,day:today,status,time_logged:timeStr});
+    const{error:insertErr}=await supabase.from("attendance").insert({athlete_id:athlete.id,date:today_date,day:today,status,time_logged:timeStr});
+    if(insertErr){console.error("Attendance insert error:",insertErr);return{status,time:timeStr,error:insertErr.message};}
     const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id);
     if(lb&&lb.length>0){
       const updates={};
@@ -476,6 +478,7 @@ export default function Athlete(){
             {noClass?"No class today":alreadyIn?"Already checked in":isLate?"You're late.":"You're in early."}
           </div>
           {checkinInfo&&<div style={{fontSize:14,color:"#888",marginBottom:16}}>Signed in at {checkinInfo.time}</div>}
+          {checkinInfo?.error&&<div style={{fontSize:12,color:"#E24B4A",marginBottom:8,padding:"8px 12px",background:"#FFF0F0",borderRadius:8}}>Save failed: {checkinInfo.error} — check Supabase RLS</div>}
           {streak>0&&!noClass&&(
             <div style={{padding:"10px 16px",borderRadius:10,background:"#1a1f1a",border:"0.5px solid "+GREEN+"44",marginBottom:16,display:"inline-block"}}>
               <div style={{fontSize:13,color:GREEN}}>🔥 {streak} day early streak</div>
