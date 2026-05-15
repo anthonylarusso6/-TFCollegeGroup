@@ -121,7 +121,7 @@ export default function Coach(){
   const[pinStep,setPinStep]=useState("select"); // "select" | "enter" | "create" | "confirm"
   const[pinConfirm,setPinConfirm]=useState("");
   const[pinError,setPinError]=useState("");
-  const[tab,setTab]=useState("overview");
+  const[tab,setTab]=useState(coachRole==="kevin"?"roster":"overview");
   const[athletes,setAthletes]=useState([]);
   const[attendance,setAttendance]=useState([]);
   const[inbox,setInbox]=useState([]);
@@ -297,24 +297,28 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
   const monthClassDates=[...new Set(attendance.filter(r=>r.date&&r.date.startsWith(thisMonth)).map(r=>r.date))];
   const mostMissed=monthClassDates.length>=2?athletes.filter(a=>a.status==="active").map(a=>({name:a.name,missed:monthClassDates.length-attendance.filter(r=>r.athlete_id===a.id&&r.date&&r.date.startsWith(thisMonth)).length})).filter(a=>a.missed>0).sort((a,b)=>b.missed-a.missed).slice(0,5):[];
 
-  const TABS=[
-    {id:"overview",label:"Overview"},
-    {id:"draft",label:"Draft"},
-    {id:"roster",label:"Roster"},
-    {id:"attendance",label:"Attendance"},
-    {id:"accountability",label:"Accountability"},
-    {id:"anvil",label:"The Anvil"},
-    {id:"inbox",label:`Inbox${inboxCount>0?` (${inboxCount})`:""}`},
-    {id:"leaderboard",label:"Leaderboard"},
-    {id:"goals",label:"Goals"},
-    {id:"fellowship",label:"Fellowship Friday"},
-{id:"mindset",label:"Mindset Monday"},
-{id:"culture",label:"Culture & Events"},
-    {id:"prayers",label:"Prayers"},
-    {id:"weights",label:"Weights"},
-    {id:"photos",label:"Photos"},
-    {id:"engagement",label:"Engagement"},
+  const ALL_TABS=[
+    {id:"overview",label:"Overview",icon:"📊"},
+    {id:"draft",label:"Draft",icon:"🎯"},
+    {id:"roster",label:"Roster",icon:"👥"},
+    {id:"attendance",label:"Attendance",icon:"📅"},
+    {id:"accountability",label:"Accountability",icon:"✊"},
+    {id:"anvil",label:"The Anvil",icon:"⚒"},
+    {id:"inbox",label:`Inbox${inboxCount>0?` (${inboxCount})`:""}`,icon:"📬"},
+    {id:"leaderboard",label:"Leaderboard",icon:"🏆"},
+    {id:"goals",label:"Goals",icon:"🎯"},
+    {id:"fellowship",label:"Fellowship",icon:"🙏"},
+    {id:"mindset",label:"Mindset",icon:"💡"},
+    {id:"culture",label:"Culture",icon:"🔥"},
+    {id:"prayers",label:"Prayers",icon:"🙌"},
+    {id:"weights",label:"Weights",icon:"⚖️"},
+    {id:"photos",label:"Photos",icon:"📸"},
+    {id:"engagement",label:"Engagement",icon:"📢"},
+    {id:"reset",label:"Reset",icon:"🔄"},
   ];
+  // Kevin only sees roster, mindset and attendance
+  const KEVIN_TABS=["roster","mindset","attendance"];
+  const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):ALL_TABS;
 
   // Kevin PIN stored in localStorage
   const getKevinPin=()=>typeof window!=="undefined"?localStorage.getItem("kevin_coach_pin"):null;
@@ -423,7 +427,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }else if(selectedCoach==="kevin"){
                         const kp=getKevinPin();
-                        if(kp&&val===kp){setAuthed(true);setCoachRole("kevin");setPin("");}
+                        if(kp&&val===kp){setAuthed(true);setCoachRole("kevin");setTab("roster");setPin("");}
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }else if(selectedCoach==="malkmus"){
                         const mp=getMalkmusPin();
@@ -437,7 +441,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         if(val===pinConfirm){saveMalkmusPin(val);setAuthed(true);setCoachRole("malkmus");setPin("");}
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }else{
-                        if(val===pinConfirm){saveKevinPin(val);setAuthed(true);setCoachRole("kevin");setPin("");}
+                        if(val===pinConfirm){saveKevinPin(val);setAuthed(true);setCoachRole("kevin");setTab("roster");setPin("");}
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }
                     }
