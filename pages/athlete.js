@@ -347,7 +347,16 @@ export default function Athlete(){
         <div style={{position:"fixed",top:-100,left:-100,width:300,height:300,borderRadius:"50%",background:"#E8720C",opacity:0.07,filter:"blur(80px)",pointerEvents:"none"}}/>
         <div style={{position:"fixed",bottom:-100,right:-100,width:250,height:250,borderRadius:"50%",background:GOLD,opacity:0.07,filter:"blur(60px)",pointerEvents:"none"}}/>
 
-        <div style={{padding:"3rem 1.5rem 2rem",position:"relative"}}>
+        <div style={{padding:"1rem 1.5rem 2rem",position:"relative"}}>
+          {/* Top nav bar */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.5rem"}}>
+            <a href="/" style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#555",textDecoration:"none",padding:"7px 12px",borderRadius:8,border:"0.5px solid #222",background:"#111"}}>
+              ← Home
+            </a>
+            <a href="/coach" style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#555",textDecoration:"none",padding:"7px 12px",borderRadius:8,border:"0.5px solid #222",background:"#111"}}>
+              ⚒ Coach
+            </a>
+          </div>
           {/* Hero header */}
           <div style={{textAlign:"center",marginBottom:"2rem"}}>
             <div style={{position:"relative",display:"inline-block",marginBottom:16}}>
