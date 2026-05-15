@@ -48,11 +48,11 @@ const TIER_COLORS={
   3:{bg:"#FAEEDA",border:"#854F0B",color:"#633806",label:"Tier 3"},
 };
 
-const snakeSeq=(total)=>{
+const snakeSeq=(total,numGroups=4)=>{
   const order=[];let i=0,dir=1;
   while(order.length<total){
     order.push(i);
-    if(i===3)dir=-1;
+    if(i===numGroups-1)dir=-1;
     if(i===0&&order.length>1)dir=1;
     i+=dir;
   }
@@ -534,7 +534,8 @@ export default function Athlete(){
     const allPicked=(draftGroups||[]).flat();
     const available=nonLeaders.filter(n=>!allPicked.includes(n));
     const totalPicks=nonLeaders.length;
-    const pickSeq=snakeSeq(totalPicks);
+    const numLeaders=draftLeaders.filter(Boolean).length||groupCount||4;
+    const pickSeq=snakeSeq(totalPicks,numLeaders);
     const pickIdx=allPicked.length;
     const currentPickerIdx=pickSeq[pickIdx]??0;
     const isMyTurn=myLeaderIdx===currentPickerIdx&&draftPhase==="draft";

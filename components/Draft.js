@@ -217,6 +217,9 @@ export default function Draft({athletes}){
   const maxPicks=Math.max(...picksPerGroup);
   const minPicks=Math.min(...picksPerGroup);
   const picksUnequal=maxPicks-minPicks>1;
+  // Target picks per group for equal distribution
+  const athletesLeft=(groups.reduce((s,g)=>s+g.length,0));
+  const targetPerGroup=pool.length>0?Math.floor((pool.length-groups.length)/groups.length):0;
 
   return(
     <div>
