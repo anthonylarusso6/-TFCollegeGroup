@@ -34,17 +34,19 @@ export default function ProgramUpload(){
     setSelectedLifts(prev=>prev.includes(lift)?prev.filter(l=>l!==lift):[...prev,lift]);
   };
 
+  const[saveErr,setSaveErr]=useState("");
   const saveProgram=async()=>{
+    setSaveErr("");
     const program={phase,lifts:selectedLifts,notes,updatedAt:new Date().toISOString()};
-    // Save to announcements table with type "program"
-    const existing=await supabase.from("announcements").select("id").eq("type","program").limit(1);
-    if(existing.data&&existing.data[0]){
-      await supabase.from("announcements").update({message:JSON.stringify(program),active:true}).eq("id",existing.data[0].id);
-    }else{
-      await supabase.from("announcements").insert({type:"program",message:JSON.stringify(program),active:true});
-    }
-    setCurrentProgram(program);
-    setSaved(true);setTimeout(()=>setSaved(false),3000);
+    try{
+      // First deactivate any existing program entries
+      await supabase.from("announcements").update({active:false}).eq("type","program");
+      // Then insert fresh
+      const{error}=await supabase.from("announcements").insert({type:"program",message:JSON.stringify(program),active:true});
+      if(error){setSaveErr("Save failed: "+error.message);return;}
+      setCurrentProgram(program);
+      setSaved(true);setTimeout(()=>setSaved(false),3000);
+    }catch(e){setSaveErr("Save failed: "+e.message);}
   };
 
   if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading...</div>;
@@ -89,6 +91,7 @@ export default function ProgramUpload(){
           {saved?"✓ Program saved!":"Push program to athletes →"}
         </button>
         {selectedLifts.length>0&&<div style={{fontSize:11,color:"#aaa",textAlign:"center",marginTop:6}}>{selectedLifts.length} lifts selected</div>}
+        {saveErr&&<div style={{fontSize:12,color:"#E24B4A",marginTop:8,padding:"8px",background:"#FFF0F0",borderRadius:8}}>{saveErr}</div>}
       </div>
     </div>
   );
