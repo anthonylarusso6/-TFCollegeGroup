@@ -1,10 +1,9 @@
-// Hard reset endpoint — run on June 17th before first class
-// Only accessible with the correct secret key
+// Hard reset — preserves Mindset Monday notes, PINs, photos, program
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://kluuoibuhkxukbqodfet.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsdXVvaWJ1aGt4dWticW9kZmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzY4NjYsImV4cCI6MjA5MTUxMjg2Nn0.0LeTTeFYeSiv7JAH6P-QmfAU8pQALZZRt5zWmW2s5-M'
 );
 
 export default async function handler(req, res) {
@@ -19,75 +18,101 @@ export default async function handler(req, res) {
   const errors = [];
 
   const run = async (label, fn) => {
-    try { await fn(); results.push(`✅ ${label}`); }
-    catch(e) { errors.push(`❌ ${label}: ${e.message}`); }
+    try { 
+      await fn(); 
+      results.push(`✅ ${label}`); 
+    } catch(e) { 
+      errors.push(`❌ ${label}: ${e.message}`); 
+    }
   };
 
   // 1. Clear attendance
-  await run('Clear attendance', () =>
-    supabase.from('attendance').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  );
+  await run('Clear attendance', async () => {
+    const { error } = await supabase.from('attendance').delete().gte('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+  });
 
   // 2. Clear draft
-  await run('Clear draft', () =>
-    supabase.from('draft').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  );
+  await run('Clear draft', async () => {
+    const { error } = await supabase.from('draft').delete().gte('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+  });
 
   // 3. Clear weight logs
-  await run('Clear weight_log', () =>
-    supabase.from('weight_log').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  );
+  await run('Clear weight_log', async () => {
+    const { error } = await supabase.from('weight_log').delete().gte('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+  });
 
   // 4. Clear PR logs
-  await run('Clear pr_log', () =>
-    supabase.from('pr_log').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  );
+  await run('Clear pr_log', async () => {
+    const { error } = await supabase.from('pr_log').delete().gte('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+  });
 
   // 5. Clear callouts
-  await run('Clear callouts', () =>
-    supabase.from('callouts').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  );
+  await run('Clear callouts', async () => {
+    const { error } = await supabase.from('callouts').delete().gte('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+  });
 
-  // 6. Clear inbox
-  await run('Clear inbox', () =>
-    supabase.from('inbox').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  );
+  // 6. Clear inbox (keep injuries for safety)
+  await run('Clear inbox messages', async () => {
+    const { error } = await supabase.from('inbox').delete().eq('type', 'message');
+    if (error) throw error;
+  });
 
   // 7. Clear anvil history
-  await run('Clear anvil', () =>
-    supabase.from('anvil').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  );
+  await run('Clear anvil', async () => {
+    const { error } = await supabase.from('anvil').delete().gte('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+  });
 
   // 8. Clear leaderboard
-  await run('Clear leaderboard', () =>
-    supabase.from('leaderboard').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  );
+  await run('Clear leaderboard', async () => {
+    const { error } = await supabase.from('leaderboard').delete().gte('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+  });
 
-  // 9. Reset all athlete roles to iron, clear group/bracelet/tier assignments
-  await run('Reset athlete roles & groups', () =>
-    supabase.from('athletes').update({
+  // 9. Reset athlete roles BUT preserve mindset_note_1 through mindset_note_6
+  // and fellowship notes, PINs, photos, goals
+  await run('Reset athlete roles & groups (keeping Mindset notes)', async () => {
+    const { error } = await supabase.from('athletes').update({
       role: 'iron',
       group_idx: null,
       bracelet: null,
       tier: null,
-    }).eq('status', 'active')
-  );
+      // NOTE: mindset_note_1 through mindset_note_12 are NOT cleared
+      // NOTE: fellowship_note_1 through fellowship_note_12 are NOT cleared
+      // NOTE: pin, photo_url, athletic_goal, character_goal are NOT cleared
+    }).eq('status', 'active');
+    if (error) throw error;
+  });
 
   // 10. Clear culture photos
-  await run('Clear culture_photos', () =>
-    supabase.from('culture_photos').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  );
+  await run('Clear culture_photos', async () => {
+    const { error } = await supabase.from('culture_photos').delete().gte('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+  });
 
   // 11. Clear culture rsvps
-  await run('Clear culture_rsvps', () =>
-    supabase.from('culture_rsvps').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  );
+  await run('Clear culture_rsvps', async () => {
+    const { error } = await supabase.from('culture_rsvps').delete().gte('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+  });
 
   return res.status(200).json({
-    message: 'Hard reset complete!',
+    message: errors.length > 0 ? 'Reset complete with some errors' : 'Hard reset complete!',
     results,
     errors,
     timestamp: new Date().toISOString(),
-    note: 'Athlete accounts, PINs, photos, and program are preserved.'
+    preserved: [
+      'Athlete accounts & PINs',
+      'Profile photos', 
+      'Mindset Monday notes (all 12 weeks)',
+      'Fellowship Friday notes (all 12 weeks)',
+      'Athletic & character goals',
+      'Training program'
+    ]
   });
 }

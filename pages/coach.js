@@ -75,21 +75,28 @@ function ResetButton(){
   const[status,setStatus]=useState("");
   const[loading,setLoading]=useState(false);
   const[results,setResults]=useState([]);
+  const[preserved,setPreserved]=useState([]);
   const[confirm,setConfirm]=useState(false);
 
   const runReset=async()=>{
     if(!confirm){setConfirm(true);return;}
-    setLoading(true);setStatus("");setResults([]);
+    setLoading(true);setStatus("");setResults([]);setPreserved([]);
     try{
       const res=await fetch("/api/reset",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({secret:"TFCG2025RESET"})
       });
+      if(!res.ok){
+        const txt=await res.text();
+        throw new Error("Server error "+res.status+": "+txt);
+      }
       const data=await res.json();
       setResults([...(data.results||[]),...(data.errors||[])]);
-      setStatus(data.errors?.length>0?"Done with some errors":"✅ Reset complete! App is fresh for June 18th.");
+      setPreserved(data.preserved||[]);
+      setStatus(data.errors?.length>0?"Done with some errors":"✅ Reset complete! Fresh start ready.");
     }catch(e){
+      console.error("Reset error:",e);
       setStatus("❌ Reset failed: "+e.message);
     }
     setLoading(false);setConfirm(false);
@@ -97,13 +104,21 @@ function ResetButton(){
 
   return(
     <div>
-      <button onClick={runReset} disabled={loading} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:loading?"#e0e0e0":confirm?"#8B0000":RED,color:loading?"#aaa":"#fff",fontSize:14,fontWeight:700,cursor:loading?"not-allowed":"pointer",fontFamily:"Georgia,serif",marginBottom:10}}>
-        {loading?"Running reset...":confirm?"⚠️ TAP AGAIN TO CONFIRM RESET":"🔄 Run Hard Reset"}
+      {/* What gets preserved */}
+      <div style={{background:"#EAF3DE",borderRadius:10,padding:"12px 14px",marginBottom:12,border:"0.5px solid #1E6B3A44"}}>
+        <div style={{fontSize:12,fontWeight:600,color:"#1E6B3A",marginBottom:6}}>✅ Always preserved:</div>
+        {["Athlete accounts & PINs","Profile photos","Mindset Monday notes","Fellowship Friday notes","Athletic & character goals","Training program"].map((item,i)=>(
+          <div key={i} style={{fontSize:11,color:"#555",marginBottom:2}}>• {item}</div>
+        ))}
+      </div>
+
+      <button onClick={runReset} disabled={loading} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:loading?"#e0e0e0":confirm?"#8B0000":RED,color:loading?"#aaa":"#fff",fontSize:14,fontWeight:700,cursor:loading?"not-allowed":"pointer",fontFamily:"Georgia,serif",marginBottom:8}}>
+        {loading?"Running reset...":confirm?"⚠️ TAP AGAIN TO CONFIRM":"🔄 Run Hard Reset"}
       </button>
-      {confirm&&!loading&&<div style={{fontSize:12,color:RED,textAlign:"center",marginBottom:10}}>Are you sure? This will wipe all season data!</div>}
-      {status&&<div style={{fontSize:13,fontWeight:600,color:status.includes("✅")?"#1E6B3A":RED,marginBottom:10}}>{status}</div>}
+      {confirm&&!loading&&<div style={{fontSize:12,color:RED,textAlign:"center",marginBottom:10}}>This clears attendance, draft, weights, PRs, callouts, anvil, leaderboard.</div>}
+      {status&&<div style={{fontSize:13,fontWeight:600,color:status.includes("✅")?"#1E6B3A":RED,marginBottom:10,padding:"8px 12px",background:status.includes("✅")?"#EAF3DE":"#FFF0F0",borderRadius:8}}>{status}</div>}
       {results.length>0&&(
-        <div style={{background:"#f9f9f9",borderRadius:8,padding:"10px 12px",fontSize:11,color:"#666"}}>
+        <div style={{background:"#f9f9f9",borderRadius:8,padding:"10px 12px",fontSize:11,color:"#666",marginBottom:8}}>
           {results.map((r,i)=><div key={i} style={{marginBottom:3}}>{r}</div>)}
         </div>
       )}
