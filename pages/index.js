@@ -432,7 +432,7 @@ export default function Landing(){
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {[
                 {icon:"⚙️",title:"The Iron",color:STEEL,desc:"Every athlete enters here. Gray. Unfinished. Ready to be shaped. The work starts now."},
-                {icon:"🔥",title:"The Forge",color:RED,desc:"Four weekly leaders. Drafted. Responsible for setting the standard and leading the group."},
+                {icon:"🔥",title:"The Forge",color:RED,desc:"Weekly leaders. Drafted. Responsible for setting the standard and leading the group."},
                 {icon:"⚒",title:"The Anvil",color:GOLD,desc:"The highest individual honor. Cannot be drafted. Can only be earned. One per week."},
               ].map((v,i)=>(
                 <div key={i} style={{display:"flex",gap:14,alignItems:"flex-start",padding:"10px 12px",borderRadius:10,background:v.color+"0a",border:"1px solid "+v.color+"22"}}>
