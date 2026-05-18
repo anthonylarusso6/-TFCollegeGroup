@@ -1037,6 +1037,20 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
             </div>
           )}
 
+          {tab==="reset"&&(
+            <div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.5rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
+                <div style={{fontSize:16,fontWeight:700,color:"#1a1a1a",marginBottom:4}}>🔄 Season Hard Reset</div>
+                <div style={{fontSize:13,color:"#888",marginBottom:16,lineHeight:1.7}}>Run this on <strong>June 17th</strong> before the first class. Clears all attendance, drafts, weight logs, PR logs, callouts, inbox, anvil history, and leaderboard. Athlete accounts, PINs, photos and program are preserved.</div>
+                <div style={{background:"#FFF0F0",borderRadius:10,padding:"12px 14px",marginBottom:16,border:"0.5px solid "+RED+"44"}}>
+                  <div style={{fontSize:12,fontWeight:600,color:RED,marginBottom:4}}>⚠️ This cannot be undone!</div>
+                  <div style={{fontSize:12,color:"#888"}}>Run this BEFORE June 18th. All season data will be wiped fresh.</div>
+                </div>
+                <ResetButton/>
+              </div>
+            </div>
+          )}
+
           {tab==="engagement"&&(
             <div>
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>

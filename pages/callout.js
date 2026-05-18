@@ -43,8 +43,8 @@ export default function Callout(){
   };
 
   const submitLog=async()=>{
-    const vLabel=violation==="Other"?otherText:violation;
-    const baseCrunches=violation?.crunches||30;
+    const vLabel=violation?.label==="Other"?otherText:(violation?.label||violation);
+    const baseCrunches=typeof violation==="object"?violation?.crunches||30:30;
     const crunches=type==="selfreport"?25*count:baseCrunches*count;
     await supabase.from("callouts").insert({
       athlete_id:selected.id,
@@ -62,6 +62,9 @@ export default function Callout(){
     }
     setDone(true);
     await loadAthletes();
+    // Reload log so it updates immediately
+    const{data:freshLog}=await supabase.from("callouts").select("*,athletes(name)").order("logged_at",{ascending:false}).limit(50);
+    if(freshLog)setLog(freshLog);
   };
 
   const reset=()=>{

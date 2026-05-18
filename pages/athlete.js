@@ -546,7 +546,7 @@ export default function Athlete(){
     const allPicked=(draftGroups||[]).flat();
     const available=nonLeaders.filter(n=>!allPicked.includes(n));
     const totalPicks=nonLeaders.length;
-    const numLeaders=draftLeaders.filter(Boolean).length||groupCount||4;
+    const numLeaders=draftLeaders.filter(Boolean).length||draft?.group_count||4;
     const pickSeq=snakeSeq(totalPicks,numLeaders);
     const pickIdx=allPicked.length;
     const currentPickerIdx=pickSeq[pickIdx]??0;

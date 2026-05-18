@@ -99,10 +99,21 @@ export default function Landing(){
       // Today attendance
       const today=new Date().toISOString().split("T")[0];
       supabase.from("attendance").select("id",{count:"exact",head:true}).eq("date",today).eq("status","early").then(({count})=>{if(count)setTodayAttendance(count);}).catch(()=>{});
-      // Forge leaders from latest draft
+      // Forge leaders from latest draft, fallback to athletes with role=forge
       supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1).then(({data})=>{
-        if(data&&data[0]&&data[0].leaders){setForgeLeaders(data[0].leaders.slice(0,4));}
-      }).catch(()=>{});
+        if(data&&data[0]&&data[0].leaders&&data[0].leaders.some(l=>l)){
+          setForgeLeaders(data[0].leaders.filter(Boolean).slice(0,4));
+        }else{
+          // Fallback: fetch athletes with forge role
+          supabase.from("athletes").select("name").eq("role","forge").eq("status","active")
+            .then(({data:aths})=>{if(aths&&aths.length>0)setForgeLeaders(aths.map(a=>a.name));})
+            .catch(()=>{});
+        }
+      }).catch(()=>{
+        supabase.from("athletes").select("name").eq("role","forge").eq("status","active")
+          .then(({data:aths})=>{if(aths&&aths.length>0)setForgeLeaders(aths.map(a=>a.name));})
+          .catch(()=>{});
+      });
       // Season progress — weeks since June 18
       const start=new Date("2025-06-18");
       const now=new Date();
@@ -180,7 +191,7 @@ export default function Landing(){
               </div>
             )}
             <div style={{textAlign:"right"}}>
-              <div style={{fontSize:11,color:isClassDay?GREEN:"#555",fontWeight:600}}>
+              <div suppressHydrationWarning style={{fontSize:11,color:isClassDay?GREEN:"#555",fontWeight:600}}>
                 {isClassDay?"⚡ Class day":"No class"}
               </div>
             </div>
