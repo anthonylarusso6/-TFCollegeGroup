@@ -51,6 +51,14 @@ export default function Draft({athletes}){
     }
   },[athletes.length]);
   const[leaders,setLeaders]=useState([null,null,null,null]);
+  // Auto-resize leaders when groupCount changes
+  useEffect(()=>{
+    setLeaders(prev=>{
+      const next=Array(groupCount).fill(null);
+      prev.forEach((l,i)=>{if(i<groupCount)next[i]=l;});
+      return next;
+    });
+  },[groupCount]);
   const[swapIdx,setSwapIdx]=useState(null);
   const[editMode,setEditMode]=useState(false);
   const[editGroups,setEditGroups]=useState(null);
@@ -236,7 +244,7 @@ export default function Draft({athletes}){
             <div style={{fontSize:12,color:"#888",marginBottom:12}}>Check everyone who's here today. Uncheck anyone who's absent or sitting out.</div>
             {/* Group count selector */}
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,padding:"10px 12px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #e0e0e0"}}>
-              <div style={{fontSize:12,color:"#888",flex:1}}>Number of groups:</div>
+              <div style={{fontSize:12,color:"#888",flex:1}}>Groups & leaders ({groupCount} each):</div>
               <div style={{display:"flex",gap:6}}>
                 {[2,3,4,5,6].map(n=>(
                   <button key={n} onClick={()=>setGroupCount(n)} style={{width:32,height:32,borderRadius:8,border:"1px solid "+(groupCount===n?PUR:"#e0e0e0"),background:groupCount===n?PUR:"#fff",color:groupCount===n?"#fff":"#888",fontSize:13,fontWeight:groupCount===n?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
