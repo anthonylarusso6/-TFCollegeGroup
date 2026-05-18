@@ -33,6 +33,7 @@ export default function Draft({athletes}){
   const[tab,setTab]=useState("groups");// groups | bracelets | preview
   const[existingDraft,setExistingDraft]=useState(null);
   const[loading,setLoading]=useState(true);
+  const[saveError,setSaveError]=useState("");
 
   useEffect(()=>{
     loadDraft();
@@ -111,14 +112,15 @@ export default function Draft({athletes}){
       group_count:groupCount,
       phase:lock?"locked":"draft",
       locked:lock,
-      updated_at:new Date().toISOString(),
     };
 
     try{
       if(existingDraft){
-        await supabase.from("draft").update(payload).eq("id",existingDraft.id);
+        const{error:upErr}=await supabase.from("draft").update(payload).eq("id",existingDraft.id);
+        if(upErr)throw upErr;
       }else{
-        const{data}=await supabase.from("draft").insert(payload).select().single();
+        const{data,error:insErr}=await supabase.from("draft").insert(payload).select().single();
+        if(insErr)throw insErr;
         setExistingDraft(data);
       }
 
@@ -139,7 +141,7 @@ export default function Draft({athletes}){
 
       if(lock)setLocked(true);
       setSaved(true);setTimeout(()=>setSaved(false),3000);
-    }catch(e){console.error("Draft save error:",e);}
+    }catch(e){console.error("Draft save error:",e);setSaveError(e.message||"Save failed");}
     setSaving(false);
   };
 
@@ -340,6 +342,7 @@ export default function Draft({athletes}){
       )}
 
       {saved&&<div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:GREEN,color:"#fff",padding:"10px 20px",borderRadius:20,fontSize:13,fontWeight:600,boxShadow:"0 4px 12px rgba(0,0,0,0.2)"}}>✓ Draft saved!</div>}
+      {saveError&&<div style={{background:"#FCEBEB",borderRadius:10,padding:"10px 14px",marginTop:10,fontSize:12,color:RED,border:"1px solid "+RED+"33"}}>❌ {saveError}<button onClick={()=>setSaveError("")} style={{float:"right",background:"transparent",border:"none",cursor:"pointer",color:RED}}>✕</button></div>}
     </div>
   );
 }

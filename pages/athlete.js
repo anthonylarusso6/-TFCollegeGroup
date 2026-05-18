@@ -205,7 +205,13 @@ export default function Athlete(){
     try{
       const{data:aths,error:athErr}=await supabase.from("athletes").select("*").eq("status","active").order("name");
       if(athErr)console.error("Athletes error:",athErr);
-      if(aths&&aths.length>0)setAthletes(aths);
+      if(aths&&aths.length>0){
+        setAthletes(aths);
+      }else{
+        // Fallback: load all athletes regardless of status
+        const{data:allAths}=await supabase.from("athletes").select("*").order("name").catch(()=>({data:[]}));
+        if(allAths&&allAths.length>0)setAthletes(allAths.filter(a=>a.status!=="archived"));
+      }
     }catch(e){console.error("Athletes fetch failed:",e);}
     try{
       const{data:ann}=await supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1);
