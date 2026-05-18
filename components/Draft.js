@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 
-const LC=["#534AB7","#0F6E56","#854F0B","#993556"];
-const LB=["#EEEDFE","#E1F5EE","#FAEEDA","#FBEAF0"];
+const GROUP_COLORS=["#534AB7","#C0392B","#1E6B3A","#D4AF37","#E8720C","#1A4F8A"];
+const GROUP_NAMES=["Group 1","Group 2","Group 3","Group 4","Group 5","Group 6"];
 
 const BRACELETS=[
   {color:"Light orange",ref:"Proverbs 3:5",text:"Trust in the Lord with all your heart.",hex:"#F5A623"},
@@ -13,593 +13,333 @@ const BRACELETS=[
   {color:"Dark blue",ref:"1 John 3:1",text:"See what great love the Father has lavished on us.",hex:"#1A4F8A"},
   {color:"Red",ref:"Philippians 4:13",text:"I can do all things through Christ who strengthens me.",hex:"#C0392B"},
   {color:"Pink",ref:"1 Corinthians 13:13",text:"The greatest of these is love.",hex:"#E87AAC"},
-  {color:"Dark purple",ref:"Matthew 11:28",text:"Come to me, all who are weary, and I will give you rest.",hex:"#5B2D8E"},
+  {color:"Dark purple",ref:"Matthew 11:28",text:"Come to me, all who are weary.",hex:"#5B2D8E"},
   {color:"Light purple",ref:"John 14:6",text:"I am the way and the truth and the life.",hex:"#9B59B6"},
   {color:"Dark green",ref:"Joshua 1:9",text:"Be strong and courageous.",hex:"#1E6B3A"},
   {color:"Light green",ref:"Psalm 27:1",text:"The Lord is my light and my salvation.",hex:"#58B368"},
   {color:"Teal",ref:"Jeremiah 29:11",text:"Plans to prosper you and not to harm you.",hex:"#1A9E8F"},
 ];
 
-const TIER_COLORS={
-  1:{bg:"#EEEDFE",border:"#534AB7",color:"#3C3489",label:"Tier 1"},
-  2:{bg:"#E1F5EE",border:"#0F6E56",color:"#085041",label:"Tier 2"},
-  3:{bg:"#FAEEDA",border:"#854F0B",color:"#633806",label:"Tier 3"},
-};
-
-const pickRandom=(arr,n,exclude=[])=>{
-  const pool=arr.filter(x=>!exclude.includes(x));
-  const out=[];const used=[...exclude];
-  while(out.length<n&&pool.length>out.length){
-    const val=pool[Math.floor(Math.random()*pool.length)];
-    if(!used.includes(val)){out.push(val);used.push(val);}
-  }
-  return out;
-};
-
 export default function Draft({athletes}){
-  const[draft,setDraft]=useState(null);
-  const[loading,setLoading]=useState(true);
-  const[step,setStep]=useState("pool");
-  const[pool,setPool]=useState([]);
+  const[groups,setGroups]=useState({});// {groupIdx: [athleteName,...]}
+  const[leaders,setLeaders]=useState({});// {groupIdx: athleteName}
+  const[bracelets,setBracelets]=useState({});// {groupIdx: braceletRef}
   const[groupCount,setGroupCount]=useState(4);
-  const[picksPerGroup,setPicksPerGroup]=useState(4);
-  // Auto-populate pool with ALL active athletes automatically
-  useEffect(()=>{
-    if(athletes.length>0&&!draft){
-      // Auto-select everyone - coach can deselect absent athletes
-      setPool(athletes.map(a=>a.name));
-    }
-  },[athletes.length]);
-  const[leaders,setLeaders]=useState([null,null,null,null]);
-  // Auto-resize leaders when groupCount changes
-  useEffect(()=>{
-    setLeaders(prev=>{
-      const next=Array(groupCount).fill(null);
-      prev.forEach((l,i)=>{if(i<groupCount)next[i]=l;});
-      return next;
-    });
-  },[groupCount]);
-  const[swapIdx,setSwapIdx]=useState(null);
-  const[editMode,setEditMode]=useState(false);
-  const[editGroups,setEditGroups]=useState(null);
+  const[saved,setSaved]=useState(false);
   const[saving,setSaving]=useState(false);
-  const[history,setHistory]=useState([]);
-  const[athleteStats,setAthleteStats]=useState({});
-  const[forgeHistory,setForgeHistory]=useState({});
-  const[manualPickMode,setManualPickMode]=useState(false);
-  const[timerMs,setTimerMs]=useState(null);
-  const pollRef=useRef(null);
-  const timerRef=useRef(null);
+  const[locked,setLocked]=useState(false);
+  const[search,setSearch]=useState("");
+  const[activeGroup,setActiveGroup]=useState(0);
+  const[tab,setTab]=useState("groups");// groups | bracelets | preview
+  const[existingDraft,setExistingDraft]=useState(null);
+  const[loading,setLoading]=useState(true);
 
   useEffect(()=>{
-    // Initialize pool with all active athletes
-    setPool(athletes.map(a=>a.name));
     loadDraft();
-    loadHistory();
-    loadStats();
-    pollRef.current=setInterval(loadDraft,3000);
-    return()=>{clearInterval(pollRef.current); if(timerRef.current) clearInterval(timerRef.current);};
   },[]);
 
   const loadDraft=async()=>{
-    const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
-    if(data&&data.length>0){
-      setDraft(data[0]);
-      setLeaders(data[0].leaders||[null,null,null,null]);
-      if(data[0].phase&&data[0].phase!=="setup")setStep("watching");
-      // Track timer for draft phase
-      if(data[0].phase==="draft"&&data[0].turn_started_at){
-        const elapsed=Date.now()-new Date(data[0].turn_started_at).getTime();
-        const remaining=Math.max(0,10000-elapsed);
-        setTimerMs(remaining);
-      }else{
-        setTimerMs(null);
+    const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1).catch(()=>({data:null}));
+    if(data&&data[0]){
+      setExistingDraft(data[0]);
+      if(data[0].groups){
+        // Convert array format to object
+        const g={};
+        (data[0].groups||[]).forEach((arr,i)=>{g[i]=arr||[];});
+        setGroups(g);
       }
+      if(data[0].leaders){
+        const l={};
+        (data[0].leaders||[]).forEach((name,i)=>{if(name)l[i]=name;});
+        setLeaders(l);
+      }
+      if(data[0].bracelets){
+        const b={};
+        (data[0].bracelets||[]).forEach((br,i)=>{if(br)b[i]=br;});
+        setBracelets(b);
+      }
+      if(data[0].group_count)setGroupCount(data[0].group_count);
+      if(data[0].phase==="locked")setLocked(true);
     }
     setLoading(false);
   };
 
-  // Local tick for smooth timer
-  useEffect(()=>{
-    if(timerMs===null||timerMs<=0){return;}
-    const tick=setInterval(()=>{
-      setTimerMs(ms=>ms===null?null:Math.max(0,ms-100));
-    },100);
-    return()=>clearInterval(tick);
-  },[timerMs]);
+  // All athletes not yet assigned to any group
+  const assigned=Object.values(groups).flat();
+  const unassigned=athletes.filter(a=>!assigned.includes(a.name)&&(!search||a.name.toLowerCase().includes(search.toLowerCase())));
+  const totalAssigned=assigned.length;
 
-  const loadHistory=async()=>{
-    const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(12);
-    if(data)setHistory(data);
-    // Build forge history — count how many times each athlete has been a leader
-    const fh={};
-    (data||[]).forEach(d=>{
-      (d.leaders||[]).forEach(name=>{
-        if(name) fh[name]=(fh[name]||0)+1;
-      });
+  const addToGroup=(athleteName,groupIdx)=>{
+    setGroups(prev=>({
+      ...prev,
+      [groupIdx]:[...(prev[groupIdx]||[]),athleteName]
+    }));
+  };
+
+  const removeFromGroup=(athleteName,groupIdx)=>{
+    setGroups(prev=>({
+      ...prev,
+      [groupIdx]:(prev[groupIdx]||[]).filter(n=>n!==athleteName)
+    }));
+  };
+
+  const moveToGroup=(athleteName,fromIdx,toIdx)=>{
+    setGroups(prev=>{
+      const next={...prev};
+      next[fromIdx]=(next[fromIdx]||[]).filter(n=>n!==athleteName);
+      next[toIdx]=[...(next[toIdx]||[]),athleteName];
+      return next;
     });
-    setForgeHistory(fh);
   };
 
-  const loadStats=async()=>{
-    const{data:lb}=await supabase.from("leaderboard").select("*,athletes(name)");
-    const{data:anv}=await supabase.from("anvil").select("athlete_name");
-    const stats={};
-    (lb||[]).forEach(r=>{
-      const name=r.athletes?.name;
-      if(name)stats[name]={streak:r.current_streak||0,early:r.early_count||0};
-    });
-    (anv||[]).forEach(a=>{
-      if(!stats[a.athlete_name])stats[a.athlete_name]={streak:0,early:0};
-      stats[a.athlete_name].anvils=(stats[a.athlete_name].anvils||0)+1;
-    });
-    setAthleteStats(stats);
+  const setLeader=(groupIdx,name)=>{
+    setLeaders(prev=>({...prev,[groupIdx]:name}));
+    // Auto-set role to forge for this athlete
   };
 
-  const togglePool=(name)=>{
-    setPool(p=>p.includes(name)?p.filter(x=>x!==name):[...p,name]);
-  };
-
-  const generateLeaders=()=>{
-    if(pool.length<groupCount){alert(`Need at least ${groupCount} athletes in the pool.`);return;}
-    const chosen=pickRandom(pool,groupCount,[]);
-    // Calculate picks per group to ensure equal distribution
-    const totalAthletes=pool.length-groupCount; // exclude leaders
-    const basePicksPerGroup=Math.floor(totalAthletes/groupCount);
-    const extraPicks=totalAthletes%groupCount;
-    setLeaders(chosen);
-    setStep("leaders");
-  };
-
-  const swapLeader=(i,newName)=>{
-    const n=[...leaders];n[i]=newName;setLeaders(n);setSwapIdx(null);
-  };
-
-  const startDraft=async()=>{
-    if(!leaders.every(l=>l))return;
+  const saveDraft=async(lock=false)=>{
     setSaving(true);
-    await supabase.from("draft").delete().neq("id","00000000-0000-0000-0000-000000000000");
-    const{data}=await supabase.from("draft").insert({
-      week_start:new Date().toISOString().split("T")[0],
-      leaders,
+    // Convert object format to array for storage
+    const groupsArr=Array.from({length:groupCount},(_,i)=>groups[i]||[]);
+    const leadersArr=Array.from({length:groupCount},(_,i)=>leaders[i]||null);
+    const braceletsArr=Array.from({length:groupCount},(_,i)=>bracelets[i]||null);
+
+    const payload={
+      groups:groupsArr,
+      leaders:leadersArr,
+      bracelets:braceletsArr,
       group_count:groupCount,
-      picks_per_group:picksPerGroup,
-      bracelets:Array(groupCount).fill(null),
-      groups:Array(groupCount).fill(null).map(()=>[]),
-      tiers:Array(groupCount).fill(null).map((_,i)=>i<Math.floor(groupCount/2)?1:i<Math.floor(groupCount*0.75)?2:3).sort(()=>Math.random()-0.5),
-      phase:"bracelet",
-      locked:false,
-    }).select();
-    if(data)setDraft(data[0]);
-    // Set leaders to forge, others to iron
-    for(const name of leaders){
-      const ath=athletes.find(a=>a.name===name);
-      if(ath)await supabase.from("athletes").update({role:"forge"}).eq("id",ath.id);
-    }
-    const others=athletes.filter(a=>!leaders.includes(a.name));
-    for(const ath of others){
-      await supabase.from("athletes").update({role:"iron",group_idx:null,bracelet:null,tier:null}).eq("id",ath.id);
-    }
-    setSaving(false);
-    setStep("watching");
-  };
+      phase:lock?"locked":"draft",
+      locked:lock,
+      updated_at:new Date().toISOString(),
+    };
 
-  const saveEdits=async()=>{
-    setSaving(true);
-    await supabase.from("draft").update({groups:editGroups,locked:true,phase:"locked"}).eq("id",draft.id);
-    editGroups.forEach(async(group,i)=>{
-      group.forEach(async(name)=>{
-        const ath=athletes.find(a=>a.name===name);
-        if(ath)await supabase.from("athletes").update({group_idx:i,tier:draft.tiers?.[i]}).eq("id",ath.id);
-      });
-    });
-    draft.leaders?.forEach(async(name,i)=>{
-      const ath=athletes.find(a=>a.name===name);
-      if(ath)await supabase.from("athletes").update({group_idx:i,tier:draft.tiers?.[i],bracelet:draft.bracelets?.[i]?.ref}).eq("id",ath.id);
-    });
-    setEditMode(false);
-    await loadDraft();
+    try{
+      if(existingDraft){
+        await supabase.from("draft").update(payload).eq("id",existingDraft.id);
+      }else{
+        const{data}=await supabase.from("draft").insert(payload).select().single();
+        setExistingDraft(data);
+      }
+
+      // Update athlete roles and group_idx
+      for(let i=0;i<groupCount;i++){
+        const groupAthletes=groupsArr[i]||[];
+        for(const name of groupAthletes){
+          const ath=athletes.find(a=>a.name===name);
+          if(ath){
+            const isLeader=leadersArr[i]===name;
+            await supabase.from("athletes").update({
+              role:isLeader?"forge":"iron",
+              group_idx:i,
+            }).eq("id",ath.id).catch(()=>{});
+          }
+        }
+      }
+
+      if(lock)setLocked(true);
+      setSaved(true);setTimeout(()=>setSaved(false),3000);
+    }catch(e){console.error("Draft save error:",e);}
     setSaving(false);
   };
 
   const resetDraft=async()=>{
-    if(!window.confirm("Reset the entire draft? This cannot be undone."))return;
-    await supabase.from("draft").delete().neq("id","00000000-0000-0000-0000-000000000000");
-    setDraft(null);
-    setLeaders(Array(groupCount).fill(null));
-    setPool(athletes.map(a=>a.name));
-    setStep("pool");
+    if(!window.confirm("Reset draft? This clears all groups."))return;
+    setGroups({});setLeaders({});setBracelets({});setLocked(false);
+    // Reset all athlete roles
+    await supabase.from("athletes").update({role:"iron",group_idx:null}).eq("status","active").catch(()=>{});
+    if(existingDraft){
+      await supabase.from("draft").update({groups:[],leaders:[],bracelets:[],phase:"setup",locked:false}).eq("id",existingDraft.id).catch(()=>{});
+    }
   };
 
-  if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888"}}>Loading draft...</div>;
-
-  const phase=draft?.phase;
-  const numGroups=draft?.group_count||draft?.leaders?.length||groupCount||4;
-  const groups=draft?.groups||Array(numGroups).fill(null).map(()=>[]);
-  const bracelets=draft?.bracelets||Array(numGroups).fill(null);
-  const tiers=draft?.tiers||Array(numGroups).fill(null);
-  const draftLeaders=draft?.leaders||Array(numGroups).fill(null);
-
-  // Equal picks helper
-  const totalPicked=groups.reduce((s,g)=>s+g.length,0);
-  const totalPool=(draft?.pool_count||groups.reduce((s,g)=>s+g.length,0));
-  const groupPickCounts=groups.map(g=>g.length);
-  const maxPicks=Math.max(...groupPickCounts);
-  const minPicks=Math.min(...groupPickCounts);
-  const picksUnequal=maxPicks-minPicks>1;
-  const maxPerGroup=draft?.picks_per_group||picksPerGroup||4;
-  const anyGroupFull=groupPickCounts.some(p=>p>=maxPerGroup);
-  // Target picks per group for equal distribution
-  const athletesLeft=(groups.reduce((s,g)=>s+g.length,0));
-  const targetPerGroup=pool.length>0?Math.floor((pool.length-groups.length)/groups.length):0;
+  if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888"}}>Loading...</div>;
 
   return(
     <div>
+      {/* Header */}
+      <div style={{background:BG,borderRadius:12,padding:"14px 16px",marginBottom:12,border:"1px solid #222"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>🎯 Draft Board</div>
+            <div style={{fontSize:11,color:"#555",marginTop:2}}>{totalAssigned} assigned · {athletes.length-totalAssigned} remaining</div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={resetDraft} style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid #555",background:"transparent",color:"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Reset</button>
+            <button onClick={()=>saveDraft(false)} disabled={saving} style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid "+ORANGE,background:"transparent",color:ORANGE,fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+              {saving?"...":"Save"}
+            </button>
+            <button onClick={()=>saveDraft(true)} disabled={saving||locked} style={{padding:"6px 12px",borderRadius:8,border:"none",background:locked?GREEN:GOLD,color:"#1a1a1a",fontSize:12,fontWeight:700,cursor:locked?"default":"pointer",fontFamily:"Georgia,serif"}}>
+              {locked?"✓ Locked":"Lock Draft"}
+            </button>
+          </div>
+        </div>
 
-      {/* STEP 1 — Pool selection */}
-      {step==="pool"&&(
+        {/* Group count */}
+        {!locked&&(
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{fontSize:11,color:"#555"}}>Groups:</div>
+            {[2,3,4,5,6].map(n=>(
+              <button key={n} onClick={()=>setGroupCount(n)} style={{width:28,height:28,borderRadius:6,border:"1px solid "+(groupCount===n?ORANGE:"#333"),background:groupCount===n?ORANGE:"transparent",color:groupCount===n?"#fff":"#666",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                {n}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:"flex",gap:6,marginBottom:12}}>
+        {[{id:"groups",label:"👥 Groups"},{id:"bracelets",label:"📿 Bracelets"},{id:"preview",label:"👁 Preview"}].map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+(tab===t.id?ORANGE:"#e0e0e0"),background:tab===t.id?ORANGE:"#fff",color:tab===t.id?"#fff":"#888",fontSize:11,fontWeight:tab===t.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* GROUPS TAB */}
+      {tab==="groups"&&(
         <div>
-          <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
-            <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>Step 1 — Select who's in the draft</div>
-            <div style={{fontSize:12,color:"#888",marginBottom:12}}>Check everyone who's here today. Uncheck anyone who's absent or sitting out.</div>
-            {/* Group count selector */}
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,padding:"10px 12px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #e0e0e0"}}>
-              <div style={{fontSize:12,color:"#888",flex:1}}>Groups & leaders ({groupCount} each):</div>
-              <div style={{display:"flex",gap:6}}>
-                {[2,3,4,5,6].map(n=>(
-                  <button key={n} onClick={()=>setGroupCount(n)} style={{width:32,height:32,borderRadius:8,border:"1px solid "+(groupCount===n?PUR:"#e0e0e0"),background:groupCount===n?PUR:"#fff",color:groupCount===n?"#fff":"#888",fontSize:13,fontWeight:groupCount===n?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                    {n}
-                  </button>
+          {/* Group selector */}
+          <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto"}}>
+            {Array.from({length:groupCount},(_,i)=>(
+              <button key={i} onClick={()=>setActiveGroup(i)} style={{flexShrink:0,padding:"8px 14px",borderRadius:10,border:"2px solid "+(activeGroup===i?GROUP_COLORS[i]:"#e0e0e0"),background:activeGroup===i?GROUP_COLORS[i]+"22":"#fff",color:activeGroup===i?GROUP_COLORS[i]:"#888",fontSize:12,fontWeight:activeGroup===i?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                {GROUP_NAMES[i]} ({(groups[i]||[]).length})
+              </button>
+            ))}
+          </div>
+
+          {/* Active group */}
+          <div style={{background:"#fff",borderRadius:12,padding:"14px",marginBottom:12,border:"2px solid "+GROUP_COLORS[activeGroup]}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+              <div style={{fontSize:13,fontWeight:700,color:GROUP_COLORS[activeGroup]}}>{GROUP_NAMES[activeGroup]}</div>
+              <div style={{fontSize:11,color:"#aaa"}}>{(groups[activeGroup]||[]).length} athletes</div>
+            </div>
+
+            {/* Leader selector */}
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:10,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Leader (Forge)</div>
+              <select value={leaders[activeGroup]||""} onChange={e=>setLeader(activeGroup,e.target.value)}
+                style={{width:"100%",padding:"8px",borderRadius:8,border:"1px solid "+GROUP_COLORS[activeGroup]+"44",fontSize:13,fontFamily:"Georgia,serif",color:"#1a1a1a",background:"#fafafa"}}>
+                <option value="">— Select leader —</option>
+                {(groups[activeGroup]||[]).map(name=><option key={name} value={name}>{name}</option>)}
+              </select>
+            </div>
+
+            {/* Athletes in this group */}
+            {(groups[activeGroup]||[]).length===0?(
+              <div style={{textAlign:"center",padding:"1rem",color:"#ccc",fontSize:12,background:"#fafafa",borderRadius:8,border:"1px dashed #e0e0e0"}}>
+                Tap athletes below to add them here
+              </div>
+            ):(
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                {(groups[activeGroup]||[]).map(name=>(
+                  <div key={name} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:20,background:leaders[activeGroup]===name?GROUP_COLORS[activeGroup]:GROUP_COLORS[activeGroup]+"22",border:"1px solid "+GROUP_COLORS[activeGroup]+"44"}}>
+                    {leaders[activeGroup]===name&&<span style={{fontSize:10}}>⚒</span>}
+                    <span style={{fontSize:12,fontWeight:500,color:leaders[activeGroup]===name?"#fff":GROUP_COLORS[activeGroup]}}>{name}</span>
+                    {!locked&&<button onClick={()=>removeFromGroup(name,activeGroup)} style={{background:"transparent",border:"none",color:leaders[activeGroup]===name?"rgba(255,255,255,0.7)":GROUP_COLORS[activeGroup]+"88",cursor:"pointer",fontSize:14,lineHeight:1,padding:0}}>×</button>}
+                  </div>
                 ))}
               </div>
-            </div>
-            {/* Athletes per group slider */}
-            <div style={{padding:"10px 12px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #e0e0e0",marginBottom:12}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                <div style={{fontSize:12,color:"#888"}}>Athletes per group:</div>
-                <div style={{fontSize:14,fontWeight:700,color:PUR}}>{picksPerGroup}</div>
-              </div>
-              <input type="range" min={2} max={10} value={picksPerGroup} onChange={e=>setPicksPerGroup(parseInt(e.target.value))}
-                style={{width:"100%",accentColor:PUR,cursor:"pointer"}}/>
-              <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
-                <div style={{fontSize:10,color:"#aaa"}}>2</div>
-                <div style={{fontSize:10,color:"#aaa"}}>{groupCount} groups × {picksPerGroup} athletes = {groupCount*picksPerGroup} total</div>
-                <div style={{fontSize:10,color:"#aaa"}}>10</div>
-              </div>
-            </div>
+            )}
+          </div>
 
-            {/* Readiness check */}
-            <div style={{background:pool.length>=4?"#EAF3DE":"#FCEBEB",borderRadius:10,padding:"10px 12px",marginBottom:12,border:"0.5px solid "+(pool.length>=4?GREEN:RED)+"44"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-                <div style={{fontSize:12,fontWeight:600,color:pool.length>=4?GREEN:RED}}>
-                  {pool.length>=4?"✓ Ready to draft":"⚠ Not ready yet"}
-                </div>
-                <div style={{fontSize:11,color:"#666"}}>{pool.length} / {athletes.length} in · {athletes.length-pool.length} out</div>
+          {/* Unassigned athletes */}
+          {!locked&&(
+            <div style={{background:"#fff",borderRadius:12,padding:"14px",border:"0.5px solid #e0e0e0"}}>
+              <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>
+                Available athletes ({unassigned.length})
               </div>
-              {athletes.length-pool.length>0&&(
-                <div style={{fontSize:11,color:"#666",marginTop:4}}>
-                  Out: {athletes.filter(a=>!pool.includes(a.name)).map(a=>a.name).join(", ")}
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search..." style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box",background:"#fafafa"}}/>
+              {unassigned.length===0?(
+                <div style={{textAlign:"center",padding:"1rem",color:"#aaa",fontSize:12}}>All athletes assigned! ✅</div>
+              ):(
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {unassigned.map(a=>(
+                    <button key={a.id} onClick={()=>addToGroup(a.name,activeGroup)} style={{padding:"6px 12px",borderRadius:20,border:"1px solid "+GROUP_COLORS[activeGroup]+"44",background:GROUP_COLORS[activeGroup]+"11",color:GROUP_COLORS[activeGroup],fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",fontWeight:500}}>
+                      + {a.name}
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
-
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-              <div style={{fontSize:12,color:PUR,fontWeight:500}}>{pool.length} athletes in pool</div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>setPool(athletes.map(a=>a.name))} style={{fontSize:11,padding:"3px 10px",borderRadius:6,border:"0.5px solid "+GREEN,background:"transparent",color:GREEN,cursor:"pointer",fontFamily:"Georgia,serif"}}>All in</button>
-                <button onClick={()=>setPool([])} style={{fontSize:11,padding:"3px 10px",borderRadius:6,border:"0.5px solid #aaa",background:"transparent",color:"#888",cursor:"pointer",fontFamily:"Georgia,serif"}}>Clear</button>
-              </div>
-            </div>
-            <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:16}}>
-              {athletes.map(a=>{
-                const inPool=pool.includes(a.name);
-                const s=athleteStats[a.name]||{};
-                const forgeCount=forgeHistory[a.name]||0;
-                const neverForge=forgeCount===0;
-                return(
-                  <button key={a.id} onClick={()=>togglePool(a.name)} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",borderRadius:10,border:"0.5px solid "+(inPool?PUR:"#e0e0e0"),background:inPool?"#EEEDFE":"#f9f9f9",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
-                    <div style={{width:22,height:22,borderRadius:6,border:"2px solid "+(inPool?PUR:"#ccc"),background:inPool?PUR:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                      {inPool&&<span style={{color:"#fff",fontSize:12,fontWeight:700}}>✓</span>}
-                    </div>
-                    <div style={{width:32,height:32,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff",flexShrink:0,position:"relative"}}>
-                      {a.name[0]}
-                      {neverForge&&inPool&&<div style={{position:"absolute",top:-3,right:-3,width:10,height:10,borderRadius:"50%",background:GOLD,border:"1.5px solid #fff"}}/>}
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:500,color:inPool?"#1a1a1a":"#aaa"}}>{a.name}</div>
-                      <div style={{fontSize:11,color:"#888",display:"flex",gap:8}}>
-                        <span>{a.sport}</span>
-                        {s.streak>0&&<span>🔥 {s.streak}</span>}
-                        {s.anvils>0&&<span>⚒ {s.anvils}</span>}
-                        <span style={{color:neverForge?GOLD:"#aaa"}}>Forge: {forgeCount}</span>
-                      </div>
-                    </div>
-                    <div style={{fontSize:11,color:inPool?PUR:"#ccc"}}>{inPool?"In":"Out"}</div>
-                  </button>
-                );
-              })}
-              {/* Legend for gold dot */}
-              <div style={{fontSize:10,color:"#888",marginTop:6,display:"flex",alignItems:"center",gap:5}}>
-                <div style={{width:8,height:8,borderRadius:"50%",background:GOLD}}/>
-                Never been Forge leader
-              </div>
-            </div>
-            <button onClick={generateLeaders} disabled={pool.length<4} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:pool.length>=4?PUR:"#e0e0e0",color:"#fff",fontSize:14,fontWeight:500,cursor:pool.length>=4?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
-              {pool.length<4?"Need at least 4 athletes":"Generate leaders →"}
-            </button>
-          </div>
+          )}
         </div>
       )}
 
-      {/* STEP 2 — Leader selection */}
-      {step==="leaders"&&(
+      {/* BRACELETS TAB */}
+      {tab==="bracelets"&&(
         <div>
-          <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-              <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>Step 2 — Confirm leaders</div>
-              <button onClick={()=>{
-                if(manualPickMode){
-                  setManualPickMode(false);
-                  setLeaders(pickRandom(pool,4,[]));
-                }else{
-                  setManualPickMode(true);
-                  setLeaders([null,null,null,null]);
-                }
-              }} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"0.5px solid "+(manualPickMode?GOLD:PUR),background:manualPickMode?"#FAEEDA":"transparent",color:manualPickMode?"#633806":PUR,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                {manualPickMode?"Manual mode ✓":"Manual pick"}
-              </button>
-            </div>
-            <div style={{fontSize:12,color:"#888",marginBottom:14}}>{manualPickMode?"Tap athletes below to fill the 4 leader slots.":"System picked 4 random leaders from your pool. Swap any before starting."}</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-              {[0,1,2,3].map(i=>{
-                const lname=leaders[i];
-                const s=lname?athleteStats[lname]||{}:{};
-                const forgeCount=lname?forgeHistory[lname]||0:0;
-                return(
-                  <div key={i} style={{background:LB[i],borderRadius:10,padding:"12px",border:"0.5px solid "+LC[i]+"44"}}>
-                    <div style={{fontSize:11,fontWeight:500,color:LC[i],marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Group {i+1}</div>
-                    <div style={{fontSize:14,fontWeight:500,color:"#1a1a1a",marginBottom:4}}>{lname||"— Empty —"}</div>
-                    {lname&&(
-                      <div style={{fontSize:10,color:"#666",marginBottom:8,display:"flex",gap:6,flexWrap:"wrap"}}>
-                        {s.streak>0&&<span>🔥 {s.streak}</span>}
-                        {s.anvils>0&&<span>⚒ {s.anvils}</span>}
-                        <span>Forge: {forgeCount}×</span>
-                      </div>
-                    )}
-                    {swapIdx===i?(
-                      <select autoFocus onChange={e=>e.target.value&&swapLeader(i,e.target.value)} style={{width:"100%",fontSize:11,padding:"4px",borderRadius:6,border:"0.5px solid #e0e0e0",background:"#fff",color:"#1a1a1a"}}>
-                        <option value="">Swap to...</option>
-                        {pool.filter(name=>!leaders.includes(name)||name===leaders[i]).map(name=><option key={name} value={name}>{name}</option>)}
-                      </select>
-                    ):(
-                      <button onClick={()=>setSwapIdx(swapIdx===i?null:i)} style={{fontSize:11,padding:"4px 12px",borderRadius:6,border:"0.5px solid "+LC[i],background:"transparent",color:LC[i],cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                        {lname?"Swap":"Pick"}
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            {manualPickMode&&(
-              <div style={{marginBottom:14}}>
-                <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:8}}>Tap to fill next empty slot</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,maxHeight:240,overflowY:"auto"}}>
-                  {pool.map(name=>{
-                    const inLeaders=leaders.includes(name);
-                    const forgeCount=forgeHistory[name]||0;
-                    const neverForge=forgeCount===0;
-                    return(
-                      <button key={name} onClick={()=>{
-                        if(inLeaders){
-                          setLeaders(ls=>ls.map(l=>l===name?null:l));
-                        }else{
-                          const emptyIdx=leaders.findIndex(l=>!l);
-                          if(emptyIdx>=0){
-                            const newLeaders=[...leaders];
-                            newLeaders[emptyIdx]=name;
-                            setLeaders(newLeaders);
-                          }
-                        }
-                      }} style={{padding:"8px",borderRadius:8,border:"0.5px solid "+(inLeaders?RED:neverForge?GOLD:"#e0e0e0"),background:inLeaders?"#FCEBEB":neverForge?"#FAEEDA":"#fafafa",cursor:"pointer",fontFamily:"Georgia,serif",fontSize:11,color:"#1a1a1a",position:"relative",textAlign:"center"}}>
-                        <div style={{fontWeight:500}}>{name.split(" ")[0]}</div>
-                        <div style={{fontSize:9,color:"#888",marginTop:2}}>Forge: {forgeCount}×</div>
-                        {inLeaders&&<div style={{position:"absolute",top:2,right:4,fontSize:10,color:RED}}>✓</div>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={()=>setStep("pool")} style={{padding:"10px 16px",borderRadius:8,border:"0.5px solid #e0e0e0",background:"transparent",color:"#888",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>← Back</button>
-              <button onClick={startDraft} disabled={!leaders.every(l=>l)||saving} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:leaders.every(l=>l)?RED:"#e0e0e0",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                {saving?"Starting...":"Start draft → Leaders pick on their phones"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 3 — Watching live */}
-      {step==="watching"&&draft&&(
-        <div>
-          {/* Status */}
-          <div style={{background:BG,borderRadius:12,padding:"1rem",marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div>
-              <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4}}>Draft status</div>
-              <div style={{fontSize:15,fontWeight:500,color:"#fff"}}>
-                {phase==="bracelet"?"Leaders picking bracelets...":phase==="draft"?"⚡ Live draft in progress":phase==="locked"?"✓ Draft complete — groups locked":"Setting up..."}
-              </div>
-            </div>
-            <div style={{display:"flex",gap:8}}>
-              {phase==="locked"&&<button onClick={()=>{setEditMode(true);setEditGroups(groups.map(g=>[...g]));}} style={{padding:"6px 14px",borderRadius:8,border:"0.5px solid "+GOLD,background:"transparent",color:GOLD,fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Edit groups</button>}
-              <button onClick={resetDraft} style={{padding:"6px 14px",borderRadius:8,border:"0.5px solid #555",background:"transparent",color:"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Reset</button>
-            </div>
-          </div>
-
-          {/* Live draft timer */}
-          {phase==="draft"&&timerMs!==null&&(
-            <div style={{background:timerMs<3000?"#FCEBEB":"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"1px solid "+(timerMs<3000?RED:"#e0e0e0"),borderTop:"3px solid "+(timerMs<3000?RED:PUR)}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                <div style={{fontSize:12,fontWeight:500,color:timerMs<3000?RED:"#888",textTransform:"uppercase",letterSpacing:"0.05em"}}>Pick timer</div>
-                <div style={{fontSize:24,fontWeight:700,color:timerMs<3000?RED:PUR,fontVariantNumeric:"tabular-nums"}}>{(timerMs/1000).toFixed(1)}s</div>
-              </div>
-              <div style={{width:"100%",height:6,background:"#f0f0f0",borderRadius:3,overflow:"hidden"}}>
-                <div style={{width:`${(timerMs/10000)*100}%`,height:"100%",background:timerMs<3000?RED:PUR,transition:"width 100ms linear"}}/>
-              </div>
-              {draft?.current_picker&&<div style={{fontSize:11,color:"#888",marginTop:6,textAlign:"center"}}>Waiting on <strong>{draft.current_picker}</strong> to pick...</div>}
-            </div>
-          )}
-
-          {/* Bracelet phase */}
-          {phase==="bracelet"&&(
-            <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
-              <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Leaders picking bracelets — auto-refreshing</div>
-              {draftLeaders.map((name,i)=>{
-                const b=bracelets[i];
-                const brac=BRACELETS.find(x=>x.ref===b?.ref);
-                return(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:10,background:LB[i],border:"0.5px solid "+LC[i]+"44",marginBottom:8}}>
-                    <div style={{width:10,height:10,borderRadius:"50%",background:brac?.hex||"#ccc",flexShrink:0}}/>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:500,color:LC[i]}}>{name}</div>
-                      {brac?<div style={{fontSize:11,color:"#888"}}>{brac.color} — {brac.ref}</div>:<div style={{fontSize:11,color:"#aaa"}}>Picking...</div>}
-                    </div>
-                    {brac?<span style={{fontSize:10,background:LC[i],color:"#fff",padding:"2px 7px",borderRadius:4}}>✓ Picked</span>:<span style={{fontSize:10,color:"#aaa"}}>Waiting</span>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Draft phase — live groups */}
-          {(phase==="draft"||phase==="locked")&&(
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-              {[0,1,2,3].map(i=>{
-                const brac=BRACELETS.find(b=>b.ref===bracelets[i]?.ref);
-                const td=TIER_COLORS[tiers[i]];
-                return(
-                  <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",border:"0.5px solid "+LC[i]+"66",borderTop:"3px solid "+LC[i]}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                      {brac&&<div style={{width:8,height:8,borderRadius:"50%",background:brac.hex}}/>}
-                      <span style={{fontSize:13,fontWeight:500,color:LC[i]}}>{draftLeaders[i]}</span>
-                    </div>
-                    {brac&&<div style={{fontSize:10,color:"#888",fontStyle:"italic",marginBottom:4}}>"{brac.text}"</div>}
-                    {td&&<div style={{display:"inline-block",fontSize:10,fontWeight:500,padding:"1px 8px",borderRadius:4,background:td.bg,color:td.color,marginBottom:6}}>{td.label}</div>}
-                    {(groups[i]||[]).map(name=>(
-                      <div key={name} style={{fontSize:12,padding:"4px 8px",background:"#f5f5f5",borderRadius:6,marginBottom:3,color:"#1a1a1a"}}>{name}</div>
-                    ))}
-                    {(!groups[i]||groups[i].length===0)&&phase==="draft"&&<div style={{fontSize:11,color:"#aaa"}}>No picks yet...</div>}
-                    {phase==="locked"&&<div style={{fontSize:11,color:"#aaa",marginTop:4}}>{(groups[i]?.length||0)+1} total</div>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Edit mode */}
-          {editMode&&editGroups&&(
-            <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GOLD}}>
-              <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Edit groups — move athletes between groups</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-                {[0,1,2,3].map(i=>(
-                  <div key={i} style={{background:LB[i],borderRadius:10,padding:"10px",border:"0.5px solid "+LC[i]+"44"}}>
-                    <div style={{fontSize:12,fontWeight:500,color:LC[i],marginBottom:8}}>Group {i+1} — {draftLeaders[i]}</div>
-                    {(editGroups[i]||[]).length>=(draft?.picks_per_group||4)&&<div style={{fontSize:10,color:"#1E6B3A",fontWeight:700,marginBottom:6,padding:"3px 8px",background:"#EAF3DE",borderRadius:6,display:"inline-block"}}>✓ Full ({draft?.picks_per_group||4}/{draft?.picks_per_group||4})</div>}
-                    {editGroups[i].map((name,j)=>(
-                      <div key={name} style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                        <div style={{flex:1,fontSize:12,padding:"4px 8px",background:"#fff",borderRadius:6,color:"#1a1a1a"}}>{name}</div>
-                        <select onChange={e=>{
-                          if(e.target.value==="")return;
-                          const newG=editGroups.map(g=>[...g]);
-                          newG[i].splice(j,1);
-                          newG[parseInt(e.target.value)].push(name);
-                          setEditGroups(newG);
-                        }} style={{fontSize:10,padding:"2px",borderRadius:4,border:"0.5px solid #e0e0e0",background:"#fff",color:"#1a1a1a"}}>
-                          <option value="">Move →</option>
-                          {[0,1,2,3].filter(x=>x!==i).map(x=><option key={x} value={x}>Group {x+1}</option>)}
-                        </select>
-                      </div>
-                    ))}
-                  </div>
+          {Array.from({length:groupCount},(_,i)=>(
+            <div key={i} style={{background:"#fff",borderRadius:12,padding:"14px",marginBottom:10,border:"2px solid "+GROUP_COLORS[i]}}>
+              <div style={{fontSize:12,fontWeight:700,color:GROUP_COLORS[i],marginBottom:8}}>{GROUP_NAMES[i]} — {leaders[i]||"No leader"}</div>
+              <select value={bracelets[i]||""} onChange={e=>setBracelets(prev=>({...prev,[i]:e.target.value}))}
+                style={{width:"100%",padding:"8px",borderRadius:8,border:"1px solid "+GROUP_COLORS[i]+"44",fontSize:12,fontFamily:"Georgia,serif",color:"#1a1a1a",background:"#fafafa"}}>
+                <option value="">— Pick a bracelet —</option>
+                {BRACELETS.map(b=>(
+                  <option key={b.ref} value={b.ref}>{b.color} — {b.ref}</option>
                 ))}
-              </div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={saveEdits} disabled={saving} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:GOLD,color:"#1a1a1a",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>{saving?"Saving...":"Save changes →"}</button>
-                <button onClick={()=>setEditMode(false)} style={{padding:"10px 16px",borderRadius:8,border:"0.5px solid #e0e0e0",background:"transparent",color:"#888",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
-              </div>
-            </div>
-          )}
-
-          {/* Post-draft summary */}
-          {phase==="locked"&&!editMode&&(
-            <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid "+GOLD+"66"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:11,color:GOLD,textTransform:"uppercase",letterSpacing:"0.06em"}}>Draft summary · {new Date(draft.created_at).toLocaleDateString()}</div>
-                  <div style={{fontSize:14,fontWeight:500,color:"#fff"}}>The week's 4 groups</div>
-                </div>
-                <div style={{fontSize:24}}>📋</div>
-              </div>
-              {[0,1,2,3].map(i=>{
-                const bracInfo=bracelets[i]?BRACELETS.find(b=>b.ref===bracelets[i].ref):null;
-                const t=tiers[i];
-                const tierInfo=TIER_COLORS[t];
-                return(
-                  <div key={i} style={{background:"#141414",borderRadius:10,padding:"10px 12px",marginBottom:8,borderLeft:"3px solid "+(bracInfo?.hex||LC[i])}}>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-                      <div style={{fontSize:12,fontWeight:600,color:"#fff"}}>Group {i+1} · {draftLeaders[i]}</div>
-                      <div style={{fontSize:10,padding:"1px 8px",borderRadius:4,background:tierInfo?.color+"33",color:tierInfo?.color||"#888"}}>{tierInfo?.label||"—"}</div>
-                    </div>
-                    {bracInfo&&(
-                      <div style={{fontSize:11,color:bracInfo.hex,marginBottom:4}}>
-                        <span style={{display:"inline-block",width:8,height:8,borderRadius:"50%",background:bracInfo.hex,marginRight:5}}/>
-                        {bracInfo.color} · {bracInfo.ref}
-                      </div>
-                    )}
-                    <div style={{fontSize:11,color:"#888"}}>
-                      Members: {(groups[i]||[]).join(", ")||"—"}
-                    </div>
+              </select>
+              {bracelets[i]&&(()=>{
+                const b=BRACELETS.find(x=>x.ref===bracelets[i]);
+                return b?(
+                  <div style={{marginTop:8,padding:"8px 10px",background:b.hex+"22",borderRadius:8,border:"1px solid "+b.hex+"44"}}>
+                    <div style={{fontSize:11,fontWeight:600,color:b.hex}}>{b.ref}</div>
+                    <div style={{fontSize:11,color:"#666",fontStyle:"italic",marginTop:2}}>"{b.text}"</div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-
-          {phase==="locked"&&!editMode&&(
-            <button onClick={resetDraft} style={{width:"100%",padding:"10px",borderRadius:8,border:"0.5px solid "+PUR,background:"transparent",color:PUR,fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif",marginBottom:12}}>
-              Start new week → Reset draft
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Weekly draft history — always visible */}
-      {history.length>0&&step!=="watching"&&(
-        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginTop:12,border:"0.5px solid #e0e0e0"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>Past drafts</div>
-          <div style={{fontSize:12,color:"#888",marginBottom:12}}>Last {history.length} week{history.length!==1?"s":""} · who was Forge, which bracelets picked</div>
-          {history.map((d,i)=>(
-            <div key={i} style={{padding:"10px 0",borderBottom:i<history.length-1?"0.5px solid #f0f0f0":"none"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a"}}>{new Date(d.created_at).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}</div>
-                <div style={{fontSize:10,padding:"1px 6px",borderRadius:4,background:d.phase==="locked"?"#EAF3DE":"#FFF3CD",color:d.phase==="locked"?GREEN:"#854F0B"}}>{d.phase==="locked"?"Complete":d.phase}</div>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
-                {(d.leaders||[]).map((ldr,li)=>{
-                  const brac=d.bracelets?.[li]?BRACELETS.find(b=>b.ref===d.bracelets[li].ref):null;
-                  return(
-                    <div key={li} style={{fontSize:10,padding:"3px 6px",borderRadius:4,background:brac?.hex+"22"||"#f5f5f5",borderLeft:"2px solid "+(brac?.hex||"#ccc")}}>
-                      <div style={{color:"#555"}}>G{li+1}: <strong>{ldr||"—"}</strong></div>
-                      {brac&&<div style={{color:"#888",fontSize:9}}>{brac.color}</div>}
-                    </div>
-                  );
-                })}
-              </div>
+                ):null;
+              })()}
             </div>
           ))}
         </div>
       )}
+
+      {/* PREVIEW TAB */}
+      {tab==="preview"&&(
+        <div>
+          {Array.from({length:groupCount},(_,i)=>(
+            <div key={i} style={{background:"#fff",borderRadius:12,padding:"14px",marginBottom:10,border:"2px solid "+GROUP_COLORS[i]}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                <div style={{fontSize:13,fontWeight:700,color:GROUP_COLORS[i]}}>{GROUP_NAMES[i]}</div>
+                <div style={{fontSize:11,color:"#aaa"}}>{(groups[i]||[]).length} athletes</div>
+              </div>
+              {leaders[i]&&(
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8,padding:"6px 10px",background:GROUP_COLORS[i]+"22",borderRadius:8}}>
+                  <span style={{fontSize:12}}>⚒</span>
+                  <span style={{fontSize:12,fontWeight:700,color:GROUP_COLORS[i]}}>{leaders[i]} — The Forge</span>
+                </div>
+              )}
+              {bracelets[i]&&(()=>{
+                const b=BRACELETS.find(x=>x.ref===bracelets[i]);
+                return b?(
+                  <div style={{fontSize:11,color:"#888",fontStyle:"italic",marginBottom:8}}>📿 {b.color} — {b.ref}</div>
+                ):null;
+              })()}
+              <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                {(groups[i]||[]).map(name=>(
+                  <span key={name} style={{fontSize:11,padding:"3px 8px",borderRadius:12,background:"#f5f5f5",color:"#555",border:"0.5px solid #e0e0e0"}}>{name}</span>
+                ))}
+              </div>
+              {!locked&&(
+                <div style={{marginTop:10,display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {Array.from({length:groupCount},(_,j)=>j!==i&&(
+                    <div key={j} style={{fontSize:10,color:"#aaa"}}>
+                      Move to {GROUP_NAMES[j]}:
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          <div style={{background:"#f9f9f9",borderRadius:10,padding:"10px 14px",marginTop:4,border:"0.5px solid #e0e0e0"}}>
+            <div style={{fontSize:11,color:"#888"}}>
+              {athletes.length-totalAssigned} athletes not yet assigned
+            </div>
+          </div>
+        </div>
+      )}
+
+      {saved&&<div style={{position:"fixed",bottom:20,left:"50%",transform:"translateX(-50%)",background:GREEN,color:"#fff",padding:"10px 20px",borderRadius:20,fontSize:13,fontWeight:600,boxShadow:"0 4px 12px rgba(0,0,0,0.2)"}}>✓ Draft saved!</div>}
     </div>
   );
 }
