@@ -1022,13 +1022,27 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         const file=e.target.files[0];
                         if(!file)return;
                         setUploadingPhoto(a.id);
-                        const reader=new FileReader();
-                        reader.onload=async ev=>{
-                          await supabase.from("athletes").update({photo_url:ev.target.result}).eq("id",a.id);
-                          setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:ev.target.result}:x));
-                          setUploadingPhoto(null);
-                        };
-                        reader.readAsDataURL(file);
+                        try{
+                          // Upload to Supabase Storage
+                          const ext=file.name.split(".").pop();
+                          const path=`athletes/${a.id}.${ext}`;
+                          const{error:upErr}=await supabase.storage.from("photos").upload(path,file,{upsert:true,contentType:file.type});
+                          if(upErr)throw upErr;
+                          const{data:urlData}=supabase.storage.from("photos").getPublicUrl(path);
+                          const url=urlData.publicUrl+"?t="+Date.now();
+                          await supabase.from("athletes").update({photo_url:url}).eq("id",a.id);
+                          setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:url}:x));
+                        }catch(err){
+                          console.error("Photo upload error:",err);
+                          // Fallback to base64
+                          const reader=new FileReader();
+                          reader.onload=async ev=>{
+                            await supabase.from("athletes").update({photo_url:ev.target.result}).eq("id",a.id);
+                            setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:ev.target.result}:x));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                        setUploadingPhoto(null);
                       }}/>
                     </label>
                   </div>
