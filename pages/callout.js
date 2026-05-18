@@ -37,8 +37,7 @@ export default function Callout(){
   const loadAthletes=async()=>{
     const{data}=await supabase.from("athletes").select("*").eq("status","active").order("name");
     if(data)setAthletes(data);
-    const{data:logs}=await supabase.from("callouts").select("*,athletes(name)").order("logged_at",{ascending:false}).limit(50);
-    if(logs)setLog(logs);
+    try{const{data:logs}=await supabase.from("callouts").select("*,athletes(name)").order("logged_at",{ascending:false}).limit(50);if(logs)setLog(logs);}catch(e){console.error("Log load error:",e);}
     setLoading(false);
   };
 
@@ -46,25 +45,38 @@ export default function Callout(){
     const vLabel=violation?.label==="Other"?otherText:(violation?.label||violation);
     const baseCrunches=typeof violation==="object"?violation?.crunches||30:30;
     const crunches=type==="selfreport"?25*count:baseCrunches*count;
-    await supabase.from("callouts").insert({
-      athlete_id:selected.id,
-      violation:vLabel,
-      count,
-      type,
-      crunches,
-    });
-    // Update leaderboard
-    const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",selected.id);
-    if(lb&&lb.length>0){
-      await supabase.from("leaderboard").update({callout_count:(lb[0].callout_count||0)+count}).eq("athlete_id",selected.id);
-    } else {
-      await supabase.from("leaderboard").insert({athlete_id:selected.id,callout_count:count});
+    try{
+      await supabase.from("callouts").insert({
+        athlete_id:selected.id,
+        violation:vLabel,
+        count,
+        type,
+        crunches,
+        logged_at:new Date().toISOString(),
+      });
+      // Update leaderboard
+      try{
+        const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",selected.id);
+        if(lb&&lb.length>0){
+          await supabase.from("leaderboard").update({callout_count:(lb[0].callout_count||0)+count}).eq("athlete_id",selected.id);
+        }else{
+          await supabase.from("leaderboard").insert({athlete_id:selected.id,callout_count:count});
+        }
+      }catch(e){console.error("Leaderboard update error:",e);}
+      setDone(true);
+      // Reload log
+      try{
+        const{data:freshLog}=await supabase.from("callouts").select("*,athletes(name)").order("logged_at",{ascending:false}).limit(50);
+        if(freshLog)setLog(freshLog);
+      }catch(e){
+        // Try without join if athletes join fails
+        const{data:freshLog}=await supabase.from("callouts").select("*").order("logged_at",{ascending:false}).limit(50).catch(()=>({data:[]}));
+        if(freshLog)setLog(freshLog);
+      }
+    }catch(e){
+      console.error("Callout submit error:",e);
+      setDone(true);
     }
-    setDone(true);
-    await loadAthletes();
-    // Reload log so it updates immediately
-    const{data:freshLog}=await supabase.from("callouts").select("*,athletes(name)").order("logged_at",{ascending:false}).limit(50);
-    if(freshLog)setLog(freshLog);
   };
 
   const reset=()=>{

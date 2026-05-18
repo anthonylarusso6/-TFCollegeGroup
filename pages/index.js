@@ -102,7 +102,7 @@ export default function Landing(){
       // Forge leaders from latest draft, fallback to athletes with role=forge
       supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1).then(({data})=>{
         if(data&&data[0]&&data[0].leaders&&data[0].leaders.some(l=>l)){
-          setForgeLeaders(data[0].leaders.filter(Boolean).slice(0,4));
+          setForgeLeaders(data[0].leaders.filter(Boolean));
         }else{
           // Fallback: fetch athletes with forge role
           supabase.from("athletes").select("name").eq("role","forge").eq("status","active")
@@ -161,9 +161,9 @@ export default function Landing(){
     }
   };
 
-  const day=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][time.getDay()];
-  const isClassDay=["Mon","Tue","Thu","Fri"].includes(day);
-  const isMonFri=day==="Mon"||day==="Fri";
+  const day=typeof window!=="undefined"?["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][time.getDay()]:"Mon";
+  const isClassDay=typeof window!=="undefined"&&["Mon","Tue","Thu","Fri"].includes(day);
+  const isMonFri=typeof window!=="undefined"&&(day==="Mon"||day==="Fri");
   const todayQuote=QUOTES[new Date().getDate()%QUOTES.length];
 
   return(
