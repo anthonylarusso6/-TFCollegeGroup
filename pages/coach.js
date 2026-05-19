@@ -838,28 +838,34 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         {isAbsent&&attDate===new Date().toISOString().split("T")[0]&&<div style={{fontSize:11,color:"#854F0B"}}>⚠ Not checked in yet</div>}
                       </div>
                       <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                        {rec?(
-                          <span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:6,background:rec.status==="early"?"#EAF3DE":"#FCEBEB",color:rec.status==="early"?GREEN:RED}}>
-                            {rec.status==="early"?"Early ✓":"Late"}
-                          </span>
-                        ):(
-                          <div style={{display:"flex",gap:4}}>
-                            <button onClick={async()=>{
-                              const now=new Date();
-                              const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
-                              await supabase.from("attendance").insert({athlete_id:a.id,date:attDate,status:"early",time_logged:timeStr,day:new Date(attDate).toLocaleDateString("en-US",{weekday:"short"})});
-                              const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200);
-                              if(data)setAttendance(data);
-                            }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid "+GREEN,background:"transparent",color:GREEN,cursor:"pointer",fontFamily:"Georgia,serif"}}>+ Early</button>
-                            <button onClick={async()=>{
-                              const now=new Date();
-                              const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
-                              await supabase.from("attendance").insert({athlete_id:a.id,date:attDate,status:"late",time_logged:timeStr,day:new Date(attDate).toLocaleDateString("en-US",{weekday:"short"})});
-                              const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200);
-                              if(data)setAttendance(data);
-                            }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid "+RED,background:"transparent",color:RED,cursor:"pointer",fontFamily:"Georgia,serif"}}>+ Late</button>
-                          </div>
-                        )}
+                        <div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"flex-end"}}>
+                          {rec&&<span style={{fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:6,background:rec.status==="early"?"#EAF3DE":"#FCEBEB",color:rec.status==="early"?GREEN:RED,marginRight:4}}>
+                            {rec.status==="early"?"✓ Early":"Late"}
+                          </span>}
+                          <button onClick={async()=>{
+                            const now=new Date();
+                            const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
+                            const day=new Date(attDate+"T12:00:00").toLocaleDateString("en-US",{weekday:"short"});
+                            if(rec){await supabase.from("attendance").update({status:"early",time_logged:timeStr}).eq("id",rec.id);}
+                            else{await supabase.from("attendance").insert({athlete_id:a.id,date:attDate,status:"early",time_logged:timeStr,day});}
+                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200);
+                            if(data)setAttendance(data);
+                          }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid "+GREEN,background:rec?.status==="early"?GREEN:"transparent",color:rec?.status==="early"?"#fff":GREEN,cursor:"pointer",fontFamily:"Georgia,serif"}}>Early</button>
+                          <button onClick={async()=>{
+                            const now=new Date();
+                            const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
+                            const day=new Date(attDate+"T12:00:00").toLocaleDateString("en-US",{weekday:"short"});
+                            if(rec){await supabase.from("attendance").update({status:"late",time_logged:timeStr}).eq("id",rec.id);}
+                            else{await supabase.from("attendance").insert({athlete_id:a.id,date:attDate,status:"late",time_logged:timeStr,day});}
+                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200);
+                            if(data)setAttendance(data);
+                          }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid "+RED,background:rec?.status==="late"?RED:"transparent",color:rec?.status==="late"?"#fff":RED,cursor:"pointer",fontFamily:"Georgia,serif"}}>Late</button>
+                          {rec&&<button onClick={async()=>{
+                            await supabase.from("attendance").delete().eq("id",rec.id);
+                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200);
+                            if(data)setAttendance(data);
+                          }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid #ddd",background:"transparent",color:"#aaa",cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>}
+                        </div>
                       </div>
                     </div>
                   );

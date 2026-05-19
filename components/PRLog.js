@@ -70,6 +70,7 @@ export default function PRLog({athleteId}){
   const[saved,setSaved]=useState(null);
   const[loadError,setLoadError]=useState("");
   const[expanded,setExpanded]=useState(null);
+  const[deleting,setDeleting]=useState(null);
 
   // Load coach program
   useEffect(()=>{
@@ -133,6 +134,16 @@ export default function PRLog({athleteId}){
     });
     setInputs(prev=>({...prev,[liftName]:{weight:"",reps:""}}));
     setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);
+  };
+
+  const deleteLog=async(logId,liftName)=>{
+    setDeleting(logId);
+    await supabase.from("pr_log").delete().eq("id",logId).catch(e=>console.error(e));
+    setLogs(prev=>{
+      const updated=(prev[liftName]||[]).filter(l=>l.id!==logId);
+      return{...prev,[liftName]:updated};
+    });
+    setDeleting(null);
   };
 
   // Personal record for a lift
@@ -263,6 +274,9 @@ export default function PRLog({athleteId}){
                         <div style={{fontSize:11,color:"#888"}}>{new Date(h.date).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
                         <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a"}}>{h.weight} lbs × {h.reps||1} reps</div>
                         {h.weight===pr&&<div style={{fontSize:10,color:GOLD,fontWeight:700}}>PR 🏆</div>}
+                        <button onClick={()=>deleteLog(h.id,lift.name)} disabled={deleting===h.id} style={{fontSize:10,padding:"2px 6px",borderRadius:4,border:"0.5px solid #ddd",background:"transparent",color:"#ccc",cursor:"pointer",fontFamily:"Georgia,serif",marginLeft:4}}>
+                          {deleting===h.id?"...":"✕"}
+                        </button>
                       </div>
                     ))}
                   </div>
