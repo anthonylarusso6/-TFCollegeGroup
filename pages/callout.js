@@ -9,7 +9,7 @@ const GREEN="#1E6B3A";
 const GOLD="#D4AF37";
 
 const VIOLATIONS=[
-  {label:"Cussing",icon:"🤬",crunches:15},
+  {label:"Cussing",icon:"🤬",crunches:30},
   {label:"Talking/Socializing 1min+",icon:"💬",crunches:30},
   {label:"Walking (jog everywhere)",icon:"🚶",crunches:30},
   {label:"Hands on head",icon:"🙌",crunches:30},
