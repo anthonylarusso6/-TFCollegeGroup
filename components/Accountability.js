@@ -116,7 +116,7 @@ export default function Accountability({athletes}){
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           {[
-            {rule:"Cussing",consequence:"15 crunches",color:"#8E44AD",bg:"#F5EEF8"},
+            {rule:"Cussing",consequence:"30 crunches",color:"#8E44AD",bg:"#F5EEF8"},
             {rule:"Talking/Socializing 1min+",consequence:"30 crunches",color:RED,bg:"#FCEBEB"},
             {rule:"Walking (jog everywhere)",consequence:"30 crunches",color:RED,bg:"#FCEBEB"},
             {rule:"Called out",consequence:"30 crunches",color:RED,bg:"#FCEBEB"},
