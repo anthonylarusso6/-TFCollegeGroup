@@ -97,7 +97,8 @@ export default function Landing(){
       // Anvil winner
       supabase.from("anvil").select("*").order("created_at",{ascending:false}).limit(1).then(({data})=>{if(data&&data[0])setAnvilWinner(data[0]);}).catch(()=>{});
       // Today attendance
-      const today=new Date().toISOString().split("T")[0];
+      const now=new Date();
+      const today=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
       supabase.from("attendance").select("id",{count:"exact",head:true}).eq("date",today).eq("status","early").then(({count})=>{if(count)setTodayAttendance(count);}).catch(()=>{});
       // Forge leaders from latest draft, fallback to athletes with role=forge
       supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1).then(({data})=>{
@@ -116,8 +117,8 @@ export default function Landing(){
       });
       // Season progress — weeks since June 18
       const start=new Date("2025-06-18");
-      const now=new Date();
-      const diffWeeks=Math.floor((now-start)/(1000*60*60*24*7));
+      const nowDate=new Date();
+      const diffWeeks=Math.floor((nowDate-start)/(1000*60*60*24*7));
       const totalWeeks=12;
       if(diffWeeks>=0&&diffWeeks<=totalWeeks)setWeekProgress({current:diffWeeks+1,total:totalWeeks,pct:Math.round(((diffWeeks+1)/totalWeeks)*100)});
       // Culture photo

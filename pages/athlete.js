@@ -249,7 +249,8 @@ export default function Athlete(){
     const cut=CUTOFFS[today]||{h:9,m:30};
     const late=now.getHours()>cut.h||(now.getHours()===cut.h&&now.getMinutes()>=cut.m);
     const status=late?"late":"early";
-    const today_date=now.toISOString().split("T")[0];
+    // Use local date not UTC to match the local day
+    const today_date=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
     const{data:existing,error:existErr}=await supabase.from("attendance").select("*").eq("athlete_id",athlete.id).eq("date",today_date);
     if(existErr)console.error("Attendance check error:",existErr);
     if(existing&&existing.length>0)return{status:existing[0].status,time:existing[0].time_logged,already:true};
