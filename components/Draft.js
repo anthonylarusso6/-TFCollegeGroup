@@ -187,7 +187,7 @@ export default function Draft({athletes=[]}){
 
       {/* View tabs */}
       <div style={{display:"flex",gap:6,marginBottom:12}}>
-        {[{id:"assign",label:"➕ Assign"},{id:"teams",label:"👥 Teams"},{id:"bracelets",label:"📿 Bracelets"}].map(t=>(
+        {[{id:"assign",label:"➕ Draft"},{id:"teams",label:"👥 Groups"},{id:"bracelets",label:"📿 Bracelets"}].map(t=>(
           <button key={t.id} onClick={()=>setView(t.id)} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+(view===t.id?ORANGE:"#e0e0e0"),background:view===t.id?ORANGE:"#fff",color:view===t.id?"#fff":"#888",fontSize:11,fontWeight:view===t.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
             {t.label}
           </button>
