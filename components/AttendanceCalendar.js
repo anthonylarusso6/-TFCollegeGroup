@@ -32,9 +32,10 @@ export default function AttendanceCalendar({athleteId}){
     const days=[];
     for(let d=1;d<=daysInMonth;d++){
       const dateStr=`${monthKey}-${String(d).padStart(2,"0")}`;
-      const dow=new Date(year,month,d).getDay();
+      const dow=new Date(year,month,d,12,0,0).getDay();
       const isClassDay=[1,2,4,5].includes(dow);
-      const isFuture=new Date(dateStr)>today;
+      const localDateStr=`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+      const isFuture=new Date(localDateStr+"T12:00:00")>today;
       days.push({dateStr,day:d,isClassDay,isFuture,status:byDate[dateStr]||null});
     }
     const mEarly=days.filter(d=>d.status==="early").length;
@@ -52,7 +53,7 @@ export default function AttendanceCalendar({athleteId}){
   const month=allMonths[monthIdx]||allMonths[0];
   const DAYS_SHORT=["S","M","T","W","T","F","S"];
 
-  const firstDay=month?new Date(month.days[0].dateStr).getDay():0;
+  const firstDay=month?new Date(month.days[0].dateStr+"T12:00:00").getDay():0;
   const cells=[];
   for(let i=0;i<firstDay;i++) cells.push(null);
   if(month) month.days.forEach(d=>cells.push(d));

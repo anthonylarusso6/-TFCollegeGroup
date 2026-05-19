@@ -844,7 +844,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                           </span>}
                           <button onClick={async()=>{
                             const now=new Date();
-                            const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
+                            const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",timeZone:"America/New_York"});
                             const day=new Date(attDate+"T12:00:00").toLocaleDateString("en-US",{weekday:"short"});
                             if(rec){await supabase.from("attendance").update({status:"early",time_logged:timeStr}).eq("id",rec.id);}
                             else{await supabase.from("attendance").insert({athlete_id:a.id,date:attDate,status:"early",time_logged:timeStr,day});}
@@ -853,7 +853,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                           }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid "+GREEN,background:rec?.status==="early"?GREEN:"transparent",color:rec?.status==="early"?"#fff":GREEN,cursor:"pointer",fontFamily:"Georgia,serif"}}>Early</button>
                           <button onClick={async()=>{
                             const now=new Date();
-                            const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
+                            const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",timeZone:"America/New_York"});
                             const day=new Date(attDate+"T12:00:00").toLocaleDateString("en-US",{weekday:"short"});
                             if(rec){await supabase.from("attendance").update({status:"late",time_logged:timeStr}).eq("id",rec.id);}
                             else{await supabase.from("attendance").insert({athlete_id:a.id,date:attDate,status:"late",time_logged:timeStr,day});}
@@ -862,7 +862,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                           }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid "+RED,background:rec?.status==="late"?RED:"transparent",color:rec?.status==="late"?"#fff":RED,cursor:"pointer",fontFamily:"Georgia,serif"}}>Late</button>
                           <button onClick={async()=>{
                             const now=new Date();
-                            const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
+                            const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",timeZone:"America/New_York"});
                             const day=new Date(attDate+"T12:00:00").toLocaleDateString("en-US",{weekday:"short"});
                             if(rec){await supabase.from("attendance").update({status:"excused",time_logged:timeStr}).eq("id",rec.id);}
                             else{await supabase.from("attendance").insert({athlete_id:a.id,date:attDate,status:"excused",time_logged:timeStr,day});}

@@ -243,7 +243,7 @@ export default function Athlete(){
 
   const doCheckin=async(athlete)=>{
     const now=new Date();
-    const timeStr=now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+    const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",timeZone:"America/New_York"});
     const today=DAYS[now.getDay()];
     if(!CLASS_DAYS.includes(today))return null;
     const cut=CUTOFFS[today]||{h:9,m:30};
