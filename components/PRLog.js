@@ -71,6 +71,7 @@ export default function PRLog({athleteId}){
   const[loadError,setLoadError]=useState("");
   const[expanded,setExpanded]=useState(null);
   const[deleting,setDeleting]=useState(null);
+  const[confirmDelete,setConfirmDelete]=useState(null);
 
   // Load coach program
   useEffect(()=>{
@@ -274,9 +275,16 @@ export default function PRLog({athleteId}){
                         <div style={{fontSize:11,color:"#888"}}>{new Date(h.date).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
                         <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a"}}>{h.weight} lbs × {h.reps||1} reps</div>
                         {h.weight===pr&&<div style={{fontSize:10,color:GOLD,fontWeight:700}}>PR 🏆</div>}
-                        <button onClick={()=>{if(window.confirm("Delete this entry?"))deleteLog(h.id,lift.name);}} disabled={deleting===h.id} style={{fontSize:12,padding:"4px 10px",borderRadius:6,border:"0.5px solid #ffcccc",background:"#fff5f5",color:"#C0392B",cursor:"pointer",fontFamily:"Georgia,serif",marginLeft:4,minWidth:36}}>
-                          {deleting===h.id?"...":"🗑"}
-                        </button>
+                        {confirmDelete===h.id?(
+                          <div style={{display:"flex",gap:4,marginLeft:4}}>
+                            <button onClick={()=>{deleteLog(h.id,lift.name);setConfirmDelete(null);}} style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:"none",background:"#C0392B",color:"#fff",cursor:"pointer",fontFamily:"Georgia,serif"}}>Delete</button>
+                            <button onClick={()=>setConfirmDelete(null)} style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:"0.5px solid #ddd",background:"#fff",color:"#888",cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
+                          </div>
+                        ):(
+                          <button onClick={()=>setConfirmDelete(h.id)} disabled={deleting===h.id} style={{fontSize:12,padding:"4px 10px",borderRadius:6,border:"0.5px solid #ffcccc",background:"#fff5f5",color:"#C0392B",cursor:"pointer",fontFamily:"Georgia,serif",marginLeft:4,minWidth:36}}>
+                            {deleting===h.id?"...":"🗑"}
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
