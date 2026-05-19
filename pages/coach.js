@@ -472,7 +472,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
           </div>
           <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:1}}>
             {TABS.map(t=>{
-              const ICONS={"overview":"📊","draft":"🎯","roster":"👥","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢"};
+              const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱"};
               return(
               <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 12px",background:tab===t.id?"#fff":"transparent",border:"none",borderRadius:10,color:tab===t.id?"#1a1a1a":"#555",fontSize:10,fontWeight:tab===t.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,boxShadow:tab===t.id?"0 2px 8px rgba(0,0,0,0.2)":"none"}}>
                 <span style={{fontSize:15}}>{ICONS[t.id]||"•"}</span>
