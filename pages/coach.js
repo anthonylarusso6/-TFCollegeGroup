@@ -71,61 +71,6 @@ function DriveLinksManager(){
 }
 
 
-function ResetButton(){
-  const[status,setStatus]=useState("");
-  const[loading,setLoading]=useState(false);
-  const[results,setResults]=useState([]);
-  const[preserved,setPreserved]=useState([]);
-  const[confirm,setConfirm]=useState(false);
-
-  const runReset=async()=>{
-    if(!confirm){setConfirm(true);return;}
-    setLoading(true);setStatus("");setResults([]);setPreserved([]);
-    try{
-      const res=await fetch("/api/reset",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({secret:"TFCG2025RESET"})
-      });
-      if(!res.ok){
-        const txt=await res.text();
-        throw new Error("Server error "+res.status+": "+txt);
-      }
-      const data=await res.json();
-      setResults([...(data.results||[]),...(data.errors||[])]);
-      setPreserved(data.preserved||[]);
-      setStatus(data.errors?.length>0?"Done with some errors":"✅ Reset complete! Fresh start ready.");
-    }catch(e){
-      console.error("Reset error:",e);
-      setStatus("❌ Reset failed: "+e.message);
-    }
-    setLoading(false);setConfirm(false);
-  };
-
-  return(
-    <div>
-      {/* What gets preserved */}
-      <div style={{background:"#EAF3DE",borderRadius:10,padding:"12px 14px",marginBottom:12,border:"0.5px solid #1E6B3A44"}}>
-        <div style={{fontSize:12,fontWeight:600,color:"#1E6B3A",marginBottom:6}}>✅ Always preserved:</div>
-        {["Athlete accounts & PINs","Profile photos","Mindset Monday notes","Fellowship Friday notes","Athletic & character goals","Training program"].map((item,i)=>(
-          <div key={i} style={{fontSize:11,color:"#555",marginBottom:2}}>• {item}</div>
-        ))}
-      </div>
-
-      <button onClick={runReset} disabled={loading} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:loading?"#e0e0e0":confirm?"#8B0000":RED,color:loading?"#aaa":"#fff",fontSize:14,fontWeight:700,cursor:loading?"not-allowed":"pointer",fontFamily:"Georgia,serif",marginBottom:8}}>
-        {loading?"Running reset...":confirm?"⚠️ TAP AGAIN TO CONFIRM":"🔄 Run Hard Reset"}
-      </button>
-      {confirm&&!loading&&<div style={{fontSize:12,color:RED,textAlign:"center",marginBottom:10}}>This clears attendance, draft, weights, PRs, callouts, anvil, leaderboard.</div>}
-      {status&&<div style={{fontSize:13,fontWeight:600,color:status.includes("✅")?"#1E6B3A":RED,marginBottom:10,padding:"8px 12px",background:status.includes("✅")?"#EAF3DE":"#FFF0F0",borderRadius:8}}>{status}</div>}
-      {results.length>0&&(
-        <div style={{background:"#f9f9f9",borderRadius:8,padding:"10px 12px",fontSize:11,color:"#666",marginBottom:8}}>
-          {results.map((r,i)=><div key={i} style={{marginBottom:3}}>{r}</div>)}
-        </div>
-      )}
-    </div>
-  );
-}
-
 
 export default function Coach(){
   const[authed,setAuthed]=useState(false);
@@ -330,7 +275,6 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
     {id:"photos",label:"Photos",icon:"📸"},
     {id:"engagement",label:"Engagement",icon:"📢"},
     {id:"qr",label:"QR Code",icon:"📱"},
-    {id:"reset",label:"Reset",icon:"🔄"},
   ];
   // Kevin only sees roster, mindset and attendance
   const KEVIN_TABS=["roster","mindset","attendance"];
@@ -1114,20 +1058,6 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                     <div style={{fontSize:12,color:"#666"}}>{s}</div>
                   </div>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {tab==="reset"&&(
-            <div>
-              <div style={{background:"#fff",borderRadius:12,padding:"1.5rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
-                <div style={{fontSize:16,fontWeight:700,color:"#1a1a1a",marginBottom:4}}>🔄 Season Hard Reset</div>
-                <div style={{fontSize:13,color:"#888",marginBottom:16,lineHeight:1.7}}>Run this on <strong>June 17th</strong> before the first class. Clears all attendance, drafts, weight logs, PR logs, callouts, inbox, anvil history, and leaderboard. Athlete accounts, PINs, photos and program are preserved.</div>
-                <div style={{background:"#FFF0F0",borderRadius:10,padding:"12px 14px",marginBottom:16,border:"0.5px solid "+RED+"44"}}>
-                  <div style={{fontSize:12,fontWeight:600,color:RED,marginBottom:4}}>⚠️ This cannot be undone!</div>
-                  <div style={{fontSize:12,color:"#888"}}>Run this BEFORE June 18th. All season data will be wiped fresh.</div>
-                </div>
-                <ResetButton/>
               </div>
             </div>
           )}
