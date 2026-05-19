@@ -11,6 +11,8 @@ const VIOLATIONS=[
   {label:"Bending over",icon:"🫸",crunches:30},
   {label:"Hands on hips",icon:"🤜",crunches:30},
   {label:"Standing around",icon:"🧍",crunches:30},
+  {label:"Not listening",icon:"🙉",crunches:30},
+  {label:"Doing drill incorrectly",icon:"❌",crunches:30},
   {label:"Other",icon:"⚠️",crunches:30},
 ];
 
