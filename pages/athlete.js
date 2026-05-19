@@ -247,7 +247,9 @@ export default function Athlete(){
     const today=DAYS[now.getDay()];
     if(!CLASS_DAYS.includes(today))return null;
     const cut=CUTOFFS[today]||{h:9,m:30};
-    const late=now.getHours()>cut.h||(now.getHours()===cut.h&&now.getMinutes()>=cut.m);
+    // Use EST time for cutoff check
+    const estTime=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const late=estTime.getHours()>cut.h||(estTime.getHours()===cut.h&&estTime.getMinutes()>=cut.m);
     const status=late?"late":"early";
     // Use local date not UTC to match the local day
     const today_date=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
