@@ -11,37 +11,44 @@ export default function AthleteLeaderboard({athleteId}){
   },[]);
 
   const loadLeaderboard=async()=>{
-    // Pull directly from attendance table — most accurate
-    const{data:att}=await supabase.from("attendance").select("athlete_id,status,athletes(name,photo_url,role)").catch(()=>({data:[]}));
-    if(!att){setLoading(false);return;}
+    try{
+      // Query attendance and athletes separately to avoid join issues
+      const[attRes,athRes]=await Promise.all([
+        supabase.from("attendance").select("athlete_id,status"),
+        supabase.from("athletes").select("id,name,photo_url,role").eq("status","active"),
+      ]);
 
-    // Count early arrivals per athlete
-    const counts={};
-    const streaks={};
-    const names={};
-    const photos={};
-    const roles={};
+      const att=attRes.data||[];
+      const aths=athRes.data||[];
 
-    att.forEach(r=>{
-      const id=r.athlete_id;
-      if(!id)return;
-      names[id]=r.athletes?.name||"Unknown";
-      photos[id]=r.athletes?.photo_url||null;
-      roles[id]=r.athletes?.role||"iron";
-      if(!counts[id])counts[id]=0;
-      if(r.status==="early")counts[id]++;
-    });
+      // Build athlete lookup
+      const athMap={};
+      aths.forEach(a=>{athMap[a.id]=a;});
 
-    // Build sorted leaderboard
-    const ranked=Object.keys(counts).map(id=>({
-      athlete_id:id,
-      early_count:counts[id],
-      name:names[id],
-      photo_url:photos[id],
-      role:roles[id],
-    })).sort((a,b)=>b.early_count-a.early_count);
+      // Count early arrivals per athlete
+      const counts={};
+      att.forEach(r=>{
+        if(!r.athlete_id)return;
+        if(!counts[r.athlete_id])counts[r.athlete_id]=0;
+        if(r.status==="early")counts[r.athlete_id]++;
+      });
 
-    setLb(ranked);
+      // Build sorted leaderboard — only include athletes with check-ins
+      const ranked=Object.keys(counts)
+        .filter(id=>athMap[id])
+        .map(id=>({
+          athlete_id:id,
+          early_count:counts[id],
+          name:athMap[id]?.name||"Unknown",
+          photo_url:athMap[id]?.photo_url||null,
+          role:athMap[id]?.role||"iron",
+        }))
+        .sort((a,b)=>b.early_count-a.early_count);
+
+      setLb(ranked);
+    }catch(e){
+      console.error("Leaderboard error:",e);
+    }
     setLoading(false);
   };
 
