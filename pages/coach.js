@@ -335,7 +335,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
   const KEVIN_TABS=["roster","mindset","attendance"];
   // Malkmus (Luke) sees overview, attendance, leaderboard, culture, anvil, weights, engagement
   const LUKE_TABS=["overview","attendance","leaderboard","culture","anvil","weights","engagement"];
-  const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):coachRole==="malkmus"?ALL_TABS.filter(t=>LUKE_TABS.includes(t.id)):ALL_TABS;
+  const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):(coachRole==="malkmus"||coachRole==="adoriyan")?ALL_TABS.filter(t=>LUKE_TABS.includes(t.id)):ALL_TABS;
 
   // Kevin PIN stored in localStorage
   const getKevinPin=()=>typeof window!=="undefined"?localStorage.getItem("kevin_coach_pin_v2"):null;
