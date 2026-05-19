@@ -49,7 +49,8 @@ export default function Draft({athletes=[]}){
 
   const loadDraft=async()=>{
     setLoading(true);
-    const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1).catch(()=>({data:[]}));
+    const{data,error}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1).catch(e=>({data:[],error:e}));
+    if(error)console.error("Draft load error:",error);
     if(data&&data[0]){
       const d=data[0];
       setDraftId(d.id);
