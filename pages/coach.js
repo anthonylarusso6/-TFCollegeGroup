@@ -382,6 +382,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
     {id:"ant",name:"Coach Ant",sub:"Head Coach",color:GOLD,emoji:"⚒"},
     {id:"kevin",name:"Coach Kevin",sub:"Guest Speaker",color:PUR,emoji:"📖"},
     {id:"malkmus",name:"Luke",sub:"Assistant Coach",color:"#1A4F8A",emoji:"📋"},
+    {id:"adoriyan",name:"Adoriyan Daniels",sub:"Coach",color:"#0F6E56",emoji:"💪"},
   ];
 
   if(!authed) return(
@@ -401,7 +402,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                   <button key={c.id} onClick={()=>{
                     setSelectedCoach(c.id);
                     setPin("");setPinError("");
-                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin());
+                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin())||(c.id==="adoriyan"&&getAdoriyanPin());
                     setPinStep(hasPin?"enter":"create");
                   }} style={{width:"100%",padding:"16px 20px",borderRadius:14,border:"0.5px solid #2a2a2a",background:"#141414",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:14,textAlign:"left"}}>
                     <div style={{width:44,height:44,borderRadius:"50%",background:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,boxShadow:"0 0 18px "+c.color+"66"}}>{c.emoji}</div>
@@ -454,15 +455,25 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         const kp=getKevinPin();
                         if(kp&&val===kp){setAuthed(true);setCoachRole("kevin");setTab("roster");setPin("");}
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
+                      }else if(selectedCoach==="adoriyan"){
+                        const ap=getAdoriyanPin();
+                        if(ap&&val===ap){setAuthed(true);setCoachRole("adoriyan");setTab("overview");setPin("");}
+                        else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }else if(selectedCoach==="malkmus"){
                         const mp=getMalkmusPin();
                         if(mp&&val===mp){setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
+                      }else if(selectedCoach==="adoriyan"){
+                        const ap=getAdoriyanPin();
+                        if(ap&&val===ap){setAuthed(true);setCoachRole("adoriyan");setTab("overview");setPin("");}
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }
                     }else if(pinStep==="create"){
                       setPinConfirm(val);setPinStep("confirm");setPin("");
                     }else if(pinStep==="confirm"){
-                      if(selectedCoach==="malkmus"){
+                      if(selectedCoach==="adoriyan"){
+                        if(val===pinConfirm){saveAdoriyanPin(val);setAuthed(true);setCoachRole("adoriyan");setTab("overview");setPin("");}
+                        else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+                      }else if(selectedCoach==="malkmus"){
                         if(val===pinConfirm){saveMalkmusPin(val);setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }else{
@@ -505,7 +516,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
             <div>
               <div style={{fontSize:18,fontWeight:400,color:"#fff"}}>TF College Group</div>
-              <div style={{fontSize:12,color:"#555"}}>{coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · {isClassDay?"Class day":"No class"}</div>
+              <div style={{fontSize:12,color:"#555"}}>{coachRole==="adoriyan"?"Adoriyan":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · {isClassDay?"Class day":"No class"}</div>
             </div>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:12,color:"#888"}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
