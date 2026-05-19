@@ -329,6 +329,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
     {id:"weights",label:"Weights",icon:"⚖️"},
     {id:"photos",label:"Photos",icon:"📸"},
     {id:"engagement",label:"Engagement",icon:"📢"},
+    {id:"qr",label:"QR Code",icon:"📱"},
     {id:"reset",label:"Reset",icon:"🔄"},
   ];
   // Kevin only sees roster, mindset and attendance
@@ -1086,6 +1087,31 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         img.src=objectUrl;
                       }}/>
                     </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab==="qr"&&(
+            <div>
+              <div style={{background:"#fff",borderRadius:12,padding:"1.5rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+ORANGE,textAlign:"center"}}>
+                <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a",marginBottom:4}}>📱 QR Check-In</div>
+                <div style={{fontSize:12,color:"#888",marginBottom:16}}>Display this QR code at the door. Athletes scan it and tap their name to check in instantly.</div>
+                <div style={{background:"#f9f9f9",borderRadius:12,padding:"20px",display:"inline-block",marginBottom:16,border:"1px solid #e0e0e0"}}>
+                  <img src={"https://api.qrserver.com/v1/create-qr-code/?size=220x220&data="+encodeURIComponent("https://tfcollegegroup.com/checkin")} alt="QR Code" style={{width:220,height:220,display:"block"}}/>
+                </div>
+                <div style={{fontSize:12,color:"#888",marginBottom:12}}>tfcollegegroup.com/checkin</div>
+                <a href="/checkin" target="_blank" rel="noreferrer" style={{display:"inline-block",padding:"10px 24px",borderRadius:10,background:ORANGE,color:"#fff",fontSize:13,fontWeight:600,textDecoration:"none",fontFamily:"Georgia,serif"}}>
+                  Open check-in page →
+                </a>
+              </div>
+              <div style={{background:"#f9f9f9",borderRadius:12,padding:"14px",border:"0.5px solid #e0e0e0"}}>
+                <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>How it works:</div>
+                {["Display QR code on your phone or iPad at the door","Athletes scan with their camera — no app needed","They tap their name from the list","Instantly marked Early or Late based on cutoff time","Shows on coach Attendance tab in real time"].map((s,i)=>(
+                  <div key={i} style={{display:"flex",gap:8,marginBottom:6}}>
+                    <div style={{width:18,height:18,borderRadius:"50%",background:ORANGE,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff",flexShrink:0}}>{i+1}</div>
+                    <div style={{fontSize:12,color:"#666"}}>{s}</div>
                   </div>
                 ))}
               </div>
