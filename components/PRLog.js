@@ -274,8 +274,8 @@ export default function PRLog({athleteId}){
                         <div style={{fontSize:11,color:"#888"}}>{new Date(h.date).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
                         <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a"}}>{h.weight} lbs × {h.reps||1} reps</div>
                         {h.weight===pr&&<div style={{fontSize:10,color:GOLD,fontWeight:700}}>PR 🏆</div>}
-                        <button onClick={()=>deleteLog(h.id,lift.name)} disabled={deleting===h.id} style={{fontSize:10,padding:"2px 6px",borderRadius:4,border:"0.5px solid #ddd",background:"transparent",color:"#ccc",cursor:"pointer",fontFamily:"Georgia,serif",marginLeft:4}}>
-                          {deleting===h.id?"...":"✕"}
+                        <button onClick={()=>{if(window.confirm("Delete this entry?"))deleteLog(h.id,lift.name);}} disabled={deleting===h.id} style={{fontSize:12,padding:"4px 10px",borderRadius:6,border:"0.5px solid #ffcccc",background:"#fff5f5",color:"#C0392B",cursor:"pointer",fontFamily:"Georgia,serif",marginLeft:4,minWidth:36}}>
+                          {deleting===h.id?"...":"🗑"}
                         </button>
                       </div>
                     ))}
