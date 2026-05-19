@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import TeamsView from "../components/TeamsView";
 import ProgramUpload from "../components/ProgramUpload";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
@@ -260,6 +261,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
   const ALL_TABS=[
     {id:"overview",label:"Overview",icon:"📊"},
     {id:"draft",label:"Draft",icon:"🎯"},
+    {id:"teams",label:"Teams",icon:"👥"},
     {id:"roster",label:"Roster",icon:"👥"},
     {id:"attendance",label:"Attendance",icon:"📅"},
     {id:"accountability",label:"Accountability",icon:"✊"},
@@ -609,6 +611,10 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
           )}
 
           {tab==="draft"&&<Draft athletes={athletes.filter(a=>a.status==="active")}/>}
+
+          {tab==="teams"&&(
+            <TeamsView athletes={athletes}/>
+          )}
 
           {tab==="roster"&&(
             <div>
