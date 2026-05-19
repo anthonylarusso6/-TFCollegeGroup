@@ -382,7 +382,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
     {id:"ant",name:"Coach Ant",sub:"Head Coach",color:GOLD,emoji:"⚒"},
     {id:"kevin",name:"Coach Kevin",sub:"Guest Speaker",color:PUR,emoji:"📖"},
     {id:"malkmus",name:"Luke",sub:"Assistant Coach",color:"#1A4F8A",emoji:"📋"},
-    {id:"adoriyan",name:"Adoriyan Daniels",sub:"Coach",color:"#0F6E56",emoji:"💪"},
+    {id:"adoriyan",name:"Adoriyan Daniels",sub:"Assistant Coach",color:"#0F6E56",emoji:"💪"},
   ];
 
   if(!authed) return(
