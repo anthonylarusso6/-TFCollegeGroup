@@ -96,7 +96,7 @@ export default function Coach(){
   const[newGender,setNewGender]=useState("");
   const[newRole,setNewRole]=useState("iron");
   const[genLoading,setGenLoading]=useState(null);
-  const[attDate,setAttDate]=useState(new Date().toISOString().split("T")[0]);
+  const[attDate,setAttDate]=useState((()=>{const n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");})());
   const[attRecords,setAttRecords]=useState(null);
   const[weightSort,setWeightSort]=useState("change");
   const[weightData,setWeightData]=useState(null);
@@ -242,13 +242,15 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
   const today=new Date();
   const dayName=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][today.getDay()];
   const isClassDay=["Mon","Tue","Thu","Fri"].includes(dayName);
-  const todayAtt=attendance.filter(a=>a.date===today.toISOString().split("T")[0]);
+  const todayLocal=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
+  const todayAtt=attendance.filter(a=>a.date===todayLocal);
   const earlyToday=todayAtt.filter(a=>a.status==="early").length;
   const lateToday=todayAtt.filter(a=>a.status==="late").length;
   const thisMonth=new Date().toISOString().slice(0,7);
   const _monday=new Date(today);
   _monday.setDate(today.getDate()+(today.getDay()===0?-6:1-today.getDay()));
   const weekDays=["Mon","Tue","Thu","Fri"].map((dn,idx)=>{
+    // Use local date calculation
     const d=new Date(_monday);
     d.setDate(_monday.getDate()+[0,1,3,4][idx]);
     const ds=d.toISOString().split("T")[0];
@@ -754,7 +756,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>
-                    {attDate===new Date().toISOString().split("T")[0]?"Today's attendance":attDate}
+                    {attDate===todayLocal?"Today's attendance":attDate}
                   </div>
                   <input type="date" value={attDate} onChange={e=>setAttDate(e.target.value)} style={{padding:"4px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}/>
                 </div>
