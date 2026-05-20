@@ -178,6 +178,7 @@ export default function Athlete(){
   const[screen,setScreen]=useState("roster");
   const[selectedAthlete,setSelectedAthlete]=useState(null);
   const[search,setSearch]=useState("");
+  const[rosterTab,setRosterTab]=useState("active");
   const[pin,setPin]=useState("");
   const[pinStep,setPinStep]=useState("enter");
   const[pinConfirm,setPinConfirm]=useState("");
@@ -203,14 +204,13 @@ export default function Athlete(){
   const loadData=async()=>{
     setLoading(true);
     try{
-      const{data:aths,error:athErr}=await supabase.from("athletes").select("*").eq("status","active").order("name");
+      const{data:aths,error:athErr}=await supabase.from("athletes").select("*").in("status",["active","sleeping"]).order("name");
       if(athErr)console.error("Athletes error:",athErr);
       if(aths&&aths.length>0){
         setAthletes(aths);
       }else{
-        // Fallback: load all athletes regardless of status
-        const{data:allAths}=await supabase.from("athletes").select("*").order("name").catch(()=>({data:[]}));
-        if(allAths&&allAths.length>0)setAthletes(allAths.filter(a=>a.status!=="archived"));
+        const{data:allAths}=await supabase.from("athletes").select("*").order("name");
+        if(allAths)setAthletes(allAths.filter(a=>a.status!=="archived"));
       }
     }catch(e){console.error("Athletes fetch failed:",e);}
     try{
@@ -397,6 +397,15 @@ export default function Athlete(){
             </div>
           )}
 
+          {/* Active / Sleeping tabs */}
+          <div style={{display:"flex",gap:6,marginBottom:12}}>
+            {[{id:"active",label:"Active"},{id:"sleeping",label:"😴 Sleeping"}].map(t=>(
+              <button key={t.id} onClick={()=>setRosterTab(t.id)} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+(rosterTab===t.id?ORANGE:"#222"),background:rosterTab===t.id?ORANGE:"transparent",color:rosterTab===t.id?"#fff":"#666",fontSize:12,fontWeight:rosterTab===t.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
           {/* Search */}
           <div style={{marginBottom:14,position:"relative"}}>
             <input type="text" placeholder="Search your name..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"14px 16px 14px 44px",borderRadius:14,border:"1px solid #222",background:"#111",color:"#fff",fontSize:14,fontFamily:"Georgia, serif",boxSizing:"border-box",outline:"none"}} autoComplete="off"/>
@@ -406,7 +415,7 @@ export default function Athlete(){
 
           {/* Athlete list */}
           <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24}}>
-            {athletes.filter(a=>!search||a.name.toLowerCase().includes(search.toLowerCase())).map((a,idx)=>{
+            {athletes.filter(a=>(rosterTab==="active"?a.status==="active":a.status==="sleeping")&&(!search||a.name.toLowerCase().includes(search.toLowerCase()))).map((a,idx)=>{
               const isForge=a.role==="forge";
               const roleColor=isForge?RED:STEEL;
               return(
