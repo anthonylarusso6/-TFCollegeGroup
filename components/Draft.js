@@ -49,7 +49,7 @@ export default function Draft({athletes=[]}){
 
   const loadDraft=async()=>{
     setLoading(true);
-    const{data,error}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1).catch(e=>({data:[],error:e}));
+    const{data,error}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
     if(error)console.error("Draft load error:",error);
     if(data&&data[0]){
       const d=data[0];
@@ -91,9 +91,9 @@ export default function Draft({athletes=[]}){
       ...updates,
     };
     if(draftId){
-      await supabase.from("draft").update(payload).eq("id",draftId).catch(()=>{});
+      await supabase.from("draft").update(payload).eq("id",draftId);
     }else{
-      const{data}=await supabase.from("draft").insert(payload).select().single().catch(()=>({data:null}));
+      const{data}=await supabase.from("draft").insert(payload).select().single();
       if(data)setDraftId(data.id);
     }
   };
@@ -139,7 +139,7 @@ export default function Draft({athletes=[]}){
 
     // Update athlete role
     const ath=athletes.find(a=>a.name===athleteName);
-    if(ath)await supabase.from("athletes").update({role:"iron",group_idx:idx}).eq("id",ath.id).catch(()=>{});
+    if(ath)await supabase.from("athletes").update({role:"iron",group_idx:idx}).eq("id",ath.id);
 
     // Check if done
     const done=newPick>=pickOrder.length||available.filter(a=>a.name!==athleteName).length===0;
@@ -148,7 +148,7 @@ export default function Draft({athletes=[]}){
       await saveToDB({phase:"done",groups:Array.from({length:groupCount},(_,i)=>newGroups[i]||[]),current_pick:newPick});
       // Update leader roles
       leaders.forEach(async(l,i)=>{
-        if(l.athleteId)await supabase.from("athletes").update({role:"forge",group_idx:i}).eq("id",l.athleteId).catch(()=>{});
+        if(l.athleteId)await supabase.from("athletes").update({role:"forge",group_idx:i}).eq("id",l.athleteId);
       });
     }else{
       await saveToDB({groups:Array.from({length:groupCount},(_,i)=>newGroups[i]||[]),current_pick:newPick});
@@ -158,8 +158,8 @@ export default function Draft({athletes=[]}){
   const resetDraft=async()=>{
     if(!window.confirm("Reset entire draft?"))return;
     setPhase("setup");setLeaders([]);setGroups({});setBracelets({});setPickOrder([]);setCurrentPick(0);
-    await supabase.from("athletes").update({role:"iron",group_idx:null}).eq("status","active").catch(()=>{});
-    if(draftId)await supabase.from("draft").update({phase:"setup",leaders:[],groups:[],bracelets:[],pick_order:[],current_pick:0}).eq("id",draftId).catch(()=>{});
+    await supabase.from("athletes").update({role:"iron",group_idx:null}).eq("status","active");
+    if(draftId)await supabase.from("draft").update({phase:"setup",leaders:[],groups:[],bracelets:[],pick_order:[],current_pick:0}).eq("id",draftId);
   };
 
   if(loading)return<div style={{textAlign:"center",padding:"3rem",color:"#888"}}>Loading draft...</div>;
