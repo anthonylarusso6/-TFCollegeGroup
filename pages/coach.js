@@ -1016,53 +1016,53 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                 {athletes.filter(a=>a.status==="active").map((a,i)=>(
                   <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",border:"0.5px solid #e0e0e0",textAlign:"center"}}>
                     <div style={{width:64,height:64,borderRadius:"50%",background:STEEL,margin:"0 auto 8px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"#fff"}}>
-                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
+                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={ev=>{ev.target.style.display="none";}} alt=""/>:a.name[0]}
                     </div>
                     <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a",marginBottom:8}}>{a.name}</div>
-                    <label style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid #e0e0e0",background:"#f9f9f9",fontSize:11,cursor:"pointer",color:"#555",display:"inline-block"}}>
-                      {uploadingPhoto===a.id?"Uploading...":a.photo_url?"Change photo":"Add photo"}
-                      <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
+                    <label style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid "+ORANGE,background:"#FFF8F0",fontSize:11,cursor:"pointer",color:ORANGE,display:"inline-block",fontWeight:600}}>
+                      {uploadingPhoto===a.id?"Saving...":a.photo_url?"Change":"Add Photo"}
+                      <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{
                         const file=e.target.files[0];
                         if(!file)return;
                         setUploadingPhoto(a.id);
-                        // Compress then try Storage first, fallback to base64
-                        const compressImage=(f,size,quality)=>new Promise((res,rej)=>{
+                        const reader=new FileReader();
+                        reader.onload=ev=>{
+                          const dataUrl=ev.target.result;
+                          // Compress using canvas
                           const img=new Image();
-                          const url=URL.createObjectURL(f);
-                          img.onload=()=>{
-                            const c=document.createElement("canvas");
-                            c.width=size;c.height=size;
-                            const ctx=c.getContext("2d");
+                          img.onload=async()=>{
+                            const canvas=document.createElement("canvas");
+                            const SIZE=150;
+                            canvas.width=SIZE;canvas.height=SIZE;
+                            const ctx=canvas.getContext("2d");
                             const min=Math.min(img.width,img.height);
-                            ctx.drawImage(img,(img.width-min)/2,(img.height-min)/2,min,min,0,0,size,size);
-                            URL.revokeObjectURL(url);
-                            res(c.toDataURL("image/jpeg",quality));
+                            const sx=(img.width-min)/2;
+                            const sy=(img.height-min)/2;
+                            ctx.drawImage(img,sx,sy,min,min,0,0,SIZE,SIZE);
+                            const compressed=canvas.toDataURL("image/jpeg",0.5);
+                            // Save to DB
+                            const{error}=await supabase.from("athletes")
+                              .update({photo_url:compressed})
+                              .eq("id",a.id);
+                            if(error){
+                              console.error("Photo DB error:",error);
+                              alert("Error saving photo: "+error.message);
+                            }else{
+                              setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:compressed}:x));
+                            }
+                            setUploadingPhoto(null);
                           };
-                          img.onerror=rej;
-                          img.src=url;
-                        });
-                        try{
-                          // Try Storage first
-                          const ext=file.name.split(".").pop().toLowerCase()||"jpg";
-                          const path=`${a.id}.${ext}`;
-                          const{error:upErr}=await supabase.storage.from("athlete-photos").upload(path,file,{upsert:true,contentType:file.type||"image/jpeg"});
-                          if(!upErr){
-                            const{data:urlData}=supabase.storage.from("athlete-photos").getPublicUrl(path);
-                            const photoUrl=urlData.publicUrl+"?t="+Date.now();
-                            await supabase.from("athletes").update({photo_url:photoUrl}).eq("id",a.id);
-                            setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:photoUrl}:x));
-                          }else{
-                            // Fallback: compress to tiny base64
-                            const compressed=await compressImage(file,100,0.4);
-                            const{error:dbErr}=await supabase.from("athletes").update({photo_url:compressed}).eq("id",a.id);
-                            if(dbErr){alert("Photo save failed: "+dbErr.message);}
-                            else{setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:compressed}:x));}
-                          }
-                        }catch(err){
-                          console.error("Photo error:",err);
-                          alert("Photo failed: "+err.message);
-                        }
-                        setUploadingPhoto(null);
+                          img.onerror=()=>{
+                            alert("Could not read image");
+                            setUploadingPhoto(null);
+                          };
+                          img.src=dataUrl;
+                        };
+                        reader.onerror=()=>{
+                          alert("Could not read file");
+                          setUploadingPhoto(null);
+                        };
+                        reader.readAsDataURL(file);
                       }}/>
                     </label>
                   </div>
