@@ -48,6 +48,7 @@ export default function Draft({athletes=[]}){
   const[draftId,setDraftId]=useState(null);
   const[loading,setLoading]=useState(true);
   const[saving,setSaving]=useState(false);
+  const[leaderSearch,setLeaderSearch]=useState("");
 
   // Load existing draft
   useEffect(()=>{
@@ -207,20 +208,44 @@ export default function Draft({athletes=[]}){
             <div style={{fontSize:11,color:"#aaa",marginBottom:16}}>{numGroups} groups × {picksPerGroup} picks = {numGroups*picksPerGroup} total athletes</div>
 
             {/* Leader selectors */}
-            <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>Select Forge leaders</div>
+            <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>Select Forge leaders — tap a name</div>
+            {/* Search */}
+            <input value={leaderSearch} onChange={e=>setLeaderSearch(e.target.value)} placeholder="🔍 Search athletes..." style={{width:"100%",padding:"8px 12px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",marginBottom:10,boxSizing:"border-box",background:"#fafafa"}}/>
+            {/* Selected leaders */}
             {Array.from({length:numGroups},(_,i)=>(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,padding:"8px 10px",borderRadius:8,background:leaders[i]?COLORS[i]+"11":"#fafafa",border:"1px solid "+(leaders[i]?COLORS[i]+"44":"#e0e0e0")}}>
                 <div style={{width:10,height:10,borderRadius:"50%",background:COLORS[i],flexShrink:0}}/>
-                <div style={{fontSize:11,color:COLORS[i],fontWeight:600,minWidth:70}}>Group {i+1} · T{getTier(i,numGroups)}</div>
-                <select value={leaders[i]||""} onChange={e=>{const l=[...leaders];l[i]=e.target.value;setLeaders(l);}}
-                  style={{flex:1,padding:"7px 8px",borderRadius:8,border:"1px solid "+COLORS[i]+"44",fontSize:12,fontFamily:"Georgia,serif",background:"#fafafa"}}>
-                  <option value="">— Pick leader —</option>
-                  {athletes.filter(a=>!leaders.some((l,j)=>j!==i&&l===a.name)).map(a=>(
-                    <option key={a.id} value={a.name}>{a.name}</option>
-                  ))}
-                </select>
+                <div style={{fontSize:11,color:COLORS[i],fontWeight:700,minWidth:60}}>G{i+1} · T{getTier(i,numGroups)}</div>
+                {leaders[i]?(
+                  <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div style={{fontSize:13,fontWeight:600,color:COLORS[i]}}>{leaders[i]}</div>
+                    <button onClick={()=>{const l=[...leaders];l[i]="";setLeaders(l);}} style={{background:"transparent",border:"none",color:COLORS[i],fontSize:16,cursor:"pointer",padding:0}}>×</button>
+                  </div>
+                ):(
+                  <div style={{fontSize:12,color:"#aaa",flex:1}}>Tap a name below →</div>
+                )}
               </div>
             ))}
+            {/* Athlete list to tap */}
+            <div style={{maxHeight:220,overflowY:"auto",border:"0.5px solid #e0e0e0",borderRadius:8,marginTop:6}}>
+              {athletes.filter(a=>
+                !leaders.includes(a.name)&&
+                (!leaderSearch||a.name.toLowerCase().includes(leaderSearch.toLowerCase()))
+              ).map(a=>{
+                const emptySlot=leaders.findIndex(l=>!l);
+                return(
+                  <button key={a.id} onClick={()=>{
+                    if(emptySlot>=0){const l=[...leaders];l[emptySlot]=a.name;setLeaders(l);}
+                  }} disabled={emptySlot<0} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#fff",border:"none",borderBottom:"0.5px solid #f5f5f5",cursor:emptySlot>=0?"pointer":"default",fontFamily:"Georgia,serif",textAlign:"left",opacity:emptySlot>=0?1:0.4}}>
+                    <div style={{width:32,height:32,borderRadius:"50%",background:STEEL,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,color:"#fff"}}>
+                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
+                    </div>
+                    <div style={{fontSize:13,color:"#1a1a1a"}}>{a.name}</div>
+                    {emptySlot>=0&&<div style={{marginLeft:"auto",fontSize:11,color:COLORS[emptySlot],fontWeight:600}}>→ G{emptySlot+1}</div>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <button onClick={startBracelets} disabled={leaders.some(l=>!l)} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:leaders.some(l=>!l)?"#e0e0e0":ORANGE,color:leaders.some(l=>!l)?"#aaa":"#fff",fontSize:14,fontWeight:700,cursor:leaders.some(l=>!l)?"not-allowed":"pointer",fontFamily:"Georgia,serif"}}>
             Next → Assign Bracelets
