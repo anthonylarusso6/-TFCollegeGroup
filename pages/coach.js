@@ -246,14 +246,16 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
   const todayAtt=attendance.filter(a=>a.date===todayLocal);
   const earlyToday=todayAtt.filter(a=>a.status==="early").length;
   const lateToday=todayAtt.filter(a=>a.status==="late").length;
-  const thisMonth=new Date().toISOString().slice(0,7);
-  const _monday=new Date(today);
-  const estToday=new Date(today.toLocaleString("en-US",{timeZone:"America/New_York"}));
-  _monday.setDate(estToday.getDate()+(estToday.getDay()===0?-6:1-estToday.getDay()));
+  // Use EST throughout for all date calculations
+  const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const thisMonth=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0");
+  // Find this week's Monday in EST
+  const dow=estNow.getDay(); // 0=Sun,1=Mon...
+  const mondayEst=new Date(estNow);
+  mondayEst.setDate(estNow.getDate()-(dow===0?6:dow-1));
   const weekDays=["Mon","Tue","Thu","Fri"].map((dn,idx)=>{
-    // Use local date calculation
-    const d=new Date(_monday);
-    d.setDate(_monday.getDate()+[0,1,3,4][idx]);
+    const d=new Date(mondayEst);
+    d.setDate(mondayEst.getDate()+[0,1,3,4][idx]);
     const ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
     const recs=attendance.filter(r=>r.date===ds);
     return{dn,ds,early:recs.filter(r=>r.status==="early").length,late:recs.filter(r=>r.status==="late").length};
