@@ -1025,28 +1025,31 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         const file=e.target.files[0];
                         if(!file)return;
                         setUploadingPhoto(a.id);
-                        const img=new Image();
-                        const objectUrl=URL.createObjectURL(file);
-                        img.onload=async()=>{
-                          try{
-                            const canvas=document.createElement("canvas");
-                            const SIZE=120;// Small enough to fit in DB
-                            canvas.width=SIZE;canvas.height=SIZE;
-                            const ctx=canvas.getContext("2d");
-                            const min=Math.min(img.width,img.height);
-                            const sx=(img.width-min)/2;
-                            const sy=(img.height-min)/2;
-                            ctx.drawImage(img,sx,sy,min,min,0,0,SIZE,SIZE);
-                            const compressed=canvas.toDataURL("image/jpeg",0.5);
-                            URL.revokeObjectURL(objectUrl);
-                            const{error}=await supabase.from("athletes").update({photo_url:compressed}).eq("id",a.id);
-                            if(error){console.error("Photo save error:",error);alert("Photo too large. Try a smaller image.");}
-                            else{setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:compressed}:x));}
-                          }catch(err){console.error("Photo error:",err);}
-                          setUploadingPhoto(null);
-                        };
-                        img.onerror=()=>{alert("Could not load image.");setUploadingPhoto(null);};
-                        img.src=objectUrl;
+                        try{
+                          // Upload to Supabase Storage bucket
+                          const ext=file.name.split(".").pop().toLowerCase()||"jpg";
+                          const path=`${a.id}.${ext}`;
+                          const{error:upErr}=await supabase.storage
+                            .from("athlete-photos")
+                            .upload(path,file,{upsert:true,contentType:file.type||"image/jpeg"});
+                          if(upErr){
+                            console.error("Storage upload error:",upErr);
+                            alert("Upload failed: "+upErr.message);
+                            setUploadingPhoto(null);
+                            return;
+                          }
+                          const{data:urlData}=supabase.storage
+                            .from("athlete-photos")
+                            .getPublicUrl(path);
+                          const url=urlData.publicUrl+"?t="+Date.now();
+                          const{error:dbErr}=await supabase.from("athletes").update({photo_url:url}).eq("id",a.id);
+                          if(dbErr){console.error("DB update error:",dbErr);}
+                          else{setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:url}:x));}
+                        }catch(err){
+                          console.error("Photo upload error:",err);
+                          alert("Upload failed: "+err.message);
+                        }
+                        setUploadingPhoto(null);
                       }}/>
                     </label>
                   </div>
