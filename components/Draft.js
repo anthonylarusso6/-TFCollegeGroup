@@ -18,6 +18,20 @@ const BRACELETS=[
   {color:"Teal",ref:"Jeremiah 29:11",text:"Plans to prosper you and not to harm you.",hex:"#1A9E8F"},
 ];
 
+// Auto-assign tiers based on group count and position
+const getTier=(groupIdx, numGroups)=>{
+  if(numGroups<=2) return groupIdx===0?1:2;
+  if(numGroups===3) return groupIdx<2?1:2;
+  if(numGroups===4) return groupIdx<2?1:groupIdx===2?2:3;
+  if(numGroups===5) return groupIdx<2?1:groupIdx<4?2:3;
+  if(numGroups===6) return groupIdx<2?1:groupIdx<4?2:3;
+  return 1;
+};
+
+const TIER_LABELS={1:"Tier 1",2:"Tier 2",3:"Tier 3"};
+const TIER_COLORS_MAP={1:"#534AB7",2:"#1E6B3A",3:"#C0392B"};
+
+
 // Snake draft order: 0,1,2,3,3,2,1,0,0,1,2,3...
 const snakeOrder=(numGroups,numRounds)=>{
   const order=[];
@@ -146,10 +160,21 @@ export default function Draft({athletes=[]}){
     if(done){
       setPhase("done");
       await saveToDB({phase:"done",groups:Array.from({length:groupCount},(_,i)=>newGroups[i]||[]),current_pick:newPick});
-      // Update leader roles
-      leaders.forEach(async(l,i)=>{
-        if(l.athleteId)await supabase.from("athletes").update({role:"forge",group_idx:i}).eq("id",l.athleteId);
-      });
+      // Update leader roles and tiers
+      for(let i=0;i<groupCount;i++){
+        const tier=getTier(i,groupCount);
+        const leaderAth=leaders[i];
+        if(leaderAth?.athleteId){
+          await supabase.from("athletes").update({role:"forge",group_idx:i,tier}).eq("id",leaderAth.athleteId);
+        }
+        // Update all group members with tier
+        for(const name of(groupsArr[i]||[])){
+          const ath=athletes.find(a=>a.name===name);
+          if(ath&&ath.id!==leaderAth?.athleteId){
+            await supabase.from("athletes").update({role:"iron",group_idx:i,tier}).eq("id",ath.id);
+          }
+        }
+      }
     }else{
       await saveToDB({groups:Array.from({length:groupCount},(_,i)=>newGroups[i]||[]),current_pick:newPick});
     }
@@ -208,7 +233,7 @@ export default function Draft({athletes=[]}){
                   newLeaders[i]=ath?{name:ath.name,athleteId:ath.id}:null;
                   setLeaders(newLeaders);
                 }} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+COLORS[i]+"55",fontSize:13,fontFamily:"Georgia,serif",background:"#fafafa"}}>
-                  <option value="">— Group {i+1} leader —</option>
+                  <option value="">— Group {i+1} ({TIER_LABELS[getTier(i,groupCount)]}) leader —</option>
                   {athletes.filter(a=>!leaders.some((l,j)=>j!==i&&l?.name===a.name)).map(a=>(
                     <option key={a.id} value={a.name}>{a.name}</option>
                   ))}
@@ -263,7 +288,7 @@ export default function Draft({athletes=[]}){
                 <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:COLORS[currentGroupIdx]}}/>
                 <div style={{fontSize:11,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Now picking — Pick {currentPick+1}/{pickOrder.length}</div>
                 <div style={{fontSize:22,fontWeight:800,color:COLORS[currentGroupIdx]}}>{currentLeader?.name||`Group ${currentGroupIdx+1}`}</div>
-                <div style={{fontSize:11,color:"#555",marginTop:4}}>Group {currentGroupIdx+1} · {(groups[currentGroupIdx]||[]).length} picks so far</div>
+                <div style={{fontSize:11,color:"#555",marginTop:4}}>Group {currentGroupIdx+1} · {TIER_LABELS[getTier(currentGroupIdx,groupCount)]} · {(groups[currentGroupIdx]||[]).length} picks so far</div>
               </div>
 
               {/* Search */}
@@ -321,7 +346,7 @@ export default function Draft({athletes=[]}){
             <div key={i} style={{background:"#fff",borderRadius:12,padding:"14px",marginBottom:8,border:"2px solid "+COLORS[i]}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                 <div style={{width:24,height:24,borderRadius:"50%",background:COLORS[i],display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff"}}>⚒</div>
-                <div style={{fontSize:13,fontWeight:700,color:COLORS[i]}}>{leaders[i]?.name} — Group {i+1}</div>
+                <div style={{fontSize:13,fontWeight:700,color:COLORS[i]}}>{leaders[i]?.name} — Group {i+1} · {TIER_LABELS[getTier(i,groupCount)]}</div>
               </div>
               <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                 {(groups[i]||[]).map(name=>(

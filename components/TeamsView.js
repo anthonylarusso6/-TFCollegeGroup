@@ -3,6 +3,14 @@ import { RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 
 const COLORS=["#534AB7","#C0392B","#1E6B3A","#D4AF37","#E8720C","#1A4F8A"];
+const getTier=(groupIdx,numGroups)=>{
+  if(numGroups<=2)return groupIdx===0?1:2;
+  if(numGroups===3)return groupIdx<2?1:2;
+  if(numGroups===4)return groupIdx<2?1:groupIdx===2?2:3;
+  if(numGroups===5)return groupIdx<2?1:groupIdx<4?2:3;
+  return groupIdx<2?1:groupIdx<4?2:3;
+};
+const TIER_LABELS={1:"Tier 1",2:"Tier 2",3:"Tier 3"};
 
 export default function TeamsView({athletes=[]}){
   const[groups,setGroups]=useState({});
@@ -107,7 +115,7 @@ export default function TeamsView({athletes=[]}){
       {Array.from({length:groupCount},(_,i)=>(
         <div key={i} style={{background:"#fff",borderRadius:12,padding:"14px",marginBottom:10,border:"2px solid "+COLORS[i]}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-            <div style={{fontSize:13,fontWeight:700,color:COLORS[i]}}>Group {i+1}</div>
+            <div style={{fontSize:13,fontWeight:700,color:COLORS[i]}}>Group {i+1} <span style={{fontSize:10,fontWeight:400,color:"#aaa"}}>· {TIER_LABELS[getTier(i,groupCount)]}</span></div>
             <div style={{fontSize:11,color:"#aaa"}}>{(groups[i]||[]).length} athletes</div>
           </div>
           <div style={{marginBottom:10}}>
