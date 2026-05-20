@@ -1025,26 +1025,27 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         const file=e.target.files[0];
                         if(!file)return;
                         setUploadingPhoto(a.id);
-                        // Compress image to ~80x80 thumbnail before storing
                         const img=new Image();
                         const objectUrl=URL.createObjectURL(file);
                         img.onload=async()=>{
-                          const canvas=document.createElement("canvas");
-                          const SIZE=200;
-                          canvas.width=SIZE;canvas.height=SIZE;
-                          const ctx=canvas.getContext("2d");
-                          // Crop to square
-                          const min=Math.min(img.width,img.height);
-                          const sx=(img.width-min)/2;
-                          const sy=(img.height-min)/2;
-                          ctx.drawImage(img,sx,sy,min,min,0,0,SIZE,SIZE);
-                          const compressed=canvas.toDataURL("image/jpeg",0.6);
-                          URL.revokeObjectURL(objectUrl);
-                          await supabase.from("athletes").update({photo_url:compressed}).eq("id",a.id);
-                          setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:compressed}:x));
+                          try{
+                            const canvas=document.createElement("canvas");
+                            const SIZE=120;// Small enough to fit in DB
+                            canvas.width=SIZE;canvas.height=SIZE;
+                            const ctx=canvas.getContext("2d");
+                            const min=Math.min(img.width,img.height);
+                            const sx=(img.width-min)/2;
+                            const sy=(img.height-min)/2;
+                            ctx.drawImage(img,sx,sy,min,min,0,0,SIZE,SIZE);
+                            const compressed=canvas.toDataURL("image/jpeg",0.5);
+                            URL.revokeObjectURL(objectUrl);
+                            const{error}=await supabase.from("athletes").update({photo_url:compressed}).eq("id",a.id);
+                            if(error){console.error("Photo save error:",error);alert("Photo too large. Try a smaller image.");}
+                            else{setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:compressed}:x));}
+                          }catch(err){console.error("Photo error:",err);}
                           setUploadingPhoto(null);
                         };
-                        img.onerror=()=>setUploadingPhoto(null);
+                        img.onerror=()=>{alert("Could not load image.");setUploadingPhoto(null);};
                         img.src=objectUrl;
                       }}/>
                     </label>
