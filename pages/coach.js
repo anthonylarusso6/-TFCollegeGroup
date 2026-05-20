@@ -1025,29 +1025,42 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         const file=e.target.files[0];
                         if(!file)return;
                         setUploadingPhoto(a.id);
+                        // Compress then try Storage first, fallback to base64
+                        const compressImage=(f,size,quality)=>new Promise((res,rej)=>{
+                          const img=new Image();
+                          const url=URL.createObjectURL(f);
+                          img.onload=()=>{
+                            const c=document.createElement("canvas");
+                            c.width=size;c.height=size;
+                            const ctx=c.getContext("2d");
+                            const min=Math.min(img.width,img.height);
+                            ctx.drawImage(img,(img.width-min)/2,(img.height-min)/2,min,min,0,0,size,size);
+                            URL.revokeObjectURL(url);
+                            res(c.toDataURL("image/jpeg",quality));
+                          };
+                          img.onerror=rej;
+                          img.src=url;
+                        });
                         try{
-                          // Upload to Supabase Storage bucket
+                          // Try Storage first
                           const ext=file.name.split(".").pop().toLowerCase()||"jpg";
                           const path=`${a.id}.${ext}`;
-                          const{error:upErr}=await supabase.storage
-                            .from("athlete-photos")
-                            .upload(path,file,{upsert:true,contentType:file.type||"image/jpeg"});
-                          if(upErr){
-                            console.error("Storage upload error:",upErr);
-                            alert("Upload failed: "+upErr.message);
-                            setUploadingPhoto(null);
-                            return;
+                          const{error:upErr}=await supabase.storage.from("athlete-photos").upload(path,file,{upsert:true,contentType:file.type||"image/jpeg"});
+                          if(!upErr){
+                            const{data:urlData}=supabase.storage.from("athlete-photos").getPublicUrl(path);
+                            const photoUrl=urlData.publicUrl+"?t="+Date.now();
+                            await supabase.from("athletes").update({photo_url:photoUrl}).eq("id",a.id);
+                            setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:photoUrl}:x));
+                          }else{
+                            // Fallback: compress to tiny base64
+                            const compressed=await compressImage(file,100,0.4);
+                            const{error:dbErr}=await supabase.from("athletes").update({photo_url:compressed}).eq("id",a.id);
+                            if(dbErr){alert("Photo save failed: "+dbErr.message);}
+                            else{setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:compressed}:x));}
                           }
-                          const{data:urlData}=supabase.storage
-                            .from("athlete-photos")
-                            .getPublicUrl(path);
-                          const url=urlData.publicUrl+"?t="+Date.now();
-                          const{error:dbErr}=await supabase.from("athletes").update({photo_url:url}).eq("id",a.id);
-                          if(dbErr){console.error("DB update error:",dbErr);}
-                          else{setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:url}:x));}
                         }catch(err){
-                          console.error("Photo upload error:",err);
-                          alert("Upload failed: "+err.message);
+                          console.error("Photo error:",err);
+                          alert("Photo failed: "+err.message);
                         }
                         setUploadingPhoto(null);
                       }}/>
