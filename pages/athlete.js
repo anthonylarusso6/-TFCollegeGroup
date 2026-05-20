@@ -311,7 +311,7 @@ export default function Athlete(){
         await loadDraft();
         // Also refresh athlete data to get latest group_idx
         if(athleteIdRef.current){
-          const{data}=await supabase.from("athletes").select("*").eq("id",athleteIdRef.current).single().catch(()=>({data:null}));
+          const{data}=await supabase.from("athletes").select("*").eq("id",athleteIdRef.current).single();
           if(data)setSelectedAthlete(data);
         }
       },5000);
