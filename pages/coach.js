@@ -246,17 +246,23 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
   const todayAtt=attendance.filter(a=>a.date===todayLocal);
   const earlyToday=todayAtt.filter(a=>a.status==="early").length;
   const lateToday=todayAtt.filter(a=>a.status==="late").length;
-  // Use EST throughout for all date calculations
-  const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  // Calculate week dates using JS Date with explicit year/month/day
+  const now=new Date();
+  const estNow=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
   const thisMonth=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0");
-  // Find this week's Monday in EST
-  const dow=estNow.getDay(); // 0=Sun,1=Mon...
-  const mondayEst=new Date(estNow);
-  mondayEst.setDate(estNow.getDate()-(dow===0?6:dow-1));
+  // Find Monday of current week
+  const dowEst=estNow.getDay();// 0=Sun
+  const daysToMon=dowEst===0?6:dowEst-1;
+  const monDate=new Date(estNow);
+  monDate.setDate(estNow.getDate()-daysToMon);
+  monDate.setHours(0,0,0,0);
   const weekDays=["Mon","Tue","Thu","Fri"].map((dn,idx)=>{
-    const d=new Date(mondayEst);
-    d.setDate(mondayEst.getDate()+[0,1,3,4][idx]);
-    const ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    const d=new Date(monDate);
+    d.setDate(monDate.getDate()+[0,1,3,4][idx]);
+    const yr=d.getFullYear();
+    const mo=String(d.getMonth()+1).padStart(2,"0");
+    const dy=String(d.getDate()).padStart(2,"0");
+    const ds=yr+"-"+mo+"-"+dy;
     const recs=attendance.filter(r=>r.date===ds);
     return{dn,ds,early:recs.filter(r=>r.status==="early").length,late:recs.filter(r=>r.status==="late").length};
   });
