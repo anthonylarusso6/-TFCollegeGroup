@@ -692,7 +692,12 @@ export default function Coach(){
                             </div>
                           </div>
                           {a.athletic_goal&&<div style={{fontSize:12,color:"#555",fontStyle:"italic",padding:"6px 10px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #e0e0e0",marginBottom:8}}>🎯 {a.athletic_goal}</div>}
-                          {hasInjury&&<div style={{fontSize:12,color:RED,padding:"6px 10px",background:"#FCEBEB",borderRadius:8,border:"0.5px solid #ffcccc",marginBottom:8}}>🤕 {a.injury_note||a.injury}</div>}
+                          {hasInjury&&(
+                            <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:RED,padding:"6px 10px",background:"#FCEBEB",borderRadius:8,border:"0.5px solid #ffcccc",marginBottom:8}}>
+                              <span style={{flex:1}}>🤕 {a.injury_note||a.injury}</span>
+                              <button onClick={async e=>{e.stopPropagation();await supabase.from("athletes").update({injury:false,injury_note:null}).eq("id",a.id);setAthletes(p=>p.map(x=>x.id===a.id?{...x,injury:false,injury_note:null}:x));}} style={{padding:"2px 8px",borderRadius:4,border:"0.5px solid #ffaaaa",background:"#fff",color:RED,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",flexShrink:0}}>Clear</button>
+                            </div>
+                          )}
                           <div>
                             <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Vitruve ID</div>
                             <input defaultValue={a.vitruve_id||""} placeholder="Paste Vitruve ID..." onBlur={async e=>{const val=e.target.value.trim();if(val!==a.vitruve_id){await supabase.from("athletes").update({vitruve_id:val||null}).eq("id",a.id);}}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
