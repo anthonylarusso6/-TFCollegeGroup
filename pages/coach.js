@@ -116,11 +116,22 @@ export default function Coach(){
   const[weightLogs,setWeightLogs]=useState([]);
   const[engAthletes,setEngAthletes]=useState([]);
   const[uploadingPhoto,setUploadingPhoto]=useState(null);
+  const[qrDataUrl,setQrDataUrl]=useState("");
+  const[qrType,setQrType]=useState("checkin");
+  const[qrFullscreen,setQrFullscreen]=useState(false);
   const[anvilWinner,setAnvilWinner]=useState("");
   const[anvilNote,setAnvilNote]=useState("");
   const[anvilDate,setAnvilDate]=useState("");
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
+
+  useEffect(()=>{
+    if(tab!=="qr")return;
+    const url=qrType==="checkin"?"https://tfcollegegroup.com/checkin":"https://tfcollegegroup.com/athlete";
+    import("qrcode").then(QRCode=>{
+      QRCode.default.toDataURL(url,{width:280,margin:2,color:{dark:"#1a1a1a",light:"#ffffff"}}).then(setQrDataUrl);
+    });
+  },[tab,qrType]);
 
   const loadAll=async()=>{
     setLoading(true);
@@ -1063,26 +1074,100 @@ export default function Coach(){
 
           {tab==="qr"&&(
             <div>
-              <div style={{background:"#fff",borderRadius:12,padding:"1.5rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+ORANGE,textAlign:"center"}}>
-                <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a",marginBottom:4}}>📱 QR Check-In</div>
-                <div style={{fontSize:12,color:"#888",marginBottom:16}}>Display this QR code at the door. Athletes scan it and tap their name to check in instantly.</div>
-                <div style={{background:"#f9f9f9",borderRadius:12,padding:"20px",display:"inline-block",marginBottom:16,border:"1px solid #e0e0e0"}}>
-                  <img src={"https://api.qrserver.com/v1/create-qr-code/?size=220x220&data="+encodeURIComponent("https://tfcollegegroup.com/checkin")} alt="QR Code" style={{width:220,height:220,display:"block"}}/>
-                </div>
-                <div style={{fontSize:12,color:"#888",marginBottom:12}}>tfcollegegroup.com/checkin</div>
-                <a href="/checkin" target="_blank" rel="noreferrer" style={{display:"inline-block",padding:"10px 24px",borderRadius:10,background:ORANGE,color:"#fff",fontSize:13,fontWeight:600,textDecoration:"none",fontFamily:"Georgia,serif"}}>
-                  Open check-in page →
-                </a>
+              {/* Type toggle */}
+              <div style={{display:"flex",gap:6,marginBottom:12}}>
+                {[{id:"checkin",label:"⏱ Check-In",url:"tfcollegegroup.com/checkin"},{id:"athlete",label:"👤 Athlete Portal",url:"tfcollegegroup.com/athlete"}].map(t=>(
+                  <button key={t.id} onClick={()=>setQrType(t.id)} style={{flex:1,padding:"10px 6px",borderRadius:10,border:"1px solid "+(qrType===t.id?ORANGE:"#e0e0e0"),background:qrType===t.id?ORANGE:"#fff",color:qrType===t.id?"#fff":"#888",fontSize:12,fontWeight:qrType===t.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                    {t.label}
+                  </button>
+                ))}
               </div>
+
+              {/* QR card */}
+              <div style={{background:"#fff",borderRadius:12,padding:"1.5rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+ORANGE,textAlign:"center"}}>
+                <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a",marginBottom:2}}>
+                  {qrType==="checkin"?"⏱ Check-In QR":"👤 Athlete Portal QR"}
+                </div>
+                <div style={{fontSize:12,color:"#888",marginBottom:16}}>
+                  {qrType==="checkin"?"Show at the door — athletes scan and check in instantly.":"Athletes scan to log in and view their profile."}
+                </div>
+                <div style={{background:"#f9f9f9",borderRadius:12,padding:"20px",display:"inline-block",marginBottom:12,border:"1px solid #e0e0e0"}}>
+                  {qrDataUrl?<img src={qrDataUrl} alt="QR Code" style={{width:220,height:220,display:"block"}}/>:<div style={{width:220,height:220,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#aaa"}}>Generating...</div>}
+                </div>
+                <div style={{fontSize:11,color:"#aaa",marginBottom:16}}>
+                  {qrType==="checkin"?"tfcollegegroup.com/checkin":"tfcollegegroup.com/athlete"}
+                </div>
+                <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+                  <button onClick={()=>setQrFullscreen(true)} style={{padding:"10px 20px",borderRadius:10,border:"none",background:"#1a1a1a",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                    ⛶ Display at door
+                  </button>
+                  {qrDataUrl&&(
+                    <a href={qrDataUrl} download={"tf-"+qrType+"-qr.png"} style={{padding:"10px 20px",borderRadius:10,border:"0.5px solid #e0e0e0",background:"#fff",color:"#555",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif",textDecoration:"none",display:"inline-block"}}>
+                      ↓ Download
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {/* Today's live attendance */}
+              {(()=>{
+                const todayRecs=attendance.filter(r=>r.date===attDate);
+                const early=todayRecs.filter(r=>r.status==="early").length;
+                const late=todayRecs.filter(r=>r.status==="late").length;
+                const total=athletes.filter(a=>a.status==="active").length;
+                return(
+                  <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+                    <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>📊 Today's check-ins (live)</div>
+                    <div style={{display:"flex",gap:10}}>
+                      <div style={{flex:1,textAlign:"center",padding:"12px 8px",background:"#EAF3DE",borderRadius:10}}>
+                        <div style={{fontSize:28,fontWeight:700,color:GREEN}}>{early}</div>
+                        <div style={{fontSize:11,color:GREEN}}>Early</div>
+                      </div>
+                      <div style={{flex:1,textAlign:"center",padding:"12px 8px",background:"#FCEBEB",borderRadius:10}}>
+                        <div style={{fontSize:28,fontWeight:700,color:RED}}>{late}</div>
+                        <div style={{fontSize:11,color:RED}}>Late</div>
+                      </div>
+                      <div style={{flex:1,textAlign:"center",padding:"12px 8px",background:"#f5f5f5",borderRadius:10}}>
+                        <div style={{fontSize:28,fontWeight:700,color:"#888"}}>{total-early-late}</div>
+                        <div style={{fontSize:11,color:"#888"}}>Not in</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div style={{background:"#f9f9f9",borderRadius:12,padding:"14px",border:"0.5px solid #e0e0e0"}}>
                 <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>How it works:</div>
-                {["Display QR code on your phone or iPad at the door","Athletes scan with their camera — no app needed","They tap their name from the list","Instantly marked Early or Late based on cutoff time","Shows on coach Attendance tab in real time"].map((s,i)=>(
+                {["Show this QR on your phone or iPad at the door","Athletes scan with their camera — no app needed","They tap their name and check in instantly","Early / Late is determined automatically by time","Attendance updates on your coach dashboard live"].map((s,i)=>(
                   <div key={i} style={{display:"flex",gap:8,marginBottom:6}}>
                     <div style={{width:18,height:18,borderRadius:"50%",background:ORANGE,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff",flexShrink:0}}>{i+1}</div>
                     <div style={{fontSize:12,color:"#666"}}>{s}</div>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Fullscreen QR overlay */}
+          {qrFullscreen&&(
+            <div onClick={()=>setQrFullscreen(false)} style={{position:"fixed",inset:0,background:"#fff",zIndex:200,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,cursor:"pointer"}}>
+              <div style={{fontSize:13,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em"}}>TF College Group · {qrType==="checkin"?"Check In":"Athlete Portal"}</div>
+              {qrDataUrl&&<img src={qrDataUrl} alt="QR Code" style={{width:"min(80vw,80vh)",height:"min(80vw,80vh)"}}/>}
+              <div style={{fontSize:15,fontWeight:600,color:"#1a1a1a"}}>
+                {qrType==="checkin"?"tfcollegegroup.com/checkin":"tfcollegegroup.com/athlete"}
+              </div>
+              {(()=>{
+                const todayRecs=attendance.filter(r=>r.date===attDate);
+                const early=todayRecs.filter(r=>r.status==="early").length;
+                const late=todayRecs.filter(r=>r.status==="late").length;
+                return early+late>0?(
+                  <div style={{display:"flex",gap:16,fontSize:13}}>
+                    <span style={{color:GREEN,fontWeight:600}}>✓ {early} early</span>
+                    {late>0&&<span style={{color:RED,fontWeight:600}}>⚠ {late} late</span>}
+                  </div>
+                ):null;
+              })()}
+              <div style={{fontSize:11,color:"#ccc"}}>Tap anywhere to close</div>
             </div>
           )}
 
