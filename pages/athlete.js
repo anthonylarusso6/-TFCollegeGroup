@@ -279,6 +279,10 @@ export default function Athlete(){
     setTab("profile");setScreen("login");
     await loadAttendance(a.id);
     await loadDraft();
+    try{
+      const{data}=await supabase.from("athletes").select("*").eq("id",a.id).single();
+      if(data)setSelectedAthlete(data);
+    }catch(e){}
   };
 
   const submitPin=async()=>{

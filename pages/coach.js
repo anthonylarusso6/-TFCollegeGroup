@@ -249,6 +249,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
   // Calculate week dates using JS Date with explicit year/month/day
   const now=new Date();
   const estNow=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const estTodayStr=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
   const thisMonth=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0");
   // Find Monday of current week
   const dowEst=estNow.getDay();// 0=Sun
@@ -546,21 +547,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:2}}>This week's attendance</div>
                 <div style={{fontSize:12,color:"#888",marginBottom:14}}>Daily check-ins · Mon, Tue, Thu, Fri</div>
                 {(()=>{
-                  const now=new Date();
-                  const monday=new Date(now);
-                  const dow=now.getDay();
-                  const diff=dow===0?-6:1-dow;
-                  monday.setDate(now.getDate()+diff);
-                  const days=[];
-                  for(let i=0;i<5;i++){
-                    const d=new Date(monday);
-                    d.setDate(monday.getDate()+i);
-                    const dayName=["Mon","Tue","Wed","Thu","Fri"][i];
-                    if(dayName==="Wed")continue;
-                    const dateStr=d.toISOString().split("T")[0];
-                    const recs=attendance.filter(a=>a.date===dateStr);
-                    days.push({dayName,date:d.getDate(),early:recs.filter(r=>r.status==="early").length,late:recs.filter(r=>r.status==="late").length,isToday:dateStr===now.toISOString().split("T")[0]});
-                  }
+                  const days=weekDays.map(d=>({dayName:d.dn,early:d.early,late:d.late,isToday:d.ds===estTodayStr}));
                   const maxVal=Math.max(...days.map(d=>d.early+d.late),5);
                   return(
                     <div>
@@ -787,7 +774,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                   const streak=lb?.current_streak||0;
                   const isAbsent=!rec;
                   return(
-                    <div key={a.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",background:isAbsent&&attDate===new Date().toISOString().split("T")[0]?"#fffbf0":"transparent",borderRadius:4,paddingLeft:isAbsent&&attDate===new Date().toISOString().split("T")[0]?6:0}}>
+                    <div key={a.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",background:isAbsent&&attDate===estTodayStr?"#fffbf0":"transparent",borderRadius:4,paddingLeft:isAbsent&&attDate===estTodayStr?6:0}}>
                       <div style={{width:34,height:34,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
                         {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
                       </div>
@@ -797,7 +784,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                           {streak>0&&<span style={{fontSize:10,color:GOLD}}>🔥 {streak}</span>}
                         </div>
                         {rec?.time_logged&&<div style={{fontSize:11,color:"#888"}}>{rec.time_logged}</div>}
-                        {isAbsent&&attDate===new Date().toISOString().split("T")[0]&&<div style={{fontSize:11,color:"#854F0B"}}>⚠ Not checked in yet</div>}
+                        {isAbsent&&attDate===estTodayStr&&<div style={{fontSize:11,color:"#854F0B"}}>⚠ Not checked in yet</div>}
                       </div>
                       <div style={{display:"flex",gap:6,alignItems:"center"}}>
                         <div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"flex-end"}}>
