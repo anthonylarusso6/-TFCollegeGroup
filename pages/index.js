@@ -57,9 +57,9 @@ export default function Landing(){
       setTime(now);
       // Next class time
       const getNextClass=()=>{
-        const classStart=new Date("2025-06-18T00:00:00");
+        const classStart=new Date("2026-06-18T00:00:00");
         if(now<classStart){
-          const diff=new Date("2025-06-18T09:00:00")-now;
+          const diff=new Date("2026-06-18T09:00:00")-now;
           return{diff,label:"First class"};
         }
         // Find next class day
@@ -92,39 +92,33 @@ export default function Landing(){
 
     // Load data
     const loadData=async()=>{
-      // Athlete count
-      supabase.from("athletes").select("id",{count:"exact",head:true}).eq("status","active").then(({count})=>{if(count)setAthleteCount(count);}).catch(()=>{});
-      // Anvil winner
-      supabase.from("anvil").select("*").order("created_at",{ascending:false}).limit(1).then(({data})=>{if(data&&data[0])setAnvilWinner(data[0]);}).catch(()=>{});
-      // Today attendance
-      const now=new Date();
-      const today=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
-      supabase.from("attendance").select("id",{count:"exact",head:true}).eq("date",today).eq("status","early").then(({count})=>{if(count)setTodayAttendance(count);}).catch(()=>{});
-      // Forge leaders from latest draft, fallback to athletes with role=forge
-      supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1).then(({data})=>{
+      try{const{count}=await supabase.from("athletes").select("id",{count:"exact",head:true}).eq("status","active");if(count)setAthleteCount(count);}catch(e){}
+      try{const{data}=await supabase.from("anvil").select("*").order("created_at",{ascending:false}).limit(1);if(data&&data[0])setAnvilWinner(data[0]);}catch(e){}
+      try{
+        const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+        const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
+        const{count}=await supabase.from("attendance").select("id",{count:"exact",head:true}).eq("date",today).eq("status","early");
+        if(count)setTodayAttendance(count);
+      }catch(e){}
+      try{
+        const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
         if(data&&data[0]&&data[0].leaders&&data[0].leaders.some(l=>l)){
           setForgeLeaders(data[0].leaders.filter(Boolean));
         }else{
-          // Fallback: fetch athletes with forge role
-          supabase.from("athletes").select("name").eq("role","forge").eq("status","active")
-            .then(({data:aths})=>{if(aths&&aths.length>0)setForgeLeaders(aths.map(a=>a.name));})
-            .catch(()=>{});
+          const{data:aths}=await supabase.from("athletes").select("name").eq("role","forge").eq("status","active");
+          if(aths&&aths.length>0)setForgeLeaders(aths.map(a=>a.name));
         }
-      }).catch(()=>{
-        supabase.from("athletes").select("name").eq("role","forge").eq("status","active")
-          .then(({data:aths})=>{if(aths&&aths.length>0)setForgeLeaders(aths.map(a=>a.name));})
-          .catch(()=>{});
-      });
+      }catch(e){}
       // Season progress — weeks since June 18
-      const start=new Date("2025-06-18");
+      const start=new Date("2026-06-18");
       const nowDate=new Date();
       const diffWeeks=Math.floor((nowDate-start)/(1000*60*60*24*7));
       const totalWeeks=12;
       if(diffWeeks>=0&&diffWeeks<=totalWeeks)setWeekProgress({current:diffWeeks+1,total:totalWeeks,pct:Math.round(((diffWeeks+1)/totalWeeks)*100)});
-      // Culture photo
-      supabase.from("culture_photos").select("*").order("created_at",{ascending:false}).limit(1).then(({data})=>{if(data&&data[0])setPhoto(data[0]);}).catch(()=>{});
-      // Weather — Knoxville TN
-      fetch("https://api.open-meteo.com/v1/forecast?latitude=35.9606&longitude=-83.9207&current_weather=true&temperature_unit=fahrenheit").then(r=>r.json()).then(d=>{
+      try{const{data}=await supabase.from("culture_photos").select("*").order("created_at",{ascending:false}).limit(1);if(data&&data[0])setPhoto(data[0]);}catch(e){}
+      try{
+        const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=35.9606&longitude=-83.9207&current_weather=true&temperature_unit=fahrenheit");
+        const d=await r.json();
         if(d.current_weather){
           const code=d.current_weather.weathercode;
           const temp=Math.round(d.current_weather.temperature);
@@ -132,7 +126,7 @@ export default function Landing(){
           const icon=icons[code]||"🌡";
           setWeather({temp,icon,wind:Math.round(d.current_weather.windspeed)});
         }
-      }).catch(()=>{});
+      }catch(e){}
     };
     loadData();
     return()=>clearInterval(t);
@@ -244,7 +238,7 @@ export default function Landing(){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
             {[
               {label:"Athletes",val:athleteCount||"—",color:STEEL},
-              {label:"Season",val:"2025",color:ORANGE},
+              {label:"Season",val:"2026",color:ORANGE},
               {label:"Starts",val:"Jun 18",color:GOLD},
             ].map((s,i)=>(
               <div key={i} style={{background:"#111",borderRadius:12,padding:"12px 8px",textAlign:"center",border:"0.5px solid #1e1e1e"}}>

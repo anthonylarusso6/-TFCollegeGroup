@@ -7,21 +7,21 @@ export default function AnvilHistory(){
   const[athletes,setAthletes]=useState({});
 
   useEffect(()=>{
-    // Load anvil winners
-    supabase.from("anvil").select("*").order("created_at",{ascending:false})
-      .then(({data})=>{
+    (async()=>{
+      try{
+        const{data}=await supabase.from("anvil").select("*").order("created_at",{ascending:false});
         setAnvils(data||[]);
-        // Load photos for all winners
         if(data&&data.length>0){
           const names=[...new Set(data.map(a=>a.athlete_name))];
-          supabase.from("athletes").select("name,photo_url,role").in("name",names)
-            .then(({data:aths})=>{
-              const map={};
-              (aths||[]).forEach(a=>map[a.name]=a);
-              setAthletes(map);
-            }).catch(()=>{});
+          try{
+            const{data:aths}=await supabase.from("athletes").select("name,photo_url,role").in("name",names);
+            const map={};
+            (aths||[]).forEach(a=>map[a.name]=a);
+            setAthletes(map);
+          }catch(e){}
         }
-      }).catch(()=>{});
+      }catch(e){}
+    })();
   },[]);
 
   const latest=anvils[0];

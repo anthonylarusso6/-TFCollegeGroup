@@ -9,8 +9,10 @@ export default function AchievementBadges({athlete}){
   const[myAnvils,setMyAnvils]=useState([]);
   useEffect(()=>{
     if(!athlete?.id)return;
-    supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id).single().then(({data})=>setLb(data||{})).catch(()=>setLb({}));
-    supabase.from("anvil").select("*").then(({data})=>setMyAnvils((data||[]).filter(a=>a.athlete_name===athlete.name))).catch(()=>{});
+    (async()=>{
+      try{const{data}=await supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id).single();setLb(data||{});}catch(e){setLb({});}
+      try{const{data}=await supabase.from("anvil").select("*");setMyAnvils((data||[]).filter(a=>a.athlete_name===athlete.name));}catch(e){}
+    })();
   },[athlete?.id]);
   const streak=lb?.current_streak||0;
   const early=lb?.early_count||0;

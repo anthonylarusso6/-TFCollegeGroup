@@ -8,13 +8,10 @@ export default function GroupPhotos(){
   const[driveLinks,setDriveLinks]=useState([]);
 
   useEffect(()=>{
-    // Load athlete photos
-    supabase.from("athletes").select("name,photo_url").not("photo_url","is",null)
-      .then(({data})=>setPhotos(data||[])).catch(()=>setPhotos([]));
-    // Load Google Drive posters/docs
-    supabase.from("announcements").select("*").eq("type","drive_link").eq("active",true)
-      .order("created_at",{ascending:false})
-      .then(({data})=>setDriveLinks(data||[])).catch(()=>setDriveLinks([]));
+    (async()=>{
+      try{const{data}=await supabase.from("athletes").select("name,photo_url").not("photo_url","is",null);setPhotos(data||[]);}catch(e){setPhotos([]);}
+      try{const{data}=await supabase.from("announcements").select("*").eq("type","drive_link").eq("active",true).order("created_at",{ascending:false});setDriveLinks(data||[]);}catch(e){setDriveLinks([]);}
+    })();
   },[]);
 
   const openDriveLink=(url)=>{

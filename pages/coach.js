@@ -23,25 +23,27 @@ function DriveLinksManager(){
   const[saved,setSaved]=useState(false);
 
   useEffect(()=>{
-    supabase.from("announcements").select("*").eq("type","drive_link").eq("active",true)
-      .order("created_at",{ascending:false})
-      .then(({data})=>setLinks(data||[])).catch(()=>{});
+    (async()=>{
+      try{const{data}=await supabase.from("announcements").select("*").eq("type","drive_link").eq("active",true).order("created_at",{ascending:false});setLinks(data||[]);}catch(e){}
+    })();
   },[]);
 
   const addLink=async()=>{
     if(!title.trim()||!url.trim())return;
     setSaving(true);
-    const{data}=await supabase.from("announcements").insert({
-      type:"drive_link",active:true,
-      message:JSON.stringify({title,url,description:desc})
-    }).select().single().catch(()=>({data:null}));
-    if(data)setLinks(p=>[data,...p]);
+    try{
+      const{data}=await supabase.from("announcements").insert({
+        type:"drive_link",active:true,
+        message:JSON.stringify({title,url,description:desc})
+      }).select().single();
+      if(data)setLinks(p=>[data,...p]);
+    }catch(e){}
     setTitle("");setUrl("");setDesc("");setSaving(false);setSaved(true);
     setTimeout(()=>setSaved(false),2000);
   };
 
   const removeLink=async(id)=>{
-    await supabase.from("announcements").update({active:false}).eq("id",id).catch(()=>{});
+    try{await supabase.from("announcements").update({active:false}).eq("id",id);}catch(e){}
     setLinks(p=>p.filter(l=>l.id!==id));
   };
 
@@ -130,7 +132,7 @@ export default function Coach(){
       supabase.from("leaderboard").select("*,athletes(name)").order("early_count",{ascending:false}),
       supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1),
     ]);
-    if(aths)setAthletes(aths);
+    if(aths)setAthletes(prev=>aths.map(a=>({...a,photo_url:a.photo_url||prev.find(p=>p.id===a.id)?.photo_url||null})));
     if(att)setAttendance(att);
     if(inb)setInbox(inb);
     if(anv)setAnvil(anv);
@@ -138,13 +140,9 @@ export default function Coach(){
     if(ann&&ann.length>0){setCurrentAnnouncement(ann[0]);setAnnouncement(ann[0].message);}
     setLoading(false);
     // Load secondary data independently — won't block main load
-    supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false}).then(({data})=>{if(data)setCoachPrayers(data);}).catch(()=>{});
-supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({data,error})=>{
-      if(error||!data){console.log("weight_log error:",error);return;}
-      console.log("weight_log raw:",data);
-      setWeightLogs(data);
-    }).catch(e=>{console.log("weight_log catch:",e);});
-    supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name").then(({data})=>{if(data)setEngAthletes(data);}).catch(()=>{});
+    try{const{data}=await supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false});if(data)setCoachPrayers(data);}catch(e){}
+    try{const{data}=await supabase.from("weight_log").select("*").order("date",{ascending:false});if(data)setWeightLogs(data);}catch(e){}
+    try{const{data}=await supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name");if(data)setEngAthletes(data);}catch(e){}
   };
 
   const callAI=async(prompt)=>{
@@ -249,6 +247,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
   // Calculate week dates using JS Date with explicit year/month/day
   const now=new Date();
   const estNow=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const estTodayStr=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
   const thisMonth=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0");
   // Find Monday of current week
   const dowEst=estNow.getDay();// 0=Sun
@@ -546,21 +545,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:2}}>This week's attendance</div>
                 <div style={{fontSize:12,color:"#888",marginBottom:14}}>Daily check-ins · Mon, Tue, Thu, Fri</div>
                 {(()=>{
-                  const now=new Date();
-                  const monday=new Date(now);
-                  const dow=now.getDay();
-                  const diff=dow===0?-6:1-dow;
-                  monday.setDate(now.getDate()+diff);
-                  const days=[];
-                  for(let i=0;i<5;i++){
-                    const d=new Date(monday);
-                    d.setDate(monday.getDate()+i);
-                    const dayName=["Mon","Tue","Wed","Thu","Fri"][i];
-                    if(dayName==="Wed")continue;
-                    const dateStr=d.toISOString().split("T")[0];
-                    const recs=attendance.filter(a=>a.date===dateStr);
-                    days.push({dayName,date:d.getDate(),early:recs.filter(r=>r.status==="early").length,late:recs.filter(r=>r.status==="late").length,isToday:dateStr===now.toISOString().split("T")[0]});
-                  }
+                  const days=weekDays.map(d=>({dayName:d.dn,early:d.early,late:d.late,isToday:d.ds===estTodayStr}));
                   const maxVal=Math.max(...days.map(d=>d.early+d.late),5);
                   return(
                     <div>
@@ -653,12 +638,28 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                       <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",cursor:"pointer"}} onClick={()=>setRosterExpanded(isExp?null:a.id)}>
                         <label style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
                           {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
-                          <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
+                          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
                             const file=e.target.files[0];if(!file)return;
                             const reader=new FileReader();
-                            reader.onload=async ev=>{
-                              await supabase.from("athletes").update({photo_url:ev.target.result}).eq("id",a.id);
-                              setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:ev.target.result}:x));
+                            reader.onload=ev=>{
+                              const img=new Image();
+                              img.onload=async()=>{
+                                const SIZE=150;
+                                const canvas=document.createElement("canvas");
+                                canvas.width=SIZE;canvas.height=SIZE;
+                                const ctx=canvas.getContext("2d");
+                                const min=Math.min(img.width,img.height);
+                                ctx.drawImage(img,(img.width-min)/2,(img.height-min)/2,min,min,0,0,SIZE,SIZE);
+                                const dataUrl=canvas.toDataURL("image/jpeg",0.5);
+                                try{
+                                  const{data,error}=await supabase.from("athletes").update({photo_url:dataUrl}).eq("id",a.id).select("id,photo_url");
+                                  if(error){alert("Photo save failed: "+error.message);return;}
+                                  if(!data||data.length===0){alert("Photo not saved — check Supabase permissions.");return;}
+                                  setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:dataUrl}:x));
+                                }catch(err){alert("Photo save failed: "+err.message);}
+                              };
+                              img.onerror=()=>alert("Could not read image");
+                              img.src=ev.target.result;
                             };
                             reader.readAsDataURL(file);
                           }}/>
@@ -707,7 +708,12 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                             </div>
                           </div>
                           {a.athletic_goal&&<div style={{fontSize:12,color:"#555",fontStyle:"italic",padding:"6px 10px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #e0e0e0",marginBottom:8}}>🎯 {a.athletic_goal}</div>}
-                          {hasInjury&&<div style={{fontSize:12,color:RED,padding:"6px 10px",background:"#FCEBEB",borderRadius:8,border:"0.5px solid #ffcccc",marginBottom:8}}>🤕 {a.injury_note||a.injury}</div>}
+                          {hasInjury&&(
+                            <div style={{display:"flex",alignItems:"center",gap:8,fontSize:12,color:RED,padding:"6px 10px",background:"#FCEBEB",borderRadius:8,border:"0.5px solid #ffcccc",marginBottom:8}}>
+                              <span style={{flex:1}}>🤕 {a.injury_note||a.injury}</span>
+                              <button onClick={async e=>{e.stopPropagation();await supabase.from("athletes").update({injury:false,injury_note:null}).eq("id",a.id);setAthletes(p=>p.map(x=>x.id===a.id?{...x,injury:false,injury_note:null}:x));}} style={{padding:"2px 8px",borderRadius:4,border:"0.5px solid #ffaaaa",background:"#fff",color:RED,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",flexShrink:0}}>Clear</button>
+                            </div>
+                          )}
                           <div>
                             <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Vitruve ID</div>
                             <input defaultValue={a.vitruve_id||""} placeholder="Paste Vitruve ID..." onBlur={async e=>{const val=e.target.value.trim();if(val!==a.vitruve_id){await supabase.from("athletes").update({vitruve_id:val||null}).eq("id",a.id);}}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
@@ -787,7 +793,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                   const streak=lb?.current_streak||0;
                   const isAbsent=!rec;
                   return(
-                    <div key={a.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",background:isAbsent&&attDate===new Date().toISOString().split("T")[0]?"#fffbf0":"transparent",borderRadius:4,paddingLeft:isAbsent&&attDate===new Date().toISOString().split("T")[0]?6:0}}>
+                    <div key={a.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:"0.5px solid #f0f0f0",background:isAbsent&&attDate===estTodayStr?"#fffbf0":"transparent",borderRadius:4,paddingLeft:isAbsent&&attDate===estTodayStr?6:0}}>
                       <div style={{width:34,height:34,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
                         {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
                       </div>
@@ -797,7 +803,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                           {streak>0&&<span style={{fontSize:10,color:GOLD}}>🔥 {streak}</span>}
                         </div>
                         {rec?.time_logged&&<div style={{fontSize:11,color:"#888"}}>{rec.time_logged}</div>}
-                        {isAbsent&&attDate===new Date().toISOString().split("T")[0]&&<div style={{fontSize:11,color:"#854F0B"}}>⚠ Not checked in yet</div>}
+                        {isAbsent&&attDate===estTodayStr&&<div style={{fontSize:11,color:"#854F0B"}}>⚠ Not checked in yet</div>}
                       </div>
                       <div style={{display:"flex",gap:6,alignItems:"center"}}>
                         <div style={{display:"flex",gap:4,flexWrap:"wrap",justifyContent:"flex-end"}}>
@@ -1275,7 +1281,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                 };
                 const priorityItem=async(item)=>{
                   const newPriority=!item.priority;
-                  await supabase.from("inbox").update({priority:newPriority}).eq("id",item.id).catch(()=>{});
+                  try{await supabase.from("inbox").update({priority:newPriority}).eq("id",item.id);}catch(e){}
                   setInbox(p=>p.map(x=>x.id===item.id?{...x,priority:newPriority}:x));
                 };
                 let filtered=[...inbox].sort((a,b)=>(b.priority?1:0)-(a.priority?1:0));
@@ -1455,7 +1461,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         <button key={r.id} onClick={async()=>{
                           const newVal=review===r.id?"":r.id;
                           setGoalReviews(p=>({...p,[a.id]:newVal}));
-                          await supabase.from("athletes").update({goal_review_status:newVal||null}).eq("id",a.id).catch(()=>{});
+                          try{await supabase.from("athletes").update({goal_review_status:newVal||null}).eq("id",a.id);}catch(e){}
                         }} title={r.id.replace("_"," ")} style={{width:28,height:28,borderRadius:6,border:"0.5px solid "+(review===r.id?r.color:"#e0e0e0"),background:review===r.id?r.bg:"#fafafa",color:review===r.id?r.color:"#aaa",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>
                           {r.label}
                         </button>

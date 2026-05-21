@@ -27,7 +27,8 @@ export default function WeightTracker({athleteId}){
   const save=async()=>{
     if(!weight)return;
     setSaving(true);setError("");
-    const today=new Date().toISOString().split("T")[0];
+    const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
     const existing=entries.find(e=>e.date===today);
     if(existing){
       const{error:err}=await supabase.from("weight_log").update({weight:parseFloat(weight)}).eq("id",existing.id);
@@ -95,7 +96,7 @@ export default function WeightTracker({athleteId}){
   entries.forEach(e=>{
     const d=new Date(e.date);
     const ws=new Date(d);ws.setDate(d.getDate()-d.getDay());
-    const key=ws.toISOString().split("T")[0];
+    const key=ws.getFullYear()+"-"+String(ws.getMonth()+1).padStart(2,"0")+"-"+String(ws.getDate()).padStart(2,"0");
     const ex=byWeek.find(w=>w.key===key);
     if(ex){ex.entries.push(e);ex.avg=parseFloat((ex.entries.reduce((s,x)=>s+x.weight,0)/ex.entries.length).toFixed(1));}
     else byWeek.push({key,label:"Week of "+ws.toLocaleDateString("en-US",{month:"short",day:"numeric"}),entries:[e],avg:e.weight});
