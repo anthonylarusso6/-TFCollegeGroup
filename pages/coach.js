@@ -206,6 +206,36 @@ export default function Coach(){
     await supabase.from("athletes").update({[key]:val}).eq("id",id);
   };
 
+  const uploadAthletePhoto=async(athleteId,file)=>{
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onerror=()=>reject(new Error("Could not read file"));
+      reader.onload=ev=>{
+        const img=new Image();
+        img.onerror=()=>reject(new Error("Could not decode image"));
+        img.onload=()=>{
+          const SIZE=150;
+          const canvas=document.createElement("canvas");
+          canvas.width=SIZE;canvas.height=SIZE;
+          const ctx=canvas.getContext("2d");
+          const min=Math.min(img.width,img.height);
+          ctx.drawImage(img,(img.width-min)/2,(img.height-min)/2,min,min,0,0,SIZE,SIZE);
+          canvas.toBlob(async blob=>{
+            try{
+              const fileName=`athlete_${athleteId}_${Date.now()}.jpg`;
+              const{error:upErr}=await supabase.storage.from("photos").upload(fileName,blob,{contentType:"image/jpeg",upsert:true});
+              if(upErr){reject(upErr);return;}
+              const{data:{publicUrl}}=supabase.storage.from("photos").getPublicUrl(fileName);
+              resolve(publicUrl);
+            }catch(e){reject(e);}
+          },"image/jpeg",0.8);
+        };
+        img.src=ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const saveAnnouncement=async()=>{
     if(currentAnnouncement){
       await supabase.from("announcements").update({message:announcement}).eq("id",currentAnnouncement.id);
@@ -638,30 +668,15 @@ export default function Coach(){
                       <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",cursor:"pointer"}} onClick={()=>setRosterExpanded(isExp?null:a.id)}>
                         <label style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
                           {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
-                          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
+                          <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
                             const file=e.target.files[0];if(!file)return;
-                            const reader=new FileReader();
-                            reader.onload=ev=>{
-                              const img=new Image();
-                              img.onload=async()=>{
-                                const SIZE=150;
-                                const canvas=document.createElement("canvas");
-                                canvas.width=SIZE;canvas.height=SIZE;
-                                const ctx=canvas.getContext("2d");
-                                const min=Math.min(img.width,img.height);
-                                ctx.drawImage(img,(img.width-min)/2,(img.height-min)/2,min,min,0,0,SIZE,SIZE);
-                                const dataUrl=canvas.toDataURL("image/jpeg",0.5);
-                                try{
-                                  const{data,error}=await supabase.from("athletes").update({photo_url:dataUrl}).eq("id",a.id).select("id,photo_url");
-                                  if(error){alert("Photo save failed: "+error.message);return;}
-                                  if(!data||data.length===0){alert("Photo not saved — check Supabase permissions.");return;}
-                                  setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:dataUrl}:x));
-                                }catch(err){alert("Photo save failed: "+err.message);}
-                              };
-                              img.onerror=()=>alert("Could not read image");
-                              img.src=ev.target.result;
-                            };
-                            reader.readAsDataURL(file);
+                            try{
+                              const publicUrl=await uploadAthletePhoto(a.id,file);
+                              const{data,error}=await supabase.from("athletes").update({photo_url:publicUrl}).eq("id",a.id).select("id");
+                              if(error){alert("Photo save failed: "+error.message);return;}
+                              if(!data||data.length===0){alert("Photo not saved — check Supabase permissions.");return;}
+                              setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:publicUrl}:x));
+                            }catch(err){alert("Photo save failed: "+err.message);}
                           }}/>
                         </label>
                         <div style={{flex:1,minWidth:0}}>
@@ -1027,48 +1042,17 @@ export default function Coach(){
                     <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a",marginBottom:8}}>{a.name}</div>
                     <label style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid "+ORANGE,background:"#FFF8F0",fontSize:11,cursor:"pointer",color:ORANGE,display:"inline-block",fontWeight:600}}>
                       {uploadingPhoto===a.id?"Saving...":a.photo_url?"Change":"Add Photo"}
-                      <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{
+                      <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={async e=>{
                         const file=e.target.files[0];
                         if(!file)return;
                         setUploadingPhoto(a.id);
-                        const reader=new FileReader();
-                        reader.onload=ev=>{
-                          const dataUrl=ev.target.result;
-                          // Compress using canvas
-                          const img=new Image();
-                          img.onload=async()=>{
-                            const canvas=document.createElement("canvas");
-                            const SIZE=150;
-                            canvas.width=SIZE;canvas.height=SIZE;
-                            const ctx=canvas.getContext("2d");
-                            const min=Math.min(img.width,img.height);
-                            const sx=(img.width-min)/2;
-                            const sy=(img.height-min)/2;
-                            ctx.drawImage(img,sx,sy,min,min,0,0,SIZE,SIZE);
-                            const compressed=canvas.toDataURL("image/jpeg",0.5);
-                            // Save to DB
-                            const{error}=await supabase.from("athletes")
-                              .update({photo_url:compressed})
-                              .eq("id",a.id);
-                            if(error){
-                              console.error("Photo DB error:",error);
-                              alert("Error saving photo: "+error.message);
-                            }else{
-                              setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:compressed}:x));
-                            }
-                            setUploadingPhoto(null);
-                          };
-                          img.onerror=()=>{
-                            alert("Could not read image");
-                            setUploadingPhoto(null);
-                          };
-                          img.src=dataUrl;
-                        };
-                        reader.onerror=()=>{
-                          alert("Could not read file");
-                          setUploadingPhoto(null);
-                        };
-                        reader.readAsDataURL(file);
+                        try{
+                          const publicUrl=await uploadAthletePhoto(a.id,file);
+                          const{error}=await supabase.from("athletes").update({photo_url:publicUrl}).eq("id",a.id);
+                          if(error){alert("Error saving photo: "+error.message);}
+                          else{setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:publicUrl}:x));}
+                        }catch(err){alert("Error saving photo: "+err.message);}
+                        setUploadingPhoto(null);
                       }}/>
                     </label>
                   </div>
