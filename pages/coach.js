@@ -223,9 +223,9 @@ export default function Coach(){
           canvas.toBlob(async blob=>{
             try{
               const fileName=`athlete_${athleteId}_${Date.now()}.jpg`;
-              const{error:upErr}=await supabase.storage.from("photos").upload(fileName,blob,{contentType:"image/jpeg",upsert:true});
+              const{error:upErr}=await supabase.storage.from("athlete-photos").upload(fileName,blob,{contentType:"image/jpeg",upsert:true});
               if(upErr){reject(upErr);return;}
-              const{data:{publicUrl}}=supabase.storage.from("photos").getPublicUrl(fileName);
+              const{data:{publicUrl}}=supabase.storage.from("athlete-photos").getPublicUrl(fileName);
               resolve(publicUrl);
             }catch(e){reject(e);}
           },"image/jpeg",0.8);
