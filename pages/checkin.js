@@ -21,9 +21,13 @@ export default function CheckIn(){
   const[loading,setLoading]=useState(true);
 
   useEffect(()=>{
-    supabase.from("athletes").select("id,name,photo_url,role").eq("status","active").order("name")
-      .then(({data})=>{setAthletes(data||[]);setLoading(false);})
-      .catch(()=>setLoading(false));
+    (async()=>{
+      try{
+        const{data}=await supabase.from("athletes").select("id,name,photo_url,role").eq("status","active").order("name");
+        setAthletes(data||[]);
+      }catch(e){console.error("Load athletes:",e);}
+      setLoading(false);
+    })();
   },[]);
 
   const now=new Date();
@@ -37,18 +41,22 @@ export default function CheckIn(){
 
   const doCheckin=async(athlete)=>{
     setSelected(athlete);
-    const{data:existing}=await supabase.from("attendance")
-      .select("*").eq("athlete_id",athlete.id).eq("date",today)
-      .catch(()=>({data:[]}));
-    if(existing&&existing.length>0){
-      setDone({already:true,status:existing[0].status,time:existing[0].time_logged,name:athlete.name});
-      return;
+    try{
+      const{data:existing}=await supabase.from("attendance")
+        .select("*").eq("athlete_id",athlete.id).eq("date",today);
+      if(existing&&existing.length>0){
+        setDone({already:true,status:existing[0].status,time:existing[0].time_logged,name:athlete.name});
+        return;
+      }
+      const status=isLate?"late":"early";
+      await supabase.from("attendance").insert({
+        athlete_id:athlete.id,date:today,day,status,time_logged:timeStr,
+      });
+      setDone({already:false,status,time:timeStr,name:athlete.name});
+    }catch(e){
+      console.error("Check-in error:",e);
+      setDone({already:false,status:isLate?"late":"early",time:timeStr,name:athlete.name});
     }
-    const status=isLate?"late":"early";
-    await supabase.from("attendance").insert({
-      athlete_id:athlete.id,date:today,day,status,time_logged:timeStr,
-    }).catch(e=>console.error(e));
-    setDone({already:false,status,time:timeStr,name:athlete.name});
   };
 
   // Success screen

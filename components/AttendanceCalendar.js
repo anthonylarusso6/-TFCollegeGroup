@@ -9,7 +9,12 @@ export default function AttendanceCalendar({athleteId}){
   const GREEN="#1E6B3A",RED="#C0392B",GOLD="#D4AF37";
 
   useEffect(()=>{
-    supabase.from("attendance").select("*").eq("athlete_id",athleteId).order("date",{ascending:true}).then(({data})=>setRecords(data||[])).catch(()=>setRecords([]));
+    (async()=>{
+      try{
+        const{data}=await supabase.from("attendance").select("*").eq("athlete_id",athleteId).order("date",{ascending:true});
+        setRecords(data||[]);
+      }catch(e){setRecords([]);}
+    })();
   },[]);
 
   const totalEarly=records.filter(r=>r.status==="early").length;
@@ -17,9 +22,9 @@ export default function AttendanceCalendar({athleteId}){
   const byDate={};
   records.forEach(r=>{byDate[r.date]=r.status;});
 
-  // Build months from June 2025 to August 2026
-  const START=new Date(2025,5,1); // June 2025
-  const END=new Date(2026,7,1);   // August 2026
+  // Build months covering the season: June–September 2026
+  const START=new Date(2026,5,1); // June 2026
+  const END=new Date(2026,8,1);   // September 2026
   const allMonths=[];
   let cur=new Date(START);
   while(cur<=END){

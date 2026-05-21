@@ -21,6 +21,8 @@ const VIOLATIONS=[
   {label:"Other",icon:"⚠️",crunches:30},
 ];
 
+const estToday=()=>{const n=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");};
+
 export default function Callout(){
   const[athletes,setAthletes]=useState([]);
   const[step,setStep]=useState("athlete");
@@ -71,9 +73,10 @@ export default function Callout(){
         const{data:freshLog}=await supabase.from("callouts").select("*,athletes(name)").order("logged_at",{ascending:false}).limit(50);
         if(freshLog)setLog(freshLog);
       }catch(e){
-        // Try without join if athletes join fails
-        const{data:freshLog}=await supabase.from("callouts").select("*").order("logged_at",{ascending:false}).limit(50).catch(()=>({data:[]}));
-        if(freshLog)setLog(freshLog);
+        try{
+          const{data:freshLog}=await supabase.from("callouts").select("*").order("logged_at",{ascending:false}).limit(50);
+          if(freshLog)setLog(freshLog);
+        }catch(e2){}
       }
     }catch(e){
       console.error("Callout submit error:",e);
@@ -143,7 +146,7 @@ export default function Callout(){
             <div style={{fontSize:14,fontWeight:500,color:"#fff",marginBottom:12}}>Who got called out?</div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:10}}>
               {athletes.map(a=>{
-                const todayCount=log.filter(l=>l.athlete_id===a.id&&(l.logged_at||"").slice(0,10)===new Date().toISOString().slice(0,10)).reduce((n,l)=>n+(l.count||1),0);
+                const todayCount=log.filter(l=>l.athlete_id===a.id&&(l.logged_at||"").slice(0,10)===estToday()).reduce((n,l)=>n+(l.count||1),0);
                 return(
                   <button key={a.id} onClick={()=>{setSelected(a);setStep("violation");}} style={{padding:"16px 12px",borderRadius:12,border:"0.5px solid #333",background:"#141414",cursor:"pointer",fontFamily:"Georgia, serif",textAlign:"center",position:"relative"}}>
                     <div style={{width:44,height:44,borderRadius:"50%",background:a.role==="forge"?RED:"#708090",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:500,color:"#fff",margin:"0 auto 8px"}}>{a.name[0]}</div>
@@ -233,10 +236,10 @@ export default function Callout(){
         {showLog&&(
           <div style={{marginTop:20,background:"#141414",borderRadius:12,padding:"1rem",border:"0.5px solid #333"}}>
             <div style={{fontSize:13,fontWeight:500,color:"#fff",marginBottom:10}}>Today's log</div>
-            {log.filter(l=>(l.logged_at||"").slice(0,10)===new Date().toISOString().slice(0,10)).length===0&&(
+            {log.filter(l=>(l.logged_at||"").slice(0,10)===estToday()).length===0&&(
               <div style={{fontSize:13,color:"#555",textAlign:"center",padding:"10px 0"}}>Nothing logged today.</div>
             )}
-            {log.filter(l=>(l.logged_at||"").slice(0,10)===new Date().toISOString().slice(0,10)).map((l,i)=>(
+            {log.filter(l=>(l.logged_at||"").slice(0,10)===estToday()).map((l,i)=>(
               <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"0.5px solid #222"}}>
                 <div>
                   <div style={{fontSize:13,color:"#fff"}}>{l.athletes?.name}</div>

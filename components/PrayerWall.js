@@ -10,7 +10,12 @@ export default function PrayerWall({athleteId, athleteName}){
   const[submitting,setSubmitting]=useState(false);
   const[submitted,setSubmitted]=useState(false);
   useEffect(()=>{
-    supabase.from("inbox").select("*").eq("type","prayer").order("created_at",{ascending:false}).then(({data})=>setPrayers(data||[])).catch(()=>setPrayers([]));
+    (async()=>{
+      try{
+        const{data}=await supabase.from("inbox").select("*").eq("type","prayer").order("created_at",{ascending:false});
+        setPrayers(data||[]);
+      }catch(e){setPrayers([]);}
+    })();
   },[]);
   const submit=async()=>{
     if(!text.trim())return;

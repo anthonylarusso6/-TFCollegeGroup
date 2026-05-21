@@ -31,9 +31,10 @@ export default function ProgramUpload(){
   const[loading,setLoading]=useState(true);
 
   useEffect(()=>{
-    supabase.from("announcements").select("*").eq("type","program").eq("active",true)
-      .order("created_at",{ascending:false}).limit(1)
-      .then(({data})=>{
+    (async()=>{
+      try{
+        const{data}=await supabase.from("announcements").select("*").eq("type","program").eq("active",true)
+          .order("created_at",{ascending:false}).limit(1);
         if(data&&data[0]){
           const p=JSON.parse(data[0].message||"{}");
           setCurrentProgram(p);
@@ -41,8 +42,9 @@ export default function ProgramUpload(){
           if(p.days)setDays(p.days);
           if(p.notes)setNotes(p.notes);
         }
-        setLoading(false);
-      }).catch(()=>setLoading(false));
+      }catch(e){}
+      setLoading(false);
+    })();
   },[]);
 
   const toggleLift=(day,liftName,tier)=>{

@@ -62,14 +62,16 @@ export default function CultureEvents({athletes=[]}){
 
   const addEvent=async()=>{
     if(!newEvent.name.trim())return;
-    const{data}=await supabase.from("culture_events").insert({...newEvent}).select().single().catch(()=>({data:null}));
-    if(data)setEvents(p=>[...p,data]);
+    try{
+      const{data}=await supabase.from("culture_events").insert({...newEvent}).select().single();
+      if(data)setEvents(p=>[...p,data]);
+    }catch(e){}
     setNewEvent({name:"",date:"",time:"",location:"",notes:""});
   };
 
   const deleteEvent=async(id)=>{
     if(!window.confirm("Delete this event?"))return;
-    await supabase.from("culture_events").delete().eq("id",id).catch(()=>{});
+    try{await supabase.from("culture_events").delete().eq("id",id);}catch(e){}
     setEvents(p=>p.filter(e=>e.id!==id));
   };
 
@@ -77,10 +79,10 @@ export default function CultureEvents({athletes=[]}){
     const current=rsvpMap[eventId]||[];
     const isIn=current.includes(name);
     if(isIn){
-      await supabase.from("culture_rsvps").delete().eq("event_id",eventId).eq("athlete_name",name).catch(()=>{});
+      try{await supabase.from("culture_rsvps").delete().eq("event_id",eventId).eq("athlete_name",name);}catch(e){}
       setRsvpMap(p=>({...p,[eventId]:current.filter(n=>n!==name)}));
     }else{
-      await supabase.from("culture_rsvps").insert({event_id:eventId,athlete_name:name}).catch(()=>{});
+      try{await supabase.from("culture_rsvps").insert({event_id:eventId,athlete_name:name});}catch(e){}
       setRsvpMap(p=>({...p,[eventId]:[...current,name]}));
     }
   };
@@ -88,29 +90,34 @@ export default function CultureEvents({athletes=[]}){
   const uploadPhoto=async(file,caption)=>{
     const reader=new FileReader();
     reader.onload=async(e)=>{
-      const{data}=await supabase.from("culture_photos").insert({photo_url:e.target.result,caption:caption||""}).select().single().catch(()=>({data:null}));
-      if(data)setPhotos(p=>[data,...p]);
+      try{
+        const{data}=await supabase.from("culture_photos").insert({photo_url:e.target.result,caption:caption||""}).select().single();
+        if(data)setPhotos(p=>[data,...p]);
+      }catch(err){}
     };
     reader.readAsDataURL(file);
   };
 
   const deletePhoto=async(id)=>{
-    await supabase.from("culture_photos").delete().eq("id",id).catch(()=>{});
+    try{await supabase.from("culture_photos").delete().eq("id",id);}catch(e){}
     setPhotos(p=>p.filter(x=>x.id!==id));
   };
 
   const saveTemplate=async()=>{
     if(!newTemplate.label.trim()||!newTemplate.text.trim())return;
-    const{data}=await supabase.from("culture_templates").insert({label:newTemplate.label,text:newTemplate.text}).select().single().catch(()=>({data:null}));
-    const t={id:data?.id||Date.now(),label:newTemplate.label,text:newTemplate.text};
-    setTemplates(p=>[...p,t]);
+    let savedId=Date.now();
+    try{
+      const{data}=await supabase.from("culture_templates").insert({label:newTemplate.label,text:newTemplate.text}).select().single();
+      if(data)savedId=data.id;
+    }catch(e){}
+    setTemplates(p=>[...p,{id:savedId,label:newTemplate.label,text:newTemplate.text}]);
     setNewTemplate({label:"",text:""});
     setShowAddTemplate(false);
   };
 
   const deleteTemplate=async(t)=>{
     if(DEFAULT_TEMPLATES.find(d=>d.id===t.id))return;
-    await supabase.from("culture_templates").delete().eq("id",t.id).catch(()=>{});
+    try{await supabase.from("culture_templates").delete().eq("id",t.id);}catch(e){}
     setTemplates(p=>p.filter(x=>x.id!==t.id));
   };
 

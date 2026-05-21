@@ -75,36 +75,38 @@ export default function PRLog({athleteId}){
 
   // Load coach program
   useEffect(()=>{
-    supabase.from("announcements").select("*").eq("type","program").eq("active",true)
-      .order("created_at",{ascending:false}).limit(1)
-      .then(({data})=>{
+    (async()=>{
+      try{
+        const{data}=await supabase.from("announcements").select("*").eq("type","program").eq("active",true)
+          .order("created_at",{ascending:false}).limit(1);
         if(data&&data[0]){
           const p=JSON.parse(data[0].message||"{}");
           if(p.days){setProgram(p.days);setPhase(p.phase||"");}
           else if(p.lifts){
-            // Legacy format — spread across days
             const spread={Mon:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Tue:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Thu:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Fri:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3}))};
             setProgram(spread);setPhase(p.phase||"");
           }else{setProgram(DEFAULT_PROGRAM);setPhase("College Group Summer");}
         }else{setProgram(DEFAULT_PROGRAM);setPhase("College Group Summer");}
-      }).catch(()=>setProgram(DEFAULT_PROGRAM));
+      }catch(e){setProgram(DEFAULT_PROGRAM);}
+    })();
   },[]);
 
   // Load existing logs for this athlete
   useEffect(()=>{
     if(!athleteId)return;
-    supabase.from("pr_log").select("*").eq("athlete_id",athleteId)
-      .order("date",{ascending:false})
-      .then(({data,error})=>{
+    (async()=>{
+      try{
+        const{data,error}=await supabase.from("pr_log").select("*").eq("athlete_id",athleteId)
+          .order("date",{ascending:false});
         if(error){setLoadError(error.message);return;}
-        // Group by lift name
         const grouped={};
         (data||[]).forEach(r=>{
           if(!grouped[r.lift])grouped[r.lift]=[];
           grouped[r.lift].push(r);
         });
         setLogs(grouped);
-      }).catch(e=>setLoadError(e.message));
+      }catch(e){setLoadError(e.message);}
+    })();
   },[athleteId]);
 
   const todayLifts=(program&&program[activeDay])||[];
@@ -117,7 +119,8 @@ export default function PRLog({athleteId}){
     const inp=inputs[liftName]||{};
     if(!inp.weight)return;
     setSaving(liftName);
-    const today=new Date().toISOString().split("T")[0];
+    const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
     const entry={
       athlete_id:athleteId,
       lift:liftName,
@@ -139,7 +142,7 @@ export default function PRLog({athleteId}){
 
   const deleteLog=async(logId,liftName)=>{
     setDeleting(logId);
-    await supabase.from("pr_log").delete().eq("id",logId).catch(e=>console.error(e));
+    try{await supabase.from("pr_log").delete().eq("id",logId);}catch(e){console.error(e);}
     setLogs(prev=>{
       const updated=(prev[liftName]||[]).filter(l=>l.id!==logId);
       return{...prev,[liftName]:updated};

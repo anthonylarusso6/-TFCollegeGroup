@@ -23,25 +23,27 @@ function DriveLinksManager(){
   const[saved,setSaved]=useState(false);
 
   useEffect(()=>{
-    supabase.from("announcements").select("*").eq("type","drive_link").eq("active",true)
-      .order("created_at",{ascending:false})
-      .then(({data})=>setLinks(data||[])).catch(()=>{});
+    (async()=>{
+      try{const{data}=await supabase.from("announcements").select("*").eq("type","drive_link").eq("active",true).order("created_at",{ascending:false});setLinks(data||[]);}catch(e){}
+    })();
   },[]);
 
   const addLink=async()=>{
     if(!title.trim()||!url.trim())return;
     setSaving(true);
-    const{data}=await supabase.from("announcements").insert({
-      type:"drive_link",active:true,
-      message:JSON.stringify({title,url,description:desc})
-    }).select().single().catch(()=>({data:null}));
-    if(data)setLinks(p=>[data,...p]);
+    try{
+      const{data}=await supabase.from("announcements").insert({
+        type:"drive_link",active:true,
+        message:JSON.stringify({title,url,description:desc})
+      }).select().single();
+      if(data)setLinks(p=>[data,...p]);
+    }catch(e){}
     setTitle("");setUrl("");setDesc("");setSaving(false);setSaved(true);
     setTimeout(()=>setSaved(false),2000);
   };
 
   const removeLink=async(id)=>{
-    await supabase.from("announcements").update({active:false}).eq("id",id).catch(()=>{});
+    try{await supabase.from("announcements").update({active:false}).eq("id",id);}catch(e){}
     setLinks(p=>p.filter(l=>l.id!==id));
   };
 
@@ -138,13 +140,9 @@ export default function Coach(){
     if(ann&&ann.length>0){setCurrentAnnouncement(ann[0]);setAnnouncement(ann[0].message);}
     setLoading(false);
     // Load secondary data independently — won't block main load
-    supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false}).then(({data})=>{if(data)setCoachPrayers(data);}).catch(()=>{});
-supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({data,error})=>{
-      if(error||!data){console.log("weight_log error:",error);return;}
-      console.log("weight_log raw:",data);
-      setWeightLogs(data);
-    }).catch(e=>{console.log("weight_log catch:",e);});
-    supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name").then(({data})=>{if(data)setEngAthletes(data);}).catch(()=>{});
+    try{const{data}=await supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false});if(data)setCoachPrayers(data);}catch(e){}
+    try{const{data}=await supabase.from("weight_log").select("*").order("date",{ascending:false});if(data)setWeightLogs(data);}catch(e){}
+    try{const{data}=await supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name");if(data)setEngAthletes(data);}catch(e){}
   };
 
   const callAI=async(prompt)=>{
@@ -1262,7 +1260,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                 };
                 const priorityItem=async(item)=>{
                   const newPriority=!item.priority;
-                  await supabase.from("inbox").update({priority:newPriority}).eq("id",item.id).catch(()=>{});
+                  try{await supabase.from("inbox").update({priority:newPriority}).eq("id",item.id);}catch(e){}
                   setInbox(p=>p.map(x=>x.id===item.id?{...x,priority:newPriority}:x));
                 };
                 let filtered=[...inbox].sort((a,b)=>(b.priority?1:0)-(a.priority?1:0));
@@ -1442,7 +1440,7 @@ supabase.from("weight_log").select("*").order("date",{ascending:false}).then(({d
                         <button key={r.id} onClick={async()=>{
                           const newVal=review===r.id?"":r.id;
                           setGoalReviews(p=>({...p,[a.id]:newVal}));
-                          await supabase.from("athletes").update({goal_review_status:newVal||null}).eq("id",a.id).catch(()=>{});
+                          try{await supabase.from("athletes").update({goal_review_status:newVal||null}).eq("id",a.id);}catch(e){}
                         }} title={r.id.replace("_"," ")} style={{width:28,height:28,borderRadius:6,border:"0.5px solid "+(review===r.id?r.color:"#e0e0e0"),background:review===r.id?r.bg:"#fafafa",color:review===r.id?r.color:"#aaa",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>
                           {r.label}
                         </button>
