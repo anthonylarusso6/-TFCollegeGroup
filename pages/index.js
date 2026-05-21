@@ -35,6 +35,8 @@ const PROGRAM_DAYS=[
 ];
 
 export default function Landing(){
+  const[qrDataUrl,setQrDataUrl]=useState("");
+  const[qrFullscreen,setQrFullscreen]=useState(false);
   const[loaded,setLoaded]=useState(false);
   const[time,setTime]=useState(new Date());
   const[countdown,setCountdown]=useState(null);
@@ -47,6 +49,12 @@ export default function Landing(){
   const[photo,setPhoto]=useState(null);
   const[notifGranted,setNotifGranted]=useState(typeof window!=="undefined"&&"Notification" in window&&Notification.permission==="granted"&&localStorage.getItem("notif_disabled")!=="true");
   const GROUPME_LINK="https://groupme.com/join_group/111967377/1JobSG7L";
+
+  useEffect(()=>{
+    import("qrcode").then(QRCode=>{
+      QRCode.default.toDataURL("https://tfcollegegroup.com/checkin",{width:200,margin:2,color:{dark:"#1a1a1a",light:"#ffffff"}}).then(setQrDataUrl);
+    });
+  },[]);
 
   useEffect(()=>{
     setTimeout(()=>setLoaded(true),100);
@@ -368,6 +376,30 @@ export default function Landing(){
               </a>
             ))}
           </div>
+
+          {/* QR Check-In */}
+          <div onClick={()=>setQrFullscreen(true)} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 18px",borderRadius:14,border:"1px solid #1e1e1e",background:"#111",cursor:"pointer",marginBottom:10}}
+            onMouseEnter={e=>e.currentTarget.style.borderColor=ORANGE+"66"}
+            onMouseLeave={e=>e.currentTarget.style.borderColor="#1e1e1e"}>
+            <div style={{width:44,height:44,borderRadius:10,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden"}}>
+              {qrDataUrl?<img src={qrDataUrl} style={{width:40,height:40}} alt="QR"/>:<div style={{fontSize:20}}>📱</div>}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:14,fontWeight:600,color:ORANGE,marginBottom:2}}>Check-In QR Code</div>
+              <div style={{fontSize:11,color:"#555"}}>Tap to display fullscreen at the door</div>
+            </div>
+            <div style={{fontSize:16,color:"#333"}}>⛶</div>
+          </div>
+
+          {/* Fullscreen QR overlay */}
+          {qrFullscreen&&(
+            <div onClick={()=>setQrFullscreen(false)} style={{position:"fixed",inset:0,background:"#fff",zIndex:999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:20,cursor:"pointer"}}>
+              <div style={{fontSize:13,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"Georgia,serif"}}>TF College Group · Check In</div>
+              {qrDataUrl&&<img src={qrDataUrl} alt="QR Code" style={{width:"min(80vw,80vh)",height:"min(80vw,80vh)"}}/>}
+              <div style={{fontSize:16,fontWeight:600,color:"#1a1a1a",fontFamily:"Georgia,serif"}}>tfcollegegroup.com/checkin</div>
+              <div style={{fontSize:11,color:"#ccc",fontFamily:"Georgia,serif"}}>Tap anywhere to close</div>
+            </div>
+          )}
 
           {/* GroupMe + Notifications */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
