@@ -132,7 +132,7 @@ export default function Coach(){
       supabase.from("leaderboard").select("*,athletes(name)").order("early_count",{ascending:false}),
       supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1),
     ]);
-    if(aths)setAthletes(aths);
+    if(aths)setAthletes(prev=>aths.map(a=>({...a,photo_url:a.photo_url||prev.find(p=>p.id===a.id)?.photo_url||null})));
     if(att)setAttendance(att);
     if(inb)setInbox(inb);
     if(anv)setAnvil(anv);
@@ -638,25 +638,27 @@ export default function Coach(){
                       <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",cursor:"pointer"}} onClick={()=>setRosterExpanded(isExp?null:a.id)}>
                         <label style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
                           {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
-                          <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
+                          <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
                             const file=e.target.files[0];if(!file)return;
                             const reader=new FileReader();
-                            reader.onload=async ev=>{
-                              const img=new window.Image();
+                            reader.onload=ev=>{
+                              const img=new Image();
                               img.onload=async()=>{
-                                const MAX=400;
-                                const scale=Math.min(1,MAX/Math.max(img.width,img.height));
+                                const SIZE=150;
                                 const canvas=document.createElement("canvas");
-                                canvas.width=Math.round(img.width*scale);
-                                canvas.height=Math.round(img.height*scale);
-                                canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
-                                const dataUrl=canvas.toDataURL("image/jpeg",0.8);
+                                canvas.width=SIZE;canvas.height=SIZE;
+                                const ctx=canvas.getContext("2d");
+                                const min=Math.min(img.width,img.height);
+                                ctx.drawImage(img,(img.width-min)/2,(img.height-min)/2,min,min,0,0,SIZE,SIZE);
+                                const dataUrl=canvas.toDataURL("image/jpeg",0.5);
                                 try{
-                                  const{error}=await supabase.from("athletes").update({photo_url:dataUrl}).eq("id",a.id);
+                                  const{data,error}=await supabase.from("athletes").update({photo_url:dataUrl}).eq("id",a.id).select("id,photo_url");
                                   if(error){alert("Photo save failed: "+error.message);return;}
+                                  if(!data||data.length===0){alert("Photo not saved — check Supabase permissions.");return;}
                                   setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:dataUrl}:x));
                                 }catch(err){alert("Photo save failed: "+err.message);}
                               };
+                              img.onerror=()=>alert("Could not read image");
                               img.src=ev.target.result;
                             };
                             reader.readAsDataURL(file);
