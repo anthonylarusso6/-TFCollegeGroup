@@ -88,18 +88,25 @@ export default function CultureEvents({athletes=[]}){
   };
 
   const uploadPhoto=async(file,caption)=>{
-    const reader=new FileReader();
-    reader.onload=async(e)=>{
-      try{
-        const{data}=await supabase.from("culture_photos").insert({photo_url:e.target.result,caption:caption||""}).select().single();
-        if(data)setPhotos(p=>[data,...p]);
-      }catch(err){}
-    };
-    reader.readAsDataURL(file);
+    try{
+      const ext=file.name.split(".").pop()||"jpg";
+      const fileName=`event_${Date.now()}.${ext}`;
+      const{error:upErr}=await supabase.storage.from("team-photos").upload(fileName,file,{contentType:file.type,upsert:false});
+      if(upErr){alert("Photo upload failed: "+upErr.message);return;}
+      const{data:{publicUrl}}=supabase.storage.from("team-photos").getPublicUrl(fileName);
+      const{data}=await supabase.from("culture_photos").insert({photo_url:publicUrl,caption:caption||"",storage_path:fileName}).select().single();
+      if(data)setPhotos(p=>[data,...p]);
+    }catch(err){alert("Photo upload failed: "+err.message);}
   };
 
   const deletePhoto=async(id)=>{
-    try{await supabase.from("culture_photos").delete().eq("id",id);}catch(e){}
+    try{
+      const photo=photos.find(p=>p.id===id);
+      await supabase.from("culture_photos").delete().eq("id",id);
+      if(photo?.storage_path){
+        try{await supabase.storage.from("team-photos").remove([photo.storage_path]);}catch(e){}
+      }
+    }catch(e){}
     setPhotos(p=>p.filter(x=>x.id!==id));
   };
 
