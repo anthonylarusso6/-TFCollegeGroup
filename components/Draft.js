@@ -218,7 +218,7 @@ export default function Draft({athletes=[]}){
             {/* Group count */}
             <div style={{fontSize:12,fontWeight:600,color:"#ddd",marginBottom:8}}>Number of groups</div>
             <div style={{display:"flex",gap:8,marginBottom:16}}>
-              {[2,3,4,5,6].map(n=>(
+              {[1,2,3,4,5,6].map(n=>(
                 <button key={n} onClick={()=>setNumGroups(n)} style={{width:38,height:38,borderRadius:8,border:"1px solid "+(numGroups===n?ORANGE:"#333"),background:numGroups===n?ORANGE:"#1a1a1a",color:numGroups===n?"#fff":"#888",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>{n}</button>
               ))}
             </div>

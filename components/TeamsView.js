@@ -36,6 +36,7 @@ export default function TeamsView({athletes=[]}){
   const[dragOverLeader,setDragOverLeader]=useState(null);
   const[picker,setPicker]=useState(null);           // athlete name waiting for group pick
   const[braceletModal,setBraceletModal]=useState(null); // group idx whose bracelet is being picked
+  const[leaderPicker,setLeaderPicker]=useState(null);   // group idx whose leader is being picked
 
   useEffect(()=>{loadTeams();},[]);
 
@@ -180,6 +181,47 @@ export default function TeamsView({athletes=[]}){
         </div>
       )}
 
+      {/* Leader picker modal */}
+      {leaderPicker!==null&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setLeaderPicker(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#141414",borderRadius:"20px 20px 0 0",padding:"1.25rem 1.25rem 2rem",width:"100%",maxWidth:480,border:"1px solid #252525",borderBottom:"none",fontFamily:"Georgia,serif",maxHeight:"70vh",overflowY:"auto"}}>
+            <div style={{width:40,height:4,borderRadius:2,background:"#333",margin:"0 auto 14px"}}/>
+            <div style={{fontSize:14,fontWeight:700,color:GC[leaderPicker],marginBottom:4}}>Group {leaderPicker+1} — Forge Leader</div>
+            <div style={{fontSize:11,color:"#555",marginBottom:14}}>Tap an athlete to set as this group's Forge leader.</div>
+            <div style={{display:"flex",flexDirection:"column",gap:4}}>
+              {active.map(a=>{
+                const isCurrentLeader=leaders[leaderPicker]===a.name;
+                const isLeaderElsewhere=Object.entries(leaders).some(([k,v])=>Number(k)!==leaderPicker&&v===a.name);
+                return(
+                  <button key={a.id} disabled={isLeaderElsewhere}
+                    onClick={()=>{
+                      if(isCurrentLeader){setLeaders(prev=>{const n={...prev};delete n[leaderPicker];return n;});}
+                      else{
+                        setGroups(prev=>{const n={...prev};Object.keys(n).forEach(k=>{n[k]=(n[k]||[]).filter(x=>x!==a.name);});n[leaderPicker]=[...(n[leaderPicker]||[]),a.name];return n;});
+                        setLeaders(prev=>({...prev,[leaderPicker]:a.name}));
+                      }
+                      setLeaderPicker(null);
+                    }}
+                    style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:12,border:"1.5px solid "+(isCurrentLeader?GC[leaderPicker]:isLeaderElsewhere?"#1e1e1e":"#252525"),background:isCurrentLeader?GC[leaderPicker]+"22":isLeaderElsewhere?"#0d0d0d":"#1a1a1a",cursor:isLeaderElsewhere?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:isLeaderElsewhere?0.4:1,textAlign:"left"}}>
+                    <div style={{width:34,height:34,borderRadius:"50%",background:isCurrentLeader?GC[leaderPicker]:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:isCurrentLeader?700:500,color:isCurrentLeader?GC[leaderPicker]:"#ccc"}}>{a.name}</div>
+                      <div style={{fontSize:10,color:"#555"}}>{a.sport||"Athlete"}{isLeaderElsewhere?" · Leader elsewhere":""}</div>
+                    </div>
+                    {isCurrentLeader&&<span style={{fontSize:11,color:GC[leaderPicker]}}>⚒ Leader</span>}
+                  </button>
+                );
+              })}
+            </div>
+            {leaders[leaderPicker]&&(
+              <button onClick={()=>{setLeaders(prev=>{const n={...prev};delete n[leaderPicker];return n;});setLeaderPicker(null);}} style={{width:"100%",marginTop:10,padding:"10px",borderRadius:10,border:"0.5px solid #333",background:"transparent",color:"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Remove leader</button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Bracelet picker modal */}
       {braceletModal!==null&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setBraceletModal(null)}>
@@ -318,7 +360,8 @@ export default function TeamsView({athletes=[]}){
                   onDragOver={e=>{e.preventDefault();e.stopPropagation();setDragOverLeader(i);setDragOver(null);}}
                   onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setDragOverLeader(null);}}
                   onDrop={e=>{e.stopPropagation();onDropLeader(i);}}
-                  style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:8,border:"1.5px dashed "+(isLeaderTarget?color:currentLeader?color+"55":"#2a2a2a"),background:isLeaderTarget?color+"18":currentLeader?color+"10":"transparent",transition:"all 0.15s",cursor:"default",minHeight:38}}>
+                  onClick={()=>setLeaderPicker(i)}
+                  style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:8,border:"1.5px dashed "+(isLeaderTarget?color:currentLeader?color+"55":"#2a2a2a"),background:isLeaderTarget?color+"18":currentLeader?color+"10":"transparent",transition:"all 0.15s",cursor:"pointer",minHeight:38}}>
                   <span style={{fontSize:13,filter:"drop-shadow(0 0 4px "+(currentLeader?color+"88":"transparent")+")"}}>⚒</span>
                   {currentLeader?(
                     <div style={{display:"flex",alignItems:"center",gap:6,flex:1}}>
@@ -326,13 +369,13 @@ export default function TeamsView({athletes=[]}){
                         {leaderAth?.photo_url?<img src={leaderAth.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:currentLeader[0]}
                       </div>
                       <span style={{fontSize:12,fontWeight:700,color}}>{currentLeader}</span>
-                      <span style={{fontSize:9,color:color+"88",marginLeft:2}}>Forge leader</span>
+                      <span style={{fontSize:9,color:color+"88",marginLeft:2}}>Forge leader · tap to change</span>
                     </div>
                   ):(
-                    <span style={{fontSize:11,color:isLeaderTarget?color:"#444",flex:1}}>{isLeaderTarget?"Drop to set as leader":"Drag name here → Forge leader"}</span>
+                    <span style={{fontSize:11,color:isLeaderTarget?color:"#444",flex:1}}>{isLeaderTarget?"Drop to set as leader":"Tap or drag to set Forge leader"}</span>
                   )}
                   {currentLeader&&(
-                    <button onClick={()=>setLeaders(prev=>{const n={...prev};delete n[i];return n;})} style={{background:"transparent",border:"none",cursor:"pointer",color:"#333",fontSize:13,lineHeight:1,padding:"0 2px"}}>×</button>
+                    <button onClick={e=>{e.stopPropagation();setLeaders(prev=>{const n={...prev};delete n[i];return n;});}} style={{background:"transparent",border:"none",cursor:"pointer",color:"#333",fontSize:13,lineHeight:1,padding:"0 2px"}}>×</button>
                   )}
                 </div>
               );
