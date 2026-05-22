@@ -637,7 +637,7 @@ export default function Coach(){
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
                 <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Class flow — 2 hours · done by 11:20am</div>
                 {[
-                  {time:"9:00am",label:"Pre-class",detail:dayName==="Mon"?"Draft → Mindset Monday":dayName==="Fri"?"Fellowship Friday devotional":"Polar sign-in · stretch prep",color:PUR,dur:"30 min"},
+                  {time:"9:00am",label:"Pre-class",detail:dayName==="Mon"?"Draft → Mindset Monday":dayName==="Fri"?"Fellowship Friday devotional":"Sign-in · stretch prep",color:PUR,dur:"30 min"},
                   {time:"9:30am",label:"Stretch & mobility",detail:"10 min · dynamic stretching · all athletes together",color:GREEN,dur:"10 min"},
                   {time:"9:40am",label:"Run",detail:"40–50 min · all 4 groups · hand positions enforced · leaders set pace",color:"#854F0B",dur:"40–50 min"},
                   {time:"10:30am",label:"Weight room",detail:"30–50 min · 2 groups Tier 1 · 1 group Tier 2 · 1 group Tier 3",color:PUR,dur:"30–50 min"},
@@ -755,10 +755,6 @@ export default function Coach(){
                               <button onClick={async e=>{e.stopPropagation();await supabase.from("athletes").update({injury:false,injury_note:null}).eq("id",a.id);setAthletes(p=>p.map(x=>x.id===a.id?{...x,injury:false,injury_note:null}:x));}} style={{padding:"2px 8px",borderRadius:4,border:"0.5px solid #ffaaaa",background:"#fff",color:RED,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",flexShrink:0}}>Clear</button>
                             </div>
                           )}
-                          <div>
-                            <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Vitruve ID</div>
-                            <input defaultValue={a.vitruve_id||""} placeholder="Paste Vitruve ID..." onBlur={async e=>{const val=e.target.value.trim();if(val!==a.vitruve_id){await supabase.from("athletes").update({vitruve_id:val||null}).eq("id",a.id);}}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
-                          </div>
                         </div>
                       )}
                     </div>
