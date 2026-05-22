@@ -46,10 +46,11 @@ export default function TeamsView({athletes=[]}){
       if(data&&data.length>0){
         const d=data[0];
         setDraftId(d.id);
-        const gc=d.group_count||4;
+        const loadedGroups=d.groups||[];
+        const gc=Math.max(loadedGroups.length,4);
         setGroupCount(gc);
         const g={};
-        (d.groups||[]).forEach((arr,i)=>{g[i]=arr||[];});
+        loadedGroups.forEach((arr,i)=>{g[i]=arr||[];});
         for(let i=0;i<gc;i++){if(!g[i])g[i]=[];}
         setGroups(g);
         const l={};
@@ -123,7 +124,7 @@ export default function TeamsView({athletes=[]}){
       const groupsArr=Array.from({length:groupCount},(_,i)=>groups[i]||[]);
       const leadersArr=Array.from({length:groupCount},(_,i)=>leaders[i]||null);
       const braceletsArr=Array.from({length:groupCount},(_,i)=>bracelets[i]||null);
-      const payload={groups:groupsArr,leaders:leadersArr,bracelets:braceletsArr,group_count:groupCount,phase:"setup",locked:false};
+      const payload={groups:groupsArr,leaders:leadersArr,bracelets:braceletsArr};
       if(draftId){
         const{error:err}=await supabase.from("draft").update(payload).eq("id",draftId);
         if(err)throw err;
