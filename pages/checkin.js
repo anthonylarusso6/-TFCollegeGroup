@@ -129,11 +129,15 @@ export default function CheckIn(){
           </div>
           <input
             autoFocus
-            type="text"
+            type="search"
             value={search}
             onChange={e=>setSearch(e.target.value)}
             placeholder="🔍 Search your name..."
-            style={{width:"100%",padding:"12px 16px",borderRadius:12,border:"1px solid #333",background:"#1a1a1a",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            style={{width:"100%",padding:"12px 16px",borderRadius:12,border:"1px solid #333",background:"#1a1a1a",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none",WebkitAppearance:"none"}}
           />
         </div>
 
