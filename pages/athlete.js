@@ -1251,12 +1251,28 @@ export default function Athlete(){
 
             {tab==="private"&&(
               <div>
-                <div style={{fontSize:13,color:"#555",lineHeight:1.7,marginBottom:14}}>This is your private line to Coach Ant. Nobody else sees what you send here.</div>
-                <div style={{background:"#141414",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #252525"}}>
-                  <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Message Coach Ant</div>
-                  {feedbackSent?<div style={{fontSize:13,color:GREEN,fontWeight:500,padding:"10px",background:"#0a1f0a",borderRadius:8,border:"0.5px solid "+GREEN+"44"}}>Message sent to Coach Ant.</div>:(
-                    <><textarea value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="Type your message to Coach Ant..." style={{width:"100%",minHeight:90,padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#1e1e1e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}/><button onClick={sendFeedback} style={{padding:"10px 20px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+PUR+",#3a2d8f)",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Send to Coach Ant</button></>
-                  )}
+                <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+STEEL+"33"}}>
+                  <div style={{background:"linear-gradient(140deg,"+STEEL+"30,"+STEEL+"10,#0d0d0d)",padding:"20px 18px 18px",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+","+STEEL+"44,transparent)"}}/>
+                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>✉️</div>
+                    <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+STEEL+"12,transparent 70%)",pointerEvents:"none"}}/>
+                    <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative",marginBottom:14}}>
+                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+STEEL+"44,"+STEEL+"22)",border:"1px solid "+STEEL+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+STEEL+"33"}}>✉️</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:8,color:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Private</div>
+                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>Message Coach Ant</div>
+                        <div style={{fontSize:11,color:"#666",marginTop:3}}>Nobody else sees what you send here.</div>
+                      </div>
+                    </div>
+                    {feedbackSent?(
+                      <div style={{fontSize:13,color:GREEN,fontWeight:600,padding:"14px",background:GREEN+"18",borderRadius:12,border:"0.5px solid "+GREEN+"44",textAlign:"center"}}>✓ Message sent to Coach Ant.</div>
+                    ):(
+                      <>
+                        <textarea value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="Type your message to Coach Ant..." style={{width:"100%",minHeight:90,padding:"12px 14px",fontSize:13,border:"1px solid #2a2a2a",borderRadius:12,background:"#0a0a0a",color:"#fff",fontFamily:"Georgia,serif",resize:"vertical",marginBottom:10,boxSizing:"border-box",lineHeight:1.6,outline:"none",transition:"border-color 0.2s"}} onFocus={e=>e.target.style.borderColor=STEEL+"88"} onBlur={e=>e.target.style.borderColor="#2a2a2a"}/>
+                        <button onClick={sendFeedback} style={{width:"100%",padding:"12px",borderRadius:12,border:"none",background:feedbackText.trim()?"linear-gradient(135deg,"+STEEL+",#2a3a4a)":"#1e1e1e",color:feedbackText.trim()?"#fff":"#444",fontSize:13,fontWeight:800,cursor:feedbackText.trim()?"pointer":"default",fontFamily:"Georgia,serif",boxShadow:feedbackText.trim()?"0 0 16px "+STEEL+"44":"none",transition:"all 0.2s",letterSpacing:"0.02em"}}>Send to Coach Ant →</button>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
                   <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
