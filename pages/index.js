@@ -70,12 +70,6 @@ export default function Landing(){
       setTime(now);
       // Next class time
       const getNextClass=()=>{
-        const classStart=new Date("2026-06-18T00:00:00");
-        if(now<classStart){
-          const diff=new Date("2026-06-18T09:00:00")-now;
-          return{diff,label:"First class"};
-        }
-        // Find next class day
         const classDays=[1,2,4,5]; // Mon,Tue,Thu,Fri
         let next=new Date(now);
         next.setSeconds(0);next.setMilliseconds(0);
