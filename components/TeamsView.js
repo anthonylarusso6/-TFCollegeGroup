@@ -159,6 +159,33 @@ export default function TeamsView({athletes=[]}){
         </button>
       </div>
 
+      {/* Group count slider */}
+      <div style={{background:"#111",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"0.5px solid #1e1e1e"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em"}}>Number of groups</div>
+          <div style={{fontSize:18,fontWeight:900,color:"#fff",minWidth:20,textAlign:"center"}}>{groupCount}</div>
+        </div>
+        <input
+          type="range" min={1} max={6} value={groupCount}
+          onChange={e=>{
+            const n=Number(e.target.value);
+            setGroupCount(n);
+            // Add new empty groups if expanding
+            setGroups(prev=>{
+              const next={...prev};
+              for(let i=0;i<n;i++){if(!next[i])next[i]=[];}
+              return next;
+            });
+          }}
+          style={{width:"100%",accentColor:"#E8720C",cursor:"pointer",height:4}}
+        />
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+          {[1,2,3,4,5,6].map(n=>(
+            <span key={n} style={{fontSize:10,color:n===groupCount?"#E8720C":"#333",fontWeight:n===groupCount?700:400,transition:"color 0.15s"}}>{n}</span>
+          ))}
+        </div>
+      </div>
+
       {/* Unassigned pool — drag source + tap to assign */}
       {unassigned.length>0&&(
         <div
