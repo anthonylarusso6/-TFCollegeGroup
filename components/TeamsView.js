@@ -181,14 +181,20 @@ export default function TeamsView({athletes=[]}){
         </div>
       )}
 
-      {/* Leader picker modal */}
+      {/* Leader + Bracelet picker modal */}
       {leaderPicker!==null&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setLeaderPicker(null)}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"#141414",borderRadius:"20px 20px 0 0",padding:"1.25rem 1.25rem 2rem",width:"100%",maxWidth:480,border:"1px solid #252525",borderBottom:"none",fontFamily:"Georgia,serif",maxHeight:"70vh",overflowY:"auto"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#141414",borderRadius:"20px 20px 0 0",padding:"1.25rem 1.25rem 2rem",width:"100%",maxWidth:480,border:"1px solid #252525",borderBottom:"none",fontFamily:"Georgia,serif",maxHeight:"85vh",overflowY:"auto"}}>
             <div style={{width:40,height:4,borderRadius:2,background:"#333",margin:"0 auto 14px"}}/>
-            <div style={{fontSize:14,fontWeight:700,color:GC[leaderPicker],marginBottom:4}}>Group {leaderPicker+1} — Forge Leader</div>
-            <div style={{fontSize:11,color:"#555",marginBottom:14}}>Tap an athlete to set as this group's Forge leader.</div>
-            <div style={{display:"flex",flexDirection:"column",gap:4}}>
+            {/* Header */}
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:GC[leaderPicker],flexShrink:0}}/>
+              <div style={{fontSize:15,fontWeight:700,color:GC[leaderPicker]}}>Group {leaderPicker+1}</div>
+            </div>
+
+            {/* ── LEADER SECTION ── */}
+            <div style={{fontSize:11,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>⚒ Forge Leader</div>
+            <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:20}}>
               {active.map(a=>{
                 const isCurrentLeader=leaders[leaderPicker]===a.name;
                 const isLeaderElsewhere=Object.entries(leaders).some(([k,v])=>Number(k)!==leaderPicker&&v===a.name);
@@ -200,7 +206,6 @@ export default function TeamsView({athletes=[]}){
                         setGroups(prev=>{const n={...prev};Object.keys(n).forEach(k=>{n[k]=(n[k]||[]).filter(x=>x!==a.name);});n[leaderPicker]=[...(n[leaderPicker]||[]),a.name];return n;});
                         setLeaders(prev=>({...prev,[leaderPicker]:a.name}));
                       }
-                      setLeaderPicker(null);
                     }}
                     style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:12,border:"1.5px solid "+(isCurrentLeader?GC[leaderPicker]:isLeaderElsewhere?"#1e1e1e":"#252525"),background:isCurrentLeader?GC[leaderPicker]+"22":isLeaderElsewhere?"#0d0d0d":"#1a1a1a",cursor:isLeaderElsewhere?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:isLeaderElsewhere?0.4:1,textAlign:"left"}}>
                     <div style={{width:34,height:34,borderRadius:"50%",background:isCurrentLeader?GC[leaderPicker]:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
@@ -210,14 +215,35 @@ export default function TeamsView({athletes=[]}){
                       <div style={{fontSize:13,fontWeight:isCurrentLeader?700:500,color:isCurrentLeader?GC[leaderPicker]:"#ccc"}}>{a.name}</div>
                       <div style={{fontSize:10,color:"#555"}}>{a.sport||"Athlete"}{isLeaderElsewhere?" · Leader elsewhere":""}</div>
                     </div>
-                    {isCurrentLeader&&<span style={{fontSize:11,color:GC[leaderPicker]}}>⚒ Leader</span>}
+                    {isCurrentLeader&&<span style={{fontSize:13}}>✓</span>}
                   </button>
                 );
               })}
             </div>
-            {leaders[leaderPicker]&&(
-              <button onClick={()=>{setLeaders(prev=>{const n={...prev};delete n[leaderPicker];return n;});setLeaderPicker(null);}} style={{width:"100%",marginTop:10,padding:"10px",borderRadius:10,border:"0.5px solid #333",background:"transparent",color:"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Remove leader</button>
-            )}
+
+            {/* ── BRACELET SECTION ── */}
+            <div style={{fontSize:11,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>📿 Bracelet Verse</div>
+            <div style={{display:"flex",flexDirection:"column",gap:5}}>
+              {BRACELETS.map(b=>{
+                const taken=takenRefs.includes(b.ref)&&bracelets[leaderPicker]?.ref!==b.ref;
+                const selected=bracelets[leaderPicker]?.ref===b.ref;
+                return(
+                  <button key={b.ref} disabled={taken}
+                    onClick={()=>setBracelets(prev=>({...prev,[leaderPicker]:selected?null:b}))}
+                    style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,border:"1.5px solid "+(selected?b.hex:taken?"#1e1e1e":b.hex+"33"),background:selected?b.hex+"22":taken?"#0d0d0d":"#1a1a1a",cursor:taken?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:taken?0.3:1,textAlign:"left"}}>
+                    <div style={{width:14,height:14,borderRadius:"50%",background:taken?"#333":b.hex,flexShrink:0,boxShadow:selected?"0 0 8px "+b.hex+"88":"none"}}/>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:12,fontWeight:selected?700:400,color:taken?"#333":selected?b.hex:"#ccc"}}>{b.color}</div>
+                      <div style={{fontSize:10,color:taken?"#2a2a2a":"#555",fontStyle:"italic"}}>{b.ref} — {b.text}</div>
+                    </div>
+                    {selected&&<span style={{fontSize:12,color:b.hex}}>✓</span>}
+                    {taken&&<span style={{fontSize:10,color:"#2a2a2a"}}>taken</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button onClick={()=>setLeaderPicker(null)} style={{width:"100%",marginTop:14,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>Done</button>
           </div>
         </div>
       )}
@@ -381,23 +407,21 @@ export default function TeamsView({athletes=[]}){
               );
             })()}
 
-            {/* Bracelet row */}
-            <button onClick={()=>setBraceletModal(i)}
-              style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:10,border:"1.5px dashed "+(brac?brac.hex+"66":"#2a2a2a"),background:brac?brac.hex+"12":"transparent",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",transition:"all 0.15s"}}>
-              <span style={{fontSize:13}}>📿</span>
-              {brac?(
-                <>
-                  <div style={{width:12,height:12,borderRadius:"50%",background:brac.hex,flexShrink:0,boxShadow:"0 0 6px "+brac.hex+"88"}}/>
-                  <div style={{flex:1}}>
-                    <span style={{fontSize:12,fontWeight:600,color:brac.hex}}>{brac.color}</span>
-                    <span style={{fontSize:10,color:"#555",marginLeft:6}}>{brac.ref}</span>
-                  </div>
-                  <span style={{fontSize:10,color:"#333"}}>change</span>
-                </>
-              ):(
-                <span style={{fontSize:11,color:"#444",flex:1}}>Tap to assign bracelet verse</span>
-              )}
-            </button>
+            {/* Bracelet row — tap the leader slot above to change */}
+            {brac&&(
+              <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:8,marginBottom:8,background:brac.hex+"12",border:"1px solid "+brac.hex+"33"}}>
+                <div style={{width:10,height:10,borderRadius:"50%",background:brac.hex,flexShrink:0}}/>
+                <span style={{fontSize:11,fontWeight:600,color:brac.hex}}>{brac.color}</span>
+                <span style={{fontSize:10,color:"#555",marginLeft:2}}>{brac.ref}</span>
+                <button onClick={e=>{e.stopPropagation();setBracelets(prev=>{const n={...prev};delete n[i];return n;});}} style={{marginLeft:"auto",background:"transparent",border:"none",cursor:"pointer",color:"#444",fontSize:12,padding:"0 2px"}}>×</button>
+              </div>
+            )}
+            {!brac&&(
+              <button onClick={()=>setLeaderPicker(i)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 10px",borderRadius:8,marginBottom:8,border:"1px dashed #252525",background:"transparent",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
+                <span style={{fontSize:12}}>📿</span>
+                <span style={{fontSize:11,color:"#444"}}>Tap leader slot to assign bracelet</span>
+              </button>
+            )}
 
             {/* Members */}
             {members.length===0?(
