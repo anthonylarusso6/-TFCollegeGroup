@@ -958,24 +958,48 @@ export default function Athlete(){
             {tab==="draft"&&isForge&&(
               <div>
                 {(!draft||draftPhase==="setup")&&(
-                  <div style={{background:BG,borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #222"}}>
-                    <div style={{fontSize:32,marginBottom:12}}>⏳</div>
-                    <div style={{fontSize:16,color:"#fff",marginBottom:8}}>
-                      {draftPhase==="setup"&&(draftGroups[myLeaderIdx]||[]).length>0
-                        ?"Coach has set your group — draft pending"
-                        :"Waiting for Coach Ant to start the draft..."}
+                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
+                    <div style={{background:"linear-gradient(140deg,"+GOLD+"30,"+GOLD+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
+                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⏳</div>
+                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GOLD+"12,transparent 70%)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>⏳</div>
+                        <div>
+                          <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Forge</div>
+                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Draft Pending</div>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{fontSize:13,color:"#555"}}>
-                      {draftPhase==="setup"?"The live draft hasn't started yet. Check your My Group tab.":"Once leaders are set you'll see your draft options here."}
+                    <div style={{background:"#111",padding:"16px 18px"}}>
+                      <div style={{fontSize:15,color:"#fff",marginBottom:6}}>
+                        {draftPhase==="setup"&&(draftGroups[myLeaderIdx]||[]).length>0
+                          ?"Coach has set your group — draft pending"
+                          :"Waiting for Coach Ant to start the draft..."}
+                      </div>
+                      <div style={{fontSize:13,color:"#555"}}>
+                        {draftPhase==="setup"?"The live draft hasn't started yet. Check your My Group tab.":"Once leaders are set you'll see your draft options here."}
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {draft&&draftPhase==="bracelet"&&myLeaderIdx>=0&&!myBraceletPicked&&(
                   <div>
-                    <div style={{background:BG,borderRadius:12,padding:"1rem",marginBottom:12,border:"2px solid "+GOLD}}>
-                      <div style={{fontSize:11,color:GOLD,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:4}}>Step 1 — Pick your bracelet</div>
-                      <div style={{fontSize:14,color:"#fff"}}>Choose your verse for the week. First come first served.</div>
+                    <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
+                      <div style={{background:"linear-gradient(140deg,"+GOLD+"30,"+GOLD+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
+                        <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📿</div>
+                        <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GOLD+"12,transparent 70%)",pointerEvents:"none"}}/>
+                        <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                          <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>📿</div>
+                          <div>
+                            <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Step 1</div>
+                            <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Pick Your Bracelet</div>
+                            <div style={{fontSize:11,color:"#666",marginTop:1}}>Choose your verse for the week — first come first served</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div style={{display:"flex",flexDirection:"column",gap:8}}>
                       {BRACELETS.map(b=>{
@@ -996,13 +1020,25 @@ export default function Athlete(){
                 )}
 
                 {draft&&draftPhase==="bracelet"&&myLeaderIdx>=0&&myBraceletPicked&&(
-                  <div style={{background:BG,borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid "+GOLD+"44"}}>
-                    <div style={{fontSize:32,marginBottom:12}}>✓</div>
-                    <div style={{fontSize:16,color:GOLD,fontWeight:500,marginBottom:8}}>Bracelet picked!</div>
-                    <div style={{fontSize:13,color:"#888",marginBottom:16}}>Waiting for other leaders...</div>
-                    <div style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}>
-                      <div style={{width:10,height:10,borderRadius:"50%",background:BRACELETS.find(b=>b.ref===myBraceletPicked.ref)?.hex}}/>
-                      <span style={{fontSize:13,color:"#fff"}}>{myBraceletPicked.color} — {myBraceletPicked.ref}</span>
+                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
+                    <div style={{background:"linear-gradient(140deg,"+GOLD+"30,"+GOLD+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
+                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>✓</div>
+                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GOLD+"12,transparent 70%)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>✓</div>
+                        <div>
+                          <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Forge</div>
+                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Bracelet Picked</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{background:"#111",padding:"16px 18px"}}>
+                      <div style={{fontSize:13,color:"#888",marginBottom:12}}>Waiting for other leaders...</div>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}>
+                        <div style={{width:10,height:10,borderRadius:"50%",background:BRACELETS.find(b=>b.ref===myBraceletPicked.ref)?.hex}}/>
+                        <span style={{fontSize:13,color:"#fff"}}>{myBraceletPicked.color} — {myBraceletPicked.ref}</span>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1023,10 +1059,23 @@ export default function Athlete(){
                         </div>
                       </div>
                     ):(
-                      <div style={{background:BG,borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #222"}}>
-                        <div style={{fontSize:32,marginBottom:12}}>⏳</div>
-                        <div style={{fontSize:16,color:"#fff",marginBottom:8}}>Waiting for {draftLeaders[currentPickerIdx]||"next leader"} to pick...</div>
-                        <div style={{fontSize:13,color:"#555"}}>Auto-refreshing every 3 seconds</div>
+                      <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+ORANGE+"33"}}>
+                        <div style={{background:"linear-gradient(140deg,"+ORANGE+"30,"+ORANGE+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+ORANGE+","+ORANGE+"44,transparent)"}}/>
+                          <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⏳</div>
+                          <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+ORANGE+"12,transparent 70%)",pointerEvents:"none"}}/>
+                          <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                            <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+ORANGE+"33"}}>⏳</div>
+                            <div>
+                              <div style={{fontSize:8,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Forge</div>
+                              <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Draft Is Live</div>
+                              <div style={{fontSize:11,color:"#666",marginTop:1}}>Waiting for {draftLeaders[currentPickerIdx]||"next leader"} to pick...</div>
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{background:"#111",padding:"16px 18px"}}>
+                          <div style={{fontSize:13,color:"#555"}}>Auto-refreshing every 3 seconds</div>
+                        </div>
                       </div>
                     )}
                     <div style={{marginTop:12,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
@@ -1042,9 +1091,20 @@ export default function Athlete(){
 
                 {draft&&(draftPhase==="locked"||draftComplete)&&myLeaderIdx>=0&&(
                   <div>
-                    <div style={{background:"#0a1f0a",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid "+GREEN+"44",textAlign:"center"}}>
-                      <div style={{fontSize:16,color:GREEN,fontWeight:500,marginBottom:4}}>Draft complete ✓</div>
-                      <div style={{fontSize:13,color:"#888"}}>Groups are locked for the week.</div>
+                    <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GREEN+"33"}}>
+                      <div style={{background:"linear-gradient(140deg,"+GREEN+"30,"+GREEN+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+GREEN+"44,transparent)"}}/>
+                        <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>✅</div>
+                        <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GREEN+"12,transparent 70%)",pointerEvents:"none"}}/>
+                        <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                          <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GREEN+"44,"+GREEN+"22)",border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GREEN+"33"}}>✅</div>
+                          <div>
+                            <div style={{fontSize:8,color:GREEN,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Forge</div>
+                            <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Draft Complete</div>
+                            <div style={{fontSize:11,color:"#666",marginTop:1}}>Groups are locked for the week</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     {myLeaderIdx>=0&&(()=>{
                       const myBrac=BRACELETS.find(b=>b.ref===draftBracelets[myLeaderIdx]?.ref);
@@ -1107,25 +1167,38 @@ export default function Athlete(){
             {tab==="mygroup"&&(
               <div>
                 {(!draft||(myGroupIdx==null&&myLeaderIdx<0))?(
-                  <div style={{background:BG,borderRadius:12,padding:"1.5rem",textAlign:"center",border:"0.5px solid #222"}}>
-                    <div style={{fontSize:32,marginBottom:12}}>⏳</div>
-                    <div style={{fontSize:16,fontWeight:600,color:"#fff",marginBottom:8}}>
-                      {draftPhase==="bracelet"?"Leaders are picking bracelets...":draftPhase==="draft"?"Draft is live — waiting to be picked...":"Draft pending..."}
-                    </div>
-                    <div style={{fontSize:13,color:"#555",lineHeight:1.7,marginBottom:16}}>You'll see your group here once you've been picked.</div>
-                    {/* Show athlete's name so they know they're in the pool */}
-                    {draftPhase==="draft"&&(
-                      <div style={{background:"#1a1a1a",borderRadius:10,padding:"12px 16px",border:"1px solid #333",display:"flex",alignItems:"center",gap:12,textAlign:"left"}}>
-                        <div style={{width:36,height:36,borderRadius:"50%",background:isForge?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
-                          {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
-                        </div>
+                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+STEEL+"33"}}>
+                    <div style={{background:"linear-gradient(140deg,"+STEEL+"30,"+STEEL+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+","+STEEL+"44,transparent)"}}/>
+                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⏳</div>
+                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+STEEL+"12,transparent 70%)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+STEEL+"44,"+STEEL+"22)",border:"1px solid "+STEEL+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+STEEL+"33"}}>⏳</div>
                         <div>
-                          <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{selectedAthlete?.name}</div>
-                          <div style={{fontSize:11,color:"#555"}}>In the draft pool — waiting to be picked</div>
+                          <div style={{fontSize:8,color:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Your Group</div>
+                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Waiting on the Draft</div>
+                          <div style={{fontSize:11,color:"#666",marginTop:1}}>You'll appear here once you've been picked</div>
                         </div>
-                        <div style={{marginLeft:"auto",width:10,height:10,borderRadius:"50%",background:GREEN,boxShadow:"0 0 8px "+GREEN}}/>
                       </div>
-                    )}
+                    </div>
+                    <div style={{background:"#111",padding:"16px 18px"}}>
+                      <div style={{fontSize:14,color:"#fff",marginBottom:draftPhase==="draft"?12:0}}>
+                        {draftPhase==="bracelet"?"Leaders are picking bracelets...":draftPhase==="draft"?"Draft is live — waiting to be picked...":"Draft pending..."}
+                      </div>
+                      {/* Show athlete's name so they know they're in the pool */}
+                      {draftPhase==="draft"&&(
+                        <div style={{background:"#1a1a1a",borderRadius:10,padding:"12px 16px",border:"1px solid #333",display:"flex",alignItems:"center",gap:12}}>
+                          <div style={{width:36,height:36,borderRadius:"50%",background:isForge?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                            {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
+                          </div>
+                          <div>
+                            <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{selectedAthlete?.name}</div>
+                            <div style={{fontSize:11,color:"#555"}}>In the draft pool — waiting to be picked</div>
+                          </div>
+                          <div style={{marginLeft:"auto",width:10,height:10,borderRadius:"50%",background:GREEN,boxShadow:"0 0 8px "+GREEN}}/>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ):(
                   <div>
@@ -1227,23 +1300,49 @@ export default function Athlete(){
 
             {tab==="journey"&&(
               <div>
-                <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,textAlign:"center"}}>
-                  <div style={{fontSize:15,color:"#ccc",fontStyle:"italic",lineHeight:1.7}}>"As iron sharpens iron, so one person sharpens another."</div>
-                  <div style={{fontSize:12,color:"#444",marginTop:6}}>— Proverbs 27:17</div>
+                <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
+                  <div style={{background:"linear-gradient(140deg,"+GOLD+"30,"+GOLD+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
+                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒️</div>
+                    <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GOLD+"12,transparent 70%)",pointerEvents:"none"}}/>
+                    <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>⚒️</div>
+                      <div>
+                        <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Proverbs 27:17</div>
+                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>As iron sharpens iron...</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{background:"#111",padding:"16px 18px"}}>
+                    <div style={{fontSize:15,color:"#ccc",fontStyle:"italic",lineHeight:1.7}}>"As iron sharpens iron, so one person sharpens another."</div>
+                    <div style={{fontSize:12,color:"#444",marginTop:6}}>— Proverbs 27:17</div>
+                  </div>
                 </div>
                 {[
-                  {title:"The Iron",color:STEEL,bg:"#1a1e20",border:"#2a3035",isYou:!isForge,body:"Every athlete enters as The Iron. Raw. Unfinished. Full of potential but not yet fully shaped.",call:"Show up early. Work hard. Hold the standard."},
-                  {title:"The Forge",color:RED,bg:"#200a0a",border:"#5a1a1a",isYou:isForge,body:"The Forge is called up for the week. They set the pace, lead the group, hold the standard.",call:"Lead by example before you lead by voice."},
-                  {title:"The Anvil",color:GOLD,bg:"#1f1700",border:"#5a4500",isYou:false,body:"The Anvil is the highest individual honor in TF College Group. It cannot be drafted. It can only be earned.",call:"You do not chase the Anvil. You become the kind of person who earns it."},
+                  {title:"The Iron",icon:"⚙️",color:STEEL,bg:"#1a1e20",border:"#2a3035",isYou:!isForge,body:"Every athlete enters as The Iron. Raw. Unfinished. Full of potential but not yet fully shaped.",call:"Show up early. Work hard. Hold the standard."},
+                  {title:"The Forge",icon:"🔥",color:RED,bg:"#200a0a",border:"#5a1a1a",isYou:isForge,body:"The Forge is called up for the week. They set the pace, lead the group, hold the standard.",call:"Lead by example before you lead by voice."},
+                  {title:"The Anvil",icon:"⚒️",color:GOLD,bg:"#1f1700",border:"#5a4500",isYou:false,body:"The Anvil is the highest individual honor in TF College Group. It cannot be drafted. It can only be earned.",call:"You do not chase the Anvil. You become the kind of person who earns it."},
                 ].map((item,i)=>(
-                  <div key={i} style={{background:item.bg,borderRadius:12,padding:"1.25rem",marginBottom:10,border:"0.5px solid "+item.border}}>
-                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                      <div style={{width:10,height:10,borderRadius:"50%",background:item.color}}/>
-                      <div style={{fontSize:18,fontWeight:400,color:item.color}}>{item.title}</div>
-                      {item.isYou&&<span style={{fontSize:11,background:item.color,color:"#1a1a1a",padding:"2px 8px",borderRadius:5,fontWeight:500}}>You are here</span>}
+                  <div key={i} style={{borderRadius:20,marginBottom:10,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+item.color+"33"}}>
+                    <div style={{background:"linear-gradient(140deg,"+item.color+"30,"+item.color+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+item.color+","+item.color+"44,transparent)"}}/>
+                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>{item.icon}</div>
+                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+item.color+"12,transparent 70%)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+item.color+"44,"+item.color+"22)",border:"1px solid "+item.color+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+item.color+"33"}}>{item.icon}</div>
+                        <div>
+                          <div style={{fontSize:8,color:item.color,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Tier</div>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>{item.title}</div>
+                            {item.isYou&&<span style={{fontSize:11,background:item.color,color:"#1a1a1a",padding:"2px 8px",borderRadius:5,fontWeight:500}}>You are here</span>}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{fontSize:13,color:"#999",lineHeight:1.75,marginBottom:10}}>{item.body}</div>
-                    <div style={{fontSize:12,color:item.color,fontStyle:"italic"}}>{item.call}</div>
+                    <div style={{background:"#111",padding:"16px 18px"}}>
+                      <div style={{fontSize:13,color:"#999",lineHeight:1.75,marginBottom:10}}>{item.body}</div>
+                      <div style={{fontSize:12,color:item.color,fontStyle:"italic"}}>{item.call}</div>
+                    </div>
                   </div>
                 ))}
               </div>
