@@ -286,7 +286,7 @@ export default function MindsetMonday(){
   const noteKey="mm-week-"+currentWeek;
   const typeColor=week.type==="kevin"?PUR:week.type==="testimony"?GREEN:GOLD;
   const typeLabel=week.type==="kevin"?"Kevin — Guest Speaker":week.type==="testimony"?"Athlete Testimony":"Coach Ant";
-  const typeBg=week.type==="kevin"?"#EEEDFE":week.type==="testimony"?"#EAF3DE":"#1f1700";
+  const typeBg=week.type==="kevin"?"#150d2a":week.type==="testimony"?"#0a1a0d":"#1f1700";
   const typeText=week.type==="coach"?"#fff":"#1a1a1a";
 
   function markComplete(){
@@ -296,17 +296,17 @@ export default function MindsetMonday(){
   return(
     <div>
       {/* Header */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Mindset Monday — 12 Weeks</div>
+      <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525",borderTop:"3px solid "+PUR}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:12}}>Mindset Monday — 12 Weeks</div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}}>
           {[
-            {label:"Current week",val:"Week "+currentWeek,color:typeColor,bg:"#f5f5f5"},
-            {label:"Speaker",val:week.type==="kevin"?"Kevin":week.type==="testimony"?"Athlete":"Coach Ant",color:typeColor,bg:"#f5f5f5"},
-            {label:"Completed",val:completedWeeks.length+"/12",color:GREEN,bg:"#EAF3DE"},
+            {label:"Current week",val:"Week "+currentWeek,color:typeColor,bg:"#1a1a1a"},
+            {label:"Speaker",val:week.type==="kevin"?"Kevin":week.type==="testimony"?"Athlete":"Coach Ant",color:typeColor,bg:"#1a1a1a"},
+            {label:"Completed",val:completedWeeks.length+"/12",color:GREEN,bg:"#0a160a"},
           ].map(s=>(
-            <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"10px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+            <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"10px",textAlign:"center",border:"0.5px solid #252525"}}>
               <div style={{fontSize:14,fontWeight:500,color:s.color}}>{s.val}</div>
-              <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
+              <div style={{fontSize:11,color:"#666",marginTop:2}}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -314,7 +314,7 @@ export default function MindsetMonday(){
         {/* Series arc */}
         <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
           {SERIES_META.map(s=>(
-            <div key={s.num} style={{fontSize:11,padding:"4px 10px",borderRadius:6,background:week.series===s.num?s.color:"#f5f5f5",color:week.series===s.num?"#fff":"#888",fontWeight:week.series===s.num?600:400}}>{s.title} · {s.weeks}</div>
+            <div key={s.num} style={{fontSize:11,padding:"4px 10px",borderRadius:6,background:week.series===s.num?s.color:"#1a1a1a",color:week.series===s.num?"#fff":"#555",fontWeight:week.series===s.num?600:400}}>{s.title} · {s.weeks}</div>
           ))}
         </div>
 
@@ -337,13 +337,13 @@ export default function MindsetMonday(){
       <div style={{background:typeBg,borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid "+typeColor+"44"}}>
         <div style={{fontSize:11,color:typeColor,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:4}}>{typeLabel} · Week {week.week} of 12</div>
         <div style={{fontSize:18,fontWeight:600,color:week.type==="coach"?GOLD:typeColor,marginBottom:6}}>{week.title}</div>
-        <div style={{fontSize:13,color:week.type==="coach"?"#aaa":"#555",lineHeight:1.7}}>{week.focus}</div>
+        <div style={{fontSize:13,color:"#888",lineHeight:1.7}}>{week.focus}</div>
       </div>
 
       {/* View tabs */}
       <div style={{display:"flex",gap:8,marginBottom:12}}>
         {["guide","questions","takeaways"].map(v=>(
-          <button key={v} onClick={()=>setView(v)} style={{flex:1,padding:"9px",borderRadius:8,border:"0.5px solid "+(view===v?typeColor:"#e0e0e0"),background:view===v?typeColor:"transparent",color:view===v?"#fff":"#888",fontSize:12,fontWeight:view===v?600:400,cursor:"pointer",fontFamily:"Georgia,serif",textTransform:"capitalize"}}>
+          <button key={v} onClick={()=>setView(v)} style={{flex:1,padding:"9px",borderRadius:8,border:"0.5px solid "+(view===v?typeColor:"#252525"),background:view===v?typeColor:"transparent",color:view===v?"#fff":"#555",fontSize:12,fontWeight:view===v?600:400,cursor:"pointer",fontFamily:"Georgia,serif",textTransform:"capitalize"}}>
             {v==="guide"?"Guide":v==="questions"?"Q&A":"Takeaways"}
           </button>
         ))}
@@ -359,20 +359,20 @@ export default function MindsetMonday(){
           </div>
 
           {/* Big idea */}
-          <div style={{background:"#fff",borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-            <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>The big idea</div>
-            <div style={{fontSize:14,color:"#1a1a1a",lineHeight:1.7,fontWeight:500}}>{week.bigIdea}</div>
+          <div style={{background:"#141414",borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,border:"0.5px solid #252525"}}>
+            <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>The big idea</div>
+            <div style={{fontSize:14,color:"#ddd",lineHeight:1.7,fontWeight:500}}>{week.bigIdea}</div>
           </div>
 
           {/* Teaching points */}
-          <div style={{background:"#fff",borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-            <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Teaching points</div>
+          <div style={{background:"#141414",borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,border:"0.5px solid #252525"}}>
+            <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Teaching points</div>
             {week.teaching.map((t,i)=>(
-              <div key={i} style={{display:"flex",gap:10,padding:"10px 12px",borderRadius:8,background:"#f9f9f9",marginBottom:6,border:"0.5px solid #e0e0e0"}}>
+              <div key={i} style={{display:"flex",gap:10,padding:"10px 12px",borderRadius:8,background:"#0e0e0e",marginBottom:6,border:"0.5px solid #1e1e1e"}}>
                 <div style={{width:24,height:24,borderRadius:"50%",background:typeColor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff",flexShrink:0}}>{i+1}</div>
                 <div>
-                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:2}}>{t.point}</div>
-                  <div style={{fontSize:12,color:"#666",lineHeight:1.6}}>{t.detail}</div>
+                  <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:2}}>{t.point}</div>
+                  <div style={{fontSize:12,color:"#888",lineHeight:1.6}}>{t.detail}</div>
                 </div>
               </div>
             ))}
@@ -385,15 +385,15 @@ export default function MindsetMonday(){
         <div>
           <div style={{fontSize:11,fontWeight:500,color:"var(--color-text-secondary, #888)",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Discussion questions</div>
           {week.questions.map((q,i)=>(
-            <div key={i} style={{marginBottom:8,borderRadius:10,border:"0.5px solid "+(expandedQ===i?typeColor:"#e0e0e0"),overflow:"hidden"}}>
-              <button onClick={()=>setExpandedQ(expandedQ===i?null:i)} style={{width:"100%",padding:"12px 14px",background:expandedQ===i?typeBg:"#f9f9f9",border:"none",cursor:"pointer",textAlign:"left",fontFamily:"Georgia,serif",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
-                <span style={{fontSize:13,fontWeight:500,color:expandedQ===i?typeColor:"#1a1a1a"}}>Q{i+1}. {q.q}</span>
+            <div key={i} style={{marginBottom:8,borderRadius:10,border:"0.5px solid "+(expandedQ===i?typeColor:"#252525"),overflow:"hidden"}}>
+              <button onClick={()=>setExpandedQ(expandedQ===i?null:i)} style={{width:"100%",padding:"12px 14px",background:expandedQ===i?typeBg:"#141414",border:"none",cursor:"pointer",textAlign:"left",fontFamily:"Georgia,serif",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+                <span style={{fontSize:13,fontWeight:500,color:expandedQ===i?typeColor:"#ddd"}}>Q{i+1}. {q.q}</span>
                 <span style={{fontSize:12,color:typeColor,flexShrink:0}}>{expandedQ===i?"▲":"▼"}</span>
               </button>
               {expandedQ===i&&(
                 <div style={{padding:"10px 14px",background:typeBg,borderTop:"0.5px solid "+typeColor+"33"}}>
                   <div style={{fontSize:11,fontWeight:500,color:typeColor,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:5}}>Guided answer</div>
-                  <div style={{fontSize:13,color:week.type==="coach"?"#fff":"#1a1a1a",lineHeight:1.7}}>{q.a}</div>
+                  <div style={{fontSize:13,color:"#ddd",lineHeight:1.7}}>{q.a}</div>
                 </div>
               )}
             </div>
@@ -415,16 +415,16 @@ export default function MindsetMonday(){
           {week.takeaways.map((t,i)=>(
             <div key={i} style={{display:"flex",gap:12,padding:"12px 14px",borderRadius:10,background:typeBg,marginBottom:8,border:"0.5px solid "+typeColor+"33"}}>
               <div style={{width:26,height:26,borderRadius:"50%",background:typeColor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:500,color:"#fff",flexShrink:0}}>{i+1}</div>
-              <div style={{fontSize:14,color:week.type==="coach"?"#fff":"#1a1a1a",lineHeight:1.6,fontWeight:500,alignSelf:"center"}}>{t}</div>
+              <div style={{fontSize:14,color:"#ddd",lineHeight:1.6,fontWeight:500,alignSelf:"center"}}>{t}</div>
             </div>
           ))}
           {currentWeek>1&&(
-            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",marginTop:12,border:"0.5px solid #e0e0e0"}}>
-              <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:8}}>Series arc so far</div>
+            <div style={{background:"#0e0e0e",borderRadius:10,padding:"12px 14px",marginTop:12,border:"0.5px solid #1e1e1e"}}>
+              <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:8}}>Series arc so far</div>
               <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                 {WEEKS.slice(0,currentWeek-1).map(s=>{
                   const c=s.type==="kevin"?PUR:s.type==="testimony"?GREEN:GOLD;
-                  return <span key={s.week} style={{fontSize:11,padding:"3px 10px",background:"#f5f5f5",color:c,borderRadius:6,fontWeight:500}}>W{s.week}: {s.title.split(" ")[0]}</span>;
+                  return <span key={s.week} style={{fontSize:11,padding:"3px 10px",background:"#1a1a1a",color:c,borderRadius:6,fontWeight:500}}>W{s.week}: {s.title.split(" ")[0]}</span>;
                 })}
                 <span style={{fontSize:11,padding:"3px 10px",background:typeColor,color:"#fff",borderRadius:6,fontWeight:500}}>W{week.week}: {week.title.split(" ")[0]}</span>
               </div>
@@ -434,9 +434,9 @@ export default function MindsetMonday(){
       )}
 
       {/* Coach notes */}
-      <div style={{background:"#fff",border:"0.5px solid #e0e0e0",borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,marginTop:12}}>
-        <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Coach notes — Week {currentWeek}</div>
-        <textarea value={notes[noteKey]||""} onChange={e=>setNotes(p=>({...p,[noteKey]:e.target.value}))} placeholder="What came up in discussion? What hit? Who opened up? What to follow up on?" style={{width:"100%",minHeight:80,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}/>
+      <div style={{background:"#141414",border:"0.5px solid #252525",borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,marginTop:12}}>
+        <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Coach notes — Week {currentWeek}</div>
+        <textarea value={notes[noteKey]||""} onChange={e=>setNotes(p=>({...p,[noteKey]:e.target.value}))} placeholder="What came up in discussion? What hit? Who opened up? What to follow up on?" style={{width:"100%",minHeight:80,padding:"8px",fontSize:13,border:"0.5px solid #222",borderRadius:8,background:"#111",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}/>
       </div>
 
       {/* Mark complete + next */}
@@ -458,9 +458,9 @@ export default function MindsetMonday(){
       </div>
 
       {/* Print handout */}
-      <div style={{background:"#f9f9f9",borderRadius:12,padding:"1rem 1.25rem",border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Student handout — Week {currentWeek}</div>
-        <div style={{fontSize:12,color:"#888",marginBottom:10}}>Opens a clean print-ready page with scripture, discussion questions with writing space, and the 3 takeaways. Use Print → Save as PDF in your browser.</div>
+      <div style={{background:"#141414",borderRadius:12,padding:"1rem 1.25rem",border:"0.5px solid #252525"}}>
+        <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Student handout — Week {currentWeek}</div>
+        <div style={{fontSize:12,color:"#666",marginBottom:10}}>Opens a clean print-ready page with scripture, discussion questions with writing space, and the 3 takeaways. Use Print → Save as PDF in your browser.</div>
         <button onClick={()=>printHandout(week,typeColor)} style={{padding:"10px 24px",borderRadius:8,border:"none",background:typeColor,color:"#fff",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>Print handout — Week {currentWeek} →</button>
       </div>
     </div>

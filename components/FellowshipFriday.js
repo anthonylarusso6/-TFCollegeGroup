@@ -295,17 +295,17 @@ export default function FellowshipFriday(){
       )}
 
       {/* Header */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+currentSeries.color}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Fellowship Friday — Summer Series · 12 weeks</div>
+      <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525",borderTop:"3px solid "+currentSeries.color}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:12}}>Fellowship Friday — Summer Series · 12 weeks</div>
 
         {/* Stat cards */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}}>
           {[
-            {label:"Series",val:currentSeries.title,color:currentSeries.color,bg:currentSeries.light,small:true},
-            {label:"Current week",val:"Week "+currentWeek,color:week.color,bg:week.light},
-            {label:"Completed",val:completedWeeks.length+"/12",color:"#1E6B3A",bg:"#EAF3DE"},
+            {label:"Series",val:currentSeries.title,color:currentSeries.color,bg:currentSeries.color+"18",small:true},
+            {label:"Current week",val:"Week "+currentWeek,color:week.color,bg:week.color+"18"},
+            {label:"Completed",val:completedWeeks.length+"/12",color:"#1E6B3A",bg:"#0a160a"},
           ].map(s=>(
-            <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"10px",textAlign:"center"}}>
+            <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"10px",textAlign:"center",border:"0.5px solid #252525"}}>
               <div style={{fontSize:s.small?11:20,fontWeight:500,color:s.color,lineHeight:1.3}}>{s.val}</div>
               <div style={{fontSize:11,color:s.color,marginTop:2,opacity:0.7}}>{s.label}</div>
             </div>
@@ -315,7 +315,7 @@ export default function FellowshipFriday(){
         {/* Series tabs */}
         <div style={{display:"flex",gap:6,marginBottom:10}}>
           {SERIES_META.map(s=>(
-            <button key={s.num} onClick={()=>{setCurrentWeek((s.num-1)*4+1);setView("guide");setExpandedQ(null);}} style={{flex:1,padding:"6px 8px",borderRadius:8,border:"0.5px solid "+(currentSeries.num===s.num?s.color:"#e0e0e0"),background:currentSeries.num===s.num?s.color:"transparent",color:currentSeries.num===s.num?"#fff":s.color,fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center"}}>
+            <button key={s.num} onClick={()=>{setCurrentWeek((s.num-1)*4+1);setView("guide");setExpandedQ(null);}} style={{flex:1,padding:"6px 8px",borderRadius:8,border:"0.5px solid "+(currentSeries.num===s.num?s.color:"#252525"),background:currentSeries.num===s.num?s.color:"transparent",color:currentSeries.num===s.num?"#fff":s.color,fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center"}}>
               {s.title}
               <div style={{fontSize:9,opacity:0.7,marginTop:1}}>{s.weeks}</div>
             </button>
@@ -329,7 +329,7 @@ export default function FellowshipFriday(){
             const isDone=completedWeeks.includes(s.week);
             const isActive=currentWeek===s.week;
             return(
-              <button key={s.week} onClick={()=>{setCurrentWeek(s.week);setView("guide");setExpandedQ(null);}} style={{flex:1,height:32,borderRadius:6,border:"0.5px solid "+(isActive?sm.color:sm.color+"44"),background:isActive?sm.color:sm.light,color:isActive?"#fff":sm.color,fontSize:10,fontWeight:isActive?600:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+              <button key={s.week} onClick={()=>{setCurrentWeek(s.week);setView("guide");setExpandedQ(null);}} style={{flex:1,height:32,borderRadius:6,border:"0.5px solid "+(isActive?sm.color:sm.color+"33"),background:isActive?sm.color:"#111",color:isActive?"#fff":sm.color,fontSize:10,fontWeight:isActive?600:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
                 {isDone?"✓":s.week}
               </button>
             );
@@ -338,11 +338,11 @@ export default function FellowshipFriday(){
       </div>
 
       {/* Week title */}
-      <div style={{background:week.light,borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid "+week.color+"44"}}>
+      <div style={{background:week.color+"12",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid "+week.color+"44"}}>
         <div style={{fontSize:11,color:week.color,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:4}}>{week.seriesTitle} · Week {week.week}</div>
         <div style={{fontSize:18,fontWeight:600,color:week.color,marginBottom:6}}>{week.title}</div>
         <div style={{display:"inline-block",background:week.color,color:"#fff",fontSize:11,padding:"2px 8px",borderRadius:5,marginBottom:10}}>{week.scripture}</div>
-        <div style={{fontSize:13,fontStyle:"italic",color:"#555",lineHeight:1.8,padding:"10px 12px",background:"rgba(255,255,255,0.6)",borderRadius:8,borderLeft:"3px solid "+week.color}}>"{week.verse}"</div>
+        <div style={{fontSize:13,fontStyle:"italic",color:"#aaa",lineHeight:1.8,padding:"10px 12px",background:"rgba(0,0,0,0.3)",borderRadius:8,borderLeft:"3px solid "+week.color}}>"{week.verse}"</div>
       </div>
 
       {/* Big idea */}
@@ -354,20 +354,20 @@ export default function FellowshipFriday(){
       {/* Sub tabs */}
       <div style={{display:"flex",gap:6,marginBottom:12}}>
         {["guide","questions","takeaways"].map(v=>(
-          <button key={v} onClick={()=>setView(v)} style={{flex:1,padding:"8px",borderRadius:8,border:"0.5px solid "+(view===v?week.color:"#e0e0e0"),background:view===v?week.color:"transparent",color:view===v?"#fff":"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+          <button key={v} onClick={()=>setView(v)} style={{flex:1,padding:"8px",borderRadius:8,border:"0.5px solid "+(view===v?week.color:"#252525"),background:view===v?week.color:"transparent",color:view===v?"#fff":"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>
             {v==="guide"?"Teaching guide":v==="questions"?"Discussion":"Takeaways"}
           </button>
         ))}
       </div>
 
       {/* Content */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
+      <div style={{background:"#141414",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #252525"}}>
         {view==="guide"&&week.teaching.map((t,i)=>(
-          <div key={i} style={{padding:"10px 0",borderBottom:i<week.teaching.length-1?"0.5px solid #f0f0f0":"none"}}>
+          <div key={i} style={{padding:"10px 0",borderBottom:i<week.teaching.length-1?"0.5px solid #1e1e1e":"none"}}>
             <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
               <span style={{background:week.color,color:"#fff",fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:500,flexShrink:0,marginTop:2}}>{t.ref}</span>
               <div>
-                <div style={{fontSize:13,fontWeight:600,marginBottom:2,color:"#1a1a1a"}}>{t.point}</div>
+                <div style={{fontSize:13,fontWeight:600,marginBottom:2,color:"#ddd"}}>{t.point}</div>
                 <div style={{fontSize:12,color:"#888",lineHeight:1.6}}>{t.detail}</div>
               </div>
             </div>
@@ -377,15 +377,15 @@ export default function FellowshipFriday(){
         {view==="questions"&&(
           <div>
             {week.questions.map((q,i)=>(
-              <div key={i} style={{marginBottom:8,borderRadius:10,border:"0.5px solid "+(expandedQ===i?week.color:"#e0e0e0"),overflow:"hidden"}}>
-                <button onClick={()=>setExpandedQ(expandedQ===i?null:i)} style={{width:"100%",padding:"10px 12px",background:expandedQ===i?week.light:"#fafafa",border:"none",cursor:"pointer",textAlign:"left",fontFamily:"Georgia,serif",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:13,fontWeight:500,color:expandedQ===i?week.color:"#1a1a1a"}}>Q{i+1}. {q.q}</span>
+              <div key={i} style={{marginBottom:8,borderRadius:10,border:"0.5px solid "+(expandedQ===i?week.color:"#252525"),overflow:"hidden"}}>
+                <button onClick={()=>setExpandedQ(expandedQ===i?null:i)} style={{width:"100%",padding:"10px 12px",background:expandedQ===i?week.color+"18":"#0e0e0e",border:"none",cursor:"pointer",textAlign:"left",fontFamily:"Georgia,serif",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+                  <span style={{fontSize:13,fontWeight:500,color:expandedQ===i?week.color:"#ddd"}}>Q{i+1}. {q.q}</span>
                   <span style={{fontSize:12,color:week.color,flexShrink:0}}>{expandedQ===i?"▲":"▼"}</span>
                 </button>
                 {expandedQ===i&&(
-                  <div style={{padding:"10px 12px",background:week.light,borderTop:"0.5px solid "+week.color+"33"}}>
+                  <div style={{padding:"10px 12px",background:week.color+"15",borderTop:"0.5px solid "+week.color+"33"}}>
                     <div style={{fontSize:11,fontWeight:500,color:week.color,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:4}}>Guided answer</div>
-                    <div style={{fontSize:13,color:"#555",lineHeight:1.7}}>{q.a}</div>
+                    <div style={{fontSize:13,color:"#aaa",lineHeight:1.7}}>{q.a}</div>
                   </div>
                 )}
               </div>
@@ -399,29 +399,29 @@ export default function FellowshipFriday(){
         )}
 
         {view==="takeaways"&&week.takeaways.map((t,i)=>(
-          <div key={i} style={{display:"flex",gap:10,padding:"10px",borderRadius:8,background:week.light,marginBottom:8,border:"0.5px solid "+week.color+"33"}}>
+          <div key={i} style={{display:"flex",gap:10,padding:"10px",borderRadius:8,background:week.color+"18",marginBottom:8,border:"0.5px solid "+week.color+"33"}}>
             <div style={{width:24,height:24,borderRadius:"50%",background:week.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:500,color:"#fff",flexShrink:0}}>{i+1}</div>
-            <div style={{fontSize:13,color:"#1a1a1a",lineHeight:1.6,fontWeight:500,alignSelf:"center"}}>{t}</div>
+            <div style={{fontSize:13,color:"#ddd",lineHeight:1.6,fontWeight:500,alignSelf:"center"}}>{t}</div>
           </div>
         ))}
       </div>
 
       {/* Coach notes */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Coach notes — Week {currentWeek}</div>
-        <textarea value={notes[noteKey]||""} onChange={e=>setNotes(p=>({...p,[noteKey]:e.target.value}))} placeholder="What came up? Who opened up? What to follow up on?" style={{width:"100%",minHeight:70,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}/>
+      <div style={{background:"#141414",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #252525"}}>
+        <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Coach notes — Week {currentWeek}</div>
+        <textarea value={notes[noteKey]||""} onChange={e=>setNotes(p=>({...p,[noteKey]:e.target.value}))} placeholder="What came up? Who opened up? What to follow up on?" style={{width:"100%",minHeight:70,padding:"8px",fontSize:13,border:"0.5px solid #222",borderRadius:8,background:"#111",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}/>
       </div>
 
       {/* Mark complete + handout */}
       <div style={{display:"flex",gap:8}}>
-        <button onClick={markComplete} disabled={completedWeeks.includes(currentWeek)} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:completedWeeks.includes(currentWeek)?"#EAF3DE":week.color,color:completedWeeks.includes(currentWeek)?"#1E6B3A":"#fff",fontSize:13,fontWeight:500,cursor:completedWeeks.includes(currentWeek)?"default":"pointer",fontFamily:"Georgia,serif"}}>
+        <button onClick={markComplete} disabled={completedWeeks.includes(currentWeek)} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:completedWeeks.includes(currentWeek)?"#0a160a":week.color,color:completedWeeks.includes(currentWeek)?"#1E6B3A":"#fff",fontSize:13,fontWeight:500,cursor:completedWeeks.includes(currentWeek)?"default":"pointer",fontFamily:"Georgia,serif"}}>
           {completedWeeks.includes(currentWeek)?"Week complete ✓":"Mark complete →"}
         </button>
         <button onClick={()=>setShowHandout(true)} style={{flex:1,padding:"10px",borderRadius:8,border:"0.5px solid "+week.color,background:"transparent",color:week.color,fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
           Student handout →
         </button>
         {currentWeek<12&&(
-          <button onClick={()=>{setCurrentWeek(w=>w+1);setView("guide");setExpandedQ(null);}} style={{padding:"10px 16px",borderRadius:8,border:"0.5px solid #e0e0e0",background:"transparent",color:"#888",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+          <button onClick={()=>{setCurrentWeek(w=>w+1);setView("guide");setExpandedQ(null);}} style={{padding:"10px 16px",borderRadius:8,border:"0.5px solid #252525",background:"transparent",color:"#555",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>
             Next →
           </button>
         )}
