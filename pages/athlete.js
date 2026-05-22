@@ -195,6 +195,9 @@ export default function Athlete(){
   const[injuryOpen,setInjuryOpen]=useState(false);
   const[injuryText,setInjuryText]=useState("");
   const[injurySent,setInjurySent]=useState(false);
+  const[goalSaved,setGoalSaved]=useState({});
+  const athleticGoalRef=useRef();
+  const characterGoalRef=useRef();
   const[attendance,setAttendance]=useState([]);
   const[streak,setStreak]=useState(0);
   const[draft,setDraft]=useState(null);
@@ -781,33 +784,90 @@ export default function Athlete(){
                     </div>
                   </div>
                 )}
-                {[{label:"Athletic goal",goalKey:"athletic_goal",taskKey:"coach_athletic_task",color:GREEN},{label:"Character goal",goalKey:"character_goal",taskKey:"coach_character_task",color:PUR}].map(({label,goalKey,taskKey,color})=>(
-                  <div key={goalKey} style={{background:"#141414",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #252525"}}>
-                    <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>{label}</div>
-                    <textarea defaultValue={selectedAthlete[goalKey]||""} onBlur={async e=>{const val=e.target.value;setSelectedAthlete(a=>({...a,[goalKey]:val}));await supabase.from("athletes").update({[goalKey]:val}).eq("id",selectedAthlete.id);}} placeholder="What's one thing you want to improve this summer?" style={{width:"100%",minHeight:60,padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#1e1e1e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
-              <button onClick={async e=>{const ta=e.target.previousSibling;const val=ta.value;setSelectedAthlete(a=>({...a,[goalKey]:val}));await supabase.from("athletes").update({[goalKey]:val}).eq("id",selectedAthlete.id);alert("Goal saved!");}} style={{padding:"6px 14px",borderRadius:8,border:"none",background:color,color:"#fff",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Save goal →</button>
-                    {selectedAthlete[taskKey]&&(
-                      <div style={{marginTop:10,padding:"10px 12px",background:BG,borderRadius:8,borderLeft:"3px solid "+color}}>
-                        <div style={{fontSize:11,fontWeight:500,color:color,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:5}}>Task from Coach Ant</div>
-                        <div style={{fontSize:13,color:"#ccc",lineHeight:1.6}}>{selectedAthlete[taskKey]}</div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                <div style={{background:"#141414",borderRadius:12,border:"0.5px solid #252525",overflow:"hidden",marginBottom:12}}>
-                  <button onClick={()=>setInjuryOpen(o=>!o)} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",fontFamily:"Georgia, serif"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <div style={{width:8,height:8,borderRadius:"50%",background:selectedAthlete.injury?RED:GREEN,boxShadow:"0 0 6px "+(selectedAthlete.injury?RED:GREEN)+"66"}}/>
-                      <span style={{fontSize:13,fontWeight:500,color:"#ddd"}}>Injury / health update</span>
+                {/* ── GOALS ── */}
+                {[
+                  {label:"Athletic Goal",sub:"Physical — what you're chasing this summer",goalKey:"athletic_goal",taskKey:"coach_athletic_task",color:GREEN,icon:"🎯",placeholder:"e.g. Drop my 40 time, add 20 lbs to my squat, make the travel roster...",ref:athleticGoalRef},
+                  {label:"Character Goal",sub:"Who you're becoming — not just what you're doing",goalKey:"character_goal",taskKey:"coach_character_task",color:PUR,icon:"⚔️",placeholder:"e.g. Be the first one in every day, lead without being asked, own my mistakes fast...",ref:characterGoalRef},
+                ].map(({label,sub,goalKey,taskKey,color,icon,placeholder,ref})=>{
+                  return(
+                  <div key={goalKey} style={{background:"#141414",borderRadius:16,marginBottom:12,border:"1px solid #252525",overflow:"hidden",boxShadow:"0 4px 20px #00000040"}}>
+                    {/* Header */}
+                    <div style={{background:"linear-gradient(135deg,"+color+"1a,"+color+"08)",padding:"14px 16px",borderBottom:"1px solid "+color+"22",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+color+",transparent)"}}/>
+                      <div style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",fontSize:36,opacity:0.12,userSelect:"none"}}>{icon}</div>
+                      <div style={{fontSize:9,color:color,textTransform:"uppercase",letterSpacing:"0.16em",fontWeight:800,marginBottom:3,textShadow:"0 0 10px "+color+"66"}}>{label}</div>
+                      <div style={{fontSize:11,color:"#555"}}>{sub}</div>
                     </div>
-                    <span style={{fontSize:12,color:"#555"}}>{injuryOpen?"▲":"▼"}</span>
+                    {/* Body */}
+                    <div style={{padding:"14px 16px"}}>
+                      {selectedAthlete[goalKey]&&(
+                        <div style={{background:color+"0d",borderRadius:10,padding:"10px 12px",marginBottom:12,border:"1px solid "+color+"22",display:"flex",alignItems:"flex-start",gap:10}}>
+                          <span style={{fontSize:16,flexShrink:0,marginTop:1}}>📌</span>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:9,color:color,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:3}}>Current goal</div>
+                            <div style={{fontSize:13,color:"#ddd",lineHeight:1.6}}>{selectedAthlete[goalKey]}</div>
+                          </div>
+                        </div>
+                      )}
+                      <textarea ref={ref} defaultValue={selectedAthlete[goalKey]||""} placeholder={placeholder} rows={3} style={{width:"100%",padding:"12px",fontSize:13,border:"1px solid #2d2d2d",borderRadius:10,background:"#0e0e0e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.6,outline:"none"}}/>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:8}}>
+                        <div style={{fontSize:11,color:"#444"}}>Tap outside or press Save</div>
+                        <button onClick={async()=>{
+                          const val=ref.current.value.trim();
+                          if(!val)return;
+                          setSelectedAthlete(a=>({...a,[goalKey]:val}));
+                          await supabase.from("athletes").update({[goalKey]:val}).eq("id",selectedAthlete.id);
+                          setGoalSaved(p=>({...p,[goalKey]:true}));
+                          setTimeout(()=>setGoalSaved(p=>({...p,[goalKey]:false})),2500);
+                        }} style={{padding:"8px 18px",borderRadius:10,border:"none",background:goalSaved[goalKey]?"#0a2a0a":color,color:goalSaved[goalKey]?GREEN:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.2s",boxShadow:goalSaved[goalKey]?"0 0 10px "+GREEN+"44":"0 0 10px "+color+"33"}}>
+                          {goalSaved[goalKey]?"✓ Saved!":"Save goal →"}
+                        </button>
+                      </div>
+                      {selectedAthlete[taskKey]&&(
+                        <div style={{marginTop:12,padding:"12px 14px",background:"#0a0a0a",borderRadius:10,borderLeft:"3px solid "+color,border:"1px solid "+color+"22"}}>
+                          <div style={{fontSize:9,color:color,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:800,marginBottom:6}}>⚒ Task from Coach Ant</div>
+                          <div style={{fontSize:13,color:"#bbb",lineHeight:1.7}}>{selectedAthlete[taskKey]}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  );
+                })}
+
+                {/* ── INJURY / HEALTH ── */}
+                <div style={{background:"#141414",borderRadius:16,border:"1px solid "+(selectedAthlete.injury?"#3a0a0a":"#252525"),overflow:"hidden",marginBottom:12,boxShadow:selectedAthlete.injury?"0 0 20px #C0392B22":"none"}}>
+                  <button onClick={()=>setInjuryOpen(o=>!o)} style={{width:"100%",padding:"16px",background:selectedAthlete.injury?"linear-gradient(135deg,#1a0606,#120404)":"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",fontFamily:"Georgia, serif",position:"relative",overflow:"hidden"}}>
+                    {selectedAthlete.injury&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+RED+",transparent)"}}/>}
+                    <div style={{display:"flex",alignItems:"center",gap:12}}>
+                      <div style={{width:36,height:36,borderRadius:10,background:selectedAthlete.injury?RED+"22":"#1e1e1e",border:"1px solid "+(selectedAthlete.injury?RED+"44":"#333"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
+                        {selectedAthlete.injury?"🤕":"💪"}
+                      </div>
+                      <div style={{textAlign:"left"}}>
+                        <div style={{fontSize:13,fontWeight:700,color:selectedAthlete.injury?RED:"#fff",letterSpacing:"-0.01em"}}>
+                          {selectedAthlete.injury?"Injury on record":"Health & injury update"}
+                        </div>
+                        <div style={{fontSize:11,color:selectedAthlete.injury?"#aa4444":"#555",marginTop:1}}>
+                          {selectedAthlete.injury?selectedAthlete.injury_note||"Flagged — see coach":"Tap to report pain, soreness, or anything going on"}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{fontSize:9,fontWeight:800,color:selectedAthlete.injury?RED:GREEN,background:selectedAthlete.injury?RED+"18":GREEN+"18",padding:"3px 10px",borderRadius:20,border:"0.5px solid "+(selectedAthlete.injury?RED+"44":GREEN+"44"),textTransform:"uppercase",letterSpacing:"0.08em"}}>{selectedAthlete.injury?"Flagged":"Healthy"}</div>
+                      <span style={{fontSize:12,color:"#444",marginLeft:4}}>{injuryOpen?"▲":"▼"}</span>
+                    </div>
                   </button>
                   {injuryOpen&&(
-                    <div style={{padding:"0 16px 16px"}}>
-                      <textarea value={injuryText} onChange={e=>setInjuryText(e.target.value)} placeholder="What's going on — what hurts, when it started..." style={{width:"100%",minHeight:80,padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#1e1e1e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}/>
-                      {injurySent?<div style={{fontSize:13,color:GREEN,fontWeight:500,padding:"8px 10px",background:"#EAF3DE",borderRadius:8}}>Coach Ant has been notified.</div>
-                      :<button onClick={sendInjury} style={{padding:"8px 16px",borderRadius:8,border:"0.5px solid "+RED,background:"transparent",color:RED,fontSize:13,cursor:"pointer",fontFamily:"Georgia, serif"}}>Notify Coach Ant</button>}
+                    <div style={{padding:"0 16px 16px",borderTop:"1px solid #1e1e1e"}}>
+                      <div style={{fontSize:12,color:"#555",margin:"12px 0 8px",lineHeight:1.6}}>
+                        Be specific — what hurts, which side, when it started, scale 1–10. Coach Ant reviews every report before the next class.
+                      </div>
+                      <textarea value={injuryText} onChange={e=>setInjuryText(e.target.value)} placeholder="e.g. Left knee pain started Tuesday, 6/10 on the pain scale, worse going downhill..." rows={3} style={{width:"100%",padding:"12px",fontSize:13,border:"1px solid #2d2d2d",borderRadius:10,background:"#0e0e0e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:10,boxSizing:"border-box",lineHeight:1.6}}/>
+                      {injurySent
+                        ?<div style={{fontSize:13,color:GREEN,fontWeight:600,padding:"10px 14px",background:GREEN+"10",borderRadius:10,border:"1px solid "+GREEN+"33",display:"flex",alignItems:"center",gap:8}}><span>✓</span>Coach Ant has been notified.</div>
+                        :<button onClick={sendInjury} disabled={!injuryText.trim()} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:injuryText.trim()?"linear-gradient(135deg,"+RED+",#8B0000)":"#1a1a1a",color:injuryText.trim()?"#fff":"#444",fontSize:13,fontWeight:700,cursor:injuryText.trim()?"pointer":"not-allowed",fontFamily:"Georgia, serif",boxShadow:injuryText.trim()?"0 0 16px "+RED+"44":"none",transition:"all 0.2s"}}>
+                          🚨 Send injury report to Coach Ant
+                        </button>
+                      }
                     </div>
                   )}
                 </div>
