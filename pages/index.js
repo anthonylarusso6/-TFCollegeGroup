@@ -50,6 +50,7 @@ export default function Landing(){
   const[forgeLeaders,setForgeLeaders]=useState([]);
   const[weather,setWeather]=useState(null);
   const[weekProgress,setWeekProgress]=useState(null);
+  const[classCount,setClassCount]=useState(null);
   const[photo,setPhoto]=useState(null);
   const[notifGranted,setNotifGranted]=useState(typeof window!=="undefined"&&"Notification" in window&&Notification.permission==="granted"&&localStorage.getItem("notif_disabled")!=="true");
   const GROUPME_LINK="https://groupme.com/join_group/111967377/1JobSG7L";
@@ -113,6 +114,10 @@ export default function Landing(){
         if(count)setTodayAttendance(count);
       }catch(e){}
       try{
+        const{data}=await supabase.from("attendance").select("date");
+        if(data){const unique=new Set(data.map(r=>r.date));setClassCount(unique.size);}
+      }catch(e){}
+      try{
         const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
         if(data&&data[0]&&data[0].leaders&&data[0].leaders.some(l=>l)){
           setForgeLeaders(data[0].leaders.filter(Boolean));
@@ -124,9 +129,14 @@ export default function Landing(){
       // Season progress — weeks since June 18
       const start=new Date("2026-06-18");
       const nowDate=new Date();
-      const diffWeeks=Math.floor((nowDate-start)/(1000*60*60*24*7));
       const totalWeeks=12;
-      if(diffWeeks>=0&&diffWeeks<=totalWeeks)setWeekProgress({current:diffWeeks+1,total:totalWeeks,pct:Math.round(((diffWeeks+1)/totalWeeks)*100)});
+      if(nowDate<start){
+        setWeekProgress({current:1,total:totalWeeks,pct:0});
+      }else{
+        const diffWeeks=Math.floor((nowDate-start)/(1000*60*60*24*7));
+        const current=Math.min(diffWeeks+1,totalWeeks);
+        setWeekProgress({current,total:totalWeeks,pct:Math.round((current/totalWeeks)*100)});
+      }
       try{const{data}=await supabase.from("culture_photos").select("*").order("created_at",{ascending:false}).limit(1);if(data&&data[0])setPhoto(data[0]);}catch(e){}
       try{
         const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=35.9606&longitude=-83.9207&current_weather=true&temperature_unit=fahrenheit");
@@ -250,8 +260,8 @@ export default function Landing(){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
             {[
               {label:"Athletes",val:athleteCount||"—",color:STEEL},
-              {label:"Season",val:"2026",color:ORANGE},
-              {label:"Starts",val:"Jun 18",color:GOLD},
+              {label:"Classes",val:classCount!==null?classCount:"—",color:ORANGE},
+              {label:"Week",val:weekProgress?`${weekProgress.current}/12`:"1/12",color:GOLD},
             ].map((s,i)=>(
               <div key={i} style={{background:"#111",borderRadius:12,padding:"12px 8px",textAlign:"center",border:"0.5px solid #1e1e1e"}}>
                 <div style={{fontSize:18,fontWeight:800,color:s.color}}>{s.val}</div>
