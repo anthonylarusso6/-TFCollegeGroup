@@ -347,10 +347,11 @@ export default function Athlete(){
   const isForge=selectedAthlete?.role==="forge";
 
   if(loading)return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a0a0a 0%,#0f0f0f 60%,#130a00 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{textAlign:"center"}}>
-        <div style={{width:80,height:80,borderRadius:22,background:"linear-gradient(135deg,#E8720C,#C0392B)",margin:"0 auto 20px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,boxShadow:"0 0 60px #E8720C55,0 0 120px #E8720C22"}}>⚒</div>
-        <div style={{fontSize:12,color:"#444",letterSpacing:"0.15em",textTransform:"uppercase"}}>Loading...</div>
+    <div style={{minHeight:"100vh",background:"#080808",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:"40%",left:"50%",transform:"translate(-50%,-50%)",width:600,height:400,background:"radial-gradient(ellipse,#E8720C10 0%,transparent 65%)",pointerEvents:"none"}}/>
+      <div style={{textAlign:"center",position:"relative"}}>
+        <div style={{width:100,height:100,borderRadius:28,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:52,boxShadow:"0 0 80px #E8720C55,0 0 160px #E8720C22,inset 0 1px 0 rgba(255,255,255,0.1)"}}>⚒</div>
+        <div style={{fontSize:11,color:"#E8720C",letterSpacing:"0.25em",textTransform:"uppercase",fontWeight:700}}>TF College Group</div>
       </div>
     </div>
   );
@@ -358,94 +359,99 @@ export default function Athlete(){
   if(screen==="roster")return(
     <>
       <Head><title>TF College Group — Athlete</title></Head>
-      <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflow:"hidden"}}>
-        {/* Background glow effects */}
-        <div style={{position:"fixed",top:-100,left:-100,width:300,height:300,borderRadius:"50%",background:"#E8720C",opacity:0.07,filter:"blur(80px)",pointerEvents:"none"}}/>
-        <div style={{position:"fixed",bottom:-100,right:-100,width:250,height:250,borderRadius:"50%",background:GOLD,opacity:0.07,filter:"blur(60px)",pointerEvents:"none"}}/>
+      <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflow:"hidden"}}>
+        {/* Ambient fire glow top */}
+        <div style={{position:"fixed",top:-120,left:"50%",transform:"translateX(-50%)",width:500,height:400,borderRadius:"50%",background:"radial-gradient(ellipse,#E8720C22 0%,transparent 70%)",pointerEvents:"none"}}/>
+        {/* Ambient bottom */}
+        <div style={{position:"fixed",bottom:-80,right:-80,width:300,height:300,borderRadius:"50%",background:"#C0392B0a",filter:"blur(60px)",pointerEvents:"none"}}/>
 
-        <div style={{padding:"1rem 1.5rem 2rem",position:"relative"}}>
-          {/* Top nav bar */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.5rem"}}>
-            <a href="/" style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#555",textDecoration:"none",padding:"7px 12px",borderRadius:8,border:"0.5px solid #222",background:"#111"}}>
-              ← Home
-            </a>
-            <a href="/coach" style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#555",textDecoration:"none",padding:"7px 12px",borderRadius:8,border:"0.5px solid #222",background:"#111"}}>
-              ⚒ Coach
-            </a>
+        {/* Hero Banner */}
+        <div style={{background:"linear-gradient(180deg,#0e0600 0%,#080808 100%)",borderBottom:"1px solid #1a0a00",padding:"2rem 1.5rem 1.5rem",textAlign:"center",position:"relative"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent 0%,#E8720C 30%,#C0392B 70%,transparent 100%)"}}/>
+          {/* Nav */}
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:"1.5rem"}}>
+            <a href="/" style={{fontSize:11,color:"#555",textDecoration:"none",padding:"6px 14px",borderRadius:8,border:"0.5px solid #1e1e1e",background:"#0e0e0e",letterSpacing:"0.04em"}}>← Home</a>
+            <a href="/coach" style={{fontSize:11,color:"#555",textDecoration:"none",padding:"6px 14px",borderRadius:8,border:"0.5px solid #1e1e1e",background:"#0e0e0e",letterSpacing:"0.04em"}}>⚒ Coach</a>
           </div>
-          {/* Hero header */}
-          <div style={{textAlign:"center",marginBottom:"2rem"}}>
-            <div style={{position:"relative",display:"inline-block",marginBottom:16}}>
-              <div style={{width:80,height:80,borderRadius:22,background:"linear-gradient(135deg,#E8720C,#C0392B)",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,boxShadow:"0 0 40px #E8720C55,0 0 80px #E8720C22"}}>⚒</div>
-              <div style={{position:"absolute",inset:-3,borderRadius:25,border:"1px solid #E8720C33",pointerEvents:"none"}}/>
-            </div>
-            <div style={{fontSize:26,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",marginBottom:6}}>TF College Group</div>
-            <div style={{fontSize:12,color:"#444",textTransform:"uppercase",letterSpacing:"0.15em"}}>Iron sharpens iron · Proverbs 27:17</div>
+          {/* Icon */}
+          <div style={{position:"relative",display:"inline-block",marginBottom:20}}>
+            <div style={{width:96,height:96,borderRadius:28,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",fontSize:52,boxShadow:"0 0 80px #E8720C55,0 0 160px #E8720C22,inset 0 1px 0 rgba(255,255,255,0.1)"}}>⚒</div>
+            <div style={{position:"absolute",inset:-6,borderRadius:34,border:"1px solid #E8720C33",pointerEvents:"none"}}/>
+            <div style={{position:"absolute",inset:-12,borderRadius:40,border:"0.5px solid #E8720C11",pointerEvents:"none"}}/>
           </div>
+          <div style={{fontSize:32,fontWeight:900,color:"#fff",letterSpacing:"-0.03em",marginBottom:4,textTransform:"uppercase"}}>TF College Group</div>
+          <div style={{fontSize:10,color:"#E8720C",textTransform:"uppercase",letterSpacing:"0.22em",fontWeight:700}}>Iron Sharpens Iron · Proverbs 27:17</div>
+        </div>
 
+        <div style={{padding:"1rem 1.25rem 2rem",position:"relative"}}>
           {/* Announcement banner */}
           {announcement&&(
-            <div style={{background:"linear-gradient(135deg,#1a1200,#201a00)",border:"1px solid #E8720C44",borderRadius:14,padding:"14px 16px",marginBottom:16,position:"relative",overflow:"hidden"}}>
+            <div style={{background:"linear-gradient(135deg,#0e0900,#160e00)",border:"1px solid #E8720C33",borderRadius:14,padding:"14px 16px",marginBottom:12,position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#E8720C,transparent)"}}/>
-              <div style={{fontSize:10,color:"#E8720C",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>📢 This week</div>
+              <div style={{fontSize:10,color:"#E8720C",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:4,fontWeight:700}}>📢 This week</div>
               <div style={{fontSize:13,color:"#ccc",lineHeight:1.6}}>{announcement.message}</div>
             </div>
           )}
 
           {/* Anvil winner */}
           {anvilWinner&&(
-            <div style={{background:"linear-gradient(135deg,#1f1700,#2a2000)",border:"1px solid "+GOLD+"44",borderRadius:14,padding:"14px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:12,position:"relative",overflow:"hidden"}}>
+            <div style={{background:"linear-gradient(135deg,#130e00,#1c1400)",border:"1px solid "+GOLD+"44",borderRadius:14,padding:"14px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:12,position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+GOLD+",transparent)"}}/>
-              <div style={{fontSize:28,filter:"drop-shadow(0 0 8px "+GOLD+"88)"}}>⚒</div>
+              <div style={{fontSize:28,filter:"drop-shadow(0 0 12px "+GOLD+"aa)"}}>⚒</div>
               <div>
-                <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:2}}>This week's Anvil</div>
-                <div style={{fontSize:15,fontWeight:700,color:GOLD}}>{anvilWinner.athlete_name}</div>
+                <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:2,fontWeight:700}}>This week's Anvil</div>
+                <div style={{fontSize:16,fontWeight:800,color:GOLD}}>{anvilWinner.athlete_name}</div>
               </div>
             </div>
           )}
 
           {/* Active / Sleeping tabs */}
-          <div style={{display:"flex",gap:6,marginBottom:12}}>
-            {[{id:"active",label:"Active"},{id:"sleeping",label:"😴 Sleeping"}].map(t=>(
-              <button key={t.id} onClick={()=>setRosterTab(t.id)} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+(rosterTab===t.id?ORANGE:"#222"),background:rosterTab===t.id?ORANGE:"transparent",color:rosterTab===t.id?"#fff":"#666",fontSize:12,fontWeight:rosterTab===t.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+          <div style={{display:"flex",gap:6,marginBottom:14,background:"#0e0e0e",borderRadius:12,padding:4,border:"0.5px solid #1e1e1e"}}>
+            {[{id:"active",label:"⚡ Active"},{id:"sleeping",label:"😴 Sleeping"}].map(t=>(
+              <button key={t.id} onClick={()=>setRosterTab(t.id)} style={{flex:1,padding:"9px",borderRadius:8,border:"none",background:rosterTab===t.id?"linear-gradient(135deg,#E8720C,#C0392B)":"transparent",color:rosterTab===t.id?"#fff":"#555",fontSize:12,fontWeight:rosterTab===t.id?800:400,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:rosterTab===t.id?"0.02em":"0",textTransform:rosterTab===t.id?"uppercase":"none",boxShadow:rosterTab===t.id?"0 2px 12px #E8720C44":"none",transition:"all 0.15s"}}>
                 {t.label}
               </button>
             ))}
           </div>
 
           {/* Search */}
-          <div style={{marginBottom:14,position:"relative"}}>
-            <input type="text" placeholder="Search your name..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"14px 16px 14px 44px",borderRadius:14,border:"1px solid #222",background:"#111",color:"#fff",fontSize:14,fontFamily:"Georgia, serif",boxSizing:"border-box",outline:"none"}} autoComplete="off"/>
-            <div style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#444"}}>🔍</div>
+          <div style={{marginBottom:16,position:"relative"}}>
+            <input type="text" placeholder="Search your name..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"14px 16px 14px 46px",borderRadius:14,border:"1px solid #1e1e1e",background:"#0e0e0e",color:"#fff",fontSize:14,fontFamily:"Georgia, serif",boxSizing:"border-box",outline:"none"}} autoComplete="off"/>
+            <div style={{position:"absolute",left:15,top:"50%",transform:"translateY(-50%)",fontSize:15,color:"#333"}}>🔍</div>
             {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:"#444",fontSize:16,cursor:"pointer"}}>✕</button>}
           </div>
 
           {/* Athlete list */}
-          <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:24}}>
+          <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:24}}>
             {athletes.filter(a=>(rosterTab==="active"?a.status==="active":a.status==="sleeping")&&(!search||a.name.toLowerCase().includes(search.toLowerCase()))).map((a,idx)=>{
               const isForge=a.role==="forge";
               const roleColor=isForge?RED:STEEL;
               return(
-                <button key={a.id} onClick={()=>selectAthlete(a)} style={{width:"100%",padding:"14px 16px",borderRadius:16,border:"1px solid "+(isForge?"#3a1a1a":"#1e1e1e"),background:isForge?"linear-gradient(135deg,#1a0d0d,#1e1010)":"linear-gradient(135deg,#111,#141416)",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all 0.15s",boxShadow:"0 2px 12px rgba(0,0,0,0.3)"}}>
+                <button key={a.id} onClick={()=>selectAthlete(a)} style={{width:"100%",padding:0,borderRadius:16,border:"1px solid "+(isForge?"#2a0808":"#151820"),background:isForge?"linear-gradient(135deg,#130808,#1a0c0c)":"linear-gradient(135deg,#0c0c10,#111318)",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"stretch",textAlign:"left",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.5)"}}>
+                  {/* Left role stripe */}
+                  <div style={{width:4,background:isForge?"linear-gradient(180deg,#E8720C,"+RED+")":"linear-gradient(180deg,#8a9aa4,"+STEEL+")",flexShrink:0}}/>
                   {/* Avatar */}
-                  <div style={{width:54,height:54,borderRadius:14,background:isForge?"linear-gradient(135deg,"+RED+",#8B1A1A)":"linear-gradient(135deg,#8a9aa4,"+STEEL+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden",boxShadow:"0 4px 12px "+roleColor+"33"}}>
-                    {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
+                  <div style={{padding:"14px 12px 14px 14px",flexShrink:0,display:"flex",alignItems:"center"}}>
+                    <div style={{width:58,height:58,borderRadius:16,background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#fff",flexShrink:0,overflow:"hidden",boxShadow:"0 4px 16px "+roleColor+"44"}}>
+                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
+                    </div>
                   </div>
                   {/* Info */}
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:15,fontWeight:600,color:"#fff",marginBottom:3}}>{a.name}</div>
-                    <div style={{fontSize:11,color:"#555"}}>{a.sport||"Athlete"}</div>
+                  <div style={{flex:1,padding:"14px 4px",minWidth:0,display:"flex",flexDirection:"column",justifyContent:"center"}}>
+                    <div style={{fontSize:16,fontWeight:700,color:"#fff",marginBottom:3,letterSpacing:"-0.01em"}}>{a.name}</div>
+                    <div style={{fontSize:11,color:"#555",marginBottom:a.injury?4:0}}>{a.sport||"Athlete"}</div>
+                    {a.injury&&<div style={{fontSize:9,fontWeight:800,color:RED,background:RED+"1a",padding:"2px 8px",borderRadius:5,border:"0.5px solid "+RED+"33",display:"inline-block",textTransform:"uppercase",letterSpacing:"0.08em",width:"fit-content"}}>⚡ Injured</div>}
                   </div>
-                  {/* Role badge */}
-                  <div style={{flexShrink:0,display:"flex",alignItems:"center",gap:6}}>
-                    <span style={{fontSize:10,fontWeight:700,color:roleColor,background:roleColor+"1a",padding:"4px 10px",borderRadius:8,textTransform:"uppercase",letterSpacing:"0.06em",border:"0.5px solid "+roleColor+"33"}}>{isForge?"Forge":"Iron"}</span>
-                    <span style={{color:"#2a2a2a",fontSize:14}}>›</span>
+                  {/* Right role badge */}
+                  <div style={{padding:"14px 16px",display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:8}}>
+                    <div style={{fontSize:9,fontWeight:800,color:roleColor,background:roleColor+"15",padding:"4px 10px",borderRadius:8,textTransform:"uppercase",letterSpacing:"0.1em",border:"0.5px solid "+roleColor+"40"}}>{isForge?"Forge":"Iron"}</div>
+                    <div style={{color:"#2a2a2a",fontSize:18,fontWeight:300,lineHeight:1}}>›</div>
                   </div>
                 </button>
               );
             })}
           </div>
-          <div style={{textAlign:"center",fontSize:11,color:"#333",letterSpacing:"0.05em"}}>TF College Group · Triple F Sports</div>
+          <div style={{textAlign:"center",fontSize:10,color:"#222",letterSpacing:"0.08em",textTransform:"uppercase"}}>TF College Group · Triple F Sports</div>
         </div>
       </div>
     </>
@@ -454,50 +460,51 @@ export default function Athlete(){
   if(screen==="login")return(
     <>
       <Head><title>Sign In — TF College Group</title></Head>
-      <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a0a0a 0%,#0f0f0f 70%,#130800 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",padding:"0 1.5rem 2rem",textAlign:"center",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-        <div style={{position:"fixed",top:-80,left:"50%",transform:"translateX(-50%)",width:320,height:320,borderRadius:"50%",background:isForge?RED:ORANGE,opacity:0.06,filter:"blur(90px)",pointerEvents:"none"}}/>
-        <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:20,left:20,background:"#141414",border:"0.5px solid #2a2a2a",color:"#666",fontSize:12,cursor:"pointer",fontFamily:"Georgia, serif",padding:"7px 14px",borderRadius:10}}>← Back</button>
-        <div style={{position:"relative",marginBottom:20,marginTop:"2rem"}}>
-          <div style={{width:80,height:80,borderRadius:"50%",background:isForge?"linear-gradient(135deg,"+RED+",#8B1A1A)":"linear-gradient(135deg,#9aa8b0,"+STEEL+")",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:700,color:"#fff",overflow:"hidden",boxShadow:"0 0 40px "+(isForge?RED:ORANGE)+"44,0 0 80px "+(isForge?RED:ORANGE)+"22"}}>
+      <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",textAlign:"center",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem 1.5rem"}}>
+        {/* Big role-specific ambient glow */}
+        <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:600,height:400,background:"radial-gradient(ellipse at top,"+(isForge?"#C0392B18":"#4a5a6622")+" 0%,transparent 70%)",pointerEvents:"none"}}/>
+        <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:400,height:300,background:"radial-gradient(ellipse at bottom,"+(isForge?"#E8720C0f":"#3a4a5a0f")+" 0%,transparent 70%)",pointerEvents:"none"}}/>
+        {/* Top bar */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+(isForge?"#C0392B,#E8720C":"#505a66,#8a9aa4")+",transparent)"}}/>
+        <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:20,left:20,background:"#111",border:"0.5px solid #1e1e1e",color:"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia, serif",padding:"7px 14px",borderRadius:10}}>← Back</button>
+        {/* Role label above avatar */}
+        <div style={{fontSize:9,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.25em",marginBottom:16,background:(isForge?RED:STEEL)+"15",padding:"4px 16px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"33"}}>
+          {isForge?"⚔ The Forge":"⚒ The Iron"}
+        </div>
+        {/* Avatar */}
+        <div style={{position:"relative",marginBottom:24}}>
+          <div style={{position:"absolute",inset:-16,borderRadius:"50%",border:"0.5px solid "+(isForge?RED:STEEL)+"1a",pointerEvents:"none"}}/>
+          <div style={{position:"absolute",inset:-8,borderRadius:"50%",border:"1px solid "+(isForge?RED:STEEL)+"33",pointerEvents:"none"}}/>
+          <div style={{width:100,height:100,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:38,fontWeight:900,color:"#fff",overflow:"hidden",boxShadow:"0 0 60px "+(isForge?RED:STEEL)+"55,0 0 120px "+(isForge?RED:STEEL)+"22"}}>
             {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
           </div>
-          <div style={{position:"absolute",inset:-4,borderRadius:"50%",border:"1px solid "+(isForge?RED:ORANGE)+"33",pointerEvents:"none"}}/>
         </div>
-        <div style={{fontSize:22,fontWeight:700,color:"#fff",marginBottom:6,letterSpacing:"-0.01em"}}>
-          {!selectedAthlete?.pin?`Hey ${selectedAthlete?.name.split(" ")[0]}!`:pinStep==="confirm"?"Confirm your PIN":`Welcome back, ${selectedAthlete?.name.split(" ")[0]}!`}
+        <div style={{fontSize:26,fontWeight:900,color:"#fff",marginBottom:6,letterSpacing:"-0.02em",textTransform:"uppercase"}}>
+          {!selectedAthlete?.pin?selectedAthlete?.name.split(" ")[0]:pinStep==="confirm"?"Confirm PIN":selectedAthlete?.name.split(" ")[0]}
         </div>
-        <div style={{fontSize:13,color:"#555",marginBottom:28}}>
-          {!selectedAthlete?.pin?"Set your 4-digit PIN to check in.":pinStep==="confirm"?"Enter the same 4 digits again.":"Enter your PIN to check in."}
+        <div style={{fontSize:12,color:"#555",marginBottom:32,letterSpacing:"0.04em"}}>
+          {!selectedAthlete?.pin?"Create a 4-digit PIN":pinStep==="confirm"?"Enter the same 4 digits":"Enter your PIN to check in"}
         </div>
-        <div style={{display:"flex",justifyContent:"center",gap:16,marginBottom:20}}>
+        {/* Big PIN dots */}
+        <div style={{display:"flex",justifyContent:"center",gap:20,marginBottom:32}}>
           {[0,1,2,3].map(i=>(
-            <div key={i} style={{width:16,height:16,borderRadius:"50%",border:"2px solid "+(isForge?RED:ORANGE)+(i<pin.length?"":"55"),background:i<pin.length?(isForge?RED:ORANGE):"transparent",transition:"background 0.15s",boxShadow:i<pin.length?"0 0 8px "+(isForge?RED:ORANGE)+"88":"none"}}/>
+            <div key={i} style={{width:20,height:20,borderRadius:"50%",border:"2px solid "+(isForge?RED:STEEL)+(i<pin.length?"":"44"),background:i<pin.length?(isForge?"linear-gradient(135deg,#E8720C,"+RED+")":"linear-gradient(135deg,#8a9aa4,"+STEEL+")"):"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 16px "+(isForge?RED:STEEL)+"99":"none"}}/>
           ))}
         </div>
-        <input
-          type="password"
-          inputMode="numeric"
-          maxLength={4}
-          value={pin}
-          onChange={e=>{
-            const val=e.target.value.replace(/[^0-9]/g,"").slice(0,4);
-            setPin(val);
-          }}
-          placeholder="····"
-          style={{display:"block",width:160,margin:"0 auto 24px",padding:"14px",borderRadius:14,border:"1px solid #2a2a2a",background:"#141414",color:"#fff",fontSize:24,textAlign:"center",fontFamily:"Georgia,serif",letterSpacing:"0.3em",outline:"none",boxSizing:"border-box"}}
-        />
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:260,margin:"0 auto"}}>
+        <input type="password" inputMode="numeric" maxLength={4} value={pin} onChange={e=>{const val=e.target.value.replace(/[^0-9]/g,"").slice(0,4);setPin(val);}} placeholder="····" style={{display:"block",width:160,margin:"0 auto 28px",padding:"14px",borderRadius:14,border:"1px solid #1e1e1e",background:"#0e0e0e",color:"#fff",fontSize:24,textAlign:"center",fontFamily:"Georgia,serif",letterSpacing:"0.3em",outline:"none",boxSizing:"border-box"}}/>
+        {/* Keypad */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,maxWidth:280,margin:"0 auto"}}>
           {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
             <button key={i} onClick={()=>{
               if(k===null)return;
               if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
               if(pin.length<4)setPin(p=>p+String(k));
-            }} style={{padding:"18px 10px",borderRadius:14,border:"0.5px solid "+(k===null?"transparent":"#222"),background:k===null?"transparent":k==="⌫"?"#1a1a1a":"#161616",fontSize:22,fontWeight:k==="⌫"?400:300,cursor:k===null?"default":"pointer",color:k==="⌫"?"#888":"#fff",fontFamily:"Georgia, serif",transition:"background 0.1s"}}>
+            }} style={{padding:"20px 10px",borderRadius:14,border:"0.5px solid "+(k===null?"transparent":"#1a1a1a"),background:k===null?"transparent":k==="⌫"?"#141414":"#111",fontSize:24,fontWeight:300,cursor:k===null?"default":"pointer",color:k==="⌫"?"#555":"#e0e0e0",fontFamily:"sans-serif",transition:"background 0.1s",letterSpacing:0}}>
               {k===null?"":k}
             </button>
           ))}
         </div>
-        {pinError&&<div style={{marginTop:16,fontSize:13,color:"#ff6b6b",padding:"8px 16px",background:"#1a0505",borderRadius:10,border:"0.5px solid #3a1010"}}>{pinError}</div>}
+        {pinError&&<div style={{marginTop:20,fontSize:13,color:"#ff5555",padding:"10px 20px",background:"#1a0505",borderRadius:12,border:"1px solid #3a0808"}}>{pinError}</div>}
       </div>
     </>
   );
@@ -506,37 +513,50 @@ export default function Athlete(){
     const isLate=checkinInfo?.status==="late";
     const noClass=!checkinInfo;
     const alreadyIn=checkinInfo?.already;
-    const accentColor=noClass?"#555":alreadyIn?PUR:isLate?RED:GREEN;
+    const accentColor=noClass?"#444":alreadyIn?PUR:isLate?"#ff3333":GREEN;
+    const bgGrad=noClass?"#080808":isLate?"linear-gradient(160deg,#080808,#100202)":alreadyIn?"linear-gradient(160deg,#080808,#04020e)":"linear-gradient(160deg,#080808,#020e06)";
     return(
       <>
         <Head><title>Check In — TF College Group</title></Head>
-        <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a0a0a 0%,#0f0f0f 60%,"+(noClass?"#111":isLate?"#130000":alreadyIn?"#0a0015":"#001308")+" 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",padding:"3rem 1.5rem 2rem",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-          <div style={{position:"fixed",top:"30%",left:"50%",transform:"translateX(-50%)",width:300,height:300,borderRadius:"50%",background:accentColor,opacity:0.06,filter:"blur(100px)",pointerEvents:"none"}}/>
-          <div style={{position:"relative",width:90,height:90,margin:"0 auto 1.5rem"}}>
-            <div style={{width:90,height:90,borderRadius:"50%",background:"linear-gradient(135deg,"+(noClass?"#222,#333":alreadyIn?PUR+",#3a2d8f":isLate?"#8B0000,"+RED:GREEN+",#145228")+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:42,boxShadow:"0 0 60px "+accentColor+"44,0 0 120px "+accentColor+"22"}}>
+        <div style={{minHeight:"100vh",background:bgGrad,fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",padding:"3rem 1.5rem 2rem",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          {/* Top accent line */}
+          <div style={{position:"fixed",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+accentColor+",transparent)",maxWidth:480,margin:"0 auto"}}/>
+          {/* Big ambient glow */}
+          <div style={{position:"fixed",top:"20%",left:"50%",transform:"translateX(-50%)",width:500,height:400,background:"radial-gradient(ellipse,"+accentColor+"12 0%,transparent 65%)",pointerEvents:"none"}}/>
+          {/* Status icon */}
+          <div style={{position:"relative",marginBottom:24}}>
+            <div style={{position:"absolute",inset:-20,borderRadius:"50%",border:"0.5px solid "+accentColor+"15",pointerEvents:"none"}}/>
+            <div style={{position:"absolute",inset:-10,borderRadius:"50%",border:"1px solid "+accentColor+"25",pointerEvents:"none"}}/>
+            <div style={{width:100,height:100,borderRadius:"50%",background:"linear-gradient(145deg,"+(noClass?"#222,#333":alreadyIn?PUR+",#3a2d8f":isLate?"#8B0000,#cc2200":GREEN+",#0d4a20")+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:48,boxShadow:"0 0 80px "+accentColor+"44,0 0 160px "+accentColor+"18"}}>
               {noClass?"📅":alreadyIn?"✓":isLate?"⚠":"✓"}
             </div>
-            <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:"1px solid "+accentColor+"33",pointerEvents:"none"}}/>
           </div>
-          <div style={{fontSize:28,fontWeight:700,color:"#fff",marginBottom:8,letterSpacing:"-0.02em"}}>
-            {noClass?"No class today":alreadyIn?"Already checked in":isLate?"You're late.":"You're in early."}
+          {/* Giant status text */}
+          {!noClass&&!alreadyIn&&(
+            <div style={{fontSize:56,fontWeight:900,color:accentColor,letterSpacing:"-0.04em",lineHeight:1,marginBottom:4,textShadow:"0 0 60px "+accentColor+"66",textTransform:"uppercase"}}>
+              {isLate?"LATE":"EARLY"}
+            </div>
+          )}
+          <div style={{fontSize:noClass||alreadyIn?24:15,fontWeight:noClass||alreadyIn?800:600,color:noClass||alreadyIn?"#fff":"#888",marginBottom:8,letterSpacing:noClass||alreadyIn?"-0.02em":"0.04em",textTransform:noClass||alreadyIn?"none":"uppercase"}}>
+            {noClass?"No class today":alreadyIn?"Already checked in":isLate?"On time is late.":"That's the standard."}
           </div>
-          {checkinInfo&&<div style={{fontSize:14,color:"#555",marginBottom:20}}>Signed in at {checkinInfo.time}</div>}
-          {checkinInfo?.error&&<div style={{fontSize:12,color:"#ff6b6b",marginBottom:8,padding:"10px 14px",background:"#1a0505",borderRadius:10,border:"0.5px solid #3a1010"}}>Save failed: {checkinInfo.error} — check Supabase RLS</div>}
+          {checkinInfo&&<div style={{fontSize:13,color:"#444",marginBottom:20,letterSpacing:"0.04em"}}>Signed in at {checkinInfo.time}</div>}
+          {checkinInfo?.error&&<div style={{fontSize:12,color:"#ff5555",marginBottom:12,padding:"10px 16px",background:"#1a0505",borderRadius:12,border:"1px solid #3a0808"}}>Save failed: {checkinInfo.error}</div>}
           {streak>0&&!noClass&&(
-            <div style={{padding:"12px 20px",borderRadius:12,background:"#0a1f0a",border:"0.5px solid "+GREEN+"44",marginBottom:16,display:"inline-flex",alignItems:"center",gap:8}}>
-              <span style={{fontSize:20}}>🔥</span>
-              <span style={{fontSize:14,color:GREEN,fontWeight:600}}>{streak} day early streak</span>
+            <div style={{padding:"12px 24px",borderRadius:12,background:"linear-gradient(135deg,#051a0a,#0a2010)",border:"1px solid "+GREEN+"33",marginBottom:20,display:"inline-flex",alignItems:"center",gap:10,boxShadow:"0 4px 20px "+GREEN+"22"}}>
+              <span style={{fontSize:22}}>🔥</span>
+              <span style={{fontSize:15,color:GREEN,fontWeight:800}}>{streak}-day early streak</span>
             </div>
           )}
           {!noClass&&!alreadyIn&&(
-            <div style={{padding:"16px 20px",borderRadius:14,border:"1px solid "+(isLate?RED+"44":GREEN+"44"),background:isLate?"linear-gradient(135deg,#1a0505,#200a0a)":"linear-gradient(135deg,#051a0a,#0a1f0e)",marginBottom:24,textAlign:"left",width:"100%",maxWidth:360,boxSizing:"border-box"}}>
-              {isLate?(<><div style={{fontSize:14,fontWeight:700,color:"#ff6b6b",marginBottom:8}}>On time is late. Early is the only standard.</div><div style={{fontSize:13,color:"#888",lineHeight:1.7}}>Consequence: <span style={{color:"#ff6b6b",fontWeight:600}}>50 crunches upon arrival.</span></div></>)
-              :(<><div style={{fontSize:14,fontWeight:700,color:"#4caf76",marginBottom:8}}>That's the standard. Keep setting it.</div><div style={{fontSize:13,color:"#888",lineHeight:1.7}}>Early is the only acceptable arrival. ⚒</div></>)}
+            <div style={{padding:"16px 20px",borderRadius:16,border:"1px solid "+accentColor+"33",background:isLate?"linear-gradient(135deg,#120303,#1a0606)":"linear-gradient(135deg,#031208,#061a0d)",marginBottom:28,textAlign:"left",width:"100%",maxWidth:360,boxSizing:"border-box",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+accentColor+",transparent)"}}/>
+              {isLate?(<><div style={{fontSize:13,fontWeight:800,color:"#ff5555",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Consequence</div><div style={{fontSize:13,color:"#888",lineHeight:1.7}}><span style={{color:"#ff6666",fontWeight:700}}>50 crunches upon arrival.</span> You know the standard.</div></>)
+              :(<><div style={{fontSize:13,fontWeight:800,color:"#4cdd80",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Keep it up</div><div style={{fontSize:13,color:"#888",lineHeight:1.7}}>Early is the only acceptable arrival. ⚒</div></>)}
             </div>
           )}
-          <button onClick={()=>{setScreen("profile");setTab("profile");}} style={{width:"100%",maxWidth:360,padding:"16px",borderRadius:14,border:"none",background:"linear-gradient(135deg,"+PUR+",#3a2d8f)",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.01em",boxShadow:"0 4px 20px "+PUR+"44"}}>
-            Go to my profile →
+          <button onClick={()=>{setScreen("profile");setTab("profile");}} style={{width:"100%",maxWidth:360,padding:"18px",borderRadius:14,border:"none",background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.06em",textTransform:"uppercase",boxShadow:"0 6px 30px #E8720C44"}}>
+            My Profile →
           </button>
         </div>
       </>
@@ -635,41 +655,48 @@ export default function Athlete(){
     return(
       <>
         <Head><title>{selectedAthlete.name} — TF College Group</title></Head>
-        <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
-          <div style={{background:"linear-gradient(180deg,#0f0f0f 0%,#0a0a0a 100%)",padding:"0.75rem 1.25rem 0",borderBottom:"1px solid #1a1a1a",position:"relative",overflow:"hidden"}}>
-            <div style={{position:"absolute",top:-60,right:-40,width:180,height:180,borderRadius:"50%",background:isForge?RED:ORANGE,opacity:0.05,filter:"blur(60px)",pointerEvents:"none"}}/>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,position:"relative"}}>
+        <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
+          {/* Profile header */}
+          <div style={{background:"linear-gradient(180deg,#0e0600 0%,#0a0505 50%,#080808 100%)",borderBottom:"1px solid #1a0800",position:"relative",overflow:"hidden"}}>
+            {/* Top accent */}
+            <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+(isForge?"#E8720C,#C0392B":"#606a75,#8a9aa4")+",transparent)"}}/>
+            {/* Ambient glow */}
+            <div style={{position:"absolute",top:-40,right:-40,width:220,height:220,borderRadius:"50%",background:isForge?"#E8720C0a":"#8a9aa40a",filter:"blur(50px)",pointerEvents:"none"}}/>
+            {/* Nav row */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
               <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                <button onClick={()=>setScreen("roster")} style={{background:"#161616",border:"0.5px solid #2a2a2a",color:"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",borderRadius:8}}>← Switch</button>
-                <a href="/" style={{background:"#161616",border:"0.5px solid #2a2a2a",borderRadius:8,color:"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>🏠</a>
-                <a href="/coach" style={{background:"#161616",border:"0.5px solid #2a2a2a",borderRadius:8,color:"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>⚒</a>
+                <button onClick={()=>setScreen("roster")} style={{background:"#111",border:"0.5px solid #1e1e1e",color:"#666",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 14px",borderRadius:8,letterSpacing:"0.02em"}}>← Switch</button>
+                <a href="/" style={{background:"#111",border:"0.5px solid #1e1e1e",borderRadius:8,color:"#666",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>🏠</a>
+                <a href="/coach" style={{background:"#111",border:"0.5px solid #1e1e1e",borderRadius:8,color:"#666",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>⚒</a>
               </div>
-              <div style={{fontSize:10,color:"#2a2a2a",letterSpacing:"0.08em",textTransform:"uppercase"}}>TF College Group</div>
+              <div style={{fontSize:9,color:"#2a2a2a",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:600}}>TF College Group</div>
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14,position:"relative"}}>
+            {/* Identity banner */}
+            <div style={{display:"flex",alignItems:"center",gap:16,padding:"4px 16px 16px",position:"relative"}}>
               <div style={{position:"relative",flexShrink:0}}>
-                <div style={{width:62,height:62,borderRadius:"50%",background:isForge?"linear-gradient(135deg,"+RED+",#8B1A1A)":"linear-gradient(135deg,#9aa8b0,"+STEEL+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:600,color:"#fff",overflow:"hidden",boxShadow:"0 0 24px "+(isForge?RED:ORANGE)+"33"}}>
+                <div style={{position:"absolute",inset:-5,borderRadius:"50%",border:"1px solid "+(isForge?RED:STEEL)+"44",pointerEvents:"none"}}/>
+                <div style={{width:70,height:70,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:900,color:"#fff",overflow:"hidden",boxShadow:"0 0 30px "+(isForge?RED:STEEL)+"44"}}>
                   {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:selectedAthlete.name[0]}
                 </div>
-                <div style={{position:"absolute",inset:-3,borderRadius:"50%",border:"1.5px solid "+(isForge?RED:ORANGE)+"44",pointerEvents:"none"}}/>
               </div>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:20,fontWeight:700,color:"#fff",letterSpacing:"-0.01em",lineHeight:1.2}}>{selectedAthlete.name}</div>
-                <div style={{fontSize:12,color:"#555",marginTop:1}}>{selectedAthlete.sport}</div>
+                <div style={{fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1,textTransform:"uppercase"}}>{selectedAthlete.name}</div>
+                <div style={{fontSize:11,color:"#444",marginTop:3,letterSpacing:"0.04em"}}>{selectedAthlete.sport}</div>
               </div>
               <div style={{textAlign:"right",flexShrink:0}}>
-                <div style={{fontSize:10,fontWeight:700,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.08em",background:(isForge?RED:STEEL)+"18",padding:"3px 10px",borderRadius:6,border:"0.5px solid "+(isForge?RED:STEEL)+"33",marginBottom:4,display:"inline-block"}}>{isForge?"The Forge":"The Iron"}</div>
-                {streak>0&&<div style={{fontSize:11,color:GREEN}}>🔥 {streak}-day streak</div>}
+                <div style={{fontSize:9,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.12em",background:(isForge?RED:STEEL)+"18",padding:"4px 12px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"44",marginBottom:5,display:"inline-block",whiteSpace:"nowrap"}}>{isForge?"⚔ Forge":"⚒ Iron"}</div>
+                {streak>0&&<div style={{fontSize:11,color:GREEN,fontWeight:700}}>🔥 {streak}-day</div>}
               </div>
             </div>
-            <div style={{display:"flex",overflowX:"auto",gap:0,padding:"0",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",marginLeft:-4,marginRight:-4,paddingLeft:4,paddingRight:4}}>
+            {/* Tab bar */}
+            <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414"}}>
               {TABS.map(t=>{
                 const icons={"profile":"👤","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","private":"🔒","stretching":"🧘","journey":"🛤"};
                 const isActive=tab===t.id;
-                const tabColor=isForge?RED:ORANGE;
+                const tabColor=isForge?"#E8720C":STEEL;
                 return(
-                <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"8px 10px 10px",background:"transparent",border:"none",borderBottom:"2px solid "+(isActive?tabColor:"transparent"),color:isActive?"#fff":"#555",fontSize:10,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.12s"}}>
-                  <span style={{fontSize:15}}>{icons[t.id]||"•"}</span>
+                <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"10px 12px 8px",background:isActive?"#0e0e0e":"transparent",border:"none",borderBottom:"2px solid "+(isActive?tabColor:"transparent"),borderRight:"none",borderLeft:"none",borderTop:"none",color:isActive?"#fff":"#444",fontSize:10,fontWeight:isActive?800:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.12s",textTransform:isActive?"uppercase":"none",letterSpacing:isActive?"0.04em":"0"}}>
+                  <span style={{fontSize:15,filter:isActive?"drop-shadow(0 0 4px "+tabColor+"88)":"none"}}>{icons[t.id]||"•"}</span>
                   <span>{t.label}</span>
                 </button>
                 );
@@ -677,7 +704,7 @@ export default function Athlete(){
             </div>
           </div>
 
-          <div style={{padding:"1.25rem",background:BG,minHeight:"60vh"}}>
+          <div style={{padding:"1.25rem",background:"#080808",minHeight:"60vh"}}>
 
             {tab==="profile"&&(
               <div>
