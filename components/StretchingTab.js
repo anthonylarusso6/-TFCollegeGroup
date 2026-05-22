@@ -119,21 +119,27 @@ export default function StretchingTab(){
   const totalAll=KEYS.reduce((s,k)=>s+CATS[k].s.length,0);
   const catDone=c.s.filter((_,i)=>done.has(cat+"-"+i)).length;
   const catPct=Math.round((catDone/c.s.length)*100);
-  const circumference=2*Math.PI*26; // r=26
+  const circumference=2*Math.PI*26;
 
   return(
     <div style={{fontFamily:"Georgia,serif",minHeight:"60vh"}}>
 
-      {/* ── ACTIVE TIMER CARD ── */}
+      {/* ── ACTIVE TIMER ── */}
       {timerName&&(
-        <div style={{background:"#111",borderRadius:16,padding:"1rem 1.25rem",marginBottom:14,border:"1.5px solid "+timerColor+"44",position:"relative",overflow:"hidden"}}>
+        <div style={{
+          background:"linear-gradient(135deg,#1a1a1a,#111)",
+          borderRadius:18,padding:"14px 16px",marginBottom:16,
+          border:"1.5px solid "+timerColor+"66",
+          boxShadow:"0 0 24px "+timerColor+"22,0 4px 16px #00000080",
+          position:"relative",overflow:"hidden",
+        }}>
           <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+timerColor+",transparent)"}}/>
-          <div style={{display:"flex",alignItems:"center",gap:14}}>
-            {/* Circular countdown */}
+          <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at top right,"+timerColor+"0a,transparent 70%)",pointerEvents:"none"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:16,position:"relative"}}>
             <div style={{position:"relative",flexShrink:0}}>
-              <svg viewBox="0 0 60 60" style={{width:64,height:64,transform:"rotate(-90deg)"}}>
-                <circle cx="30" cy="30" r="26" fill="none" stroke="#1e1e1e" strokeWidth="5"/>
-                <circle cx="30" cy="30" r="26" fill="none" stroke={timerSecs<=5?"#C0392B":timerColor}
+              <svg viewBox="0 0 60 60" style={{width:68,height:68,transform:"rotate(-90deg)",filter:"drop-shadow(0 0 6px "+timerColor+"55)"}}>
+                <circle cx="30" cy="30" r="26" fill="none" stroke="#252525" strokeWidth="5"/>
+                <circle cx="30" cy="30" r="26" fill="none" stroke={timerSecs<=5?"#ff4444":timerColor}
                   strokeWidth="5"
                   strokeDasharray={`${(timerSecs/timerTotal)*circumference} ${circumference}`}
                   strokeLinecap="round"
@@ -141,35 +147,34 @@ export default function StretchingTab(){
                 />
               </svg>
               <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <span style={{fontSize:18,fontWeight:900,color:timerSecs<=5?"#ff5555":"#fff",lineHeight:1}}>{timerSecs}</span>
+                <span style={{fontSize:19,fontWeight:900,color:timerSecs<=5?"#ff4444":"#fff",lineHeight:1,textShadow:timerSecs<=5?"0 0 8px #ff444488":"none"}}>{timerSecs}</span>
               </div>
             </div>
-            {/* Name + bar */}
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:9,color:"#444",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:3}}>Holding now</div>
-              <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:8,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{timerName}</div>
-              <div style={{height:3,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}>
-                <div style={{height:"100%",width:(timerSecs/timerTotal*100)+"%",background:timerSecs<=5?"#C0392B":timerColor,borderRadius:2,transition:"width 1s linear"}}/>
+              <div style={{fontSize:9,color:timerColor,textTransform:"uppercase",letterSpacing:"0.14em",marginBottom:4,fontWeight:700}}>Holding Now</div>
+              <div style={{fontSize:15,fontWeight:800,color:"#fff",marginBottom:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:"-0.01em"}}>{timerName}</div>
+              <div style={{height:4,background:"#252525",borderRadius:3,overflow:"hidden"}}>
+                <div style={{height:"100%",width:(timerSecs/timerTotal*100)+"%",background:timerSecs<=5?"#ff4444":timerColor,borderRadius:3,transition:"width 1s linear",boxShadow:"0 0 8px "+(timerSecs<=5?"#ff444488":timerColor+"88")}}/>
               </div>
             </div>
             <button onClick={()=>{clearInterval(timerRef.current);setTimerName("");}}
-              style={{background:"transparent",border:"none",color:"#444",fontSize:20,cursor:"pointer",padding:"4px",flexShrink:0,lineHeight:1}}>✕</button>
+              style={{background:"#222",border:"1px solid #333",color:"#888",fontSize:16,cursor:"pointer",padding:"6px 8px",borderRadius:8,lineHeight:1,flexShrink:0}}>✕</button>
           </div>
         </div>
       )}
 
       {/* ── OVERALL PROGRESS ── */}
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-        <div style={{flex:1,height:3,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}>
-          <div style={{height:"100%",width:(totalDone/totalAll*100)+"%",background:"linear-gradient(90deg,#534AB7,#E8720C)",borderRadius:2,transition:"width 0.4s"}}/>
+      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+        <div style={{flex:1,height:5,background:"#222",borderRadius:3,overflow:"hidden"}}>
+          <div style={{height:"100%",width:(totalDone/totalAll*100)+"%",background:"linear-gradient(90deg,#534AB7,#E8720C)",borderRadius:3,transition:"width 0.4s",boxShadow:totalDone>0?"0 0 8px #E8720C44":undefined}}/>
         </div>
-        <div style={{fontSize:10,color:totalDone>0?"#888":"#333",whiteSpace:"nowrap",fontWeight:600,minWidth:55,textAlign:"right"}}>
-          {totalDone} / {totalAll}
+        <div style={{fontSize:11,color:totalDone>0?"#bbb":"#444",fontWeight:700,minWidth:52,textAlign:"right"}}>
+          {totalDone}<span style={{color:"#444",fontWeight:400}}> / {totalAll}</span>
         </div>
       </div>
 
       {/* ── CATEGORY TABS ── */}
-      <div style={{display:"flex",gap:5,overflowX:"auto",paddingBottom:4,marginBottom:12,scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+      <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:6,marginBottom:14,scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
         {KEYS.map(k=>{
           const cc=CATS[k];
           const isA=cat===k;
@@ -177,33 +182,46 @@ export default function StretchingTab(){
           const allD=kd===cc.s.length;
           return(
             <button key={k} onClick={()=>{setCat(k);setOpen(null);}}
-              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"8px 10px",borderRadius:10,border:"1.5px solid "+(isA?cc.c:allD?cc.c+"55":"#1e1e1e"),background:isA?cc.c:allD?cc.c+"12":"#111",cursor:"pointer",flexShrink:0,fontFamily:"Georgia,serif",position:"relative",transition:"all 0.15s"}}>
-              {allD&&!isA&&<div style={{position:"absolute",top:3,right:3,width:5,height:5,borderRadius:"50%",background:cc.c,boxShadow:"0 0 4px "+cc.c}}/>}
-              <span style={{fontSize:17}}>{cc.i}</span>
-              <span style={{fontSize:8,color:isA?"#fff":allD?cc.c:"#555",whiteSpace:"nowrap",fontWeight:isA?800:400,textTransform:"uppercase",letterSpacing:"0.04em"}}>{cc.l}</span>
-              {kd>0&&!allD&&(
-                <span style={{fontSize:7,color:isA?"rgba(255,255,255,0.5)":cc.c+"88"}}>{kd}/{cc.s.length}</span>
-              )}
+              style={{
+                display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+                padding:"10px 12px",borderRadius:12,
+                border:"1.5px solid "+(isA?cc.c:allD?cc.c+"66":"#2d2d2d"),
+                background:isA?"linear-gradient(160deg,"+cc.c+"ee,"+cc.c+"bb)":allD?cc.c+"18":"#181818",
+                cursor:"pointer",flexShrink:0,fontFamily:"Georgia,serif",
+                position:"relative",
+                boxShadow:isA?"0 0 16px "+cc.c+"44,0 2px 8px #00000060":allD?"0 0 8px "+cc.c+"22":"none",
+                transition:"all 0.15s",
+              }}>
+              {allD&&!isA&&<div style={{position:"absolute",top:4,right:4,width:6,height:6,borderRadius:"50%",background:cc.c,boxShadow:"0 0 6px "+cc.c}}/>}
+              <span style={{fontSize:20}}>{cc.i}</span>
+              <span style={{fontSize:9,color:isA?"#fff":allD?cc.c:"#aaa",whiteSpace:"nowrap",fontWeight:isA?900:500,textTransform:"uppercase",letterSpacing:"0.06em"}}>{cc.l}</span>
+              {kd>0&&!allD&&<span style={{fontSize:8,color:cc.c,fontWeight:700}}>{kd}/{cc.s.length}</span>}
             </button>
           );
         })}
       </div>
 
       {/* ── CATEGORY HERO ── */}
-      <div style={{background:"linear-gradient(135deg,"+c.c+"1a,"+c.c+"06)",borderRadius:14,padding:"16px",marginBottom:10,border:"1px solid "+c.c+"33",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",right:-12,top:-12,fontSize:80,opacity:0.07,lineHeight:1,userSelect:"none"}}>{c.i}</div>
-        <div style={{position:"absolute",top:0,left:0,width:"40%",height:2,background:"linear-gradient(90deg,"+c.c+",transparent)"}}/>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div style={{
+        background:"linear-gradient(135deg,"+c.c+"28,"+c.c+"0e,#0d0d0d)",
+        borderRadius:16,padding:"20px",marginBottom:12,
+        border:"1px solid "+c.c+"55",
+        position:"relative",overflow:"hidden",
+        boxShadow:"0 0 32px "+c.c+"18,0 4px 20px #00000060",
+      }}>
+        <div style={{position:"absolute",right:-16,top:-16,fontSize:100,opacity:0.1,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>{c.i}</div>
+        <div style={{position:"absolute",top:0,left:0,width:"60%",height:2,background:"linear-gradient(90deg,"+c.c+",transparent)"}}/>
+        <div style={{position:"absolute",bottom:0,right:0,width:"40%",height:1,background:"linear-gradient(270deg,"+c.c+"44,transparent)"}}/>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}}>
           <div>
-            <div style={{fontSize:9,color:c.c,textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:800,marginBottom:5}}>Muscle Group</div>
-            <div style={{fontSize:24,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",marginBottom:3}}>{c.l}</div>
-            <div style={{fontSize:11,color:"#555"}}>{catDone} of {c.s.length} complete</div>
-            {catPct===100&&<div style={{fontSize:11,color:c.c,fontWeight:700,marginTop:4}}>✓ All done</div>}
+            <div style={{fontSize:9,color:c.c,textTransform:"uppercase",letterSpacing:"0.16em",fontWeight:800,marginBottom:6,textShadow:"0 0 12px "+c.c+"88"}}>{c.l} · Muscle Group</div>
+            <div style={{fontSize:28,fontWeight:900,color:"#fff",letterSpacing:"-0.03em",lineHeight:1,marginBottom:6,textShadow:"0 2px 12px #00000080"}}>{c.l}</div>
+            <div style={{fontSize:12,color:"#888",letterSpacing:"0.02em"}}>{catDone} of {c.s.length} complete</div>
+            {catPct===100&&<div style={{fontSize:12,color:c.c,fontWeight:800,marginTop:5,textShadow:"0 0 8px "+c.c+"88"}}>✓ All done</div>}
           </div>
-          {/* Progress ring */}
           <div style={{position:"relative",flexShrink:0}}>
-            <svg viewBox="0 0 60 60" style={{width:60,height:60,transform:"rotate(-90deg)"}}>
-              <circle cx="30" cy="30" r="24" fill="none" stroke="#1a1a1a" strokeWidth="5"/>
+            <svg viewBox="0 0 60 60" style={{width:64,height:64,transform:"rotate(-90deg)",filter:"drop-shadow(0 0 8px "+c.c+"44)"}}>
+              <circle cx="30" cy="30" r="24" fill="none" stroke="#222" strokeWidth="5"/>
               <circle cx="30" cy="30" r="24" fill="none" stroke={c.c}
                 strokeWidth="5"
                 strokeDasharray={`${catPct*1.508} 150.8`}
@@ -212,14 +230,14 @@ export default function StretchingTab(){
               />
             </svg>
             <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <span style={{fontSize:12,fontWeight:900,color:catPct===100?c.c:"#fff"}}>{catPct}%</span>
+              <span style={{fontSize:13,fontWeight:900,color:catPct===100?c.c:"#fff",textShadow:catPct===100?"0 0 8px "+c.c:"none"}}>{catPct}%</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── STRETCH CARDS ── */}
-      <div style={{display:"flex",flexDirection:"column",gap:5}}>
+      <div style={{display:"flex",flexDirection:"column",gap:7}}>
         {c.s.map((s,i)=>{
           const key=cat+"-"+i;
           const isDone=done.has(key);
@@ -227,56 +245,95 @@ export default function StretchingTab(){
           const isTimerHere=timerName===s.n;
           return(
             <div key={i} style={{
-              background:isDone?"#0a120a":"#141414",
-              borderRadius:12,
-              border:"1px solid "+(isDone?c.c+"33":isOpen?c.c+"55":"#1e1e1e"),
+              background:isDone?"#0f160f":isOpen?"#1c1c1c":"#181818",
+              borderRadius:14,
+              border:"1px solid "+(isDone?c.c+"44":isOpen?c.c+"66":"#2d2d2d"),
               overflow:"hidden",
-              borderLeft:"3px solid "+(isDone?c.c:isOpen?c.c+"99":"#252525"),
+              borderLeft:"3px solid "+(isDone?c.c:isOpen?c.c:"#404040"),
+              boxShadow:isOpen?"0 0 16px "+c.c+"18,0 2px 12px #00000060":isDone?"0 0 8px "+c.c+"12":undefined,
               transition:"all 0.15s",
             }}>
-              {/* Row */}
               <div onClick={()=>setOpen(isOpen?null:i)}
-                style={{display:"flex",alignItems:"center",gap:10,padding:"11px 12px 11px 10px",cursor:"pointer",userSelect:"none"}}>
-                {/* Checkbox */}
+                style={{display:"flex",alignItems:"center",gap:12,padding:"13px 14px 13px 12px",cursor:"pointer",userSelect:"none"}}>
                 <button onClick={e=>{e.stopPropagation();toggleDone(key);}}
-                  style={{width:24,height:24,borderRadius:"50%",border:"2px solid "+(isDone?c.c:"#2a2a2a"),background:isDone?c.c:"transparent",flexShrink:0,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:11,fontWeight:900,transition:"all 0.15s"}}>
+                  style={{
+                    width:26,height:26,borderRadius:"50%",
+                    border:"2px solid "+(isDone?c.c:"#3a3a3a"),
+                    background:isDone?"linear-gradient(135deg,"+c.c+","+c.c+"cc)":"transparent",
+                    flexShrink:0,cursor:"pointer",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    color:"#fff",fontSize:11,fontWeight:900,
+                    boxShadow:isDone?"0 0 8px "+c.c+"66":undefined,
+                    transition:"all 0.15s",
+                  }}>
                   {isDone?"✓":""}
                 </button>
-                {/* Name + sub */}
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:isDone?400:600,color:isDone?"#3a3a3a":"#ddd",textDecoration:isDone?"line-through":"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.n}</div>
-                  <div style={{fontSize:10,color:isTimerHere?c.c:"#444",marginTop:1,fontWeight:isTimerHere?700:400}}>
+                  <div style={{fontSize:14,fontWeight:isDone?500:700,color:isDone?"#555":"#fff",textDecoration:isDone?"line-through":"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:"-0.01em"}}>{s.n}</div>
+                  <div style={{fontSize:11,color:isTimerHere?c.c:"#666",marginTop:2,fontWeight:isTimerHere?700:400}}>
                     {isTimerHere?"⏳ Timer running...":s.d+"s hold"}
                   </div>
                 </div>
-                {/* Timer btn */}
                 <button onClick={e=>{e.stopPropagation();startTimer(s.d,s.n,c.c);}}
-                  style={{width:32,height:32,borderRadius:8,border:"1px solid "+(isTimerHere?c.c:c.c+"33"),background:isTimerHere?c.c:c.c+"15",flexShrink:0,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,transition:"all 0.15s"}}>
+                  style={{
+                    width:36,height:36,borderRadius:10,
+                    border:"1.5px solid "+(isTimerHere?c.c:c.c+"44"),
+                    background:isTimerHere?"linear-gradient(135deg,"+c.c+","+c.c+"bb)":c.c+"18",
+                    flexShrink:0,cursor:"pointer",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    fontSize:16,
+                    boxShadow:isTimerHere?"0 0 10px "+c.c+"66":undefined,
+                    transition:"all 0.15s",
+                  }}>
                   ⏱
                 </button>
-                {/* Chevron */}
-                <span style={{fontSize:11,color:"#333",flexShrink:0,display:"inline-block",transform:isOpen?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
+                <span style={{fontSize:12,color:"#555",flexShrink:0,display:"inline-block",transform:isOpen?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
               </div>
 
-              {/* Expanded detail */}
               {isOpen&&(
-                <div style={{borderTop:"1px solid #1e1e1e",padding:"12px 12px 14px 13px"}}>
-                  <p style={{fontSize:13,color:"#777",lineHeight:1.8,margin:"0 0 12px",paddingLeft:10,borderLeft:"2px solid "+c.c+"44",fontStyle:"italic"}}>{s.t}</p>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                <div style={{borderTop:"1px solid #252525",padding:"14px 14px 16px"}}>
+                  <p style={{
+                    fontSize:13,color:"#aaa",lineHeight:1.85,margin:"0 0 14px",
+                    paddingLeft:12,
+                    borderLeft:"3px solid "+c.c+"55",
+                    fontStyle:"italic",
+                    background:c.c+"08",
+                    padding:"10px 12px",
+                    borderRadius:"0 8px 8px 0",
+                  }}>{s.t}</p>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
                     <button onClick={()=>startTimer(s.d,s.n,c.c)}
-                      style={{borderRadius:10,border:"1px solid "+c.c+"33",background:c.c+"12",padding:"10px 4px",cursor:"pointer",fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all 0.15s"}}>
-                      <span style={{fontSize:19}}>⏱</span>
-                      <span style={{fontSize:10,fontWeight:700,color:c.c}}>{s.d}s</span>
+                      style={{
+                        borderRadius:12,border:"1.5px solid "+c.c+"44",
+                        background:"linear-gradient(160deg,"+c.c+"18,"+c.c+"0a)",
+                        padding:"12px 4px",cursor:"pointer",fontFamily:"Georgia,serif",
+                        display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                        transition:"all 0.15s",
+                      }}>
+                      <span style={{fontSize:20}}>⏱</span>
+                      <span style={{fontSize:11,fontWeight:800,color:c.c}}>{s.d}s</span>
                     </button>
                     <a href={"https://www.youtube.com/results?search_query="+encodeURIComponent(s.n+" stretch tutorial")} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()}
-                      style={{borderRadius:10,border:"1px solid #C0392B33",background:"#C0392B0f",padding:"10px 4px",cursor:"pointer",textDecoration:"none",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
-                      <span style={{fontSize:19}}>▶️</span>
-                      <span style={{fontSize:10,fontWeight:700,color:"#C0392B"}}>Video</span>
+                      style={{
+                        borderRadius:12,border:"1.5px solid #C0392B55",
+                        background:"linear-gradient(160deg,#C0392B18,#C0392B0a)",
+                        padding:"12px 4px",cursor:"pointer",textDecoration:"none",
+                        display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                      }}>
+                      <span style={{fontSize:20}}>▶️</span>
+                      <span style={{fontSize:11,fontWeight:800,color:"#C0392B"}}>Video</span>
                     </a>
                     <button onClick={()=>{toggleDone(key);setOpen(null);}}
-                      style={{borderRadius:10,border:"1px solid "+(isDone?"#1E6B3A33":c.c+"33"),background:isDone?"#1E6B3A18":c.c+"18",padding:"10px 4px",cursor:"pointer",fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",gap:3,transition:"all 0.15s"}}>
-                      <span style={{fontSize:19}}>{isDone?"↩":"✓"}</span>
-                      <span style={{fontSize:10,fontWeight:700,color:isDone?"#1E6B3A":c.c}}>{isDone?"Undo":"Done"}</span>
+                      style={{
+                        borderRadius:12,
+                        border:"1.5px solid "+(isDone?"#1E6B3A55":c.c+"44"),
+                        background:"linear-gradient(160deg,"+(isDone?"#1E6B3A18":""+c.c+"18")+","+(isDone?"#1E6B3A0a":""+c.c+"0a")+")",
+                        padding:"12px 4px",cursor:"pointer",fontFamily:"Georgia,serif",
+                        display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                        transition:"all 0.15s",
+                      }}>
+                      <span style={{fontSize:20}}>{isDone?"↩":"✓"}</span>
+                      <span style={{fontSize:11,fontWeight:800,color:isDone?"#1E6B3A":c.c}}>{isDone?"Undo":"Done"}</span>
                     </button>
                   </div>
                 </div>
@@ -286,10 +343,9 @@ export default function StretchingTab(){
         })}
       </div>
 
-      {/* Footer */}
-      <div style={{textAlign:"center",padding:"2rem 0 0.5rem"}}>
-        <div style={{fontSize:12,color:"#2a2a2a",fontStyle:"italic",letterSpacing:"0.04em"}}>"As iron sharpens iron"</div>
-        <div style={{fontSize:10,color:"#222",marginTop:2}}>Proverbs 27:17</div>
+      <div style={{textAlign:"center",padding:"2.5rem 0 0.5rem"}}>
+        <div style={{fontSize:12,color:"#444",fontStyle:"italic",letterSpacing:"0.04em"}}>"As iron sharpens iron"</div>
+        <div style={{fontSize:10,color:"#333",marginTop:3}}>Proverbs 27:17</div>
       </div>
     </div>
   );
