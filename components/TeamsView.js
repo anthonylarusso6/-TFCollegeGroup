@@ -29,7 +29,8 @@ export default function TeamsView({athletes=[]}){
   const[loading,setLoading]=useState(true);
   const[saving,setSaving]=useState(false);
   const[saved,setSaved]=useState(false);
-  const[error,setError]=useState("");
+  const[saveError,setSaveError]=useState("");
+  const[loadError,setLoadError]=useState("");
   const[dragging,setDragging]=useState(null);
   const[dragOver,setDragOver]=useState(null);
   const[dragOverLeader,setDragOverLeader]=useState(null);
@@ -63,7 +64,7 @@ export default function TeamsView({athletes=[]}){
       }
     }catch(e){
       console.error("Teams load:",e);
-      setError(e.message||"Failed to load teams");
+      setLoadError(e.message||"Failed to load teams");
       const g={};for(let i=0;i<4;i++)g[i]=[];
       setGroups(g);
     }
@@ -117,11 +118,12 @@ export default function TeamsView({athletes=[]}){
 
   const saveChanges=async()=>{
     setSaving(true);
+    setSaveError("");
     try{
       const groupsArr=Array.from({length:groupCount},(_,i)=>groups[i]||[]);
       const leadersArr=Array.from({length:groupCount},(_,i)=>leaders[i]||null);
       const braceletsArr=Array.from({length:groupCount},(_,i)=>bracelets[i]||null);
-      const payload={groups:groupsArr,leaders:leadersArr,bracelets:braceletsArr,group_count:groupCount};
+      const payload={groups:groupsArr,leaders:leadersArr,bracelets:braceletsArr,group_count:groupCount,phase:"setup",locked:false};
       if(draftId){
         const{error:err}=await supabase.from("draft").update(payload).eq("id",draftId);
         if(err)throw err;
@@ -136,17 +138,19 @@ export default function TeamsView({athletes=[]}){
           if(ath){
             const updates={role:leadersArr[i]===name?"forge":"iron",group_idx:i};
             if(leadersArr[i]===name&&braceletsArr[i])updates.bracelet=braceletsArr[i].ref;
-            await supabase.from("athletes").update(updates).eq("id",ath.id);
+            try{await supabase.from("athletes").update(updates).eq("id",ath.id);}catch(ae){console.error("Athlete update:",ae);}
           }
         }
       }
       setSaved(true);setTimeout(()=>setSaved(false),3000);
-    }catch(e){console.error("Save error:",e);}
+    }catch(e){
+      console.error("Save error:",e);
+      setSaveError(e.message||"Save failed — check console");
+    }
     setSaving(false);
   };
 
   if(loading)return<div style={{textAlign:"center",padding:"3rem",color:"#555",fontSize:13}}>Loading teams...</div>;
-  if(error)return<div style={{background:"#1a0808",borderRadius:10,padding:"14px",color:"#C0392B",fontSize:13,border:"0.5px solid #C0392B44"}}>{error}</div>;
 
   const allAssigned=Object.values(groups).flat();
   const active=athletes.filter(a=>a.status==="active");
@@ -206,16 +210,35 @@ export default function TeamsView({athletes=[]}){
         </div>
       )}
 
+      {/* Load error banner */}
+      {loadError&&(
+        <div style={{background:"#1a0808",borderRadius:10,padding:"10px 14px",marginBottom:10,border:"0.5px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+          <span style={{fontSize:12,color:"#C0392B"}}>⚠ {loadError}</span>
+          <button onClick={()=>{setLoadError("");loadTeams();}} style={{background:"transparent",border:"0.5px solid #C0392B55",borderRadius:6,color:"#C0392B",fontSize:11,cursor:"pointer",padding:"4px 10px",fontFamily:"Georgia,serif"}}>Retry</button>
+        </div>
+      )}
+
       {/* Header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:saveError?6:14}}>
         <div>
           <div style={{fontSize:13,fontWeight:600,color:"#ddd"}}>{allAssigned.length}/{active.length} assigned</div>
           {unassigned.length>0&&<div style={{fontSize:11,color:"#555"}}>{unassigned.length} not yet placed</div>}
         </div>
-        <button onClick={saveChanges} disabled={saving} style={{padding:"10px 20px",borderRadius:10,border:"none",background:saved?"#1E6B3A":saving?"#222":"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:12,fontWeight:700,cursor:saving?"not-allowed":"pointer",fontFamily:"Georgia,serif",boxShadow:(saved||saving)?"none":"0 4px 16px #E8720C44",transition:"all 0.2s"}}>
-          {saved?"✓ Saved!":saving?"Saving...":"Save Teams"}
-        </button>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          {saved&&<button onClick={loadTeams} style={{padding:"8px 12px",borderRadius:10,border:"0.5px solid #1E6B3A55",background:"transparent",color:"#1E6B3A",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>↺ Reload</button>}
+          <button onClick={saveChanges} disabled={saving} style={{padding:"10px 20px",borderRadius:10,border:"none",background:saved?"#1E6B3A":saving?"#222":"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:12,fontWeight:700,cursor:saving?"not-allowed":"pointer",fontFamily:"Georgia,serif",boxShadow:(saved||saving)?"none":"0 4px 16px #E8720C44",transition:"all 0.2s"}}>
+            {saved?"✓ Saved!":saving?"Saving...":"Save Teams"}
+          </button>
+        </div>
       </div>
+
+      {/* Save error banner */}
+      {saveError&&(
+        <div style={{background:"#1a0808",borderRadius:10,padding:"10px 14px",marginBottom:12,border:"0.5px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+          <span style={{fontSize:12,color:"#C0392B"}}>⚠ {saveError}</span>
+          <button onClick={()=>setSaveError("")} style={{background:"transparent",border:"none",color:"#666",fontSize:14,cursor:"pointer",padding:"0 4px"}}>×</button>
+        </div>
+      )}
 
       {/* Group count slider */}
       <div style={{background:"#111",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"0.5px solid #1e1e1e"}}>
