@@ -1069,7 +1069,7 @@ export default function Athlete(){
                         <div style={{fontSize:13,fontWeight:500,color:"#ddd"}}>{rec.day} · {rec.date}</div>
                         <div style={{fontSize:11,color:"#555"}}>{rec.time_logged||""}</div>
                       </div>
-                      <span style={{fontSize:11,padding:"3px 10px",borderRadius:6,background:rec.status==="early"?"#EAF3DE":rec.status==="late"?"#FFF3CD":"#FCEBEB",color:rec.status==="early"?GREEN:rec.status==="late"?"#854F0B":RED,fontWeight:500}}>
+                      <span style={{fontSize:10,padding:"4px 10px",borderRadius:6,background:rec.status==="early"?GREEN+"22":rec.status==="late"?GOLD+"22":RED+"22",color:rec.status==="early"?GREEN:rec.status==="late"?GOLD:RED,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",border:"0.5px solid "+(rec.status==="early"?GREEN:rec.status==="late"?GOLD:RED)+"44"}}>
                         {rec.status==="early"?"Early":rec.status==="late"?"Late":"No show"}
                       </span>
                     </div>

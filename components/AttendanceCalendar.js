@@ -69,59 +69,68 @@ export default function AttendanceCalendar({athleteId}){
     <div>
       {/* Overall stats */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-        {[{label:"Early",val:totalEarly,color:GREEN,bg:"#EAF3DE"},{label:"Late",val:totalLate,color:RED,bg:"#FCEBEB"},{label:"Total",val:records.length,color:"#1a1a1a",bg:"#f5f5f5"}].map(s=>(
-          <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-            <div style={{fontSize:20,fontWeight:600,color:s.color}}>{s.val}</div>
-            <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
+        {[
+          {label:"Early",val:totalEarly,color:GREEN,accent:GREEN+"33",border:GREEN+"44"},
+          {label:"Late",val:totalLate,color:GOLD,accent:GOLD+"22",border:GOLD+"33"},
+          {label:"Total",val:records.length,color:"#aaa",accent:"#1a1a1a",border:"#2a2a2a"},
+        ].map(s=>(
+          <div key={s.label} style={{background:s.accent,borderRadius:12,padding:"14px 10px",textAlign:"center",border:"1px solid "+s.border}}>
+            <div style={{fontSize:26,fontWeight:900,color:s.color,lineHeight:1}}>{s.val}</div>
+            <div style={{fontSize:10,color:"#555",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:600}}>{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Month slider card */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+      <div style={{background:"#111",borderRadius:14,padding:"1.25rem",border:"1px solid #1e1e1e"}}>
         {/* Navigation */}
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
-          <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} style={{width:32,height:32,borderRadius:8,border:"0.5px solid #e0e0e0",background:monthIdx===0?"#f9f9f9":"#fff",fontSize:16,cursor:monthIdx===0?"default":"pointer",color:monthIdx===0?"#ccc":"#1a1a1a"}}>‹</button>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+          <button onClick={()=>setMonthIdx(i=>Math.max(0,i-1))} disabled={monthIdx===0} style={{width:34,height:34,borderRadius:10,border:"1px solid #1e1e1e",background:"#0e0e0e",fontSize:18,cursor:monthIdx===0?"default":"pointer",color:monthIdx===0?"#2a2a2a":"#888",fontWeight:300}}>‹</button>
           <div style={{textAlign:"center"}}>
-            <div style={{fontSize:14,fontWeight:600,color:"#1a1a1a"}}>{month?.monthName} {month?.year}</div>
-            <div style={{fontSize:11,color:"#888",marginTop:2}}>
-              <span style={{color:GREEN,fontWeight:500}}>{month?.mEarly||0} early</span>
-              {(month?.mLate||0)>0&&<span style={{color:GOLD,fontWeight:500}}> · {month.mLate} late</span>}
-              {(month?.mEarly||0)===0&&(month?.mLate||0)===0&&<span> · no check-ins</span>}
+            <div style={{fontSize:15,fontWeight:800,color:"#fff",textTransform:"uppercase",letterSpacing:"0.04em"}}>{month?.monthName} {month?.year}</div>
+            <div style={{fontSize:11,marginTop:3}}>
+              <span style={{color:GREEN,fontWeight:700}}>{month?.mEarly||0} early</span>
+              {(month?.mLate||0)>0&&<span style={{color:GOLD,fontWeight:700}}> · {month.mLate} late</span>}
+              {(month?.mEarly||0)===0&&(month?.mLate||0)===0&&<span style={{color:"#333"}}> · no check-ins</span>}
             </div>
           </div>
-          <button onClick={()=>setMonthIdx(i=>Math.min(allMonths.length-1,i+1))} disabled={monthIdx===allMonths.length-1} style={{width:32,height:32,borderRadius:8,border:"0.5px solid #e0e0e0",background:monthIdx===allMonths.length-1?"#f9f9f9":"#fff",fontSize:16,cursor:monthIdx===allMonths.length-1?"default":"pointer",color:monthIdx===allMonths.length-1?"#ccc":"#1a1a1a"}}>›</button>
+          <button onClick={()=>setMonthIdx(i=>Math.min(allMonths.length-1,i+1))} disabled={monthIdx===allMonths.length-1} style={{width:34,height:34,borderRadius:10,border:"1px solid #1e1e1e",background:"#0e0e0e",fontSize:18,cursor:monthIdx===allMonths.length-1?"default":"pointer",color:monthIdx===allMonths.length-1?"#2a2a2a":"#888",fontWeight:300}}>›</button>
         </div>
 
         {/* Day headers */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:4}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:6}}>
           {DAYS_SHORT.map((d,i)=>(
-            <div key={i} style={{fontSize:10,color:"#aaa",textAlign:"center",fontWeight:500}}>{d}</div>
+            <div key={i} style={{fontSize:10,color:"#333",textAlign:"center",fontWeight:700,textTransform:"uppercase"}}>{d}</div>
           ))}
         </div>
 
         {/* Calendar grid */}
         {rows.map((row,ri)=>(
           <div key={ri} style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:4}}>
-            {row.map((cell,ci)=>(
-              <div key={ci} style={{
-                height:34,borderRadius:8,
-                background:!cell?"transparent":cell.isFuture?"#fafafa":!cell.isClassDay?"#f5f5f5":cell.status==="early"?GREEN:cell.status==="late"?GOLD:"#ebebeb",
-                display:"flex",alignItems:"center",justifyContent:"center",
-                border:cell&&cell.isClassDay&&!cell.isFuture&&!cell.status?"0.5px solid #ddd":"none",
-              }}>
-                {cell&&<span style={{fontSize:11,color:!cell.isClassDay||cell.isFuture?"#ccc":cell.status?"#fff":"#999",fontWeight:cell.status?600:400}}>{cell.day}</span>}
-              </div>
-            ))}
+            {row.map((cell,ci)=>{
+              let bg="transparent",textColor="#2a2a2a",borderStyle="none",fontWeight=400;
+              if(cell){
+                if(cell.isFuture){bg="transparent";textColor="#2a2a2a";}
+                else if(!cell.isClassDay){bg="#0e0e0e";textColor="#282828";}
+                else if(cell.status==="early"){bg=GREEN;textColor="#fff";fontWeight=700;borderStyle="none";}
+                else if(cell.status==="late"){bg="#7a5a00";textColor=GOLD;fontWeight=700;borderStyle="none";}
+                else{bg="#141414";textColor="#3a3a3a";borderStyle="1px solid #1e1e1e";}
+              }
+              return(
+                <div key={ci} style={{height:36,borderRadius:8,background:bg,display:"flex",alignItems:"center",justifyContent:"center",border:borderStyle,boxShadow:cell?.status==="early"?"0 2px 8px "+GREEN+"44":cell?.status==="late"?"0 2px 8px "+GOLD+"22":"none"}}>
+                  {cell&&<span style={{fontSize:11,color:textColor,fontWeight}}>{cell.day}</span>}
+                </div>
+              );
+            })}
           </div>
         ))}
 
         {/* Legend */}
-        <div style={{display:"flex",gap:10,marginTop:10,fontSize:10,color:"#888",flexWrap:"wrap"}}>
-          <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:GREEN}}/> Early</div>
-          <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:GOLD}}/> Late</div>
-          <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:"#ebebeb",border:"0.5px solid #ddd"}}/> Missed</div>
-          <div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:10,height:10,borderRadius:2,background:"#f5f5f5"}}/> Off day</div>
+        <div style={{display:"flex",gap:12,marginTop:12,fontSize:10,color:"#444",flexWrap:"wrap"}}>
+          <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:3,background:GREEN,boxShadow:"0 0 6px "+GREEN+"66"}}/><span style={{color:"#666"}}>Early</span></div>
+          <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:3,background:"#7a5a00",border:"1px solid "+GOLD+"44"}}/><span style={{color:"#666"}}>Late</span></div>
+          <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:3,background:"#141414",border:"1px solid #1e1e1e"}}/><span style={{color:"#555"}}>Missed</span></div>
+          <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:3,background:"#0e0e0e"}}/><span style={{color:"#333"}}>Off day</span></div>
         </div>
       </div>
     </div>
