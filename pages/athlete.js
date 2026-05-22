@@ -1189,20 +1189,34 @@ export default function Athlete(){
             {tab==="attendance"&&(
               <div>
                 <AttendanceCalendar athleteId={selectedAthlete.id}/>
-                <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginTop:12,border:"0.5px solid #252525"}}>
-                  <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Check-in history</div>
-                  {attendance.length===0&&<div style={{fontSize:12,color:"#555",textAlign:"center",padding:"1rem 0"}}>No check-ins yet.</div>}
-                  {attendance.slice(0,30).map((rec,i)=>(
-                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<Math.min(attendance.length,30)-1?"0.5px solid #1e1e1e":"none"}}>
+                <div style={{borderRadius:20,marginTop:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+ORANGE+"33"}}>
+                  <div style={{background:"linear-gradient(140deg,"+ORANGE+"30,"+ORANGE+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+ORANGE+","+ORANGE+"44,transparent)"}}/>
+                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📅</div>
+                    <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+ORANGE+"12,transparent 70%)",pointerEvents:"none"}}/>
+                    <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+ORANGE+"33"}}>📅</div>
                       <div>
-                        <div style={{fontSize:13,fontWeight:500,color:"#ddd"}}>{rec.day} · {rec.date}</div>
-                        <div style={{fontSize:11,color:"#555"}}>{rec.time_logged||""}</div>
+                        <div style={{fontSize:8,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Your record</div>
+                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Check-in History</div>
+                        <div style={{fontSize:11,color:"#555",marginTop:1}}>{attendance.length} session{attendance.length!==1?"s":""} logged</div>
                       </div>
-                      <span style={{fontSize:10,padding:"4px 10px",borderRadius:6,background:rec.status==="early"?GREEN+"22":rec.status==="late"?GOLD+"22":RED+"22",color:rec.status==="early"?GREEN:rec.status==="late"?GOLD:RED,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",border:"0.5px solid "+(rec.status==="early"?GREEN:rec.status==="late"?GOLD:RED)+"44"}}>
-                        {rec.status==="early"?"Early":rec.status==="late"?"Late":"No show"}
-                      </span>
                     </div>
-                  ))}
+                  </div>
+                  <div style={{background:"#0e0e0e",padding:"0 18px"}}>
+                    {attendance.length===0&&<div style={{fontSize:12,color:"#444",textAlign:"center",padding:"1.5rem 0"}}>No check-ins yet.</div>}
+                    {attendance.slice(0,30).map((rec,i)=>(
+                      <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:i<Math.min(attendance.length,30)-1?"0.5px solid #1a1a1a":"none"}}>
+                        <div>
+                          <div style={{fontSize:13,fontWeight:600,color:"#ddd"}}>{rec.day} · {rec.date}</div>
+                          <div style={{fontSize:11,color:"#555",marginTop:2}}>{rec.time_logged||""}</div>
+                        </div>
+                        <span style={{fontSize:10,padding:"4px 12px",borderRadius:8,background:rec.status==="early"?GREEN+"22":rec.status==="late"?GOLD+"22":RED+"22",color:rec.status==="early"?GREEN:rec.status==="late"?GOLD:RED,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.08em",border:"0.5px solid "+(rec.status==="early"?GREEN:rec.status==="late"?GOLD:RED)+"44"}}>
+                          {rec.status==="early"?"Early":rec.status==="late"?"Late":"No show"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -1244,11 +1258,28 @@ export default function Athlete(){
                     <><textarea value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="Type your message to Coach Ant..." style={{width:"100%",minHeight:90,padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#1e1e1e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}/><button onClick={sendFeedback} style={{padding:"10px 20px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+PUR+",#3a2d8f)",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Send to Coach Ant</button></>
                   )}
                 </div>
-                <div style={{background:BG,borderRadius:12,padding:"1rem",border:"0.5px solid #2a2a2a"}}>
-                  <div style={{fontSize:13,fontWeight:500,color:"#fff",marginBottom:4}}>Prayer request</div>
-                  {prayerSent?<div style={{fontSize:13,color:"#58B368",fontWeight:500,padding:"10px",background:"#0d1f0f",borderRadius:8}}>Your request has been received.</div>:(
-                    <><textarea value={prayerText} onChange={e=>setPrayerText(e.target.value)} placeholder="Share your prayer request here..." style={{width:"100%",minHeight:90,padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#242424",color:"#fff",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}/><button onClick={sendPrayer} style={{padding:"10px 20px",borderRadius:8,border:"0.5px solid #58B368",background:"transparent",color:"#58B368",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Submit prayer request</button></>
-                  )}
+                <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
+                  <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
+                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>🙏</div>
+                    <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
+                    <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative",marginBottom:14}}>
+                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>🙏</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Private</div>
+                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>Prayer Request</div>
+                        <div style={{fontSize:11,color:"#666",marginTop:3}}>Coach Ant will pray for you personally.</div>
+                      </div>
+                    </div>
+                    {prayerSent?(
+                      <div style={{fontSize:13,color:GREEN,fontWeight:600,padding:"14px",background:GREEN+"18",borderRadius:12,border:"0.5px solid "+GREEN+"44",textAlign:"center"}}>✓ Your request has been received. We're praying for you.</div>
+                    ):(
+                      <>
+                        <textarea value={prayerText} onChange={e=>setPrayerText(e.target.value)} placeholder="Share your prayer request here..." style={{width:"100%",minHeight:90,padding:"12px 14px",fontSize:13,border:"1px solid #2a2a2a",borderRadius:12,background:"#0a0a0a",color:"#fff",fontFamily:"Georgia,serif",resize:"vertical",marginBottom:10,boxSizing:"border-box",lineHeight:1.6,outline:"none",transition:"border-color 0.2s"}} onFocus={e=>e.target.style.borderColor=PUR+"88"} onBlur={e=>e.target.style.borderColor="#2a2a2a"}/>
+                        <button onClick={sendPrayer} style={{width:"100%",padding:"12px",borderRadius:12,border:"none",background:prayerText.trim()?"linear-gradient(135deg,"+PUR+",#3a2d8f)":"#1e1e1e",color:prayerText.trim()?"#fff":"#444",fontSize:13,fontWeight:800,cursor:prayerText.trim()?"pointer":"default",fontFamily:"Georgia,serif",boxShadow:prayerText.trim()?"0 0 16px "+PUR+"44":"none",transition:"all 0.2s",letterSpacing:"0.02em"}}>Submit prayer request →</button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
