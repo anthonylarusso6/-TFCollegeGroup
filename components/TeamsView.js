@@ -125,6 +125,10 @@ export default function TeamsView({athletes=[]}){
       if(draftId){
         const{error:err}=await supabase.from("draft").update(payload).eq("id",draftId);
         if(err)throw err;
+      }else{
+        const{data:inserted,error:err}=await supabase.from("draft").insert(payload).select().single();
+        if(err)throw err;
+        if(inserted)setDraftId(inserted.id);
       }
       for(let i=0;i<groupCount;i++){
         for(const name of(groupsArr[i]||[])){
