@@ -52,20 +52,20 @@ function DriveLinksManager(){
       {links.map((l,i)=>{
         const data=JSON.parse(l.message||"{}");
         return(
-          <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#f9f9f9",borderRadius:8,marginBottom:8,border:"0.5px solid #e0e0e0"}}>
+          <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#141414",borderRadius:10,marginBottom:8,border:"0.5px solid #252525"}}>
             <div style={{fontSize:20}}>📄</div>
             <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{data.title}</div>
-              {data.description&&<div style={{fontSize:11,color:"#888"}}>{data.description}</div>}
+              <div style={{fontSize:13,fontWeight:600,color:"#ddd",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{data.title}</div>
+              {data.description&&<div style={{fontSize:11,color:"#666"}}>{data.description}</div>}
             </div>
             <a href={data.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4285f4",textDecoration:"none",fontFamily:"Georgia,serif",padding:"4px 8px",border:"0.5px solid #4285f4",borderRadius:6}}>Open</a>
             <button onClick={()=>removeLink(l.id)} style={{fontSize:11,color:RED,background:"transparent",border:"0.5px solid "+RED+"44",borderRadius:6,padding:"4px 8px",cursor:"pointer",fontFamily:"Georgia,serif"}}>Remove</button>
           </div>
         );
       })}
-      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Document title (e.g. Summer Program Poster)" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",background:"#fafafa",marginBottom:6,boxSizing:"border-box"}}/>
-      <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="Google Drive link" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",background:"#fafafa",marginBottom:6,boxSizing:"border-box"}}/>
-      <input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Short description (optional)" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",background:"#fafafa",marginBottom:8,boxSizing:"border-box"}}/>
+      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Document title (e.g. Summer Program Poster)" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #222",fontSize:12,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",marginBottom:6,boxSizing:"border-box"}}/>
+      <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="Google Drive link" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #222",fontSize:12,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",marginBottom:6,boxSizing:"border-box"}}/>
+      <input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Short description (optional)" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #222",fontSize:12,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",marginBottom:8,boxSizing:"border-box"}}/>
       <button onClick={addLink} disabled={!title.trim()||!url.trim()||saving} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:title&&url?"#4285f4":"#e0e0e0",color:title&&url?"#fff":"#aaa",fontSize:13,fontWeight:600,cursor:title&&url?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
         {saved?"✓ Added!":saving?"Saving...":"Add document →"}
       </button>
@@ -386,15 +386,17 @@ export default function Coach(){
   if(!authed) return(
     <>
       <Head><title>Coach — TF College Group</title></Head>
-      <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
-        <div style={{textAlign:"center",maxWidth:340,width:"100%"}}>
+      <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:600,height:400,background:"radial-gradient(ellipse at top,#E8720C10 0%,transparent 70%)",pointerEvents:"none"}}/>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#E8720C,#C0392B,transparent)"}}/>
+        <div style={{textAlign:"center",maxWidth:340,width:"100%",position:"relative"}}>
 
           {/* Step 1 — Select coach */}
           {pinStep==="select"&&(
             <>
-              <div style={{width:60,height:60,borderRadius:16,background:GOLD,margin:"0 auto 1.5rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,boxShadow:"0 0 30px "+GOLD+"44"}}>⚒</div>
-              <div style={{fontSize:20,fontWeight:400,color:"#fff",marginBottom:4}}>Coach Login</div>
-              <div style={{fontSize:13,color:"#888",marginBottom:28}}>Select your name to continue</div>
+              <div style={{width:72,height:72,borderRadius:20,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto 1.5rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,boxShadow:"0 0 60px #E8720C55,0 0 120px #E8720C22"}}>⚒</div>
+              <div style={{fontSize:24,fontWeight:900,color:"#fff",marginBottom:4,letterSpacing:"-0.02em",textTransform:"uppercase"}}>Coach Login</div>
+              <div style={{fontSize:12,color:"#555",marginBottom:28,letterSpacing:"0.04em"}}>Select your name to continue</div>
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 {coaches.map(c=>(
                   <button key={c.id} onClick={()=>{
@@ -402,36 +404,42 @@ export default function Coach(){
                     setPin("");setPinError("");
                     const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin())||(c.id==="adoriyan"&&getAdoriyanPin());
                     setPinStep(hasPin?"enter":"create");
-                  }} style={{width:"100%",padding:"16px 20px",borderRadius:14,border:"0.5px solid #2a2a2a",background:"#141414",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:14,textAlign:"left"}}>
-                    <div style={{width:44,height:44,borderRadius:"50%",background:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,boxShadow:"0 0 18px "+c.color+"66"}}>{c.emoji}</div>
-                    <div>
-                      <div style={{fontSize:15,fontWeight:500}}>{c.name}</div>
-                      <div style={{fontSize:12,color:"#888"}}>{c.sub}</div>
+                  }} style={{width:"100%",padding:0,borderRadius:14,border:"1px solid #1e1e1e",background:"linear-gradient(135deg,#0e0e0e,#131313)",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"stretch",textAlign:"left",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)"}}>
+                    <div style={{width:4,background:"linear-gradient(180deg,"+c.color+","+c.color+"88)",flexShrink:0}}/>
+                    <div style={{padding:"14px 14px",display:"flex",alignItems:"center",gap:14,flex:1}}>
+                      <div style={{width:44,height:44,borderRadius:"50%",background:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,boxShadow:"0 0 20px "+c.color+"55"}}>{c.emoji}</div>
+                      <div>
+                        <div style={{fontSize:15,fontWeight:700,letterSpacing:"-0.01em"}}>{c.name}</div>
+                        <div style={{fontSize:12,color:"#555"}}>{c.sub}</div>
+                      </div>
+                      <div style={{marginLeft:"auto",color:"#2a2a2a",fontSize:18,paddingRight:4}}>›</div>
                     </div>
-                    <div style={{marginLeft:"auto",color:"#555",fontSize:18}}>→</div>
                   </button>
                 ))}
               </div>
-              <a href="/" style={{display:"block",marginTop:24,fontSize:12,color:"#444"}}>← Back to home</a>
+              <a href="/" style={{display:"block",marginTop:24,fontSize:11,color:"#333",letterSpacing:"0.04em"}}>← Back to home</a>
             </>
           )}
 
           {/* Step 2 — PIN entry / create */}
           {pinStep!=="select"&&(
             <>
-              <button onClick={()=>{setPinStep("select");setPin("");setPinError("");setSelectedCoach(null);}} style={{position:"absolute",top:20,left:20,background:"transparent",border:"none",color:"#666",fontSize:13,cursor:"pointer",fontFamily:"Georgia, serif"}}>← Back</button>
+              <button onClick={()=>{setPinStep("select");setPin("");setPinError("");setSelectedCoach(null);}} style={{position:"absolute",top:20,left:20,background:"#111",border:"0.5px solid #1e1e1e",color:"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia, serif",padding:"6px 14px",borderRadius:10}}>← Back</button>
               {(() => {
                 const c=coaches.find(x=>x.id===selectedCoach);
                 return(
-                  <div style={{width:60,height:60,borderRadius:"50%",background:c.color,margin:"0 auto 1rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,boxShadow:"0 0 30px "+c.color+"44"}}>{c.emoji}</div>
+                  <div style={{position:"relative",display:"inline-block",marginBottom:14}}>
+                    <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:"1px solid "+c.color+"33",pointerEvents:"none"}}/>
+                    <div style={{width:68,height:68,borderRadius:"50%",background:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,boxShadow:"0 0 40px "+c.color+"44"}}>{c.emoji}</div>
+                  </div>
                 );
               })()}
-              <div style={{fontSize:18,fontWeight:400,color:"#fff",marginBottom:4}}>{coaches.find(x=>x.id===selectedCoach)?.name}</div>
-              <div style={{fontSize:13,color:"#888",marginBottom:28}}>
+              <div style={{fontSize:22,fontWeight:900,color:"#fff",marginBottom:4,letterSpacing:"-0.01em",textTransform:"uppercase"}}>{coaches.find(x=>x.id===selectedCoach)?.name}</div>
+              <div style={{fontSize:12,color:"#555",marginBottom:20,letterSpacing:"0.04em"}}>
                 {pinStep==="create"?"Create your 4-digit PIN":pinStep==="confirm"?"Confirm your PIN":"Enter your PIN"}
               </div>
-              <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:24}}>
-                {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD),background:i<pin.length?(coaches.find(x=>x.id===selectedCoach)?.color||GOLD):"transparent"}}/>)}
+              <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:16}}>
+                {[0,1,2,3].map(i=>{const cc=coaches.find(x=>x.id===selectedCoach)?.color||GOLD;return(<div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+cc+(i<pin.length?"":"44"),background:i<pin.length?cc:"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 10px "+cc+"88":"none"}}/>);})}
               </div>
               {/* Hidden keyboard input */}
               <input
@@ -485,13 +493,13 @@ export default function Coach(){
               />
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
                 {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
-                  <button key={i} onClick={()=>{handlePinKey(k);pinRef.current&&pinRef.current.focus();}} style={{padding:"16px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#333"),background:k===null?"transparent":"#141414",fontSize:20,fontWeight:500,cursor:k===null?"default":"pointer",color:"#fff",fontFamily:"Georgia, serif"}}>
+                  <button key={i} onClick={()=>{handlePinKey(k);pinRef.current&&pinRef.current.focus();}} style={{padding:"14px 8px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#1a1a1a"),background:k===null?"transparent":k==="⌫"?"#141414":"#111",fontSize:20,fontWeight:300,cursor:k===null?"default":"pointer",color:k==="⌫"?"#555":"#e0e0e0",fontFamily:"sans-serif",transition:"background 0.1s"}}>
                     {k===null?"":k}
                   </button>
                 ))}
               </div>
-              <div style={{marginTop:14,fontSize:11,color:"#444",textAlign:"center"}}>Tap the dots or numpad · type on keyboard</div>
-              {pinError&&<div style={{marginTop:10,fontSize:13,color:RED}}>{pinError}</div>}
+              <div style={{marginTop:10,fontSize:10,color:"#2a2a2a",textAlign:"center",letterSpacing:"0.04em"}}>Tap keypad or type on keyboard</div>
+              {pinError&&<div style={{marginTop:12,fontSize:12,color:"#ff5555",padding:"8px 16px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
             </>
           )}
         </div>
@@ -500,33 +508,40 @@ export default function Coach(){
   );
 
   if(loading) return(
-    <div style={{minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{textAlign:"center"}}><div style={{fontSize:32,marginBottom:16}}>⚒</div><div style={{fontSize:14,color:"#555"}}>Loading dashboard...</div></div>
+    <div style={{minHeight:"100vh",background:"#080808",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+      <div style={{position:"absolute",top:"40%",left:"50%",transform:"translate(-50%,-50%)",width:600,height:400,background:"radial-gradient(ellipse,#E8720C10 0%,transparent 65%)",pointerEvents:"none"}}/>
+      <div style={{textAlign:"center",position:"relative"}}>
+        <div style={{width:80,height:80,borderRadius:22,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto 20px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:42,boxShadow:"0 0 80px #E8720C55,0 0 160px #E8720C22"}}>⚒</div>
+        <div style={{fontSize:11,color:"#E8720C",letterSpacing:"0.25em",textTransform:"uppercase",fontWeight:700}}>Coach Dashboard</div>
+      </div>
     </div>
   );
 
   return(
     <>
       <Head><title>Coach Dashboard — TF College Group</title></Head>
-      <div style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"#f5f5f5",minHeight:"100vh"}}>
+      <div style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"#080808",minHeight:"100vh"}}>
 
-        <div style={{background:BG,padding:"1rem 1.25rem 0"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+        <div style={{background:"linear-gradient(180deg,#0e0600 0%,#0a0505 50%,#080808 100%)",borderBottom:"1px solid #1a0800",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#E8720C,#C0392B,transparent)"}}/>
+          <div style={{position:"absolute",top:-40,right:-40,width:200,height:200,borderRadius:"50%",background:"#E8720C08",filter:"blur(50px)",pointerEvents:"none"}}/>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
             <div>
-              <div style={{fontSize:18,fontWeight:400,color:"#fff"}}>TF College Group</div>
-              <div style={{fontSize:12,color:"#555"}}>{coachRole==="adoriyan"?"Adoriyan":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · {isClassDay?"Class day":"No class"}</div>
+              <div style={{fontSize:18,fontWeight:900,color:"#fff",letterSpacing:"-0.01em",textTransform:"uppercase"}}>TF College Group</div>
+              <div style={{fontSize:11,color:"#555",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="adoriyan"?"Adoriyan":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"#444"}}>{isClassDay?"Class day":"No class"}</span></div>
             </div>
             <div style={{textAlign:"right"}}>
-              <div style={{fontSize:12,color:"#888"}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
-              <button onClick={()=>setAuthed(false)} style={{fontSize:11,color:"#444",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif"}}>Sign out</button>
+              <div style={{fontSize:11,color:"#555",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
+              <button onClick={()=>setAuthed(false)} style={{fontSize:10,color:"#333",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.04em"}}>Sign out</button>
             </div>
           </div>
-          <div style={{display:"flex",gap:4,overflowX:"auto",paddingBottom:1}}>
+          <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414"}}>
             {TABS.map(t=>{
               const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱"};
+              const isActive=tab===t.id;
               return(
-              <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 12px",background:tab===t.id?"#fff":"transparent",border:"none",borderRadius:10,color:tab===t.id?"#1a1a1a":"#555",fontSize:10,fontWeight:tab===t.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,boxShadow:tab===t.id?"0 2px 8px rgba(0,0,0,0.2)":"none"}}>
-                <span style={{fontSize:15}}>{ICONS[t.id]||"•"}</span>
+              <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"10px 12px 8px",background:isActive?"#0e0e0e":"transparent",border:"none",borderBottom:"2px solid "+(isActive?"#E8720C":"transparent"),borderRight:"none",borderLeft:"none",borderTop:"none",color:isActive?"#fff":"#444",fontSize:10,fontWeight:isActive?800:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.12s",textTransform:isActive?"uppercase":"none",letterSpacing:isActive?"0.04em":"0"}}>
+                <span style={{fontSize:15,filter:isActive?"drop-shadow(0 0 4px #E8720C88)":"none"}}>{ICONS[t.id]||"•"}</span>
                 <span>{t.label}</span>
               </button>
               );
@@ -541,14 +556,14 @@ export default function Coach(){
             <div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:12}}>
                 {[
-                  {label:"Athletes",val:athletes.filter(a=>a.status==="active").length,color:"#1a1a1a",bg:"#fff"},
-                  {label:"Early today",val:earlyToday,color:GREEN,bg:"#EAF3DE"},
-                  {label:"Late today",val:lateToday,color:RED,bg:"#FCEBEB"},
-                  {label:"Inbox",val:inboxCount,color:inboxCount>0?PUR:"#888",bg:inboxCount>0?"#EEEDFE":"#fff"},
+                  {label:"Athletes",val:athletes.filter(a=>a.status==="active").length,color:"#aaa",accent:"#1a1a1a",border:"#2a2a2a"},
+                  {label:"Early today",val:earlyToday,color:GREEN,accent:GREEN+"22",border:GREEN+"33"},
+                  {label:"Late today",val:lateToday,color:RED,accent:RED+"18",border:RED+"33"},
+                  {label:"Inbox",val:inboxCount,color:inboxCount>0?PUR:"#444",accent:inboxCount>0?PUR+"18":"#1a1a1a",border:inboxCount>0?PUR+"33":"#252525"},
                 ].map(s=>(
-                  <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"10px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-                    <div style={{fontSize:22,fontWeight:500,color:s.color}}>{s.val}</div>
-                    <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
+                  <div key={s.label} style={{background:s.accent,borderRadius:12,padding:"12px 8px",textAlign:"center",border:"1px solid "+s.border}}>
+                    <div style={{fontSize:24,fontWeight:900,color:s.color,lineHeight:1}}>{s.val}</div>
+                    <div style={{fontSize:10,color:"#555",marginTop:4,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:600}}>{s.label}</div>
                   </div>
                 ))}
               </div>
