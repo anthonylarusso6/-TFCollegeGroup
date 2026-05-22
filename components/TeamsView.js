@@ -5,19 +5,36 @@ const GC=["#534AB7","#C0392B","#1E6B3A","#D4AF37","#E8720C","#1A4F8A"];
 const getTier=(i,n)=>i<2?1:i===2?2:3;
 const TIER_LABEL={1:"Tier 1",2:"Tier 2",3:"Tier 3"};
 
+const BRACELETS=[
+  {color:"Light orange", ref:"Proverbs 3:5",   text:"Trust in the Lord with all your heart.",                    hex:"#F5A623"},
+  {color:"Dark orange",  ref:"Psalm 46:10",    text:"Be still, and know that I am God.",                        hex:"#D4581A"},
+  {color:"Yellow",       ref:"Genesis 1:3",    text:"And God said, let there be light.",                        hex:"#E8C84A"},
+  {color:"Light blue",   ref:"1 Peter 5:7",    text:"Cast all your anxiety on him.",                            hex:"#5BBFEA"},
+  {color:"Dark blue",    ref:"1 John 3:1",     text:"See what great love the Father has lavished on us.",       hex:"#1A4F8A"},
+  {color:"Red",          ref:"Philippians 4:13",text:"I can do all things through Christ who strengthens me.", hex:"#C0392B"},
+  {color:"Pink",         ref:"1 Cor 13:13",    text:"The greatest of these is love.",                           hex:"#E87AAC"},
+  {color:"Dark purple",  ref:"Matthew 11:28",  text:"Come to me, all who are weary, and I will give you rest.",hex:"#5B2D8E"},
+  {color:"Light purple", ref:"John 14:6",      text:"I am the way and the truth and the life.",                 hex:"#9B59B6"},
+  {color:"Dark green",   ref:"Joshua 1:9",     text:"Be strong and courageous.",                                hex:"#1E6B3A"},
+  {color:"Light green",  ref:"Psalm 27:1",     text:"The Lord is my light and my salvation.",                  hex:"#58B368"},
+  {color:"Teal",         ref:"Jeremiah 29:11", text:"Plans to prosper you and not to harm you.",               hex:"#1A9E8F"},
+];
+
 export default function TeamsView({athletes=[]}){
   const[groups,setGroups]=useState({});
   const[leaders,setLeaders]=useState({});
+  const[bracelets,setBracelets]=useState({});   // {groupIdx: bracelet object | null}
   const[groupCount,setGroupCount]=useState(4);
   const[draftId,setDraftId]=useState(null);
   const[loading,setLoading]=useState(true);
   const[saving,setSaving]=useState(false);
   const[saved,setSaved]=useState(false);
   const[error,setError]=useState("");
-  const[dragging,setDragging]=useState(null);   // {name, fromGroup: idx|null}
-  const[dragOver,setDragOver]=useState(null);   // group idx | "pool"
-  const[dragOverLeader,setDragOverLeader]=useState(null); // group idx whose leader slot is hovered
-  const[picker,setPicker]=useState(null);        // athlete name waiting for group pick
+  const[dragging,setDragging]=useState(null);
+  const[dragOver,setDragOver]=useState(null);
+  const[dragOverLeader,setDragOverLeader]=useState(null);
+  const[picker,setPicker]=useState(null);           // athlete name waiting for group pick
+  const[braceletModal,setBraceletModal]=useState(null); // group idx whose bracelet is being picked
 
   useEffect(()=>{loadTeams();},[]);
 
@@ -37,6 +54,9 @@ export default function TeamsView({athletes=[]}){
         const l={};
         (d.leaders||[]).forEach((name,i)=>{if(name)l[i]=name;});
         setLeaders(l);
+        const b={};
+        (d.bracelets||[]).forEach((br,i)=>{if(br)b[i]=br;});
+        setBracelets(b);
       }else{
         const g={};for(let i=0;i<4;i++)g[i]=[];
         setGroups(g);
@@ -53,7 +73,6 @@ export default function TeamsView({athletes=[]}){
   const addToGroup=(name,toIdx)=>{
     setGroups(prev=>{
       const n={...prev};
-      // remove from wherever they are
       Object.keys(n).forEach(k=>{n[k]=(n[k]||[]).filter(x=>x!==name);});
       n[toIdx]=[...(n[toIdx]||[]),name];
       return n;
@@ -66,15 +85,9 @@ export default function TeamsView({athletes=[]}){
     if(leaders[idx]===name)setLeaders(prev=>{const n={...prev};delete n[idx];return n;});
   };
 
-  const toggleLeader=(name,idx)=>{
-    setLeaders(prev=>({...prev,[idx]:prev[idx]===name?null:name}));
-  };
-
-  // Drag handlers
   const onDragStart=(name,fromGroup)=>setDragging({name,fromGroup});
   const onDragEnd=()=>{setDragging(null);setDragOver(null);setDragOverLeader(null);};
 
-  // Drop onto leader slot — adds to group if needed, then sets as leader
   const onDropLeader=(groupIdx)=>{
     if(!dragging)return;
     const{name}=dragging;
@@ -87,23 +100,28 @@ export default function TeamsView({athletes=[]}){
     setLeaders(prev=>({...prev,[groupIdx]:name}));
     setDragging(null);setDragOver(null);setDragOverLeader(null);
   };
+
   const onDropGroup=(toIdx)=>{
     if(!dragging)return;
     addToGroup(dragging.name,toIdx);
     setDragging(null);setDragOver(null);
   };
+
   const onDropPool=()=>{
     if(!dragging||dragging.fromGroup===null)return;
     removeFromGroup(dragging.name,dragging.fromGroup);
     setDragging(null);setDragOver(null);
   };
 
+  const takenRefs=Object.values(bracelets).filter(Boolean).map(b=>b.ref);
+
   const saveChanges=async()=>{
     setSaving(true);
     try{
       const groupsArr=Array.from({length:groupCount},(_,i)=>groups[i]||[]);
       const leadersArr=Array.from({length:groupCount},(_,i)=>leaders[i]||null);
-      const payload={groups:groupsArr,leaders:leadersArr,group_count:groupCount};
+      const braceletsArr=Array.from({length:groupCount},(_,i)=>bracelets[i]||null);
+      const payload={groups:groupsArr,leaders:leadersArr,bracelets:braceletsArr,group_count:groupCount};
       if(draftId){
         const{error:err}=await supabase.from("draft").update(payload).eq("id",draftId);
         if(err)throw err;
@@ -111,7 +129,11 @@ export default function TeamsView({athletes=[]}){
       for(let i=0;i<groupCount;i++){
         for(const name of(groupsArr[i]||[])){
           const ath=athletes.find(a=>a.name===name);
-          if(ath)await supabase.from("athletes").update({role:leadersArr[i]===name?"forge":"iron",group_idx:i}).eq("id",ath.id);
+          if(ath){
+            const updates={role:leadersArr[i]===name?"forge":"iron",group_idx:i};
+            if(leadersArr[i]===name&&braceletsArr[i])updates.bracelet=braceletsArr[i].ref;
+            await supabase.from("athletes").update(updates).eq("id",ath.id);
+          }
         }
       }
       setSaved(true);setTimeout(()=>setSaved(false),3000);
@@ -128,7 +150,7 @@ export default function TeamsView({athletes=[]}){
 
   return(
     <div>
-      {/* Group-picker modal (tap-to-assign) */}
+      {/* Athlete group-picker modal */}
       {picker&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"}} onClick={()=>setPicker(null)}>
           <div onClick={e=>e.stopPropagation()} style={{background:"#141414",borderRadius:16,padding:"1.5rem",width:"100%",maxWidth:300,border:"1px solid #2a2a2a",fontFamily:"Georgia,serif"}}>
@@ -144,6 +166,38 @@ export default function TeamsView({athletes=[]}){
               ))}
             </div>
             <button onClick={()=>setPicker(null)} style={{width:"100%",marginTop:12,padding:"10px",borderRadius:10,border:"0.5px solid #252525",background:"transparent",color:"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Bracelet picker modal */}
+      {braceletModal!==null&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setBraceletModal(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#141414",borderRadius:"20px 20px 0 0",padding:"1.25rem 1.25rem 2rem",width:"100%",maxWidth:480,border:"1px solid #252525",borderBottom:"none",fontFamily:"Georgia,serif",maxHeight:"80vh",overflowY:"auto"}}>
+            <div style={{width:40,height:4,borderRadius:2,background:"#333",margin:"0 auto 16px"}}/>
+            <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:4}}>Group {braceletModal+1} — Bracelet</div>
+            <div style={{fontSize:11,color:"#555",marginBottom:16}}>Pick the verse bracelet for this group's leader. Taken ones are grayed out.</div>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {BRACELETS.map(b=>{
+                const taken=takenRefs.includes(b.ref)&&bracelets[braceletModal]?.ref!==b.ref;
+                const selected=bracelets[braceletModal]?.ref===b.ref;
+                return(
+                  <button key={b.ref} disabled={taken} onClick={()=>{setBracelets(prev=>({...prev,[braceletModal]:b}));setBraceletModal(null);}}
+                    style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:12,border:"1.5px solid "+(selected?b.hex:taken?"#1e1e1e":b.hex+"44"),background:selected?b.hex+"22":taken?"#0d0d0d":"#1a1a1a",cursor:taken?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:taken?0.35:1,textAlign:"left"}}>
+                    <div style={{width:16,height:16,borderRadius:"50%",background:taken?"#333":b.hex,flexShrink:0,boxShadow:selected?"0 0 8px "+b.hex+"99":"none"}}/>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,fontWeight:selected?700:400,color:taken?"#444":selected?b.hex:"#ccc"}}>{b.color}</div>
+                      <div style={{fontSize:10,color:taken?"#333":"#555"}}>{b.ref} — <span style={{fontStyle:"italic"}}>{b.text}</span></div>
+                    </div>
+                    {selected&&<span style={{fontSize:11,color:b.hex}}>✓</span>}
+                    {taken&&<span style={{fontSize:10,color:"#333"}}>taken</span>}
+                  </button>
+                );
+              })}
+            </div>
+            {bracelets[braceletModal]&&(
+              <button onClick={()=>{setBracelets(prev=>{const n={...prev};delete n[braceletModal];return n;});setBraceletModal(null);}} style={{width:"100%",marginTop:10,padding:"10px",borderRadius:10,border:"0.5px solid #333",background:"transparent",color:"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Remove bracelet</button>
+            )}
           </div>
         </div>
       )}
@@ -165,17 +219,11 @@ export default function TeamsView({athletes=[]}){
           <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em"}}>Number of groups</div>
           <div style={{fontSize:18,fontWeight:900,color:"#fff",minWidth:20,textAlign:"center"}}>{groupCount}</div>
         </div>
-        <input
-          type="range" min={1} max={6} value={groupCount}
+        <input type="range" min={1} max={6} value={groupCount}
           onChange={e=>{
             const n=Number(e.target.value);
             setGroupCount(n);
-            // Add new empty groups if expanding
-            setGroups(prev=>{
-              const next={...prev};
-              for(let i=0;i<n;i++){if(!next[i])next[i]=[];}
-              return next;
-            });
+            setGroups(prev=>{const next={...prev};for(let i=0;i<n;i++){if(!next[i])next[i]=[];}return next;});
           }}
           style={{width:"100%",accentColor:"#E8720C",cursor:"pointer",height:4}}
         />
@@ -186,7 +234,7 @@ export default function TeamsView({athletes=[]}){
         </div>
       </div>
 
-      {/* Unassigned pool — drag source + tap to assign */}
+      {/* Unassigned pool */}
       {unassigned.length>0&&(
         <div
           onDragOver={e=>{e.preventDefault();setDragOver("pool");}}
@@ -196,12 +244,10 @@ export default function TeamsView({athletes=[]}){
           <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Unassigned — tap to place · drag to group</div>
           <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
             {unassigned.map(a=>(
-              <div key={a.id}
-                draggable
-                onDragStart={()=>onDragStart(a.name,null)}
-                onDragEnd={onDragEnd}
+              <div key={a.id} draggable
+                onDragStart={()=>onDragStart(a.name,null)} onDragEnd={onDragEnd}
                 onClick={()=>setPicker(a.name)}
-                style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px 6px 6px",borderRadius:20,border:"0.5px solid #2a2a2a",background:"#1e1e1e",cursor:"grab",userSelect:"none",transition:"border-color 0.1s"}}>
+                style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px 6px 6px",borderRadius:20,border:"0.5px solid #2a2a2a",background:"#1e1e1e",cursor:"grab",userSelect:"none"}}>
                 <div style={{width:22,height:22,borderRadius:"50%",background:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#888",flexShrink:0,overflow:"hidden"}}>
                   {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
                 </div>
@@ -217,18 +263,19 @@ export default function TeamsView({athletes=[]}){
         const color=GC[i];
         const members=groups[i]||[];
         const isTarget=dragOver===i;
+        const brac=bracelets[i]||null;
         return(
           <div key={i}
             onDragOver={e=>{e.preventDefault();setDragOver(i);}}
             onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setDragOver(null);}}
             onDrop={()=>onDropGroup(i)}
             style={{background:"#141414",borderRadius:14,padding:"14px",marginBottom:10,border:"2px solid "+(isTarget?color:color+"33"),boxShadow:isTarget?"0 0 20px "+color+"33":"none",transition:"all 0.15s"}}>
+
             {/* Group header */}
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
               <div style={{width:10,height:10,borderRadius:"50%",background:color,flexShrink:0,boxShadow:"0 0 6px "+color+"88"}}/>
               <div style={{fontSize:13,fontWeight:700,color}}>Group {i+1}</div>
               <span style={{fontSize:9,padding:"2px 8px",borderRadius:5,background:color+"18",color,border:"0.5px solid "+color+"33"}}>{TIER_LABEL[getTier(i,groupCount)]}</span>
-              {leaders[i]&&<span style={{fontSize:10,color:color+"bb"}}>⚒ {leaders[i].split(" ")[0]}</span>}
               <div style={{marginLeft:"auto",fontSize:11,color:"#444"}}>{members.length}</div>
             </div>
 
@@ -242,7 +289,7 @@ export default function TeamsView({athletes=[]}){
                   onDragOver={e=>{e.preventDefault();e.stopPropagation();setDragOverLeader(i);setDragOver(null);}}
                   onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setDragOverLeader(null);}}
                   onDrop={e=>{e.stopPropagation();onDropLeader(i);}}
-                  style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:10,border:"1.5px dashed "+(isLeaderTarget?color:currentLeader?color+"55":"#2a2a2a"),background:isLeaderTarget?color+"18":currentLeader?color+"10":"transparent",transition:"all 0.15s",cursor:"default",minHeight:38}}>
+                  style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:8,border:"1.5px dashed "+(isLeaderTarget?color:currentLeader?color+"55":"#2a2a2a"),background:isLeaderTarget?color+"18":currentLeader?color+"10":"transparent",transition:"all 0.15s",cursor:"default",minHeight:38}}>
                   <span style={{fontSize:13,filter:"drop-shadow(0 0 4px "+(currentLeader?color+"88":"transparent")+")"}}>⚒</span>
                   {currentLeader?(
                     <div style={{display:"flex",alignItems:"center",gap:6,flex:1}}>
@@ -262,7 +309,25 @@ export default function TeamsView({athletes=[]}){
               );
             })()}
 
-            {/* Empty drop zone */}
+            {/* Bracelet row */}
+            <button onClick={()=>setBraceletModal(i)}
+              style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:10,border:"1.5px dashed "+(brac?brac.hex+"66":"#2a2a2a"),background:brac?brac.hex+"12":"transparent",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",transition:"all 0.15s"}}>
+              <span style={{fontSize:13}}>📿</span>
+              {brac?(
+                <>
+                  <div style={{width:12,height:12,borderRadius:"50%",background:brac.hex,flexShrink:0,boxShadow:"0 0 6px "+brac.hex+"88"}}/>
+                  <div style={{flex:1}}>
+                    <span style={{fontSize:12,fontWeight:600,color:brac.hex}}>{brac.color}</span>
+                    <span style={{fontSize:10,color:"#555",marginLeft:6}}>{brac.ref}</span>
+                  </div>
+                  <span style={{fontSize:10,color:"#333"}}>change</span>
+                </>
+              ):(
+                <span style={{fontSize:11,color:"#444",flex:1}}>Tap to assign bracelet verse</span>
+              )}
+            </button>
+
+            {/* Members */}
             {members.length===0?(
               <div style={{fontSize:12,color:isTarget?color+"88":"#2a2a2a",textAlign:"center",padding:"18px 8px",border:"1px dashed "+(isTarget?color+"55":"#252525"),borderRadius:8,transition:"all 0.15s"}}>
                 {isTarget?"Drop here":"Empty — drag athletes here"}
@@ -273,10 +338,8 @@ export default function TeamsView({athletes=[]}){
                   const isLeader=leaders[i]===name;
                   const ath=athletes.find(a=>a.name===name);
                   return(
-                    <div key={name}
-                      draggable
-                      onDragStart={()=>onDragStart(name,i)}
-                      onDragEnd={onDragEnd}
+                    <div key={name} draggable
+                      onDragStart={()=>onDragStart(name,i)} onDragEnd={onDragEnd}
                       style={{display:"flex",alignItems:"center",gap:5,padding:"5px 4px 5px 6px",borderRadius:20,background:isLeader?color+"22":"#1e1e1e",border:"1px solid "+(isLeader?color+"88":"#2a2a2a"),cursor:"grab",userSelect:"none"}}>
                       <div style={{width:20,height:20,borderRadius:"50%",background:isLeader?color:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
                         {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:name[0]}
@@ -289,7 +352,7 @@ export default function TeamsView({athletes=[]}){
               </div>
             )}
 
-            {/* Quick-add unassigned */}
+            {/* Quick-add */}
             {unassigned.length>0&&(
               <div style={{marginTop:10,paddingTop:10,borderTop:"0.5px solid #1e1e1e"}}>
                 <div style={{fontSize:10,color:"#444",marginBottom:6}}>Quick add:</div>
