@@ -37,6 +37,10 @@ const PROGRAM_DAYS=[
 export default function Landing(){
   const[qrDataUrl,setQrDataUrl]=useState("");
   const[qrFullscreen,setQrFullscreen]=useState(false);
+  const[qrUnlocked,setQrUnlocked]=useState(()=>typeof window!=="undefined"&&sessionStorage.getItem("qr_unlocked")==="1");
+  const[qrPinModal,setQrPinModal]=useState(false);
+  const[qrPin,setQrPin]=useState("");
+  const[qrPinError,setQrPinError]=useState(false);
   const[loaded,setLoaded]=useState(false);
   const[time,setTime]=useState(new Date());
   const[countdown,setCountdown]=useState(null);
@@ -378,7 +382,7 @@ export default function Landing(){
           </div>
 
           {/* QR Check-In */}
-          <div onClick={()=>setQrFullscreen(true)} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 18px",borderRadius:14,border:"1px solid #1e1e1e",background:"#111",cursor:"pointer",marginBottom:10}}
+          <div onClick={()=>{if(qrUnlocked){setQrFullscreen(true);}else{setQrPin("");setQrPinError(false);setQrPinModal(true);}}} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 18px",borderRadius:14,border:"1px solid #1e1e1e",background:"#111",cursor:"pointer",marginBottom:10}}
             onMouseEnter={e=>e.currentTarget.style.borderColor=ORANGE+"66"}
             onMouseLeave={e=>e.currentTarget.style.borderColor="#1e1e1e"}>
             <div style={{width:44,height:44,borderRadius:10,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden"}}>
@@ -386,10 +390,66 @@ export default function Landing(){
             </div>
             <div style={{flex:1}}>
               <div style={{fontSize:14,fontWeight:600,color:ORANGE,marginBottom:2}}>Check-In QR Code</div>
-              <div style={{fontSize:11,color:"#555"}}>Tap to display fullscreen at the door</div>
+              <div style={{fontSize:11,color:"#555"}}>{qrUnlocked?"Tap to display fullscreen at the door":"Coach passcode required"}</div>
             </div>
-            <div style={{fontSize:16,color:"#333"}}>⛶</div>
+            <div style={{fontSize:16,color:"#333"}}>{qrUnlocked?"⛶":"🔒"}</div>
           </div>
+
+          {/* PIN modal */}
+          {qrPinModal&&(
+            <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setQrPinModal(false)}>
+              <div onClick={e=>e.stopPropagation()} style={{background:"#111",borderRadius:16,padding:"2rem 1.5rem",width:280,border:"1px solid #2a2a2a",textAlign:"center",fontFamily:"Georgia,serif"}}>
+                <div style={{fontSize:24,marginBottom:8}}>🔒</div>
+                <div style={{fontSize:15,fontWeight:700,color:"#fff",marginBottom:4}}>Coach Passcode</div>
+                <div style={{fontSize:12,color:"#555",marginBottom:20}}>Enter your passcode to display the QR</div>
+                <div style={{display:"flex",justifyContent:"center",gap:12,marginBottom:16}}>
+                  {[0,1,2,3].map(i=>(
+                    <div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+ORANGE,background:i<qrPin.length?ORANGE:"transparent"}}/>
+                  ))}
+                </div>
+                {qrPinError&&<div style={{fontSize:12,color:RED,marginBottom:12}}>Wrong passcode. Try again.</div>}
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:8}}>
+                  {[1,2,3,4,5,6,7,8,9].map(n=>(
+                    <button key={n} onClick={()=>{
+                      const next=qrPin+n;
+                      setQrPin(next);
+                      setQrPinError(false);
+                      if(next.length===4){
+                        if(next==="1803"){
+                          sessionStorage.setItem("qr_unlocked","1");
+                          setQrUnlocked(true);
+                          setQrPinModal(false);
+                          setQrFullscreen(true);
+                        }else{
+                          setQrPinError(true);
+                          setQrPin("");
+                        }
+                      }
+                    }} style={{padding:"14px",borderRadius:10,border:"1px solid #2a2a2a",background:"#1a1a1a",color:"#fff",fontSize:18,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>{n}</button>
+                  ))}
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <button onClick={()=>setQrPinModal(false)} style={{padding:"14px",borderRadius:10,border:"1px solid #2a2a2a",background:"#1a1a1a",color:"#555",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
+                  <button onClick={()=>{
+                    const next=qrPin+"0";
+                    setQrPin(next);
+                    setQrPinError(false);
+                    if(next.length===4){
+                      if(next==="1803"){
+                        sessionStorage.setItem("qr_unlocked","1");
+                        setQrUnlocked(true);
+                        setQrPinModal(false);
+                        setQrFullscreen(true);
+                      }else{
+                        setQrPinError(true);
+                        setQrPin("");
+                      }
+                    }
+                  }} style={{padding:"14px",borderRadius:10,border:"1px solid #2a2a2a",background:"#1a1a1a",color:"#fff",fontSize:18,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>0</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Fullscreen QR overlay */}
           {qrFullscreen&&(
