@@ -22,9 +22,12 @@ export default function AttendanceCalendar({athleteId}){
   const byDate={};
   records.forEach(r=>{byDate[r.date]=r.status;});
 
-  // Build months covering the season: June–September 2026
-  const START=new Date(2026,5,1); // June 2026
-  const END=new Date(2026,8,1);   // September 2026
+  // Build months from earliest check-in (or current month) through end of season
+  const earliestRec=records.length>0?new Date(records[0].date+"T12:00:00"):new Date();
+  const now=new Date();
+  const startRef=earliestRec<now?earliestRec:now;
+  const START=new Date(startRef.getFullYear(),startRef.getMonth(),1);
+  const END=new Date(2026,9,1); // October 2026 (covers full Sep season)
   const allMonths=[];
   let cur=new Date(START);
   while(cur<=END){
