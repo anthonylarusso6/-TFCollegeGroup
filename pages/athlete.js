@@ -460,48 +460,42 @@ export default function Athlete(){
   if(screen==="login")return(
     <>
       <Head><title>Sign In — TF College Group</title></Head>
-      <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",textAlign:"center",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",paddingTop:"18vw",paddingBottom:"1rem",paddingLeft:"1.25rem",paddingRight:"1.25rem"}}>
-        {/* Big role-specific ambient glow */}
-        <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:600,height:400,background:"radial-gradient(ellipse at top,"+(isForge?"#C0392B18":"#4a5a6622")+" 0%,transparent 70%)",pointerEvents:"none"}}/>
-        {/* Top bar */}
+      <div style={{height:"100dvh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",textAlign:"center",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 1.25rem",overflow:"hidden"}}>
+        <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:500,height:300,background:"radial-gradient(ellipse at top,"+(isForge?"#C0392B14":"#4a5a6618")+" 0%,transparent 70%)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+(isForge?"#C0392B,#E8720C":"#505a66,#8a9aa4")+",transparent)"}}/>
-        <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:16,left:16,background:"#111",border:"0.5px solid #1e1e1e",color:"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia, serif",padding:"6px 12px",borderRadius:10}}>← Back</button>
-        {/* Role label above avatar */}
-        <div style={{fontSize:9,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.22em",marginBottom:8,background:(isForge?RED:STEEL)+"15",padding:"3px 12px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"33"}}>
+        <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:14,left:14,background:"#111",border:"0.5px solid #1e1e1e",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia, serif",padding:"5px 11px",borderRadius:8}}>← Back</button>
+        <div style={{fontSize:8,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",marginBottom:6,background:(isForge?RED:STEEL)+"15",padding:"3px 10px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"33"}}>
           {isForge?"⚔ The Forge":"⚒ The Iron"}
         </div>
-        {/* Avatar */}
-        <div style={{position:"relative",marginBottom:8}}>
-          <div style={{position:"absolute",inset:-5,borderRadius:"50%",border:"1px solid "+(isForge?RED:STEEL)+"33",pointerEvents:"none"}}/>
-          <div style={{width:54,height:54,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:900,color:"#fff",overflow:"hidden",boxShadow:"0 0 30px "+(isForge?RED:STEEL)+"44"}}>
+        <div style={{position:"relative",marginBottom:6}}>
+          <div style={{position:"absolute",inset:-4,borderRadius:"50%",border:"1px solid "+(isForge?RED:STEEL)+"33",pointerEvents:"none"}}/>
+          <div style={{width:46,height:46,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:900,color:"#fff",overflow:"hidden",boxShadow:"0 0 24px "+(isForge?RED:STEEL)+"44"}}>
             {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
           </div>
         </div>
-        <div style={{fontSize:17,fontWeight:900,color:"#fff",marginBottom:2,letterSpacing:"-0.02em",textTransform:"uppercase"}}>
+        <div style={{fontSize:15,fontWeight:900,color:"#fff",marginBottom:2,letterSpacing:"-0.01em",textTransform:"uppercase"}}>
           {!selectedAthlete?.pin?selectedAthlete?.name.split(" ")[0]:pinStep==="confirm"?"Confirm PIN":selectedAthlete?.name.split(" ")[0]}
         </div>
-        <div style={{fontSize:11,color:"#555",marginBottom:14,letterSpacing:"0.04em"}}>
+        <div style={{fontSize:10,color:"#555",marginBottom:12,letterSpacing:"0.04em"}}>
           {!selectedAthlete?.pin?"Create a 4-digit PIN":pinStep==="confirm"?"Enter the same 4 digits":"Enter your PIN to check in"}
         </div>
-        {/* PIN dots */}
-        <div style={{display:"flex",justifyContent:"center",gap:12,marginBottom:16}}>
+        <div style={{display:"flex",justifyContent:"center",gap:10,marginBottom:14}}>
           {[0,1,2,3].map(i=>(
-            <div key={i} style={{width:12,height:12,borderRadius:"50%",border:"2px solid "+(isForge?RED:STEEL)+(i<pin.length?"":"44"),background:i<pin.length?(isForge?"linear-gradient(135deg,#E8720C,"+RED+")":"linear-gradient(135deg,#8a9aa4,"+STEEL+")"):"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 8px "+(isForge?RED:STEEL)+"88":"none"}}/>
+            <div key={i} style={{width:10,height:10,borderRadius:"50%",border:"2px solid "+(isForge?RED:STEEL)+(i<pin.length?"":"44"),background:i<pin.length?(isForge?"linear-gradient(135deg,#E8720C,"+RED+")":"linear-gradient(135deg,#8a9aa4,"+STEEL+")"):"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 6px "+(isForge?RED:STEEL)+"88":"none"}}/>
           ))}
         </div>
-        {/* Keypad */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,width:"72%",maxWidth:220}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:5,width:"68%",maxWidth:200}}>
           {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
             <button key={i} onClick={()=>{
               if(k===null)return;
               if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
               if(pin.length<4)setPin(p=>p+String(k));
-            }} style={{padding:"12px 0",borderRadius:10,border:"0.5px solid "+(k===null?"transparent":"#1e1e1e"),background:k===null?"transparent":k==="⌫"?"#161616":"#141414",fontSize:17,fontWeight:300,cursor:k===null?"default":"pointer",color:k==="⌫"?"#555":"#ddd",fontFamily:"sans-serif",transition:"background 0.1s"}}>
+            }} style={{padding:"9px 0",borderRadius:8,border:"0.5px solid "+(k===null?"transparent":"#1e1e1e"),background:k===null?"transparent":k==="⌫"?"#161616":"#141414",fontSize:16,fontWeight:300,cursor:k===null?"default":"pointer",color:k==="⌫"?"#555":"#ddd",fontFamily:"sans-serif"}}>
               {k===null?"":k}
             </button>
           ))}
         </div>
-        {pinError&&<div style={{marginTop:10,fontSize:11,color:"#ff5555",padding:"6px 14px",background:"#1a0505",borderRadius:8,border:"1px solid #3a0808"}}>{pinError}</div>}
+        {pinError&&<div style={{marginTop:8,fontSize:10,color:"#ff5555",padding:"5px 12px",background:"#1a0505",borderRadius:8,border:"1px solid #3a0808"}}>{pinError}</div>}
       </div>
     </>
   );
