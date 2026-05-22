@@ -16,6 +16,7 @@ export default function TeamsView({athletes=[]}){
   const[error,setError]=useState("");
   const[dragging,setDragging]=useState(null);   // {name, fromGroup: idx|null}
   const[dragOver,setDragOver]=useState(null);   // group idx | "pool"
+  const[dragOverLeader,setDragOverLeader]=useState(null); // group idx whose leader slot is hovered
   const[picker,setPicker]=useState(null);        // athlete name waiting for group pick
 
   useEffect(()=>{loadTeams();},[]);
@@ -71,7 +72,21 @@ export default function TeamsView({athletes=[]}){
 
   // Drag handlers
   const onDragStart=(name,fromGroup)=>setDragging({name,fromGroup});
-  const onDragEnd=()=>{setDragging(null);setDragOver(null);};
+  const onDragEnd=()=>{setDragging(null);setDragOver(null);setDragOverLeader(null);};
+
+  // Drop onto leader slot — adds to group if needed, then sets as leader
+  const onDropLeader=(groupIdx)=>{
+    if(!dragging)return;
+    const{name}=dragging;
+    setGroups(prev=>{
+      const n={...prev};
+      Object.keys(n).forEach(k=>{n[k]=(n[k]||[]).filter(x=>x!==name);});
+      n[groupIdx]=[...(n[groupIdx]||[]),name];
+      return n;
+    });
+    setLeaders(prev=>({...prev,[groupIdx]:name}));
+    setDragging(null);setDragOver(null);setDragOverLeader(null);
+  };
   const onDropGroup=(toIdx)=>{
     if(!dragging)return;
     addToGroup(dragging.name,toIdx);
@@ -190,6 +205,36 @@ export default function TeamsView({athletes=[]}){
               <div style={{marginLeft:"auto",fontSize:11,color:"#444"}}>{members.length}</div>
             </div>
 
+            {/* Leader drop zone */}
+            {(()=>{
+              const isLeaderTarget=dragOverLeader===i;
+              const currentLeader=leaders[i];
+              const leaderAth=currentLeader?athletes.find(a=>a.name===currentLeader):null;
+              return(
+                <div
+                  onDragOver={e=>{e.preventDefault();e.stopPropagation();setDragOverLeader(i);setDragOver(null);}}
+                  onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setDragOverLeader(null);}}
+                  onDrop={e=>{e.stopPropagation();onDropLeader(i);}}
+                  style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:10,border:"1.5px dashed "+(isLeaderTarget?color:currentLeader?color+"55":"#2a2a2a"),background:isLeaderTarget?color+"18":currentLeader?color+"10":"transparent",transition:"all 0.15s",cursor:"default",minHeight:38}}>
+                  <span style={{fontSize:13,filter:"drop-shadow(0 0 4px "+(currentLeader?color+"88":"transparent")+")"}}>⚒</span>
+                  {currentLeader?(
+                    <div style={{display:"flex",alignItems:"center",gap:6,flex:1}}>
+                      <div style={{width:22,height:22,borderRadius:"50%",background:color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                        {leaderAth?.photo_url?<img src={leaderAth.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:currentLeader[0]}
+                      </div>
+                      <span style={{fontSize:12,fontWeight:700,color}}>{currentLeader}</span>
+                      <span style={{fontSize:9,color:color+"88",marginLeft:2}}>Forge leader</span>
+                    </div>
+                  ):(
+                    <span style={{fontSize:11,color:isLeaderTarget?color:"#444",flex:1}}>{isLeaderTarget?"Drop to set as leader":"Drag name here → Forge leader"}</span>
+                  )}
+                  {currentLeader&&(
+                    <button onClick={()=>setLeaders(prev=>{const n={...prev};delete n[i];return n;})} style={{background:"transparent",border:"none",cursor:"pointer",color:"#333",fontSize:13,lineHeight:1,padding:"0 2px"}}>×</button>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Empty drop zone */}
             {members.length===0?(
               <div style={{fontSize:12,color:isTarget?color+"88":"#2a2a2a",textAlign:"center",padding:"18px 8px",border:"1px dashed "+(isTarget?color+"55":"#252525"),borderRadius:8,transition:"all 0.15s"}}>
@@ -210,10 +255,7 @@ export default function TeamsView({athletes=[]}){
                         {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:name[0]}
                       </div>
                       <span style={{fontSize:12,color:isLeader?color:"#ccc",fontWeight:isLeader?700:400}}>{name.split(" ")[0]}</span>
-                      {/* Leader toggle */}
-                      <button onClick={()=>toggleLeader(name,i)} title={isLeader?"Remove as leader":"Set as leader"} style={{background:"transparent",border:"none",cursor:"pointer",padding:"0 2px",fontSize:11,color:isLeader?color:"#333",lineHeight:1,transition:"color 0.1s"}}>⚒</button>
-                      {/* Remove */}
-                      <button onClick={()=>removeFromGroup(name,i)} style={{background:"transparent",border:"none",cursor:"pointer",padding:"0 4px 0 0",fontSize:13,color:"#333",lineHeight:1}}>×</button>
+                      <button onClick={()=>removeFromGroup(name,i)} style={{background:"transparent",border:"none",cursor:"pointer",padding:"0 4px 0 2px",fontSize:13,color:"#333",lineHeight:1}}>×</button>
                     </div>
                   );
                 })}
