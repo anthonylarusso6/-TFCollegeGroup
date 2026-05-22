@@ -567,97 +567,151 @@ export default function Coach(){
                   </div>
                 ))}
               </div>
-              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>Weekly announcement</div>
-                <div style={{fontSize:12,color:"#888",marginBottom:8}}>This shows on every athlete's home screen when they log in.</div>
-                <textarea value={announcement} onChange={e=>setAnnouncement(e.target.value)} placeholder="Type this week's message to your athletes..." style={{width:"100%",minHeight:80,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",marginBottom:8}}/>
-                <button onClick={saveAnnouncement} style={{padding:"8px 20px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Save & push to athletes →</button>
+              <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
+                <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
+                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📣</div>
+                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
+                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📣</div>
+                    <div>
+                      <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Coach Ant</div>
+                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Weekly Announcement</div>
+                      <div style={{fontSize:11,color:"#666",marginTop:1}}>Pushed to every athlete's home screen</div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{background:"#111",padding:"16px 18px"}}>
+                  <textarea value={announcement} onChange={e=>setAnnouncement(e.target.value)} placeholder="Type this week's message to your athletes..." style={{width:"100%",minHeight:80,padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",marginBottom:8}}/>
+                  <button onClick={saveAnnouncement} style={{padding:"8px 20px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Save & push to athletes →</button>
+                </div>
               </div>
               {(injuries.length>0||messages.length>0||prayers.length>0)&&(
-                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
-                  <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>Needs attention</div>
-                  {injuries.map((i,idx)=>(
-                    <div key={idx} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"flex-start"}}>
-                      <div style={{width:7,height:7,borderRadius:"50%",background:RED,marginTop:5,flexShrink:0}}/>
-                      <div style={{fontSize:13}}><span style={{fontWeight:500}}>{i.athletes?.name}</span> — injury: <span style={{color:"#888"}}>{i.message}</span></div>
+                <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+RED+"33"}}>
+                  <div style={{background:"linear-gradient(140deg,"+RED+"30,"+RED+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+RED+"44,transparent)"}}/>
+                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>🚨</div>
+                    <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+RED+"12,transparent 70%)",pointerEvents:"none"}}/>
+                    <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+RED+"44,"+RED+"22)",border:"1px solid "+RED+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+RED+"33"}}>🚨</div>
+                      <div>
+                        <div style={{fontSize:8,color:RED,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Action Required</div>
+                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Needs Attention</div>
+                        <div style={{fontSize:11,color:"#666",marginTop:1}}>{injuries.length>0?injuries.length+" injur"+(injuries.length===1?"y":"ies"):""}{injuries.length>0&&messages.length>0?" · ":""}{messages.length>0?messages.length+" message"+(messages.length===1?"":"s"):""}{(injuries.length>0||messages.length>0)&&prayers.length>0?" · ":""}{prayers.length>0?prayers.length+" prayer"+(prayers.length===1?"":"s"):""}</div>
+                      </div>
                     </div>
-                  ))}
-                  {messages.map((m,idx)=>(
-                    <div key={idx} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"flex-start"}}>
-                      <div style={{width:7,height:7,borderRadius:"50%",background:PUR,marginTop:5,flexShrink:0}}/>
-                      <div style={{fontSize:13}}><span style={{fontWeight:500}}>{m.athletes?.name}</span> sent a message</div>
-                    </div>
-                  ))}
-                  {prayers.map((p,idx)=>(
-                    <div key={idx} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"0.5px solid #f0f0f0",alignItems:"flex-start"}}>
-                      <div style={{width:7,height:7,borderRadius:"50%",background:GREEN,marginTop:5,flexShrink:0}}/>
-                      <div style={{fontSize:13}}><span style={{fontWeight:500}}>{p.athletes?.name}</span> submitted a prayer request</div>
-                    </div>
-                  ))}
+                  </div>
+                  <div style={{background:"#111",padding:"16px 18px"}}>
+                    {injuries.map((i,idx)=>(
+                      <div key={idx} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"0.5px solid #1e1e1e",alignItems:"flex-start"}}>
+                        <div style={{width:7,height:7,borderRadius:"50%",background:RED,marginTop:5,flexShrink:0}}/>
+                        <div style={{fontSize:13,color:"#ddd"}}><span style={{fontWeight:500}}>{i.athletes?.name}</span> — injury: <span style={{color:"#666"}}>{i.message}</span></div>
+                      </div>
+                    ))}
+                    {messages.map((m,idx)=>(
+                      <div key={idx} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"0.5px solid #1e1e1e",alignItems:"flex-start"}}>
+                        <div style={{width:7,height:7,borderRadius:"50%",background:PUR,marginTop:5,flexShrink:0}}/>
+                        <div style={{fontSize:13,color:"#ddd"}}><span style={{fontWeight:500}}>{m.athletes?.name}</span> sent a message</div>
+                      </div>
+                    ))}
+                    {prayers.map((p,idx)=>(
+                      <div key={idx} style={{display:"flex",gap:10,padding:"7px 0",borderBottom:"0.5px solid #1e1e1e",alignItems:"flex-start"}}>
+                        <div style={{width:7,height:7,borderRadius:"50%",background:GREEN,marginTop:5,flexShrink:0}}/>
+                        <div style={{fontSize:13,color:"#ddd"}}><span style={{fontWeight:500}}>{p.athletes?.name}</span> submitted a prayer request</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
               {/* This week attendance chart */}
-              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:2}}>This week's attendance</div>
-                <div style={{fontSize:12,color:"#888",marginBottom:14}}>Daily check-ins · Mon, Tue, Thu, Fri</div>
-                {(()=>{
-                  const days=weekDays.map(d=>({dayName:d.dn,early:d.early,late:d.late,isToday:d.ds===estTodayStr}));
-                  const maxVal=Math.max(...days.map(d=>d.early+d.late),5);
-                  return(
+              <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GREEN+"33"}}>
+                <div style={{background:"linear-gradient(140deg,"+GREEN+"30,"+GREEN+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+GREEN+"44,transparent)"}}/>
+                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📊</div>
+                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GREEN+"12,transparent 70%)",pointerEvents:"none"}}/>
+                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GREEN+"44,"+GREEN+"22)",border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GREEN+"33"}}>📊</div>
                     <div>
-                      <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-around",gap:8,height:140,marginBottom:12,borderBottom:"0.5px solid #e0e0e0",paddingBottom:4}}>
-                        {days.map((d,i)=>{
-                          const total=d.early+d.late;
-                          const earlyPct=total>0?(d.early/maxVal)*100:0;
-                          const latePct=total>0?(d.late/maxVal)*100:0;
-                          return(
-                            <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,height:"100%"}}>
-                              <div style={{flex:1,width:"100%",display:"flex",flexDirection:"column",justifyContent:"flex-end",alignItems:"center",gap:1}}>
-                                {total>0&&(
-                                  <>
-                                    {d.late>0&&<div style={{width:"70%",height:`${latePct}%`,background:RED,borderRadius:"4px 4px 0 0",minHeight:latePct>0?4:0}}/>}
-                                    {d.early>0&&<div style={{width:"70%",height:`${earlyPct}%`,background:GREEN,borderRadius:d.late>0?"0":"4px 4px 0 0",minHeight:earlyPct>0?4:0}}/>}
-                                  </>
-                                )}
-                                {total>0&&<div style={{fontSize:11,fontWeight:600,color:"#1a1a1a",marginBottom:2}}>{total}</div>}
-                              </div>
-                              <div style={{fontSize:11,fontWeight:d.isToday?600:400,color:d.isToday?GREEN:"#888"}}>{d.dayName}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div style={{display:"flex",gap:16,justifyContent:"center",fontSize:11,color:"#888"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:2,background:GREEN}}/> Early</div>
-                        <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:2,background:RED}}/> Late</div>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-              <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-                <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Class flow — 2 hours · done by 11:20am</div>
-                {[
-                  {time:"9:00am",label:"Pre-class",detail:dayName==="Mon"?"Draft → Mindset Monday":dayName==="Fri"?"Fellowship Friday devotional":"Sign-in · stretch prep",color:PUR,dur:"30 min"},
-                  {time:"9:30am",label:"Stretch & mobility",detail:"10 min · dynamic stretching · all athletes together",color:GREEN,dur:"10 min"},
-                  {time:"9:40am",label:"Run",detail:"40–50 min · all 4 groups · hand positions enforced · leaders set pace",color:"#854F0B",dur:"40–50 min"},
-                  {time:"10:30am",label:"Weight room",detail:"30–50 min · 2 groups Tier 1 · 1 group Tier 2 · 1 group Tier 3",color:PUR,dur:"30–50 min"},
-                  {time:"11:15am",label:"Closeout & prayer",detail:"5 min · all together · coach or athlete prays",color:RED,dur:"5 min"},
-                ].map((s,i,arr)=>(
-                  <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<arr.length-1?"0.5px solid #f0f0f0":"none"}}>
-                    <div style={{minWidth:56,fontSize:12,color:"#888",paddingTop:2}}>{s.time}</div>
-                    <div style={{minWidth:8,display:"flex",flexDirection:"column",alignItems:"center"}}>
-                      <div style={{width:8,height:8,borderRadius:"50%",background:s.color,marginTop:4,flexShrink:0}}/>
-                      {i<arr.length-1&&<div style={{width:1,flex:1,background:"#e0e0e0",marginTop:3}}/>}
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
-                        <span style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{s.label}</span>
-                        <span style={{fontSize:11,background:"#f5f5f5",color:"#888",padding:"1px 7px",borderRadius:5}}>{s.dur}</span>
-                      </div>
-                      <div style={{fontSize:12,color:"#888"}}>{s.detail}</div>
+                      <div style={{fontSize:8,color:GREEN,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>This Week</div>
+                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Attendance</div>
+                      <div style={{fontSize:11,color:"#666",marginTop:1}}>Mon · Tue · Thu · Fri check-ins</div>
                     </div>
                   </div>
-                ))}
+                </div>
+                <div style={{background:"#111",padding:"16px 18px"}}>
+                  {(()=>{
+                    const days=weekDays.map(d=>({dayName:d.dn,early:d.early,late:d.late,isToday:d.ds===estTodayStr}));
+                    const maxVal=Math.max(...days.map(d=>d.early+d.late),5);
+                    return(
+                      <div>
+                        <div style={{display:"flex",alignItems:"flex-end",justifyContent:"space-around",gap:8,height:140,marginBottom:12,borderBottom:"0.5px solid #252525",paddingBottom:4}}>
+                          {days.map((d,i)=>{
+                            const total=d.early+d.late;
+                            const earlyPct=total>0?(d.early/maxVal)*100:0;
+                            const latePct=total>0?(d.late/maxVal)*100:0;
+                            return(
+                              <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,height:"100%"}}>
+                                <div style={{flex:1,width:"100%",display:"flex",flexDirection:"column",justifyContent:"flex-end",alignItems:"center",gap:1}}>
+                                  {total>0&&(
+                                    <>
+                                      {d.late>0&&<div style={{width:"70%",height:`${latePct}%`,background:RED,borderRadius:"4px 4px 0 0",minHeight:latePct>0?4:0}}/>}
+                                      {d.early>0&&<div style={{width:"70%",height:`${earlyPct}%`,background:GREEN,borderRadius:d.late>0?"0":"4px 4px 0 0",minHeight:earlyPct>0?4:0}}/>}
+                                    </>
+                                  )}
+                                  {total>0&&<div style={{fontSize:11,fontWeight:600,color:"#fff",marginBottom:2}}>{total}</div>}
+                                </div>
+                                <div style={{fontSize:11,fontWeight:d.isToday?600:400,color:d.isToday?GREEN:"#666"}}>{d.dayName}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div style={{display:"flex",gap:16,justifyContent:"center",fontSize:11,color:"#666"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:2,background:GREEN}}/> Early</div>
+                          <div style={{display:"flex",alignItems:"center",gap:5}}><div style={{width:10,height:10,borderRadius:2,background:RED}}/> Late</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+              <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
+                <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
+                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⏱</div>
+                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
+                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>⏱</div>
+                    <div>
+                      <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Daily Structure</div>
+                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Class Flow</div>
+                      <div style={{fontSize:11,color:"#666",marginTop:1}}>2 hours · done by 11:20am</div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{background:"#111",padding:"16px 18px"}}>
+                  {[
+                    {time:"9:00am",label:"Pre-class",detail:dayName==="Mon"?"Draft → Mindset Monday":dayName==="Fri"?"Fellowship Friday devotional":"Sign-in · stretch prep",color:PUR,dur:"30 min"},
+                    {time:"9:30am",label:"Stretch & mobility",detail:"10 min · dynamic stretching · all athletes together",color:GREEN,dur:"10 min"},
+                    {time:"9:40am",label:"Run",detail:"40–50 min · all 4 groups · hand positions enforced · leaders set pace",color:"#854F0B",dur:"40–50 min"},
+                    {time:"10:30am",label:"Weight room",detail:"30–50 min · 2 groups Tier 1 · 1 group Tier 2 · 1 group Tier 3",color:PUR,dur:"30–50 min"},
+                    {time:"11:15am",label:"Closeout & prayer",detail:"5 min · all together · coach or athlete prays",color:RED,dur:"5 min"},
+                  ].map((s,i,arr)=>(
+                    <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<arr.length-1?"0.5px solid #252525":"none"}}>
+                      <div style={{minWidth:56,fontSize:12,color:"#555",paddingTop:2}}>{s.time}</div>
+                      <div style={{minWidth:8,display:"flex",flexDirection:"column",alignItems:"center"}}>
+                        <div style={{width:8,height:8,borderRadius:"50%",background:s.color,marginTop:4,flexShrink:0}}/>
+                        {i<arr.length-1&&<div style={{width:1,flex:1,background:"#252525",marginTop:3}}/>}
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+                          <span style={{fontSize:13,fontWeight:500,color:"#ddd"}}>{s.label}</span>
+                          <span style={{fontSize:11,background:"#222",color:"#666",padding:"1px 7px",borderRadius:5}}>{s.dur}</span>
+                        </div>
+                        <div style={{fontSize:12,color:"#666"}}>{s.detail}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
