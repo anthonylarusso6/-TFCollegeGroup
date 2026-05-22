@@ -126,10 +126,11 @@ export default function TeamsView({athletes=[]}){
       const braceletsArr=Array.from({length:groupCount},(_,i)=>bracelets[i]||null);
       const payload={groups:groupsArr,leaders:leadersArr,bracelets:braceletsArr};
       if(draftId){
+        // Don't overwrite phase/locked when editing — preserve existing draft state
         const{error:err}=await supabase.from("draft").update(payload).eq("id",draftId);
         if(err)throw err;
       }else{
-        const{data:inserted,error:err}=await supabase.from("draft").insert(payload).select().single();
+        const{data:inserted,error:err}=await supabase.from("draft").insert({...payload,phase:"setup",locked:false}).select().single();
         if(err)throw err;
         if(inserted)setDraftId(inserted.id);
       }

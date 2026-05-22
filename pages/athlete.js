@@ -598,7 +598,8 @@ export default function Athlete(){
     const allPicked=(draftGroups||[]).flat();
     const available=nonLeaders.filter(n=>!allPicked.includes(n));
     const totalPicks=nonLeaders.length;
-    const numLeaders=draftLeaders.filter(Boolean).length||draft?.group_count||4;
+    const numLeaders=draftLeaders.filter(Boolean).length||4;
+    const MAX_PICKS_PER_GROUP=numLeaders>0&&nonLeaders.length>0?Math.ceil(nonLeaders.length/numLeaders):4;
     const pickSeq=snakeSeq(totalPicks,numLeaders);
     const pickIdx=allPicked.length;
     const currentPickerIdx=pickSeq[pickIdx]??0;
@@ -607,23 +608,22 @@ export default function Athlete(){
 
     const pickBracelet=async(b)=>{
       if(myLeaderIdx<0||myBraceletPicked)return;
-      const nb=[...(draftBracelets||[null,null,null,null])];
+      const nb=[...(draftBracelets||Array(numLeaders).fill(null))];
       nb[myLeaderIdx]=b;
       await supabase.from("draft").update({bracelets:nb}).eq("id",draft.id);
-      const allPicked=nb.every(Boolean);
+      const allPicked=nb.slice(0,numLeaders).every(Boolean);
       if(allPicked){
         await supabase.from("draft").update({phase:"draft"}).eq("id",draft.id);
       }
       await loadDraft();
     };
 
-    const MAX_PICKS_PER_GROUP=draft?.picks_per_group||4;
     const pickAthlete=async(name)=>{
       if(!isMyTurn)return;
-      const ng=(draftGroups||[[],[],[],[]]).map(g=>[...g]);
+      const ng=(draftGroups||Array(numLeaders).fill([])).map(g=>[...g]);
       // Enforce 4-pick max per group
       if(ng[myLeaderIdx].length>=MAX_PICKS_PER_GROUP){
-        alert("Your group is full! Each group can only have 4 athletes.");
+        alert(`Your group is full! Each group can only have ${MAX_PICKS_PER_GROUP} athletes.`);
         return;
       }
       ng[myLeaderIdx].push(name);
@@ -835,11 +835,17 @@ export default function Athlete(){
             )}
             {tab==="draft"&&isForge&&(
               <div>
-                {!draft&&(
+                {(!draft||draftPhase==="setup")&&(
                   <div style={{background:BG,borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #222"}}>
                     <div style={{fontSize:32,marginBottom:12}}>⏳</div>
-                    <div style={{fontSize:16,color:"#fff",marginBottom:8}}>Waiting for Coach Ant to start the draft...</div>
-                    <div style={{fontSize:13,color:"#555"}}>Once leaders are generated you'll see your draft options here.</div>
+                    <div style={{fontSize:16,color:"#fff",marginBottom:8}}>
+                      {draftPhase==="setup"&&(draftGroups[myLeaderIdx]||[]).length>0
+                        ?"Coach has set your group — draft pending"
+                        :"Waiting for Coach Ant to start the draft..."}
+                    </div>
+                    <div style={{fontSize:13,color:"#555"}}>
+                      {draftPhase==="setup"?"The live draft hasn't started yet. Check your My Group tab.":"Once leaders are set you'll see your draft options here."}
+                    </div>
                   </div>
                 )}
 
@@ -897,14 +903,14 @@ export default function Athlete(){
                     ):(
                       <div style={{background:BG,borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #222"}}>
                         <div style={{fontSize:32,marginBottom:12}}>⏳</div>
-                        <div style={{fontSize:16,color:"#fff",marginBottom:8}}>Waiting for {draftLeaders[currentPickerIdx]} to pick...</div>
+                        <div style={{fontSize:16,color:"#fff",marginBottom:8}}>Waiting for {draftLeaders[currentPickerIdx]||"next leader"} to pick...</div>
                         <div style={{fontSize:13,color:"#555"}}>Auto-refreshing every 3 seconds</div>
                       </div>
                     )}
                     <div style={{marginTop:12,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                      {[0,1,2,3].map(i=>(
-                        <div key={i} style={{background:LB[i],borderRadius:10,padding:"8px 10px",border:"0.5px solid "+LC[i]+"44"}}>
-                          <div style={{fontSize:11,fontWeight:500,color:LC[i],marginBottom:4}}>{draftLeaders[i]}{i===myLeaderIdx?" (you)":""}</div>
+                      {Array.from({length:numLeaders},(_,i)=>(
+                        <div key={i} style={{background:LB[i%LB.length],borderRadius:10,padding:"8px 10px",border:"0.5px solid "+LC[i%LC.length]+"44"}}>
+                          <div style={{fontSize:11,fontWeight:500,color:LC[i%LC.length],marginBottom:4}}>{draftLeaders[i]}{i===myLeaderIdx?" (you)":""}</div>
                           {(draftGroups[i]||[]).map(n=><div key={n} style={{fontSize:11,color:"#555",padding:"2px 0"}}>{n}</div>)}
                         </div>
                       ))}
@@ -921,14 +927,16 @@ export default function Athlete(){
                     {myLeaderIdx>=0&&(()=>{
                       const myBrac=BRACELETS.find(b=>b.ref===draftBracelets[myLeaderIdx]?.ref);
                       const myTd=TIER_COLORS[draftTiers[myLeaderIdx]];
+                      const myColor=LC[myLeaderIdx%LC.length];
+                      const myBg=LB[myLeaderIdx%LB.length];
                       return(
-                        <div style={{background:LB[myLeaderIdx],borderRadius:14,padding:"1.25rem",marginBottom:12,border:"2px solid "+LC[myLeaderIdx]}}>
-                          <div style={{fontSize:11,color:LC[myLeaderIdx],textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>Your group</div>
+                        <div style={{background:myBg,borderRadius:14,padding:"1.25rem",marginBottom:12,border:"2px solid "+myColor}}>
+                          <div style={{fontSize:11,color:myColor,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8}}>Your group</div>
                           {myBrac&&(
                             <div style={{marginBottom:12}}>
                               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                                 <div style={{width:14,height:14,borderRadius:"50%",background:myBrac.hex}}/>
-                                <span style={{fontSize:13,fontWeight:600,color:LC[myLeaderIdx]}}>{myBrac.color} — {myBrac.ref}</span>
+                                <span style={{fontSize:13,fontWeight:600,color:myColor}}>{myBrac.color} — {myBrac.ref}</span>
                               </div>
                               <div style={{fontSize:14,color:"#1a1a1a",fontStyle:"italic",lineHeight:1.7,padding:"10px 12px",background:"rgba(255,255,255,0.6)",borderRadius:8,borderLeft:"3px solid "+myBrac.hex}}>
                                 "{myBrac.text}"
@@ -936,10 +944,10 @@ export default function Athlete(){
                             </div>
                           )}
                           {myTd&&<div style={{display:"inline-block",fontSize:11,fontWeight:500,padding:"3px 12px",borderRadius:6,background:myTd.bg,color:myTd.color,marginBottom:10}}>{myTd.label}</div>}
-                          <div style={{fontSize:11,fontWeight:500,color:LC[myLeaderIdx],textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:8}}>Your team</div>
+                          <div style={{fontSize:11,fontWeight:500,color:myColor,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:8}}>Your team</div>
                           <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"rgba(255,255,255,0.7)",borderRadius:8,marginBottom:4}}>
-                            <div style={{width:28,height:28,borderRadius:"50%",background:LC[myLeaderIdx],display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff"}}>{selectedAthlete.name[0]}</div>
-                            <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{selectedAthlete.name} <span style={{fontSize:11,color:LC[myLeaderIdx]}}>— Leader</span></div>
+                            <div style={{width:28,height:28,borderRadius:"50%",background:myColor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff"}}>{selectedAthlete.name[0]}</div>
+                            <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{selectedAthlete.name} <span style={{fontSize:11,color:myColor}}>— Leader</span></div>
                           </div>
                           {(draftGroups[myLeaderIdx]||[]).map(n=>(
                             <div key={n} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"rgba(255,255,255,0.7)",borderRadius:8,marginBottom:4}}>
@@ -952,16 +960,19 @@ export default function Athlete(){
                     })()}
                     <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>All groups</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                      {[0,1,2,3].map(i=>{
+                      {draftLeaders.filter(Boolean).map((leader,i)=>{
+                        const color=LC[i%LC.length];
+                        const bg=LB[i%LB.length];
                         const brac=BRACELETS.find(b=>b.ref===draftBracelets[i]?.ref);
+                        const isMe=i===myLeaderIdx;
                         return(
-                          <div key={i} style={{background:i===myLeaderIdx?LB[i]:"#fff",borderRadius:12,padding:"10px",border:"0.5px solid "+(i===myLeaderIdx?LC[i]:"#e0e0e0"),borderTop:"3px solid "+(i===myLeaderIdx?LC[i]:"#e0e0e0")}}>
+                          <div key={i} style={{background:isMe?bg:"#141414",borderRadius:12,padding:"10px",border:"0.5px solid "+(isMe?color:"#222"),borderTop:"3px solid "+(isMe?color:"#333")}}>
                             <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                               {brac&&<div style={{width:8,height:8,borderRadius:"50%",background:brac.hex}}/>}
-                              <span style={{fontSize:12,fontWeight:500,color:i===myLeaderIdx?LC[i]:"#1a1a1a"}}>{draftLeaders[i]}{i===myLeaderIdx?" ✓":""}</span>
+                              <span style={{fontSize:12,fontWeight:500,color:isMe?color:"#ccc"}}>{leader}{isMe?" ✓":""}</span>
                             </div>
-                            {brac&&<div style={{fontSize:10,color:"#888",fontStyle:"italic",marginBottom:4}}>"{brac.text}"</div>}
-                            {(draftGroups[i]||[]).map(n=><div key={n} style={{fontSize:11,color:"#555",padding:"2px 0"}}>{n}</div>)}
+                            {brac&&<div style={{fontSize:10,color:isMe?"#555":"#444",fontStyle:"italic",marginBottom:4}}>"{brac.text}"</div>}
+                            {(draftGroups[i]||[]).map(n=><div key={n} style={{fontSize:11,color:isMe?"#444":"#666",padding:"2px 0"}}>{n}</div>)}
                           </div>
                         );
                       })}
@@ -973,7 +984,7 @@ export default function Athlete(){
 
             {tab==="mygroup"&&(
               <div>
-                {!draft||draftPhase==="setup"||(myGroupIdx==null&&myLeaderIdx<0&&draftPhase!=="locked")?(
+                {(!draft||(myGroupIdx==null&&myLeaderIdx<0))?(
                   <div style={{background:BG,borderRadius:12,padding:"1.5rem",textAlign:"center",border:"0.5px solid #222"}}>
                     <div style={{fontSize:32,marginBottom:12}}>⏳</div>
                     <div style={{fontSize:16,fontWeight:600,color:"#fff",marginBottom:8}}>

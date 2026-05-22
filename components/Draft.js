@@ -25,7 +25,6 @@ const getTier=(idx,n)=>{
   return idx<2?1:idx<4?2:3;
 };
 
-// Snake order: 0,1,2,3,3,2,1,0,0,1,2,3...
 const makeSnake=(n,rounds)=>{
   const out=[];
   for(let r=0;r<rounds;r++){
@@ -36,7 +35,7 @@ const makeSnake=(n,rounds)=>{
 };
 
 export default function Draft({athletes=[]}){
-  const[step,setStep]=useState("setup");// setup|bracelet|draft|done
+  const[step,setStep]=useState("setup");
   const[numGroups,setNumGroups]=useState(4);
   const[picksPerGroup,setPicksPerGroup]=useState(4);
   const[leaders,setLeaders]=useState(Array(4).fill(""));
@@ -47,10 +46,9 @@ export default function Draft({athletes=[]}){
   const[search,setSearch]=useState("");
   const[draftId,setDraftId]=useState(null);
   const[loading,setLoading]=useState(true);
-  const[saving,setSaving]=useState(false);
   const[leaderSearch,setLeaderSearch]=useState("");
+  const[saveError,setSaveError]=useState("");
 
-  // Load existing draft
   useEffect(()=>{
     (async()=>{
       try{
@@ -58,33 +56,37 @@ export default function Draft({athletes=[]}){
         if(data&&data[0]){
           const d=data[0];
           setDraftId(d.id);
-          if(d.group_count)setNumGroups(d.group_count);
-          if(d.picks_per_group)setPicksPerGroup(d.picks_per_group);
-          if(d.leaders){
-            const l=Array(d.group_count||4).fill("");
-            d.leaders.forEach((n,i)=>{if(n)l[i]=n;});
-            setLeaders(l);
-          }
+          // Derive group count from leaders array — group_count column doesn't exist
+          const loadedLeaders=d.leaders||[];
+          const n=Math.max(loadedLeaders.filter(Boolean).length,2);
+          setNumGroups(n);
+          const l=Array(n).fill("");
+          loadedLeaders.slice(0,n).forEach((name,i)=>{if(name)l[i]=name;});
+          setLeaders(l);
           if(d.bracelets){
-            const b={};
-            d.bracelets.forEach((br,i)=>{if(br)b[i]=br;});
+            const b={};d.bracelets.forEach((br,i)=>{if(br)b[i]=typeof br==="string"?BRACELETS.find(x=>x.ref===br)||br:br;});
             setBracelets(b);
           }
           if(d.groups){
-            const g={};
-            d.groups.forEach((arr,i)=>{g[i]=arr||[];});
-            setGroups(g);
+            const g={};d.groups.forEach((arr,i)=>{g[i]=arr||[];});setGroups(g);
           }
-          if(d.pick_order)setPickSeq(d.pick_order);
-          if(d.current_pick!=null)setPickIdx(d.current_pick);
-          if(d.phase)setStep(d.phase==="locked"?"done":d.phase);
+          const phase=d.phase||"setup";
+          setStep(phase==="locked"?"done":phase);
+          if(phase==="draft"){
+            const maxMembers=Math.max(...(d.groups||[]).map(g=>(g||[]).length),1);
+            const pp=Math.max(maxMembers,picksPerGroup);
+            setPicksPerGroup(pp);
+            const seq=makeSnake(n,pp);
+            setPickSeq(seq);
+            const totalPicked=(d.groups||[]).flat().length;
+            setPickIdx(Math.max(0,totalPicked-n));
+          }
         }
       }catch(e){console.error("Load draft:",e);}
       setLoading(false);
     })();
   },[]);
 
-  // Sync leaders array size with numGroups
   useEffect(()=>{
     setLeaders(prev=>{
       const next=Array(numGroups).fill("");
@@ -93,28 +95,37 @@ export default function Draft({athletes=[]}){
     });
   },[numGroups]);
 
+  // Only save columns that actually exist in the draft table
   const save=async(updates={})=>{
+    setSaveError("");
     const payload={
-      group_count:numGroups,
-      picks_per_group:picksPerGroup,
-      leaders,
-      bracelets:Array(numGroups).fill(null).map((_,i)=>bracelets[i]||null),
-      groups:Array(numGroups).fill(null).map((_,i)=>groups[i]||[]),
+      leaders:leaders.slice(0,numGroups),
+      bracelets:Array.from({length:numGroups},(_,i)=>bracelets[i]||null),
+      groups:Array.from({length:numGroups},(_,i)=>groups[i]||[]),
       ...updates,
     };
+    // Strip columns that don't exist in the schema
+    delete payload.group_count;
+    delete payload.picks_per_group;
+    delete payload.pick_order;
+    delete payload.current_pick;
     try{
       if(draftId){
-        await supabase.from("draft").update(payload).eq("id",draftId);
+        const{error:err}=await supabase.from("draft").update(payload).eq("id",draftId);
+        if(err)throw err;
       }else{
-        const{data}=await supabase.from("draft").insert(payload).select().single();
+        const{data,error:err}=await supabase.from("draft").insert({...payload,phase:"setup",locked:false}).select().single();
+        if(err)throw err;
         if(data)setDraftId(data.id);
       }
-    }catch(e){console.error("Save draft:",e);}
+    }catch(e){
+      console.error("Save draft:",e);
+      setSaveError(e.message||"Save failed");
+    }
   };
 
   const startBracelets=()=>{
     if(leaders.some(l=>!l)){alert("Select all leaders first!");return;}
-    // Put leaders in their groups
     const g={};
     leaders.forEach((l,i)=>{g[i]=[l];});
     setGroups(g);
@@ -125,7 +136,7 @@ export default function Draft({athletes=[]}){
   const startDraft=()=>{
     const seq=makeSnake(numGroups,picksPerGroup);
     setPickSeq(seq);setPickIdx(0);setStep("draft");
-    save({phase:"draft",pick_order:seq,current_pick:0});
+    save({phase:"draft"});
   };
 
   const pick=async(athleteName)=>{
@@ -134,38 +145,40 @@ export default function Draft({athletes=[]}){
     const newIdx=pickIdx+1;
     setGroups(newGroups);setPickIdx(newIdx);
 
-    // Update athlete in DB
     const ath=athletes.find(a=>a.name===athleteName);
     if(ath){
-      await supabase.from("athletes").update({role:"iron",group_idx:gIdx,tier:getTier(gIdx,numGroups)}).eq("id",ath.id);
+      try{await supabase.from("athletes").update({role:"iron",group_idx:gIdx,tier:getTier(gIdx,numGroups)}).eq("id",ath.id);}
+      catch(e){console.error("Athlete update:",e);}
     }
 
     const seqDone=newIdx>=pickSeq.length;
     const noMore=athletes.filter(a=>![...Object.values(newGroups).flat()].includes(a.name)).length===0;
 
     if(seqDone||noMore){
-      // Update leader roles
       leaders.forEach(async(name,i)=>{
         const a=athletes.find(x=>x.name===name);
-        if(a)await supabase.from("athletes").update({role:"forge",group_idx:i,tier:getTier(i,numGroups)}).eq("id",a.id);
+        if(a){try{await supabase.from("athletes").update({role:"forge",group_idx:i,tier:getTier(i,numGroups)}).eq("id",a.id);}catch(e){}}
       });
       setStep("done");
-      save({phase:"locked",groups:Object.values(newGroups),current_pick:newIdx,locked:true});
+      save({phase:"locked",groups:Object.values(newGroups),locked:true});
     }else{
-      save({groups:Object.values(newGroups),current_pick:newIdx,phase:"draft"});
+      save({groups:Object.values(newGroups),phase:"draft"});
     }
   };
 
   const reset=async()=>{
-    if(!confirm("Reset draft?"))return;
+    if(!confirm("Reset draft? This will clear all groups and set everyone back to Iron."))return;
     setStep("setup");setLeaders(Array(numGroups).fill(""));
-    setBracelets({});setGroups({});setPickSeq([]);setPickIdx(0);
+    setBracelets({});setGroups({});setPickSeq([]);setPickIdx(0);setSaveError("");
     try{
       await supabase.from("athletes").update({role:"iron",group_idx:null,tier:null}).eq("status","active");
-      if(draftId)await supabase.from("draft").update({phase:"setup",leaders:[],groups:[],bracelets:[],pick_order:[],current_pick:0,locked:false}).eq("id",draftId);
-    }catch(e){console.error(e);}
+      if(draftId)await supabase.from("draft").update({
+        phase:"setup",leaders:[],groups:[],bracelets:[],locked:false
+      }).eq("id",draftId);
+    }catch(e){console.error("Reset error:",e);}
   };
 
+  const takenRefs=Object.values(bracelets).filter(Boolean).map(b=>typeof b==="object"?b.ref:b);
   const assigned=[...Object.values(groups).flat()];
   const pool=athletes.filter(a=>!assigned.includes(a.name)&&(!search||a.name.toLowerCase().includes(search.toLowerCase())));
   const curGroup=pickSeq[pickIdx];
@@ -184,50 +197,55 @@ export default function Draft({athletes=[]}){
             {step==="setup"&&"Step 1 — Set up groups"}
             {step==="bracelet"&&"Step 2 — Assign bracelets"}
             {step==="draft"&&`Step 3 — Pick ${pickIdx+1} of ${pickSeq.length}`}
-            {step==="done"&&"✅ Draft complete"}
+            {step==="done"&&"✅ Draft complete — edit in Teams tab"}
           </div>
         </div>
         <button onClick={reset} style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid #444",background:"transparent",color:"#777",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>Reset</button>
       </div>
 
+      {/* Save error */}
+      {saveError&&(
+        <div style={{background:"#1a0808",borderRadius:10,padding:"10px 14px",marginBottom:10,border:"0.5px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <span style={{fontSize:12,color:"#C0392B"}}>⚠ {saveError}</span>
+          <button onClick={()=>setSaveError("")} style={{background:"transparent",border:"none",color:"#666",fontSize:14,cursor:"pointer",padding:"0 4px"}}>×</button>
+        </div>
+      )}
+
       {/* STEP 1: SETUP */}
       {step==="setup"&&(
         <div>
-          <div style={{background:"#fff",borderRadius:12,padding:"16px",marginBottom:10,border:"0.5px solid #e0e0e0"}}>
+          <div style={{background:"#111",borderRadius:12,padding:"16px",marginBottom:10,border:"0.5px solid #1e1e1e"}}>
             {/* Group count */}
-            <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>Number of groups</div>
+            <div style={{fontSize:12,fontWeight:600,color:"#ddd",marginBottom:8}}>Number of groups</div>
             <div style={{display:"flex",gap:8,marginBottom:16}}>
               {[2,3,4,5,6].map(n=>(
-                <button key={n} onClick={()=>setNumGroups(n)} style={{width:38,height:38,borderRadius:8,border:"1px solid "+(numGroups===n?ORANGE:"#e0e0e0"),background:numGroups===n?ORANGE:"#fff",color:numGroups===n?"#fff":"#888",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>{n}</button>
+                <button key={n} onClick={()=>setNumGroups(n)} style={{width:38,height:38,borderRadius:8,border:"1px solid "+(numGroups===n?ORANGE:"#333"),background:numGroups===n?ORANGE:"#1a1a1a",color:numGroups===n?"#fff":"#888",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>{n}</button>
               ))}
             </div>
 
             {/* Picks per group */}
-            <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a",marginBottom:6}}>Athletes per group: <span style={{color:ORANGE}}>{picksPerGroup}</span></div>
+            <div style={{fontSize:12,fontWeight:600,color:"#ddd",marginBottom:6}}>Athletes per group: <span style={{color:ORANGE}}>{picksPerGroup}</span></div>
             <input type="range" min={2} max={12} value={picksPerGroup} onChange={e=>setPicksPerGroup(+e.target.value)} style={{width:"100%",accentColor:ORANGE,marginBottom:4}}/>
-            <div style={{fontSize:11,color:"#aaa",marginBottom:16}}>{numGroups} groups × {picksPerGroup} picks = {numGroups*picksPerGroup} total athletes</div>
+            <div style={{fontSize:11,color:"#555",marginBottom:16}}>{numGroups} groups × {picksPerGroup} picks = {numGroups*picksPerGroup} total athletes</div>
 
             {/* Leader selectors */}
-            <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>Select Forge leaders — tap a name</div>
-            {/* Search */}
-            <input value={leaderSearch} onChange={e=>setLeaderSearch(e.target.value)} placeholder="🔍 Search athletes..." style={{width:"100%",padding:"8px 12px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",marginBottom:10,boxSizing:"border-box",background:"#fafafa"}}/>
-            {/* Selected leaders */}
+            <div style={{fontSize:12,fontWeight:600,color:"#ddd",marginBottom:8}}>Select Forge leaders</div>
+            <input value={leaderSearch} onChange={e=>setLeaderSearch(e.target.value)} placeholder="🔍 Search..." style={{width:"100%",padding:"8px 12px",borderRadius:8,border:"0.5px solid #222",fontSize:13,fontFamily:"Georgia,serif",marginBottom:10,boxSizing:"border-box",background:"#1a1a1a",color:"#ddd"}}/>
             {Array.from({length:numGroups},(_,i)=>(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,padding:"8px 10px",borderRadius:8,background:leaders[i]?COLORS[i]+"11":"#fafafa",border:"1px solid "+(leaders[i]?COLORS[i]+"44":"#e0e0e0")}}>
-                <div style={{width:10,height:10,borderRadius:"50%",background:COLORS[i],flexShrink:0}}/>
-                <div style={{fontSize:11,color:COLORS[i],fontWeight:700,minWidth:60}}>G{i+1} · T{getTier(i,numGroups)}</div>
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,padding:"8px 10px",borderRadius:8,background:leaders[i]?COLORS[i%COLORS.length]+"18":"#0e0e0e",border:"1px solid "+(leaders[i]?COLORS[i%COLORS.length]+"44":"#252525")}}>
+                <div style={{width:10,height:10,borderRadius:"50%",background:COLORS[i%COLORS.length],flexShrink:0}}/>
+                <div style={{fontSize:11,color:COLORS[i%COLORS.length],fontWeight:700,minWidth:60}}>G{i+1} · T{getTier(i,numGroups)}</div>
                 {leaders[i]?(
                   <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <div style={{fontSize:13,fontWeight:600,color:COLORS[i]}}>{leaders[i]}</div>
-                    <button onClick={()=>{const l=[...leaders];l[i]="";setLeaders(l);}} style={{background:"transparent",border:"none",color:COLORS[i],fontSize:16,cursor:"pointer",padding:0}}>×</button>
+                    <div style={{fontSize:13,fontWeight:600,color:COLORS[i%COLORS.length]}}>{leaders[i]}</div>
+                    <button onClick={()=>{const l=[...leaders];l[i]="";setLeaders(l);}} style={{background:"transparent",border:"none",color:COLORS[i%COLORS.length],fontSize:16,cursor:"pointer",padding:0}}>×</button>
                   </div>
                 ):(
-                  <div style={{fontSize:12,color:"#aaa",flex:1}}>Tap a name below →</div>
+                  <div style={{fontSize:12,color:"#444",flex:1}}>Tap a name below →</div>
                 )}
               </div>
             ))}
-            {/* Athlete list to tap */}
-            <div style={{maxHeight:220,overflowY:"auto",border:"0.5px solid #e0e0e0",borderRadius:8,marginTop:6}}>
+            <div style={{maxHeight:200,overflowY:"auto",border:"0.5px solid #1e1e1e",borderRadius:8,marginTop:6}}>
               {athletes.filter(a=>
                 !leaders.includes(a.name)&&
                 (!leaderSearch||a.name.toLowerCase().includes(leaderSearch.toLowerCase()))
@@ -236,18 +254,18 @@ export default function Draft({athletes=[]}){
                 return(
                   <button key={a.id} onClick={()=>{
                     if(emptySlot>=0){const l=[...leaders];l[emptySlot]=a.name;setLeaders(l);}
-                  }} disabled={emptySlot<0} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#fff",border:"none",borderBottom:"0.5px solid #f5f5f5",cursor:emptySlot>=0?"pointer":"default",fontFamily:"Georgia,serif",textAlign:"left",opacity:emptySlot>=0?1:0.4}}>
+                  }} disabled={emptySlot<0} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#141414",border:"none",borderBottom:"0.5px solid #1e1e1e",cursor:emptySlot>=0?"pointer":"default",fontFamily:"Georgia,serif",textAlign:"left",opacity:emptySlot>=0?1:0.4}}>
                     <div style={{width:32,height:32,borderRadius:"50%",background:STEEL,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,color:"#fff"}}>
                       {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
                     </div>
-                    <div style={{fontSize:13,color:"#1a1a1a"}}>{a.name}</div>
-                    {emptySlot>=0&&<div style={{marginLeft:"auto",fontSize:11,color:COLORS[emptySlot],fontWeight:600}}>→ G{emptySlot+1}</div>}
+                    <div style={{fontSize:13,color:"#ddd"}}>{a.name}</div>
+                    {emptySlot>=0&&<div style={{marginLeft:"auto",fontSize:11,color:COLORS[emptySlot%COLORS.length],fontWeight:600}}>→ G{emptySlot+1}</div>}
                   </button>
                 );
               })}
             </div>
           </div>
-          <button onClick={startBracelets} disabled={leaders.some(l=>!l)} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:leaders.some(l=>!l)?"#e0e0e0":ORANGE,color:leaders.some(l=>!l)?"#aaa":"#fff",fontSize:14,fontWeight:700,cursor:leaders.some(l=>!l)?"not-allowed":"pointer",fontFamily:"Georgia,serif"}}>
+          <button onClick={startBracelets} disabled={leaders.some(l=>!l)} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:leaders.some(l=>!l)?"#222":ORANGE,color:leaders.some(l=>!l)?"#555":"#fff",fontSize:14,fontWeight:700,cursor:leaders.some(l=>!l)?"not-allowed":"pointer",fontFamily:"Georgia,serif"}}>
             Next → Assign Bracelets
           </button>
         </div>
@@ -256,24 +274,28 @@ export default function Draft({athletes=[]}){
       {/* STEP 2: BRACELETS */}
       {step==="bracelet"&&(
         <div>
-          {Array.from({length:numGroups},(_,i)=>(
-            <div key={i} style={{background:"#fff",borderRadius:12,padding:"14px",marginBottom:8,border:"2px solid "+COLORS[i]}}>
-              <div style={{fontSize:13,fontWeight:700,color:COLORS[i],marginBottom:8}}>⚒ {leaders[i]} — Group {i+1}</div>
-              <select value={bracelets[i]||""} onChange={e=>setBracelets(p=>({...p,[i]:e.target.value}))}
-                style={{width:"100%",padding:"8px",borderRadius:8,border:"1px solid "+COLORS[i]+"33",fontSize:12,fontFamily:"Georgia,serif",marginBottom:6}}>
-                <option value="">— Choose bracelet —</option>
-                {BRACELETS.filter(b=>!Object.values(bracelets).includes(b.ref)||bracelets[i]===b.ref).map(b=>(
-                  <option key={b.ref} value={b.ref}>{b.color} — {b.ref}</option>
-                ))}
-              </select>
-              {bracelets[i]&&(()=>{const b=BRACELETS.find(x=>x.ref===bracelets[i]);return b&&(
-                <div style={{padding:"8px",background:b.hex+"22",borderRadius:8,border:"1px solid "+b.hex+"33"}}>
-                  <div style={{fontSize:11,fontWeight:600,color:b.hex}}>{b.ref}</div>
-                  <div style={{fontSize:11,color:"#666",fontStyle:"italic",marginTop:2}}>"{b.text}"</div>
-                </div>
-              );})()}
-            </div>
-          ))}
+          {Array.from({length:numGroups},(_,i)=>{
+            const color=COLORS[i%COLORS.length];
+            const currentBrac=bracelets[i];
+            return(
+              <div key={i} style={{background:"#141414",borderRadius:12,padding:"14px",marginBottom:8,border:"2px solid "+color}}>
+                <div style={{fontSize:13,fontWeight:700,color,marginBottom:8}}>⚒ {leaders[i]} — Group {i+1}</div>
+                <select value={currentBrac?.ref||""} onChange={e=>{const b=BRACELETS.find(x=>x.ref===e.target.value)||null;setBracelets(p=>({...p,[i]:b}));}}
+                  style={{width:"100%",padding:"8px",borderRadius:8,border:"1px solid "+color+"33",fontSize:12,fontFamily:"Georgia,serif",marginBottom:6,background:"#1a1a1a",color:"#ddd"}}>
+                  <option value="">— Choose bracelet —</option>
+                  {BRACELETS.filter(b=>!takenRefs.includes(b.ref)||currentBrac?.ref===b.ref).map(b=>(
+                    <option key={b.ref} value={b.ref}>{b.color} — {b.ref}</option>
+                  ))}
+                </select>
+                {currentBrac&&(
+                  <div style={{padding:"8px",background:currentBrac.hex+"22",borderRadius:8,border:"1px solid "+currentBrac.hex+"33"}}>
+                    <div style={{fontSize:11,fontWeight:600,color:currentBrac.hex}}>{currentBrac.ref}</div>
+                    <div style={{fontSize:11,color:"#888",fontStyle:"italic",marginTop:2}}>"{currentBrac.text}"</div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
           <button onClick={startDraft} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:GOLD,color:"#1a1a1a",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",marginTop:4}}>
             🏁 Start Draft!
           </button>
@@ -285,37 +307,30 @@ export default function Draft({athletes=[]}){
         <div>
           {!isDone?(
             <>
-              {/* Who's picking */}
-              <div style={{background:"linear-gradient(135deg,#111,#1a1a1a)",borderRadius:14,padding:"16px",marginBottom:12,border:"2px solid "+COLORS[curGroup],textAlign:"center"}}>
-                <div style={{fontSize:11,color:"#666",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Now picking · {pickIdx+1}/{pickSeq.length}</div>
-                <div style={{fontSize:24,fontWeight:800,color:COLORS[curGroup]}}>{curLeader}</div>
-                <div style={{fontSize:11,color:"#666",marginTop:4}}>Group {curGroup+1} · Tier {getTier(curGroup,numGroups)} · {(groups[curGroup]||[]).length} picked</div>
+              <div style={{background:"linear-gradient(135deg,#111,#1a1a1a)",borderRadius:14,padding:"16px",marginBottom:12,border:"2px solid "+COLORS[curGroup%COLORS.length],textAlign:"center"}}>
+                <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Now picking · {pickIdx+1}/{pickSeq.length}</div>
+                <div style={{fontSize:24,fontWeight:800,color:COLORS[curGroup%COLORS.length]}}>{curLeader}</div>
+                <div style={{fontSize:11,color:"#555",marginTop:4}}>Group {curGroup+1} · Tier {getTier(curGroup,numGroups)} · {(groups[curGroup]||[]).length} picked</div>
               </div>
-
-              {/* Search */}
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search athletes..." style={{width:"100%",padding:"10px 14px",borderRadius:10,border:"1px solid #e0e0e0",fontSize:14,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box"}}/>
-
-              {/* Athlete pool */}
-              <div style={{background:"#fff",borderRadius:12,border:"0.5px solid #e0e0e0",overflow:"hidden",marginBottom:12}}>
-                {pool.length===0?<div style={{textAlign:"center",padding:"2rem",color:"#aaa",fontSize:13}}>No athletes available</div>:
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search athletes..." style={{width:"100%",padding:"10px 14px",borderRadius:10,border:"1px solid #222",fontSize:14,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box",background:"#111",color:"#ddd"}}/>
+              <div style={{background:"#141414",borderRadius:12,border:"0.5px solid #1e1e1e",overflow:"hidden",marginBottom:12}}>
+                {pool.length===0?<div style={{textAlign:"center",padding:"2rem",color:"#555",fontSize:13}}>No athletes available</div>:
                   pool.map(a=>(
-                    <button key={a.id} onClick={()=>pick(a.name)} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:"#fff",border:"none",borderBottom:"0.5px solid #f5f5f5",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
+                    <button key={a.id} onClick={()=>pick(a.name)} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:"#141414",border:"none",borderBottom:"0.5px solid #1e1e1e",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
                       <div style={{width:36,height:36,borderRadius:"50%",background:STEEL,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:600,color:"#fff"}}>
                         {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
                       </div>
-                      <div style={{flex:1,fontSize:14,color:"#1a1a1a"}}>{a.name}</div>
-                      <div style={{fontSize:18,color:COLORS[curGroup],fontWeight:700}}>+</div>
+                      <div style={{flex:1,fontSize:14,color:"#ddd"}}>{a.name}</div>
+                      <div style={{fontSize:18,color:COLORS[curGroup%COLORS.length],fontWeight:700}}>+</div>
                     </button>
                   ))
                 }
               </div>
-
-              {/* Live groups */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6}}>
                 {Array.from({length:numGroups},(_,i)=>(
-                  <div key={i} style={{background:"#fff",borderRadius:8,padding:"8px",border:"1px solid "+(i===curGroup?COLORS[i]+"88":"#e0e0e0")}}>
-                    <div style={{fontSize:10,fontWeight:700,color:COLORS[i],marginBottom:4}}>Group {i+1} ({(groups[i]||[]).length})</div>
-                    {(groups[i]||[]).map(n=><div key={n} style={{fontSize:11,color:"#555"}}>{n}</div>)}
+                  <div key={i} style={{background:"#141414",borderRadius:8,padding:"8px",border:"1px solid "+(i===curGroup?COLORS[i%COLORS.length]+"88":"#222")}}>
+                    <div style={{fontSize:10,fontWeight:700,color:COLORS[i%COLORS.length],marginBottom:4}}>Group {i+1} ({(groups[i]||[]).length})</div>
+                    {(groups[i]||[]).map(n=><div key={n} style={{fontSize:11,color:"#888"}}>{n}</div>)}
                   </div>
                 ))}
               </div>
@@ -334,16 +349,21 @@ export default function Draft({athletes=[]}){
       {step==="done"&&(
         <div>
           <div style={{background:"linear-gradient(135deg,#0d1f0d,#1a3a1f)",borderRadius:12,padding:"12px 14px",marginBottom:12,border:"1px solid "+GREEN+"44",textAlign:"center"}}>
-            <div style={{fontSize:15,fontWeight:700,color:GREEN}}>✅ Draft Complete — Use Teams tab to edit</div>
+            <div style={{fontSize:15,fontWeight:700,color:GREEN}}>✅ Draft Complete — edit groups in the Teams tab</div>
           </div>
-          {Array.from({length:numGroups},(_,i)=>(
-            <div key={i} style={{background:"#fff",borderRadius:12,padding:"12px",marginBottom:8,border:"2px solid "+COLORS[i]}}>
-              <div style={{fontSize:13,fontWeight:700,color:COLORS[i],marginBottom:6}}>⚒ {leaders[i]} — Group {i+1} · Tier {getTier(i,numGroups)}</div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                {(groups[i]||[]).map(n=><span key={n} style={{fontSize:11,padding:"3px 8px",borderRadius:12,background:COLORS[i]+"11",color:COLORS[i],border:"1px solid "+COLORS[i]+"33"}}>{n}</span>)}
+          {Array.from({length:numGroups},(_,i)=>{
+            const color=COLORS[i%COLORS.length];
+            const brac=bracelets[i];
+            return(
+              <div key={i} style={{background:"#141414",borderRadius:12,padding:"12px",marginBottom:8,border:"2px solid "+color}}>
+                <div style={{fontSize:13,fontWeight:700,color,marginBottom:6}}>⚒ {leaders[i]} — Group {i+1} · Tier {getTier(i,numGroups)}</div>
+                {brac&&<div style={{fontSize:11,color:"#888",marginBottom:6,fontStyle:"italic"}}>📿 {brac.ref} — "{brac.text}"</div>}
+                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                  {(groups[i]||[]).map(n=><span key={n} style={{fontSize:11,padding:"3px 8px",borderRadius:12,background:color+"11",color,border:"1px solid "+color+"33"}}>{n}</span>)}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
