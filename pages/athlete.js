@@ -196,6 +196,8 @@ export default function Athlete(){
   const[injuryText,setInjuryText]=useState("");
   const[injurySent,setInjurySent]=useState(false);
   const[goalSaved,setGoalSaved]=useState({});
+  const[goalText,setGoalText]=useState({});
+  const[painLevel,setPainLevel]=useState(0);
   const athleticGoalRef=useRef();
   const characterGoalRef=useRef();
   const[attendance,setAttendance]=useState([]);
@@ -344,10 +346,11 @@ export default function Athlete(){
   };
 
   const sendInjury=async()=>{
-    if(!injuryText.trim())return;
+    if(!injuryText.trim()&&painLevel===0)return;
+    const fullMsg=(painLevel>0?"Pain level: "+painLevel+"/10. ":"")+injuryText.trim();
     try{
-      await supabase.from("athletes").update({injury:true,injury_note:injuryText}).eq("id",selectedAthlete.id);
-      await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"injury",message:injuryText});
+      await supabase.from("athletes").update({injury:true,injury_note:fullMsg}).eq("id",selectedAthlete.id);
+      await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"injury",message:fullMsg});
     }catch(e){console.error("Injury send:",e);}
     setInjurySent(true);
   };
@@ -786,86 +789,133 @@ export default function Athlete(){
                 )}
                 {/* ── GOALS ── */}
                 {[
-                  {label:"Athletic Goal",sub:"Physical — what you're chasing this summer",goalKey:"athletic_goal",taskKey:"coach_athletic_task",color:GREEN,icon:"🎯",placeholder:"e.g. Drop my 40 time, add 20 lbs to my squat, make the travel roster...",ref:athleticGoalRef},
-                  {label:"Character Goal",sub:"Who you're becoming — not just what you're doing",goalKey:"character_goal",taskKey:"coach_character_task",color:PUR,icon:"⚔️",placeholder:"e.g. Be the first one in every day, lead without being asked, own my mistakes fast...",ref:characterGoalRef},
-                ].map(({label,sub,goalKey,taskKey,color,icon,placeholder,ref})=>{
-                  return(
-                  <div key={goalKey} style={{background:"#141414",borderRadius:16,marginBottom:12,border:"1px solid #252525",overflow:"hidden",boxShadow:"0 4px 20px #00000040"}}>
-                    {/* Header */}
-                    <div style={{background:"linear-gradient(135deg,"+color+"1a,"+color+"08)",padding:"14px 16px",borderBottom:"1px solid "+color+"22",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+color+",transparent)"}}/>
-                      <div style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",fontSize:36,opacity:0.12,userSelect:"none"}}>{icon}</div>
-                      <div style={{fontSize:9,color:color,textTransform:"uppercase",letterSpacing:"0.16em",fontWeight:800,marginBottom:3,textShadow:"0 0 10px "+color+"66"}}>{label}</div>
-                      <div style={{fontSize:11,color:"#555"}}>{sub}</div>
-                    </div>
-                    {/* Body */}
-                    <div style={{padding:"14px 16px"}}>
+                  {label:"Athletic Goal",sub:"Physical",question:"What are you chasing this summer?",goalKey:"athletic_goal",taskKey:"coach_athletic_task",color:GREEN,icon:"🎯",placeholder:"Drop my 40 time, add 20 lbs to my squat, make the travel roster…",ref:athleticGoalRef},
+                  {label:"Character Goal",sub:"Who you're becoming",question:"How are you growing as a person?",goalKey:"character_goal",taskKey:"coach_character_task",color:PUR,icon:"⚔️",placeholder:"First one in every day, lead without being asked, own my mistakes fast…",ref:characterGoalRef},
+                ].map(({label,sub,question,goalKey,taskKey,color,icon,placeholder,ref})=>(
+                  <div key={goalKey} style={{borderRadius:20,marginBottom:14,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+color+"33"}}>
+                    {/* Hero banner */}
+                    <div style={{background:"linear-gradient(140deg,"+color+"30,"+color+"10,#0d0d0d)",padding:"20px 18px 16px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+color+","+color+"44,transparent)"}}/>
+                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>{icon}</div>
+                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+color+"12,transparent 70%)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative"}}>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+color+"44,"+color+"22)",border:"1px solid "+color+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+color+"33"}}>{icon}</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:8,color:color,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>{sub}</div>
+                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>{label}</div>
+                          <div style={{fontSize:11,color:"#666",marginTop:3}}>{question}</div>
+                        </div>
+                      </div>
+                      {/* Goal display */}
                       {selectedAthlete[goalKey]&&(
-                        <div style={{background:color+"0d",borderRadius:10,padding:"10px 12px",marginBottom:12,border:"1px solid "+color+"22",display:"flex",alignItems:"flex-start",gap:10}}>
-                          <span style={{fontSize:16,flexShrink:0,marginTop:1}}>📌</span>
-                          <div style={{flex:1}}>
-                            <div style={{fontSize:9,color:color,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:3}}>Current goal</div>
-                            <div style={{fontSize:13,color:"#ddd",lineHeight:1.6}}>{selectedAthlete[goalKey]}</div>
-                          </div>
+                        <div style={{marginTop:14,position:"relative"}}>
+                          <div style={{fontSize:9,color:color+"aa",textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700,marginBottom:5}}>Your goal</div>
+                          <div style={{fontSize:15,fontWeight:700,color:"#fff",lineHeight:1.5,fontStyle:"italic",borderLeft:"3px solid "+color,paddingLeft:12}}>"{selectedAthlete[goalKey]}"</div>
                         </div>
                       )}
-                      <textarea ref={ref} defaultValue={selectedAthlete[goalKey]||""} placeholder={placeholder} rows={3} style={{width:"100%",padding:"12px",fontSize:13,border:"1px solid #2d2d2d",borderRadius:10,background:"#0e0e0e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.6,outline:"none"}}/>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:8}}>
-                        <div style={{fontSize:11,color:"#444"}}>Tap outside or press Save</div>
+                    </div>
+                    {/* Edit area */}
+                    <div style={{background:"#111",padding:"16px"}}>
+                      <div style={{fontSize:10,color:"#444",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8,fontWeight:600}}>{selectedAthlete[goalKey]?"Update your goal":"Set your goal"}</div>
+                      <textarea
+                        ref={ref}
+                        defaultValue={selectedAthlete[goalKey]||""}
+                        onChange={e=>setGoalText(p=>({...p,[goalKey]:e.target.value}))}
+                        placeholder={placeholder}
+                        rows={2}
+                        style={{width:"100%",padding:"12px 14px",fontSize:14,border:"1px solid #2a2a2a",borderRadius:12,background:"#0a0a0a",color:"#fff",fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",lineHeight:1.6,outline:"none",transition:"border-color 0.2s"}}
+                        onFocus={e=>e.target.style.borderColor=color+"88"}
+                        onBlur={e=>e.target.style.borderColor="#2a2a2a"}
+                      />
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginTop:10}}>
                         <button onClick={async()=>{
                           const val=ref.current.value.trim();
                           if(!val)return;
                           setSelectedAthlete(a=>({...a,[goalKey]:val}));
-                          await supabase.from("athletes").update({[goalKey]:val}).eq("id",selectedAthlete.id);
+                          try{await supabase.from("athletes").update({[goalKey]:val}).eq("id",selectedAthlete.id);}catch(e){}
                           setGoalSaved(p=>({...p,[goalKey]:true}));
                           setTimeout(()=>setGoalSaved(p=>({...p,[goalKey]:false})),2500);
-                        }} style={{padding:"8px 18px",borderRadius:10,border:"none",background:goalSaved[goalKey]?"#0a2a0a":color,color:goalSaved[goalKey]?GREEN:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.2s",boxShadow:goalSaved[goalKey]?"0 0 10px "+GREEN+"44":"0 0 10px "+color+"33"}}>
-                          {goalSaved[goalKey]?"✓ Saved!":"Save goal →"}
+                        }} style={{flex:1,padding:"12px",borderRadius:12,border:"none",background:goalSaved[goalKey]?"linear-gradient(135deg,#0a2a0a,#0d360d)":"linear-gradient(135deg,"+color+","+color+"cc)",color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",boxShadow:goalSaved[goalKey]?"0 0 12px "+GREEN+"44":"0 0 16px "+color+"44",transition:"all 0.25s"}}>
+                          {goalSaved[goalKey]?"✓ Goal saved":"Lock it in →"}
                         </button>
                       </div>
-                      {selectedAthlete[taskKey]&&(
-                        <div style={{marginTop:12,padding:"12px 14px",background:"#0a0a0a",borderRadius:10,borderLeft:"3px solid "+color,border:"1px solid "+color+"22"}}>
-                          <div style={{fontSize:9,color:color,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:800,marginBottom:6}}>⚒ Task from Coach Ant</div>
-                          <div style={{fontSize:13,color:"#bbb",lineHeight:1.7}}>{selectedAthlete[taskKey]}</div>
-                        </div>
-                      )}
                     </div>
+                    {/* Coach task */}
+                    {selectedAthlete[taskKey]&&(
+                      <div style={{background:"#0a0a0a",padding:"14px 16px",borderTop:"1px solid "+color+"22"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <div style={{width:32,height:32,borderRadius:8,background:color+"18",border:"1px solid "+color+"33",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>⚒</div>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:9,color:color,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:800,marginBottom:3}}>Task from Coach Ant</div>
+                            <div style={{fontSize:13,color:"#bbb",lineHeight:1.65}}>{selectedAthlete[taskKey]}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  );
-                })}
+                ))}
 
-                {/* ── INJURY / HEALTH ── */}
-                <div style={{background:"#141414",borderRadius:16,border:"1px solid "+(selectedAthlete.injury?"#3a0a0a":"#252525"),overflow:"hidden",marginBottom:12,boxShadow:selectedAthlete.injury?"0 0 20px #C0392B22":"none"}}>
-                  <button onClick={()=>setInjuryOpen(o=>!o)} style={{width:"100%",padding:"16px",background:selectedAthlete.injury?"linear-gradient(135deg,#1a0606,#120404)":"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",fontFamily:"Georgia, serif",position:"relative",overflow:"hidden"}}>
-                    {selectedAthlete.injury&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+RED+",transparent)"}}/>}
-                    <div style={{display:"flex",alignItems:"center",gap:12}}>
-                      <div style={{width:36,height:36,borderRadius:10,background:selectedAthlete.injury?RED+"22":"#1e1e1e",border:"1px solid "+(selectedAthlete.injury?RED+"44":"#333"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
-                        {selectedAthlete.injury?"🤕":"💪"}
-                      </div>
-                      <div style={{textAlign:"left"}}>
-                        <div style={{fontSize:13,fontWeight:700,color:selectedAthlete.injury?RED:"#fff",letterSpacing:"-0.01em"}}>
-                          {selectedAthlete.injury?"Injury on record":"Health & injury update"}
+                {/* ── HEALTH & INJURY ── */}
+                <div style={{borderRadius:20,overflow:"hidden",marginBottom:12,border:"1px solid "+(selectedAthlete.injury?"#5a1010":"#252525"),boxShadow:selectedAthlete.injury?"0 0 32px #C0392B28,0 8px 32px #00000060":"0 8px 32px #00000060"}}>
+                  {/* Status bar — always visible */}
+                  <button onClick={()=>setInjuryOpen(o=>!o)} style={{width:"100%",padding:0,background:"none",border:"none",cursor:"pointer",fontFamily:"Georgia,serif",display:"block"}}>
+                    <div style={{background:selectedAthlete.injury?"linear-gradient(140deg,#200808,#160404,#0d0d0d)":"linear-gradient(140deg,#0a1a0a,#080e08,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:selectedAthlete.injury?"linear-gradient(90deg,"+RED+","+RED+"55,transparent)":"linear-gradient(90deg,"+GREEN+","+GREEN+"55,transparent)"}}/>
+                      <div style={{position:"absolute",bottom:-10,right:-4,fontSize:64,opacity:0.06,lineHeight:1,userSelect:"none"}}>{selectedAthlete.injury?"🚨":"🛡️"}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                        <div style={{width:52,height:52,borderRadius:14,background:selectedAthlete.injury?"linear-gradient(145deg,"+RED+"44,"+RED+"22)":"linear-gradient(145deg,"+GREEN+"44,"+GREEN+"22)",border:"1px solid "+(selectedAthlete.injury?RED+"55":GREEN+"55"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,boxShadow:"0 0 20px "+(selectedAthlete.injury?RED:GREEN)+"33",flexShrink:0}}>
+                          {selectedAthlete.injury?"🤕":"💪"}
                         </div>
-                        <div style={{fontSize:11,color:selectedAthlete.injury?"#aa4444":"#555",marginTop:1}}>
-                          {selectedAthlete.injury?selectedAthlete.injury_note||"Flagged — see coach":"Tap to report pain, soreness, or anything going on"}
+                        <div style={{flex:1,textAlign:"left"}}>
+                          <div style={{fontSize:8,color:selectedAthlete.injury?RED:GREEN,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Body status</div>
+                          <div style={{fontSize:19,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>{selectedAthlete.injury?"Injury flagged":"All clear"}</div>
+                          <div style={{fontSize:11,color:selectedAthlete.injury?"#cc5555":"#4a8a4a",marginTop:3,lineHeight:1.4}}>{selectedAthlete.injury?selectedAthlete.injury_note||"Report on file — check with Coach Ant":"Tap to report pain, soreness, or any concern"}</div>
+                        </div>
+                        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flexShrink:0}}>
+                          <div style={{fontSize:9,fontWeight:900,color:selectedAthlete.injury?RED:GREEN,background:selectedAthlete.injury?RED+"18":GREEN+"18",padding:"4px 10px",borderRadius:20,border:"1px solid "+(selectedAthlete.injury?RED+"44":GREEN+"44"),textTransform:"uppercase",letterSpacing:"0.1em",whiteSpace:"nowrap"}}>{selectedAthlete.injury?"Flagged":"Healthy"}</div>
+                          <div style={{fontSize:11,color:"#333"}}>{injuryOpen?"▲":"▼"}</div>
                         </div>
                       </div>
-                    </div>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <div style={{fontSize:9,fontWeight:800,color:selectedAthlete.injury?RED:GREEN,background:selectedAthlete.injury?RED+"18":GREEN+"18",padding:"3px 10px",borderRadius:20,border:"0.5px solid "+(selectedAthlete.injury?RED+"44":GREEN+"44"),textTransform:"uppercase",letterSpacing:"0.08em"}}>{selectedAthlete.injury?"Flagged":"Healthy"}</div>
-                      <span style={{fontSize:12,color:"#444",marginLeft:4}}>{injuryOpen?"▲":"▼"}</span>
                     </div>
                   </button>
+                  {/* Report form */}
                   {injuryOpen&&(
-                    <div style={{padding:"0 16px 16px",borderTop:"1px solid #1e1e1e"}}>
-                      <div style={{fontSize:12,color:"#555",margin:"12px 0 8px",lineHeight:1.6}}>
-                        Be specific — what hurts, which side, when it started, scale 1–10. Coach Ant reviews every report before the next class.
+                    <div style={{background:"#0d0d0d",borderTop:"1px solid #1e1e1e",padding:"16px"}}>
+                      {/* Pain scale */}
+                      <div style={{marginBottom:14}}>
+                        <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:600,marginBottom:8}}>Pain level {painLevel>0?"— "+painLevel+"/10":""}</div>
+                        <div style={{display:"flex",gap:5}}>
+                          {[1,2,3,4,5,6,7,8,9,10].map(n=>{
+                            const c=n<=3?GREEN:n<=6?GOLD:RED;
+                            const isActive=painLevel===n;
+                            return(
+                              <button key={n} onClick={()=>setPainLevel(painLevel===n?0:n)}
+                                style={{flex:1,padding:"8px 0",borderRadius:8,border:"1px solid "+(isActive?c:c+"33"),background:isActive?"linear-gradient(135deg,"+c+","+c+"bb)":"transparent",color:isActive?"#fff":c+"88",fontSize:12,fontWeight:isActive?900:400,cursor:"pointer",fontFamily:"sans-serif",transition:"all 0.15s",boxShadow:isActive?"0 0 10px "+c+"55":undefined}}>
+                                {n}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+                          <span style={{fontSize:9,color:GREEN+"88"}}>mild</span>
+                          <span style={{fontSize:9,color:GOLD+"88"}}>moderate</span>
+                          <span style={{fontSize:9,color:RED+"88"}}>severe</span>
+                        </div>
                       </div>
-                      <textarea value={injuryText} onChange={e=>setInjuryText(e.target.value)} placeholder="e.g. Left knee pain started Tuesday, 6/10 on the pain scale, worse going downhill..." rows={3} style={{width:"100%",padding:"12px",fontSize:13,border:"1px solid #2d2d2d",borderRadius:10,background:"#0e0e0e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:10,boxSizing:"border-box",lineHeight:1.6}}/>
+                      {/* Description */}
+                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:600,marginBottom:8}}>What's going on</div>
+                      <textarea value={injuryText} onChange={e=>setInjuryText(e.target.value)} placeholder="Which body part, which side, when it started, what makes it worse…" rows={3} style={{width:"100%",padding:"12px 14px",fontSize:13,border:"1px solid #2a2a2a",borderRadius:12,background:"#0a0a0a",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",marginBottom:12,boxSizing:"border-box",lineHeight:1.6,outline:"none"}}
+                        onFocus={e=>e.target.style.borderColor=RED+"55"} onBlur={e=>e.target.style.borderColor="#2a2a2a"}/>
                       {injurySent
-                        ?<div style={{fontSize:13,color:GREEN,fontWeight:600,padding:"10px 14px",background:GREEN+"10",borderRadius:10,border:"1px solid "+GREEN+"33",display:"flex",alignItems:"center",gap:8}}><span>✓</span>Coach Ant has been notified.</div>
-                        :<button onClick={sendInjury} disabled={!injuryText.trim()} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:injuryText.trim()?"linear-gradient(135deg,"+RED+",#8B0000)":"#1a1a1a",color:injuryText.trim()?"#fff":"#444",fontSize:13,fontWeight:700,cursor:injuryText.trim()?"pointer":"not-allowed",fontFamily:"Georgia, serif",boxShadow:injuryText.trim()?"0 0 16px "+RED+"44":"none",transition:"all 0.2s"}}>
-                          🚨 Send injury report to Coach Ant
+                        ?<div style={{display:"flex",alignItems:"center",gap:10,padding:"14px",background:GREEN+"10",borderRadius:12,border:"1px solid "+GREEN+"33"}}>
+                          <div style={{width:32,height:32,borderRadius:"50%",background:GREEN,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:16,fontWeight:900,flexShrink:0}}>✓</div>
+                          <div>
+                            <div style={{fontSize:13,color:GREEN,fontWeight:700}}>Report sent to Coach Ant</div>
+                            <div style={{fontSize:11,color:GREEN+"88",marginTop:1}}>He'll check in with you before the next class.</div>
+                          </div>
+                        </div>
+                        :<button onClick={sendInjury} disabled={!injuryText.trim()&&painLevel===0} style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:injuryText.trim()||painLevel>0?"linear-gradient(135deg,"+RED+",#8B0000)":"#1a1a1a",color:injuryText.trim()||painLevel>0?"#fff":"#333",fontSize:14,fontWeight:800,cursor:injuryText.trim()||painLevel>0?"pointer":"not-allowed",fontFamily:"Georgia,serif",letterSpacing:"0.02em",boxShadow:injuryText.trim()||painLevel>0?"0 0 20px "+RED+"44":"none",transition:"all 0.25s"}}>
+                          🚨 Send report to Coach Ant
                         </button>
                       }
                     </div>
