@@ -755,35 +755,66 @@ export default function Athlete(){
                   );
                 })()}
                 {announcement&&(
-                  <div style={{background:"#1a1a2a",border:"0.5px solid "+PUR+"66",borderRadius:12,padding:"12px 16px",marginBottom:12}}>
-                    <div style={{fontSize:10,color:PUR,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>This week from Coach Ant</div>
-                    <div style={{fontSize:13,color:"#fff",lineHeight:1.6}}>{announcement.message}</div>
+                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
+                    <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
+                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative"}}>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📣</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>From Coach Ant</div>
+                          <div style={{fontSize:13,color:"#fff",lineHeight:1.7}}>{announcement.message}</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
                 {bracelet&&(
-                  <div style={{background:BG,borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid "+bracelet.hex+"44"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                      <div style={{width:10,height:10,borderRadius:"50%",background:bracelet.hex}}/>
-                      <span style={{fontSize:11,fontWeight:500,color:bracelet.hex,textTransform:"uppercase",letterSpacing:"0.05em"}}>{bracelet.color} · {bracelet.ref}</span>
+                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+bracelet.hex+"33"}}>
+                    <div style={{background:"linear-gradient(140deg,"+bracelet.hex+"30,"+bracelet.hex+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+bracelet.hex+","+bracelet.hex+"44,transparent)"}}/>
+                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+bracelet.hex+"12,transparent 70%)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative"}}>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+bracelet.hex+"44,"+bracelet.hex+"22)",border:"1px solid "+bracelet.hex+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+bracelet.hex+"33"}}>📿</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:8,color:bracelet.hex,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>{bracelet.color} · {bracelet.ref}</div>
+                          <div style={{fontSize:14,color:"#fff",fontStyle:"italic",lineHeight:1.75}}>"{bracelet.text}"</div>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{fontSize:14,color:"#fff",fontStyle:"italic",lineHeight:1.7}}>"{bracelet.text}"</div>
                   </div>
                 )}
                 {streak>0&&(
-                  <div style={{background:"#0a1f0a",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"0.5px solid "+GREEN+"44",display:"flex",alignItems:"center",gap:12}}>
-                    <div style={{fontSize:28}}>🔥</div>
-                    <div>
-                      <div style={{fontSize:16,fontWeight:500,color:GREEN}}>{streak} day early streak</div>
-                      <div style={{fontSize:12,color:"#888"}}>Keep showing up early.</div>
+                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GREEN+"33"}}>
+                    <div style={{background:"linear-gradient(140deg,"+GREEN+"30,"+GREEN+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+GREEN+"44,transparent)"}}/>
+                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>🔥</div>
+                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GREEN+"12,transparent 70%)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GREEN+"44,"+GREEN+"22)",border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GREEN+"33"}}>🔥</div>
+                        <div>
+                          <div style={{fontSize:8,color:GREEN,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Early arrival streak</div>
+                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>{streak} <span style={{fontSize:13,color:"#888",fontWeight:400}}>days straight</span></div>
+                          <div style={{fontSize:11,color:"#555",marginTop:1}}>Keep showing up early.</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
                 {anvilWinner&&(
-                  <div style={{background:"#1f1700",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"0.5px solid "+GOLD+"44",display:"flex",alignItems:"center",gap:10}}>
-                    <div style={{width:8,height:8,borderRadius:"50%",background:GOLD,flexShrink:0}}/>
-                    <div>
-                      <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}}>This week's Anvil</div>
-                      <div style={{fontSize:14,fontWeight:500,color:GOLD}}>{anvilWinner.athlete_name}</div>
+                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
+                    <div style={{background:"linear-gradient(140deg,"+GOLD+"30,"+GOLD+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
+                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒</div>
+                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GOLD+"12,transparent 70%)",pointerEvents:"none"}}/>
+                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>⚒️</div>
+                        <div>
+                          <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>This week's Anvil</div>
+                          <div style={{fontSize:20,fontWeight:900,color:GOLD,letterSpacing:"-0.02em"}}>{anvilWinner.athlete_name}</div>
+                          <div style={{fontSize:11,color:"#666",marginTop:1}}>Iron sharpens iron.</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

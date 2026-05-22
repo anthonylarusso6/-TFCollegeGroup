@@ -9,8 +9,8 @@ export default function ClassCountdown(){
     return()=>clearInterval(t);
   },[]);
 
-  const CLASS_START=new Date("2025-06-18T09:00:00");
-  const SEASON_END=new Date("2025-09-10T11:20:00");
+  const CLASS_START=new Date("2026-06-18T09:00:00");
+  const SEASON_END=new Date("2026-09-10T11:20:00");
   const TOTAL_WEEKS=12;
 
   // Before season
@@ -32,7 +32,7 @@ export default function ClassCountdown(){
             </div>
           ))}
         </div>
-        <div style={{fontSize:11,color:"#444",marginTop:10}}>June 18, 2025 · 9:00am · Iron sharpens iron</div>
+        <div style={{fontSize:11,color:"#444",marginTop:10}}>June 18, 2026 · 9:00am · Iron sharpens iron</div>
       </div>
     );
   }
@@ -45,7 +45,7 @@ export default function ClassCountdown(){
         <div style={{fontSize:32,marginBottom:8}}>🏆</div>
         <div style={{fontSize:16,fontWeight:800,color:GREEN,marginBottom:4}}>Season Complete!</div>
         <div style={{fontSize:12,color:"#888"}}>12 weeks. Iron sharpened iron.</div>
-        <div style={{fontSize:11,color:"#555",marginTop:6}}>June 18 — September 10, 2025</div>
+        <div style={{fontSize:11,color:"#555",marginTop:6}}>June 18 — September 10, 2026</div>
       </div>
     );
   }
