@@ -135,6 +135,7 @@ export default function Coach(){
 
   const loadAll=async()=>{
     setLoading(true);
+    try{
     const[{data:aths},{data:att},{data:inb},{data:anv},{data:lb},{data:ann}]=await Promise.all([
       supabase.from("athletes").select("*").order("name"),
       supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200),
@@ -149,6 +150,7 @@ export default function Coach(){
     if(anv)setAnvil(anv);
     if(lb)setLeaderboard(lb);
     if(ann&&ann.length>0){setCurrentAnnouncement(ann[0]);setAnnouncement(ann[0].message);}
+    }catch(e){console.error("loadAll error:",e);}
     setLoading(false);
     // Load secondary data independently — won't block main load
     try{const{data}=await supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false});if(data)setCoachPrayers(data);}catch(e){}
@@ -258,7 +260,8 @@ export default function Coach(){
 
   const awardAnvil=async()=>{
     if(!anvilWinner.trim())return;
-    await supabase.from("anvil").insert({athlete_name:anvilWinner,note:anvilNote,date_awarded:anvilDate||new Date().toLocaleDateString(),type:"individual",athlete_role:"iron"});
+    const _n=new Date();const _e=new Date(_n.toLocaleString("en-US",{timeZone:"America/New_York"}));const _iso=_e.getFullYear()+"-"+String(_e.getMonth()+1).padStart(2,"0")+"-"+String(_e.getDate()).padStart(2,"0");
+    await supabase.from("anvil").insert({athlete_name:anvilWinner,note:anvilNote,date_awarded:anvilDate||_iso,type:"individual",athlete_role:"iron"});
     const ath=athletes.find(a=>a.name===anvilWinner);
     if(ath){
       const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",ath.id);
@@ -278,17 +281,14 @@ export default function Coach(){
   const prayers=inbox.filter(i=>i.type==="prayer");
   const inboxCount=inbox.length;
 
-  const today=new Date();
-  const dayName=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][today.getDay()];
-  const isClassDay=["Mon","Tue","Thu","Fri"].includes(dayName);
-  const todayLocal=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
-  const todayAtt=attendance.filter(a=>a.date===todayLocal);
-  const earlyToday=todayAtt.filter(a=>a.status==="early").length;
-  const lateToday=todayAtt.filter(a=>a.status==="late").length;
-  // Calculate week dates using JS Date with explicit year/month/day
   const now=new Date();
   const estNow=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const dayName=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][estNow.getDay()];
+  const isClassDay=["Mon","Tue","Thu","Fri"].includes(dayName);
   const estTodayStr=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
+  const todayAtt=attendance.filter(a=>a.date===estTodayStr);
+  const earlyToday=todayAtt.filter(a=>a.status==="early").length;
+  const lateToday=todayAtt.filter(a=>a.status==="late").length;
   const thisMonth=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0");
   // Find Monday of current week
   const dowEst=estNow.getDay();// 0=Sun
@@ -341,6 +341,9 @@ export default function Coach(){
   // Malkmus PIN stored in localStorage
   const getMalkmusPin=()=>typeof window!=="undefined"?localStorage.getItem("malkmus_coach_pin"):null;
   const saveMalkmusPin=(p)=>localStorage.setItem("malkmus_coach_pin",p);
+  // Adoriyan PIN stored in localStorage
+  const getAdoriyanPin=()=>typeof window!=="undefined"?localStorage.getItem("adoriyan_coach_pin"):null;
+  const saveAdoriyanPin=(p)=>localStorage.setItem("adoriyan_coach_pin",p);
 
   function handlePinKey(k){
     if(k===null)return;
@@ -468,9 +471,6 @@ export default function Coach(){
                       }else if(selectedCoach==="malkmus"){
                         const mp=getMalkmusPin();
                         if(mp&&val===mp){setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
-                      }else if(selectedCoach==="adoriyan"){
-                        const ap=getAdoriyanPin();
-                        if(ap&&val===ap){setAuthed(true);setCoachRole("adoriyan");setTab("overview");setPin("");}
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }
                     }else if(pinStep==="create"){
@@ -812,7 +812,7 @@ export default function Coach(){
               <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0",borderTop:"3px solid "+GREEN}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
                   <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>
-                    {attDate===todayLocal?"Today's attendance":attDate}
+                    {attDate===estTodayStr?"Today's attendance":attDate}
                   </div>
                   <input type="date" value={attDate} onChange={e=>setAttDate(e.target.value)} style={{padding:"4px 8px",fontSize:12,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a"}}/>
                 </div>

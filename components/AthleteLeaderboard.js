@@ -22,10 +22,11 @@ export default function AthleteLeaderboard({athleteId}){
       const athMap={};
       aths.forEach(a=>{athMap[a.id]=a;});
 
-      // Get this week's dates (Mon-Fri)
+      // Get this week's dates (Mon-Fri) using EST
       const now=new Date();
-      const weekStart=new Date(now);
-      weekStart.setDate(now.getDate()-now.getDay()+1);
+      const estNow=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
+      const weekStart=new Date(estNow);
+      weekStart.setDate(estNow.getDate()-estNow.getDay()+1);
       weekStart.setHours(0,0,0,0);
 
       // Calculate stats per athlete

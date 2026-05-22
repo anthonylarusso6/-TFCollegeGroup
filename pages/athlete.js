@@ -125,7 +125,9 @@ function AccountabilityPartner({athleteId, athletes}){
   const[lb,setLb]=useState(null);
   useEffect(()=>{
     if(partner){
-      supabase.from("leaderboard").select("*").eq("athlete_id",partner.id).single().then(({data})=>setLb(data));
+      (async()=>{
+        try{const{data}=await supabase.from("leaderboard").select("*").eq("athlete_id",partner.id).single();if(data)setLb(data);}catch(e){}
+      })();
     }
   },[partner]);
   const GOLD="#D4AF37",GREEN="#1E6B3A",RED="#C0392B",STEEL="#708090",BG="#0f0f0f";
@@ -228,31 +230,33 @@ export default function Athlete(){
   useEffect(()=>{athleteIdRef.current=selectedAthlete?.id;},[selectedAthlete]);
 
   const loadDraft=async()=>{
-    const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
-    if(data&&data.length>0)setDraft(data[0]);
-    else setDraft(null);
+    try{
+      const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
+      if(data&&data.length>0)setDraft(data[0]);
+      else setDraft(null);
+    }catch(e){}
   };
 
   const loadAttendance=async(athleteId)=>{
-    const{data}=await supabase.from("attendance").select("*").eq("athlete_id",athleteId).order("date",{ascending:false});
-    if(data)setAttendance(data);
-    let s=0;
-    if(data){for(const rec of data){if(rec.status==="early")s++;else break;}}
-    setStreak(s);
+    try{
+      const{data}=await supabase.from("attendance").select("*").eq("athlete_id",athleteId).order("date",{ascending:false});
+      if(data)setAttendance(data);
+      let s=0;
+      if(data){for(const rec of data){if(rec.status==="early")s++;else break;}}
+      setStreak(s);
+    }catch(e){}
   };
 
   const doCheckin=async(athlete)=>{
     const now=new Date();
+    const estTime=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
     const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",timeZone:"America/New_York"});
-    const today=DAYS[now.getDay()];
+    const today=DAYS[estTime.getDay()];
     if(!CLASS_DAYS.includes(today))return null;
     const cut=CUTOFFS[today]||{h:9,m:30};
-    // Use EST time for cutoff check
-    const estTime=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
     const late=estTime.getHours()>cut.h||(estTime.getHours()===cut.h&&estTime.getMinutes()>=cut.m);
     const status=late?"late":"early";
-    // Use local date not UTC to match the local day
-    const today_date=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+    const today_date=estTime.getFullYear()+"-"+String(estTime.getMonth()+1).padStart(2,"0")+"-"+String(estTime.getDate()).padStart(2,"0");
     const{data:existing,error:existErr}=await supabase.from("attendance").select("*").eq("athlete_id",athlete.id).eq("date",today_date);
     if(existErr)console.error("Attendance check error:",existErr);
     if(existing&&existing.length>0)return{status:existing[0].status,time:existing[0].time_logged,already:true};
@@ -326,20 +330,22 @@ export default function Athlete(){
 
   const sendFeedback=async()=>{
     if(!feedbackText.trim())return;
-    await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"message",message:feedbackText});
+    try{await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"message",message:feedbackText});}catch(e){console.error("Feedback send:",e);}
     setFeedbackSent(true);
   };
 
   const sendPrayer=async()=>{
     if(!prayerText.trim())return;
-    await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"prayer",message:prayerText});
+    try{await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"prayer",message:prayerText});}catch(e){console.error("Prayer send:",e);}
     setPrayerSent(true);
   };
 
   const sendInjury=async()=>{
     if(!injuryText.trim())return;
-    await supabase.from("athletes").update({injury:true,injury_note:injuryText}).eq("id",selectedAthlete.id);
-    await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"injury",message:injuryText});
+    try{
+      await supabase.from("athletes").update({injury:true,injury_note:injuryText}).eq("id",selectedAthlete.id);
+      await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"injury",message:injuryText});
+    }catch(e){console.error("Injury send:",e);}
     setInjurySent(true);
   };
 
@@ -578,14 +584,13 @@ export default function Athlete(){
     const draftBracelets=draft?.bracelets||[];
     const draftTiers=draft?.tiers||[];
     const draftPhase=draft?.phase;
+    const myLeaderIdx=isForge?draftLeaders.indexOf(selectedAthlete.name):-1;
     // For Forge leaders, use their leader index; for Iron, use group_idx
     const effectiveGroupIdx=isForge&&myLeaderIdx>=0?myLeaderIdx:myGroupIdx;
     const myLeader=effectiveGroupIdx!=null?draftLeaders[effectiveGroupIdx]:null;
     const myGroup=effectiveGroupIdx!=null?draftGroups[effectiveGroupIdx]:null;
     const myBracelet=effectiveGroupIdx!=null?BRACELETS.find(b=>b.ref===draftBracelets[effectiveGroupIdx]?.ref):null;
     const myTier=effectiveGroupIdx!=null?draftTiers[effectiveGroupIdx]:null;
-
-    const myLeaderIdx=isForge?draftLeaders.indexOf(selectedAthlete.name):-1;
     const takenBracelets=(draftBracelets||[]).filter(Boolean).map(b=>b?.ref);
     const myBraceletPicked=myLeaderIdx>=0?draftBracelets[myLeaderIdx]:null;
 
@@ -699,13 +704,13 @@ export default function Athlete(){
 
             {tab==="profile"&&(
               <div>
-                {(()=>{const _d=new Date().getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><div style={{fontSize:24}}>🔥</div></div>);})()}
+                {(()=>{const _est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><div style={{fontSize:24}}>🔥</div></div>);})()}
                 <DailyWord announcement={announcement}/>
                 <ClassCountdown/>
                 {/* Day schedule — always shows */}
                 {(()=>{
                   const _days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-                  const _day=_days[new Date().getDay()];
+                  const _day=_days[new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"})).getDay()];
                   const _classDays=["Mon","Tue","Thu","Fri"];
                   const _isClassDay=_classDays.includes(_day);
                   if(!_isClassDay) return(
