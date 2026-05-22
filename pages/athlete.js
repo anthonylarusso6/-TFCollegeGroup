@@ -102,14 +102,14 @@ function MindsetNotes({athleteId, athlete}){
         <div style={{fontSize:12,color:"#888"}}>Write your takeaway from each week. Only you can see these.</div>
       </div>
       {WEEKS.map((w,i)=>(
-        <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:8,border:"0.5px solid #e0e0e0",borderLeft:"4px solid "+w.color}}>
+        <div key={i} style={{background:"#141414",borderRadius:12,padding:"1rem",marginBottom:8,border:"0.5px solid #252525",borderLeft:"4px solid "+w.color}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
             <div style={{fontSize:11,color:w.color,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.04em"}}>Week {w.week}</div>
-            <div style={{fontSize:11,color:"#888"}}>{w.scripture}</div>
+            <div style={{fontSize:11,color:"#555"}}>{w.scripture}</div>
           </div>
-          <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a",marginBottom:2}}>{w.title}</div>
-          <div style={{fontSize:12,color:"#888",fontStyle:"italic",marginBottom:8}}>"{w.takeaway}"</div>
-          <textarea defaultValue={athlete?.[`mindset_note_${w.week}`]||""} onBlur={e=>saveNote(w.week,e.target.value)} placeholder="Your personal takeaway..." style={{width:"100%",minHeight:55,padding:"8px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",background:"#fafafa",color:"#1a1a1a"}}/>
+          <div style={{fontSize:13,fontWeight:500,color:"#ddd",marginBottom:2}}>{w.title}</div>
+          <div style={{fontSize:12,color:"#666",fontStyle:"italic",marginBottom:8}}>"{w.takeaway}"</div>
+          <textarea defaultValue={athlete?.[`mindset_note_${w.week}`]||""} onBlur={e=>saveNote(w.week,e.target.value)} placeholder="Your personal takeaway..." style={{width:"100%",minHeight:55,padding:"8px",borderRadius:8,border:"0.5px solid #333",fontSize:12,fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",background:"#1e1e1e",color:"#ddd"}}/>
           {saving===w.week&&<div style={{fontSize:11,color:"#1E6B3A",marginTop:3}}>Saving...</div>}
         </div>
       ))}
@@ -130,10 +130,10 @@ function AccountabilityPartner({athleteId, athletes}){
   },[partner]);
   const GOLD="#D4AF37",GREEN="#1E6B3A",RED="#C0392B",STEEL="#708090",BG="#0f0f0f";
   if(!partner) return(
-    <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+    <div style={{background:"#141414",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #252525"}}>
       <div style={{fontSize:32,marginBottom:12}}>🤝</div>
-      <div style={{fontSize:15,fontWeight:500,color:"#1a1a1a",marginBottom:8}}>No partner yet</div>
-      <div style={{fontSize:13,color:"#888"}}>Coach Ant will assign your accountability partner. Check back soon!</div>
+      <div style={{fontSize:15,fontWeight:500,color:"#ddd",marginBottom:8}}>No partner yet</div>
+      <div style={{fontSize:13,color:"#666"}}>Coach Ant will assign your accountability partner. Check back soon!</div>
     </div>
   );
   return(
@@ -151,18 +151,18 @@ function AccountabilityPartner({athleteId, athletes}){
         </div>
       </div>
       {lb&&(
-        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Their stats</div>
+        <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",border:"0.5px solid #252525"}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:12}}>Their stats</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
             {[{label:"Early",val:lb.early_count||0,color:GREEN},{label:"Streak 🔥",val:lb.current_streak||0,color:GOLD},{label:"Anvils",val:lb.anvil_count||0,color:GOLD}].map(s=>(
-              <div key={s.label} style={{background:"#f9f9f9",borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+              <div key={s.label} style={{background:"#1e1e1e",borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #2a2a2a"}}>
                 <div style={{fontSize:20,fontWeight:600,color:s.color}}>{s.val}</div>
-                <div style={{fontSize:11,color:"#888",marginTop:2}}>{s.label}</div>
+                <div style={{fontSize:11,color:"#666",marginTop:2}}>{s.label}</div>
               </div>
             ))}
           </div>
-          <div style={{marginTop:12,padding:"10px 14px",background:"#f9f9f9",borderRadius:10,border:"0.5px solid #e0e0e0"}}>
-            <div style={{fontSize:12,color:"#888",fontStyle:"italic"}}>"Iron sharpens iron. Hold each other to the standard."</div>
+          <div style={{marginTop:12,padding:"10px 14px",background:"#1a1a1a",borderRadius:10,border:"0.5px solid #252525"}}>
+            <div style={{fontSize:12,color:"#555",fontStyle:"italic"}}>"Iron sharpens iron. Hold each other to the standard."</div>
           </div>
         </div>
       )}
@@ -347,8 +347,11 @@ export default function Athlete(){
   const isForge=selectedAthlete?.role==="forge";
 
   if(loading)return(
-    <div style={{minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <div style={{textAlign:"center"}}><div style={{fontSize:32,marginBottom:16}}>⚒</div><div style={{fontSize:14,color:"#555"}}>Loading...</div></div>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a0a0a 0%,#0f0f0f 60%,#130a00 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{textAlign:"center"}}>
+        <div style={{width:80,height:80,borderRadius:22,background:"linear-gradient(135deg,#E8720C,#C0392B)",margin:"0 auto 20px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:40,boxShadow:"0 0 60px #E8720C55,0 0 120px #E8720C22"}}>⚒</div>
+        <div style={{fontSize:12,color:"#444",letterSpacing:"0.15em",textTransform:"uppercase"}}>Loading...</div>
+      </div>
     </div>
   );
 
@@ -423,20 +426,20 @@ export default function Athlete(){
               const isForge=a.role==="forge";
               const roleColor=isForge?RED:STEEL;
               return(
-                <button key={a.id} onClick={()=>selectAthlete(a)} style={{width:"100%",padding:"12px 16px",borderRadius:14,border:"1px solid "+(isForge?"#3a1a1a":"#1e1e1e"),background:isForge?"#1a0d0d":"#111",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all 0.15s"}}>
+                <button key={a.id} onClick={()=>selectAthlete(a)} style={{width:"100%",padding:"14px 16px",borderRadius:16,border:"1px solid "+(isForge?"#3a1a1a":"#1e1e1e"),background:isForge?"linear-gradient(135deg,#1a0d0d,#1e1010)":"linear-gradient(135deg,#111,#141416)",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",gap:14,textAlign:"left",transition:"all 0.15s",boxShadow:"0 2px 12px rgba(0,0,0,0.3)"}}>
                   {/* Avatar */}
-                  <div style={{width:44,height:44,borderRadius:12,background:isForge?"linear-gradient(135deg,"+RED+",#8B1A1A)":"linear-gradient(135deg,"+STEEL+",#505a66)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden",boxShadow:"0 2px 8px "+roleColor+"44"}}>
+                  <div style={{width:54,height:54,borderRadius:14,background:isForge?"linear-gradient(135deg,"+RED+",#8B1A1A)":"linear-gradient(135deg,#8a9aa4,"+STEEL+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden",boxShadow:"0 4px 12px "+roleColor+"33"}}>
                     {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
                   </div>
                   {/* Info */}
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:14,fontWeight:600,color:"#fff",marginBottom:2}}>{a.name}</div>
+                    <div style={{fontSize:15,fontWeight:600,color:"#fff",marginBottom:3}}>{a.name}</div>
                     <div style={{fontSize:11,color:"#555"}}>{a.sport||"Athlete"}</div>
                   </div>
                   {/* Role badge */}
                   <div style={{flexShrink:0,display:"flex",alignItems:"center",gap:6}}>
-                    <span style={{fontSize:10,fontWeight:700,color:roleColor,background:roleColor+"22",padding:"3px 8px",borderRadius:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>{isForge?"Forge":"Iron"}</span>
-                    <span style={{color:"#333",fontSize:14}}>→</span>
+                    <span style={{fontSize:10,fontWeight:700,color:roleColor,background:roleColor+"1a",padding:"4px 10px",borderRadius:8,textTransform:"uppercase",letterSpacing:"0.06em",border:"0.5px solid "+roleColor+"33"}}>{isForge?"Forge":"Iron"}</span>
+                    <span style={{color:"#2a2a2a",fontSize:14}}>›</span>
                   </div>
                 </button>
               );
@@ -451,21 +454,26 @@ export default function Athlete(){
   if(screen==="login")return(
     <>
       <Head><title>Sign In — TF College Group</title></Head>
-      <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",padding:"3rem 1.5rem 2rem",textAlign:"center",position:"relative"}}>
-        <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:20,left:20,background:"transparent",border:"none",color:"#666",fontSize:13,cursor:"pointer",fontFamily:"Georgia, serif"}}>← Back</button>
-        <div style={{width:56,height:56,borderRadius:"50%",background:isForge?"linear-gradient(135deg,"+RED+",#8B1A1A)":"linear-gradient(135deg,"+STEEL+",#505a66)",margin:"0 auto 1rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:700,color:"#fff",overflow:"hidden",boxShadow:"0 0 20px "+(isForge?RED:STEEL)+"44"}}>
-          {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
+      <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a0a0a 0%,#0f0f0f 70%,#130800 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",padding:"0 1.5rem 2rem",textAlign:"center",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+        <div style={{position:"fixed",top:-80,left:"50%",transform:"translateX(-50%)",width:320,height:320,borderRadius:"50%",background:isForge?RED:ORANGE,opacity:0.06,filter:"blur(90px)",pointerEvents:"none"}}/>
+        <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:20,left:20,background:"#141414",border:"0.5px solid #2a2a2a",color:"#666",fontSize:12,cursor:"pointer",fontFamily:"Georgia, serif",padding:"7px 14px",borderRadius:10}}>← Back</button>
+        <div style={{position:"relative",marginBottom:20,marginTop:"2rem"}}>
+          <div style={{width:80,height:80,borderRadius:"50%",background:isForge?"linear-gradient(135deg,"+RED+",#8B1A1A)":"linear-gradient(135deg,#9aa8b0,"+STEEL+")",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:700,color:"#fff",overflow:"hidden",boxShadow:"0 0 40px "+(isForge?RED:ORANGE)+"44,0 0 80px "+(isForge?RED:ORANGE)+"22"}}>
+            {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
+          </div>
+          <div style={{position:"absolute",inset:-4,borderRadius:"50%",border:"1px solid "+(isForge?RED:ORANGE)+"33",pointerEvents:"none"}}/>
         </div>
-        <div style={{fontSize:20,fontWeight:700,color:"#fff",marginBottom:6}}>
+        <div style={{fontSize:22,fontWeight:700,color:"#fff",marginBottom:6,letterSpacing:"-0.01em"}}>
           {!selectedAthlete?.pin?`Hey ${selectedAthlete?.name.split(" ")[0]}!`:pinStep==="confirm"?"Confirm your PIN":`Welcome back, ${selectedAthlete?.name.split(" ")[0]}!`}
         </div>
-        <div style={{fontSize:13,color:"#666",marginBottom:24}}>
-          {!selectedAthlete?.pin?"Create your 4-digit PIN.":pinStep==="confirm"?"Enter the same 4 digits again.":"Enter your 4-digit PIN."}
+        <div style={{fontSize:13,color:"#555",marginBottom:28}}>
+          {!selectedAthlete?.pin?"Set your 4-digit PIN to check in.":pinStep==="confirm"?"Enter the same 4 digits again.":"Enter your PIN to check in."}
         </div>
-        <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:16}}>
-          {[0,1,2,3].map(i=><div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(isForge?RED:ORANGE),background:i<pin.length?(isForge?RED:ORANGE):"transparent",transition:"background 0.15s"}}/>)}
+        <div style={{display:"flex",justifyContent:"center",gap:16,marginBottom:20}}>
+          {[0,1,2,3].map(i=>(
+            <div key={i} style={{width:16,height:16,borderRadius:"50%",border:"2px solid "+(isForge?RED:ORANGE)+(i<pin.length?"":"55"),background:i<pin.length?(isForge?RED:ORANGE):"transparent",transition:"background 0.15s",boxShadow:i<pin.length?"0 0 8px "+(isForge?RED:ORANGE)+"88":"none"}}/>
+          ))}
         </div>
-        {/* Visible input for keyboard entry */}
         <input
           type="password"
           inputMode="numeric"
@@ -476,20 +484,20 @@ export default function Athlete(){
             setPin(val);
           }}
           placeholder="····"
-          style={{display:"block",width:160,margin:"0 auto 20px",padding:"14px",borderRadius:12,border:"1px solid #333",background:"#141414",color:"#fff",fontSize:24,textAlign:"center",fontFamily:"Georgia,serif",letterSpacing:"0.3em",outline:"none",boxSizing:"border-box"}}
+          style={{display:"block",width:160,margin:"0 auto 24px",padding:"14px",borderRadius:14,border:"1px solid #2a2a2a",background:"#141414",color:"#fff",fontSize:24,textAlign:"center",fontFamily:"Georgia,serif",letterSpacing:"0.3em",outline:"none",boxSizing:"border-box"}}
         />
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:260,margin:"0 auto"}}>
           {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
             <button key={i} onClick={()=>{
               if(k===null)return;
               if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
               if(pin.length<4)setPin(p=>p+String(k));
-            }} style={{padding:"16px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#333"),background:k===null?"transparent":"#141414",fontSize:20,fontWeight:500,cursor:k===null?"default":"pointer",color:"#fff",fontFamily:"Georgia, serif"}}>
+            }} style={{padding:"18px 10px",borderRadius:14,border:"0.5px solid "+(k===null?"transparent":"#222"),background:k===null?"transparent":k==="⌫"?"#1a1a1a":"#161616",fontSize:22,fontWeight:k==="⌫"?400:300,cursor:k===null?"default":"pointer",color:k==="⌫"?"#888":"#fff",fontFamily:"Georgia, serif",transition:"background 0.1s"}}>
               {k===null?"":k}
             </button>
           ))}
         </div>
-        {pinError&&<div style={{marginTop:14,fontSize:13,color:"#E24B4A"}}>{pinError}</div>}
+        {pinError&&<div style={{marginTop:16,fontSize:13,color:"#ff6b6b",padding:"8px 16px",background:"#1a0505",borderRadius:10,border:"0.5px solid #3a1010"}}>{pinError}</div>}
       </div>
     </>
   );
@@ -498,30 +506,36 @@ export default function Athlete(){
     const isLate=checkinInfo?.status==="late";
     const noClass=!checkinInfo;
     const alreadyIn=checkinInfo?.already;
+    const accentColor=noClass?"#555":alreadyIn?PUR:isLate?RED:GREEN;
     return(
       <>
         <Head><title>Check In — TF College Group</title></Head>
-        <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",padding:"3rem 1.5rem 2rem",textAlign:"center"}}>
-          <div style={{width:70,height:70,borderRadius:"50%",background:noClass?"#333":alreadyIn?PUR:isLate?RED:GREEN,margin:"0 auto 1.5rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32}}>
-            {noClass?"📅":alreadyIn?"✓":isLate?"⚠":"✓"}
+        <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a0a0a 0%,#0f0f0f 60%,"+(noClass?"#111":isLate?"#130000":alreadyIn?"#0a0015":"#001308")+" 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",padding:"3rem 1.5rem 2rem",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+          <div style={{position:"fixed",top:"30%",left:"50%",transform:"translateX(-50%)",width:300,height:300,borderRadius:"50%",background:accentColor,opacity:0.06,filter:"blur(100px)",pointerEvents:"none"}}/>
+          <div style={{position:"relative",width:90,height:90,margin:"0 auto 1.5rem"}}>
+            <div style={{width:90,height:90,borderRadius:"50%",background:"linear-gradient(135deg,"+(noClass?"#222,#333":alreadyIn?PUR+",#3a2d8f":isLate?"#8B0000,"+RED:GREEN+",#145228")+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:42,boxShadow:"0 0 60px "+accentColor+"44,0 0 120px "+accentColor+"22"}}>
+              {noClass?"📅":alreadyIn?"✓":isLate?"⚠":"✓"}
+            </div>
+            <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:"1px solid "+accentColor+"33",pointerEvents:"none"}}/>
           </div>
-          <div style={{fontSize:22,fontWeight:400,color:"#fff",marginBottom:6}}>
+          <div style={{fontSize:28,fontWeight:700,color:"#fff",marginBottom:8,letterSpacing:"-0.02em"}}>
             {noClass?"No class today":alreadyIn?"Already checked in":isLate?"You're late.":"You're in early."}
           </div>
-          {checkinInfo&&<div style={{fontSize:14,color:"#888",marginBottom:16}}>Signed in at {checkinInfo.time}</div>}
-          {checkinInfo?.error&&<div style={{fontSize:12,color:"#E24B4A",marginBottom:8,padding:"8px 12px",background:"#FFF0F0",borderRadius:8}}>Save failed: {checkinInfo.error} — check Supabase RLS</div>}
+          {checkinInfo&&<div style={{fontSize:14,color:"#555",marginBottom:20}}>Signed in at {checkinInfo.time}</div>}
+          {checkinInfo?.error&&<div style={{fontSize:12,color:"#ff6b6b",marginBottom:8,padding:"10px 14px",background:"#1a0505",borderRadius:10,border:"0.5px solid #3a1010"}}>Save failed: {checkinInfo.error} — check Supabase RLS</div>}
           {streak>0&&!noClass&&(
-            <div style={{padding:"10px 16px",borderRadius:10,background:"#1a1f1a",border:"0.5px solid "+GREEN+"44",marginBottom:16,display:"inline-block"}}>
-              <div style={{fontSize:13,color:GREEN}}>🔥 {streak} day early streak</div>
+            <div style={{padding:"12px 20px",borderRadius:12,background:"#0a1f0a",border:"0.5px solid "+GREEN+"44",marginBottom:16,display:"inline-flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:20}}>🔥</span>
+              <span style={{fontSize:14,color:GREEN,fontWeight:600}}>{streak} day early streak</span>
             </div>
           )}
           {!noClass&&!alreadyIn&&(
-            <div style={{padding:"14px 16px",borderRadius:10,border:"0.5px solid "+(isLate?"#E24B4A":GREEN),background:isLate?"#2a0a0a":"#0a1f0a",marginBottom:24,textAlign:"left"}}>
-              {isLate?(<><div style={{fontSize:13,fontWeight:500,color:"#E24B4A",marginBottom:6}}>On time is late. Early is the only standard.</div><div style={{fontSize:13,color:"#aaa",lineHeight:1.6}}>Consequence: <span style={{color:"#E24B4A",fontWeight:500}}>50 crunches upon arrival.</span></div></>)
-              :(<><div style={{fontSize:13,fontWeight:500,color:"#58B368",marginBottom:6}}>That's the standard. Keep setting it.</div><div style={{fontSize:13,color:"#aaa",lineHeight:1.6}}>Early is the only acceptable arrival.</div></>)}
+            <div style={{padding:"16px 20px",borderRadius:14,border:"1px solid "+(isLate?RED+"44":GREEN+"44"),background:isLate?"linear-gradient(135deg,#1a0505,#200a0a)":"linear-gradient(135deg,#051a0a,#0a1f0e)",marginBottom:24,textAlign:"left",width:"100%",maxWidth:360,boxSizing:"border-box"}}>
+              {isLate?(<><div style={{fontSize:14,fontWeight:700,color:"#ff6b6b",marginBottom:8}}>On time is late. Early is the only standard.</div><div style={{fontSize:13,color:"#888",lineHeight:1.7}}>Consequence: <span style={{color:"#ff6b6b",fontWeight:600}}>50 crunches upon arrival.</span></div></>)
+              :(<><div style={{fontSize:14,fontWeight:700,color:"#4caf76",marginBottom:8}}>That's the standard. Keep setting it.</div><div style={{fontSize:13,color:"#888",lineHeight:1.7}}>Early is the only acceptable arrival. ⚒</div></>)}
             </div>
           )}
-          <button onClick={()=>{setScreen("profile");setTab("profile");}} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:PUR,color:"#fff",fontSize:15,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>
+          <button onClick={()=>{setScreen("profile");setTab("profile");}} style={{width:"100%",maxWidth:360,padding:"16px",borderRadius:14,border:"none",background:"linear-gradient(135deg,"+PUR+",#3a2d8f)",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.01em",boxShadow:"0 4px 20px "+PUR+"44"}}>
             Go to my profile →
           </button>
         </div>
@@ -621,36 +635,41 @@ export default function Athlete(){
     return(
       <>
         <Head><title>{selectedAthlete.name} — TF College Group</title></Head>
-        <div style={{minHeight:"100vh",background:"#f5f5f5",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
-          <div style={{background:BG,padding:"1rem 1.25rem 0"}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-              <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                <button onClick={()=>setScreen("roster")} style={{background:"transparent",border:"none",color:"#666",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 10px",borderRadius:8,border:"0.5px solid #222"}}>← Switch</button>
-                <a href="/" style={{background:"transparent",border:"0.5px solid #222",borderRadius:8,color:"#666",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 10px",textDecoration:"none"}}>🏠 Home</a>
-                <a href="/coach" style={{background:"transparent",border:"0.5px solid #222",borderRadius:8,color:"#666",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 10px",textDecoration:"none"}}>⚒ Coach</a>
+        <div style={{minHeight:"100vh",background:BG,fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
+          <div style={{background:"linear-gradient(180deg,#0f0f0f 0%,#0a0a0a 100%)",padding:"0.75rem 1.25rem 0",borderBottom:"1px solid #1a1a1a",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:-60,right:-40,width:180,height:180,borderRadius:"50%",background:isForge?RED:ORANGE,opacity:0.05,filter:"blur(60px)",pointerEvents:"none"}}/>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12,position:"relative"}}>
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                <button onClick={()=>setScreen("roster")} style={{background:"#161616",border:"0.5px solid #2a2a2a",color:"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",borderRadius:8}}>← Switch</button>
+                <a href="/" style={{background:"#161616",border:"0.5px solid #2a2a2a",borderRadius:8,color:"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>🏠</a>
+                <a href="/coach" style={{background:"#161616",border:"0.5px solid #2a2a2a",borderRadius:8,color:"#888",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>⚒</a>
               </div>
-              <div style={{fontSize:11,color:"#444"}}>TF College Group</div>
+              <div style={{fontSize:10,color:"#2a2a2a",letterSpacing:"0.08em",textTransform:"uppercase"}}>TF College Group</div>
             </div>
-            <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:16}}>
-             <div style={{width:50,height:50,borderRadius:"50%",background:isForge?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
-                {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:selectedAthlete.name[0]}
+            <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:14,position:"relative"}}>
+              <div style={{position:"relative",flexShrink:0}}>
+                <div style={{width:62,height:62,borderRadius:"50%",background:isForge?"linear-gradient(135deg,"+RED+",#8B1A1A)":"linear-gradient(135deg,#9aa8b0,"+STEEL+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:600,color:"#fff",overflow:"hidden",boxShadow:"0 0 24px "+(isForge?RED:ORANGE)+"33"}}>
+                  {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:selectedAthlete.name[0]}
+                </div>
+                <div style={{position:"absolute",inset:-3,borderRadius:"50%",border:"1.5px solid "+(isForge?RED:ORANGE)+"44",pointerEvents:"none"}}/>
               </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:18,fontWeight:400,color:"#fff"}}>{selectedAthlete.name}</div>
-                <div style={{fontSize:12,color:"#888"}}>{selectedAthlete.sport}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:20,fontWeight:700,color:"#fff",letterSpacing:"-0.01em",lineHeight:1.2}}>{selectedAthlete.name}</div>
+                <div style={{fontSize:12,color:"#555",marginTop:1}}>{selectedAthlete.sport}</div>
               </div>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontSize:11,fontWeight:500,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.06em"}}>{isForge?"The Forge":"The Iron"}</div>
-                {streak>0&&<div style={{fontSize:11,color:GREEN,marginTop:2}}>🔥 {streak} day streak</div>}
+              <div style={{textAlign:"right",flexShrink:0}}>
+                <div style={{fontSize:10,fontWeight:700,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.08em",background:(isForge?RED:STEEL)+"18",padding:"3px 10px",borderRadius:6,border:"0.5px solid "+(isForge?RED:STEEL)+"33",marginBottom:4,display:"inline-block"}}>{isForge?"The Forge":"The Iron"}</div>
+                {streak>0&&<div style={{fontSize:11,color:GREEN}}>🔥 {streak}-day streak</div>}
               </div>
             </div>
-            <div style={{display:"flex",overflowX:"auto",gap:4,padding:"0 4px",scrollbarWidth:"none"}}>
+            <div style={{display:"flex",overflowX:"auto",gap:0,padding:"0",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",marginLeft:-4,marginRight:-4,paddingLeft:4,paddingRight:4}}>
               {TABS.map(t=>{
                 const icons={"profile":"👤","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","private":"🔒","stretching":"🧘","journey":"🛤"};
                 const isActive=tab===t.id;
+                const tabColor=isForge?RED:ORANGE;
                 return(
-                <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 12px",background:isActive?"#fff":"transparent",border:"none",borderRadius:10,color:isActive?"#1a1a1a":"#666",fontSize:11,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.15s",boxShadow:isActive?"0 2px 8px rgba(0,0,0,0.15)":"none"}}>
-                  <span style={{fontSize:16}}>{icons[t.id]||"•"}</span>
+                <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"8px 10px 10px",background:"transparent",border:"none",borderBottom:"2px solid "+(isActive?tabColor:"transparent"),color:isActive?"#fff":"#555",fontSize:10,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.12s"}}>
+                  <span style={{fontSize:15}}>{icons[t.id]||"•"}</span>
                   <span>{t.label}</span>
                 </button>
                 );
@@ -658,7 +677,7 @@ export default function Athlete(){
             </div>
           </div>
 
-          <div style={{padding:"1.25rem"}}>
+          <div style={{padding:"1.25rem",background:BG,minHeight:"60vh"}}>
 
             {tab==="profile"&&(
               <div>
@@ -672,9 +691,9 @@ export default function Athlete(){
                   const _classDays=["Mon","Tue","Thu","Fri"];
                   const _isClassDay=_classDays.includes(_day);
                   if(!_isClassDay) return(
-                    <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-                      <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>No class today</div>
-                      <div style={{fontSize:12,color:"#888"}}>Class days are Monday, Tuesday, Thursday & Friday. Rest up and come back ready.</div>
+                    <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525"}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:4}}>No class today</div>
+                      <div style={{fontSize:12,color:"#666"}}>Class days are Monday, Tuesday, Thursday & Friday. Rest up and come back ready.</div>
                     </div>
                   );
                   const _items=[
@@ -685,21 +704,21 @@ export default function Athlete(){
                     {time:"11:15am",label:"Closeout & prayer",detail:"5 min · all together · coach or athlete prays",color:RED,dur:"5 min"},
                   ];
                   return(
-                    <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-                      <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Class flow — 2 hours · done by 11:20am</div>
+                    <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525"}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:12}}>Class flow — 2 hours · done by 11:20am</div>
                       {_items.map((s,i,arr)=>(
-                        <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<arr.length-1?"0.5px solid #f0f0f0":"none"}}>
-                          <div style={{minWidth:56,fontSize:12,color:"#888",paddingTop:2}}>{s.time}</div>
+                        <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<arr.length-1?"0.5px solid #1e1e1e":"none"}}>
+                          <div style={{minWidth:56,fontSize:12,color:"#666",paddingTop:2}}>{s.time}</div>
                           <div style={{minWidth:8,display:"flex",flexDirection:"column",alignItems:"center"}}>
-                            <div style={{width:8,height:8,borderRadius:"50%",background:s.color,marginTop:4,flexShrink:0}}/>
-                            {i<arr.length-1&&<div style={{width:1,flex:1,background:"#e0e0e0",marginTop:3}}/>}
+                            <div style={{width:8,height:8,borderRadius:"50%",background:s.color,marginTop:4,flexShrink:0,boxShadow:"0 0 6px "+s.color+"66"}}/>
+                            {i<arr.length-1&&<div style={{width:1,flex:1,background:"#252525",marginTop:3}}/>}
                           </div>
                           <div style={{flex:1}}>
                             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
-                              <span style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{s.label}</span>
-                              <span style={{fontSize:11,background:"#f5f5f5",color:"#888",padding:"1px 7px",borderRadius:5}}>{s.dur}</span>
+                              <span style={{fontSize:13,fontWeight:500,color:"#ddd"}}>{s.label}</span>
+                              <span style={{fontSize:11,background:"#222",color:"#666",padding:"1px 7px",borderRadius:5}}>{s.dur}</span>
                             </div>
-                            <div style={{fontSize:12,color:"#888"}}>{s.detail}</div>
+                            <div style={{fontSize:12,color:"#666"}}>{s.detail}</div>
                           </div>
                         </div>
                       ))}
@@ -740,9 +759,9 @@ export default function Athlete(){
                   </div>
                 )}
                 {[{label:"Athletic goal",goalKey:"athletic_goal",taskKey:"coach_athletic_task",color:GREEN},{label:"Character goal",goalKey:"character_goal",taskKey:"coach_character_task",color:PUR}].map(({label,goalKey,taskKey,color})=>(
-                  <div key={goalKey} style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-                    <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>{label}</div>
-                    <textarea defaultValue={selectedAthlete[goalKey]||""} onBlur={async e=>{const val=e.target.value;setSelectedAthlete(a=>({...a,[goalKey]:val}));await supabase.from("athletes").update({[goalKey]:val}).eq("id",selectedAthlete.id);}} placeholder="What's one thing you want to improve this summer?" style={{width:"100%",minHeight:60,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
+                  <div key={goalKey} style={{background:"#141414",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #252525"}}>
+                    <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>{label}</div>
+                    <textarea defaultValue={selectedAthlete[goalKey]||""} onBlur={async e=>{const val=e.target.value;setSelectedAthlete(a=>({...a,[goalKey]:val}));await supabase.from("athletes").update({[goalKey]:val}).eq("id",selectedAthlete.id);}} placeholder="What's one thing you want to improve this summer?" style={{width:"100%",minHeight:60,padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#1e1e1e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
               <button onClick={async e=>{const ta=e.target.previousSibling;const val=ta.value;setSelectedAthlete(a=>({...a,[goalKey]:val}));await supabase.from("athletes").update({[goalKey]:val}).eq("id",selectedAthlete.id);alert("Goal saved!");}} style={{padding:"6px 14px",borderRadius:8,border:"none",background:color,color:"#fff",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Save goal →</button>
                     {selectedAthlete[taskKey]&&(
                       <div style={{marginTop:10,padding:"10px 12px",background:BG,borderRadius:8,borderLeft:"3px solid "+color}}>
@@ -753,17 +772,17 @@ export default function Athlete(){
                   </div>
                 ))}
 
-                <div style={{background:"#fff",borderRadius:12,border:"0.5px solid #e0e0e0",overflow:"hidden",marginBottom:12}}>
+                <div style={{background:"#141414",borderRadius:12,border:"0.5px solid #252525",overflow:"hidden",marginBottom:12}}>
                   <button onClick={()=>setInjuryOpen(o=>!o)} style={{width:"100%",padding:"12px 16px",background:"transparent",border:"none",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer",fontFamily:"Georgia, serif"}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <div style={{width:8,height:8,borderRadius:"50%",background:selectedAthlete.injury?RED:GREEN}}/>
-                      <span style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>Injury / health update</span>
+                      <div style={{width:8,height:8,borderRadius:"50%",background:selectedAthlete.injury?RED:GREEN,boxShadow:"0 0 6px "+(selectedAthlete.injury?RED:GREEN)+"66"}}/>
+                      <span style={{fontSize:13,fontWeight:500,color:"#ddd"}}>Injury / health update</span>
                     </div>
-                    <span style={{fontSize:12,color:"#888"}}>{injuryOpen?"▲":"▼"}</span>
+                    <span style={{fontSize:12,color:"#555"}}>{injuryOpen?"▲":"▼"}</span>
                   </button>
                   {injuryOpen&&(
                     <div style={{padding:"0 16px 16px"}}>
-                      <textarea value={injuryText} onChange={e=>setInjuryText(e.target.value)} placeholder="What's going on — what hurts, when it started..." style={{width:"100%",minHeight:80,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}/>
+                      <textarea value={injuryText} onChange={e=>setInjuryText(e.target.value)} placeholder="What's going on — what hurts, when it started..." style={{width:"100%",minHeight:80,padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#1e1e1e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}/>
                       {injurySent?<div style={{fontSize:13,color:GREEN,fontWeight:500,padding:"8px 10px",background:"#EAF3DE",borderRadius:8}}>Coach Ant has been notified.</div>
                       :<button onClick={sendInjury} style={{padding:"8px 16px",borderRadius:8,border:"0.5px solid "+RED,background:"transparent",color:RED,fontSize:13,cursor:"pointer",fontFamily:"Georgia, serif"}}>Notify Coach Ant</button>}
                     </div>
@@ -1014,14 +1033,14 @@ export default function Athlete(){
             {tab==="attendance"&&(
               <div>
                 <AttendanceCalendar athleteId={selectedAthlete.id}/>
-                <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginTop:12,border:"0.5px solid #e0e0e0"}}>
-                  <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Check-in history</div>
-                  {attendance.length===0&&<div style={{fontSize:12,color:"#aaa",textAlign:"center",padding:"1rem 0"}}>No check-ins yet.</div>}
+                <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginTop:12,border:"0.5px solid #252525"}}>
+                  <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:10}}>Check-in history</div>
+                  {attendance.length===0&&<div style={{fontSize:12,color:"#555",textAlign:"center",padding:"1rem 0"}}>No check-ins yet.</div>}
                   {attendance.slice(0,30).map((rec,i)=>(
-                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<Math.min(attendance.length,30)-1?"0.5px solid #f0f0f0":"none"}}>
+                    <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<Math.min(attendance.length,30)-1?"0.5px solid #1e1e1e":"none"}}>
                       <div>
-                        <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{rec.day} · {rec.date}</div>
-                        <div style={{fontSize:11,color:"#888"}}>{rec.time_logged||""}</div>
+                        <div style={{fontSize:13,fontWeight:500,color:"#ddd"}}>{rec.day} · {rec.date}</div>
+                        <div style={{fontSize:11,color:"#555"}}>{rec.time_logged||""}</div>
                       </div>
                       <span style={{fontSize:11,padding:"3px 10px",borderRadius:6,background:rec.status==="early"?"#EAF3DE":rec.status==="late"?"#FFF3CD":"#FCEBEB",color:rec.status==="early"?GREEN:rec.status==="late"?"#854F0B":RED,fontWeight:500}}>
                         {rec.status==="early"?"Early":rec.status==="late"?"Late":"No show"}
@@ -1062,11 +1081,11 @@ export default function Athlete(){
 
             {tab==="private"&&(
               <div>
-                <div style={{fontSize:13,color:"#888",lineHeight:1.7,marginBottom:14}}>This is your private line to Coach Ant. Nobody else sees what you send here.</div>
-                <div style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-                  <div style={{fontSize:11,fontWeight:500,color:"#888",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Message Coach Ant</div>
-                  {feedbackSent?<div style={{fontSize:13,color:GREEN,fontWeight:500,padding:"10px",background:"#EAF3DE",borderRadius:8}}>Message sent to Coach Ant.</div>:(
-                    <><textarea value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="Type your message to Coach Ant..." style={{width:"100%",minHeight:90,padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}/><button onClick={sendFeedback} style={{padding:"10px 20px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Send to Coach Ant</button></>
+                <div style={{fontSize:13,color:"#555",lineHeight:1.7,marginBottom:14}}>This is your private line to Coach Ant. Nobody else sees what you send here.</div>
+                <div style={{background:"#141414",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #252525"}}>
+                  <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Message Coach Ant</div>
+                  {feedbackSent?<div style={{fontSize:13,color:GREEN,fontWeight:500,padding:"10px",background:"#0a1f0a",borderRadius:8,border:"0.5px solid "+GREEN+"44"}}>Message sent to Coach Ant.</div>:(
+                    <><textarea value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="Type your message to Coach Ant..." style={{width:"100%",minHeight:90,padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#1e1e1e",color:"#ddd",fontFamily:"Georgia, serif",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}/><button onClick={sendFeedback} style={{padding:"10px 20px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+PUR+",#3a2d8f)",color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Send to Coach Ant</button></>
                   )}
                 </div>
                 <div style={{background:BG,borderRadius:12,padding:"1rem",border:"0.5px solid #2a2a2a"}}>
