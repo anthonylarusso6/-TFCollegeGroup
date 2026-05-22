@@ -110,9 +110,9 @@ export default function AthleteLeaderboard({athleteId}){
 
   if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading leaderboard...</div>;
   if(displayLb.length===0)return(
-    <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+    <div style={{background:"#141414",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #252525"}}>
       <div style={{fontSize:32,marginBottom:8}}>🏆</div>
-      <div style={{fontSize:13,color:"#888"}}>No check-ins yet. Be the first to show up early!</div>
+      <div style={{fontSize:13,color:"#555"}}>No check-ins yet. Be the first to show up early!</div>
     </div>
   );
 
@@ -121,7 +121,7 @@ export default function AthleteLeaderboard({athleteId}){
       {/* View toggle */}
       <div style={{display:"flex",gap:6,marginBottom:12}}>
         {[{id:"all",label:"All Time"},{id:"week",label:"This Week"}].map(v=>(
-          <button key={v.id} onClick={()=>setView(v.id)} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+(view===v.id?GOLD:"#e0e0e0"),background:view===v.id?GOLD:"#fff",color:view===v.id?"#1a1a1a":"#888",fontSize:12,fontWeight:view===v.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+          <button key={v.id} onClick={()=>setView(v.id)} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+(view===v.id?GOLD:"#222"),background:view===v.id?GOLD:"#111",color:view===v.id?"#1a1a1a":"#555",fontSize:12,fontWeight:view===v.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
             {v.label}
           </button>
         ))}
@@ -189,7 +189,7 @@ export default function AthleteLeaderboard({athleteId}){
                   </div>
                   {isForge&&<div style={{position:"absolute",bottom:-2,right:-2,width:16,height:16,borderRadius:"50%",background:RED,border:"1px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8}}>⚒</div>}
                 </div>
-                <div style={{fontSize:11,fontWeight:isMe?700:500,color:isMe?GOLD:"#1a1a1a",marginBottom:4}}>
+                <div style={{fontSize:11,fontWeight:isMe?700:500,color:isMe?GOLD:"#ccc",marginBottom:4}}>
                   {r.name?.split(" ")[0]}{isMe?" ⭐":""}
                 </div>
                 <div style={{background:podiumColors[rank],borderRadius:"8px 8px 0 0",height:heights[rank],display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",padding:"8px 4px"}}>
@@ -204,14 +204,14 @@ export default function AthleteLeaderboard({athleteId}){
       )}
 
       {/* Full list */}
-      <div style={{background:"#fff",borderRadius:12,border:"0.5px solid #e0e0e0",overflow:"hidden"}}>
+      <div style={{background:"#111",borderRadius:12,border:"0.5px solid #1e1e1e",overflow:"hidden"}}>
         {displayLb.map((r,i)=>{
           const isMe=r.athlete_id===athleteId;
           const isForge=r.role==="forge";
           const earlyCount=view==="week"?r.earlyWeek:r.earlyAll;
           const trend=r.trend||0;
           return(
-            <div key={r.athlete_id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderBottom:i<displayLb.length-1?"0.5px solid #f5f5f5":"none",background:isMe?"#fffdf0":"#fff"}}>
+            <div key={r.athlete_id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderBottom:i<displayLb.length-1?"0.5px solid #1a1a1a":"none",background:isMe?"#1a1200":"#111"}}>
               {/* Rank */}
               <div style={{fontSize:12,fontWeight:700,color:i<3?podiumColors[i]:"#aaa",minWidth:22,textAlign:"center"}}>
                 {i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`}
@@ -229,7 +229,7 @@ export default function AthleteLeaderboard({athleteId}){
               </div>
               {/* Name + stats */}
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:isMe?700:500,color:isMe?GOLD:"#1a1a1a",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                <div style={{fontSize:12,fontWeight:isMe?700:500,color:isMe?GOLD:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                   {r.name}{isMe?" ⭐":""}{isForge?" 🔴":""}
                 </div>
                 <div style={{display:"flex",gap:8,marginTop:2}}>

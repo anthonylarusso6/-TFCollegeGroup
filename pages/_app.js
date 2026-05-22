@@ -16,6 +16,7 @@ export default function App({ Component, pageProps }) {
   return (
     <>
       <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="icon" href="/icon.png" />
         <meta property="og:image" content="https://tfcollegegroup.com/og-image.jpg" />
