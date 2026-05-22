@@ -107,7 +107,7 @@ const WEEKS=[
   {week:6,series:2,seriesTitle:"Mental Toughness",speaker:"Athlete Testimony",type:"testimony",title:"Testimony Monday",
     focus:"Open volunteer. Someone who's been sitting on their story.",
     scripture:"Isaiah 43:2",
-    verse:"When you pass through the waters, I will be with you; and when you pass through the rivers, they will not sweep over you.",
+    verse:"When you pass through the waters, I will be with you; and when you pass through the rivers, they will not sweep over you. When you walk through the fire, you will not be burned; the flames will not set you ablaze.",
     bigIdea:"You are not alone in what you've been through. The storms in your life were not signs that God abandoned you.",
     teaching:[
       {point:"'When' not 'if'",detail:"God doesn't promise you'll avoid the water. He promises He'll be in it with you."},
@@ -164,7 +164,7 @@ const WEEKS=[
   {week:9,series:3,seriesTitle:"Legacy & Character",speaker:"Kevin",type:"kevin",title:"Mental Side of Adversity",
     focus:"How you handle hard things mentally is the difference between people who make it and people who don't.",
     scripture:"James 1:2-4",
-    verse:"Consider it pure joy whenever you face trials of many kinds, because you know that the testing of your faith produces perseverance.",
+    verse:"Consider it pure joy, my brothers and sisters, whenever you face trials of many kinds, because you know that the testing of your faith produces perseverance. Let perseverance finish its work so that you may be mature and complete, not lacking anything.",
     bigIdea:"Your mind gives up before your body does — almost every time. The mental rep is the most important rep you'll take.",
     teaching:[
       {point:"Your mind quits first",detail:"Science and experience agree: the body still has capacity when the mind says stop. Train your mind like you train your body."},

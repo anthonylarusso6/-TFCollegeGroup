@@ -12,7 +12,7 @@ const SERIES_META=[
 
 const SERIES=[
   {week:1,series:1,seriesTitle:"Leading by Example",title:"The Leader Nobody Sees",scripture:"Matthew 6:1–4",
-    verse:"Be careful not to practice your righteousness in front of others to be seen by them. If you do, you will have no reward from your Father in heaven… do not let your left hand know what your right hand is doing, so that your giving may be in secret. Then your Father, who sees what is done in secret, will reward you.",
+    verse:"Be careful not to practice your righteousness in front of others to be seen by them. If you do, you will have no reward from your Father in heaven. So when you give to the needy, do not announce it with trumpets, as the hypocrites do in the synagogues and on the streets, to be honored by others. Truly I tell you, they have received their reward in full. But when you give to the needy, do not let your left hand know what your right hand is doing, so that your giving may be in secret. Then your Father, who sees what is done in secret, will reward you.",
     bigIdea:"Who you are in private is who you are as a leader. The most powerful leadership happens when nobody is watching.",
     teaching:[
       {ref:"v1",point:"Don't perform for people",detail:"Leadership done for applause isn't leadership — it's performance. God sees through it and so does your team eventually."},
@@ -31,7 +31,7 @@ const SERIES=[
     takeaways:["Real leadership is built in private before it shows up in public.","God rewards what is done in secret — not what is performed for a crowd.","The leader nobody sees is the leader everybody needs."],
     color:RED,light:"#FCEBEB"},
   {week:2,series:1,seriesTitle:"Leading by Example",title:"Leading Under Pressure",scripture:"Daniel 3:16–18",
-    verse:"Shadrach, Meshach, and Abednego replied, 'King Nebuchadnezzar, we do not need to defend ourselves before you. If we are thrown into the blazing furnace, the God we serve is able to deliver us from it… But even if he does not, we want you to know that we will not serve your gods.'",
+    verse:"Shadrach, Meshach and Abednego replied to him, 'King Nebuchadnezzar, we do not need to defend ourselves before you in this matter. If we are thrown into the blazing furnace, the God we serve is able to deliver us from it, and he will deliver us from Your Majesty's hand. But even if he does not, we want you to know, Your Majesty, that we will not serve your gods or worship the image of gold you have set up.'",
     bigIdea:"Pressure reveals your real leadership. When everything is on the line, your character either holds or it doesn't.",
     teaching:[
       {ref:"v16",point:"No defense needed",detail:"They didn't panic or beg. Calm under pressure is a leadership superpower."},
@@ -49,7 +49,7 @@ const SERIES=[
     takeaways:["Pressure doesn't build character — it reveals it.","'But even if he does not' is one of the most powerful statements of faith in the Bible.","The leader who won't bend under pressure is the leader people trust when it matters most."],
     color:RED,light:"#FCEBEB"},
   {week:3,series:1,seriesTitle:"Leading by Example",title:"The Servant Leader",scripture:"Mark 10:42–45",
-    verse:"Jesus called them together and said, 'You know that those who are regarded as rulers lord it over them… Not so with you. Instead, whoever wants to become great among you must be your servant… For even the Son of Man did not come to be served, but to serve, and to give his life as a ransom for many.'",
+    verse:"Jesus called them together and said, 'You know that those who are regarded as rulers of the Gentiles lord it over them, and their high officials exercise authority over them. Not so with you. Instead, whoever wants to become great among you must be your servant, and whoever wants to be first must be slave of all. For even the Son of Man did not come to be served, but to serve, and to give his life as a ransom for many.'",
     bigIdea:"The world's version of leadership is about rank and power. God's version is about service and sacrifice.",
     teaching:[
       {ref:"v42",point:"The world's leadership model",detail:"Power, position, authority. This is the model most people grow up seeing."},
@@ -123,7 +123,7 @@ const SERIES=[
     takeaways:["The world is always pressing you into its mold. Resisting it is a daily choice.","Transformation starts in the mind. What you feed your mind shapes the person you become.","A renewed mind sees clearly what a conformed mind cannot."],
     color:BLUE,light:"#E6F1FB"},
   {week:7,series:2,seriesTitle:"Built Different",title:"Staying Righteous in a Crooked World",scripture:"Proverbs 11:3 & Psalm 1:1–3",
-    verse:"The integrity of the upright guides them… Blessed is the one who does not walk in step with the wicked… That person is like a tree planted by streams of water, which yields its fruit in season and whose leaf does not wither.",
+    verse:"The integrity of the upright guides them, but the crookedness of the treacherous destroys them. Blessed is the one who does not walk in step with the wicked or stand in the way that sinners take or sit in the company of mockers, but whose delight is in the law of the Lord, and who meditates on his law day and night. That person is like a tree planted by streams of water, which yields its fruit in season and whose leaf does not wither — whatever they do prospers.",
     bigIdea:"Righteousness is not perfection — it's direction. Staying true in a crooked world means knowing which way you're pointed.",
     teaching:[
       {ref:"Prov 11:3",point:"Integrity is a guide",detail:"When you don't know what to do — your integrity tells you. It's an internal compass."},
@@ -142,7 +142,7 @@ const SERIES=[
     takeaways:["Righteousness is not perfection — it's direction. Know which way you're pointed.","The drift starts slow. Walk, stand, sit. Guard the first step.","A tree planted by water doesn't fear drought. Plant yourself in the right place."],
     color:BLUE,light:"#E6F1FB"},
   {week:8,series:2,seriesTitle:"Built Different",title:"Who God Called You to Be",scripture:"Jeremiah 1:5 & Ephesians 2:10",
-    verse:"Before I formed you in the womb I knew you… For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do.",
+    verse:"Before I formed you in the womb I knew you, before you were born I set you apart; I appointed you as a prophet to the nations. For we are God's handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do.",
     bigIdea:"You were not an accident. God knew you, named you, and called you before you had any idea who you were.",
     teaching:[
       {ref:"Jer 1:5a",point:"Known before formed",detail:"Before your parents named you. Before your sport. Before your failures. God knew you."},
@@ -161,7 +161,7 @@ const SERIES=[
     takeaways:["You were known before you were formed. Your identity starts with God, not your performance.","You are God's masterpiece — crafted, not mass produced. One of one.","Purpose pre-exists your awareness of it. You were made for something specific. Walk in it."],
     color:BLUE,light:"#E6F1FB"},
   {week:9,series:3,seriesTitle:"Roots and Fruit",title:"Where Are Your Roots?",scripture:"Jeremiah 17:7–8",
-    verse:"But blessed is the one who trusts in the Lord, whose confidence is in him. They will be like a tree planted by the water… It does not fear when heat comes; its leaves are always green. It has no worries in a year of drought and never fails to bear fruit.",
+    verse:"But blessed is the one who trusts in the Lord, whose confidence is in him. They will be like a tree planted by the water that sends out its roots by the stream. It does not fear when heat comes; its leaves are always green. It has no worries in a year of drought and never fails to bear fruit.",
     bigIdea:"What you are rooted in determines what comes out of you when pressure hits.",
     teaching:[
       {ref:"v7",point:"Trust and confidence in God",detail:"Rootedness starts with where your confidence actually lives — not where you say it is, but where it actually is."},
@@ -180,7 +180,7 @@ const SERIES=[
     takeaways:["What you're rooted in is revealed by pressure, not by comfort.","You can look fine on the surface while being completely unrooted underneath.","A tree planted by water never fails to bear fruit — even in drought."],
     color:TEAL,light:"#E1F5EE"},
   {week:10,series:3,seriesTitle:"Roots and Fruit",title:"When the Storm Hits",scripture:"James 1:2–4 & Romans 5:3–5",
-    verse:"Consider it pure joy whenever you face trials of many kinds, because you know that the testing of your faith produces perseverance… Suffering produces perseverance; perseverance, character; and character, hope.",
+    verse:"Consider it pure joy, my brothers and sisters, whenever you face trials of many kinds, because you know that the testing of your faith produces perseverance. Let perseverance finish its work so that you may be mature and complete, not lacking anything. Not only so, but we also glory in our sufferings, because we know that suffering produces perseverance; perseverance, character; and character, hope. And hope does not put us to shame, because God's love has been poured out into our hearts through the Holy Spirit, who has been given to us.",
     bigIdea:"Hardship is not the enemy — it is the teacher. The storm does not come to destroy you. It comes to develop you.",
     teaching:[
       {ref:"James 1:2",point:"Count it joy — not because it's easy",detail:"Joy and happiness are different. Joy is a choice rooted in knowing what God is doing through the hard thing."},
@@ -199,7 +199,7 @@ const SERIES=[
     takeaways:["Hardship is not the enemy. It is the teacher. The storm comes to develop you, not destroy you.","Suffering → Perseverance → Character → Hope. Don't skip the process.","Every storm you survive gives you evidence for the next one. That's how hope grows roots."],
     color:TEAL,light:"#E1F5EE"},
   {week:11,series:3,seriesTitle:"Roots and Fruit",title:"Fruit That Lasts",scripture:"John 15:16 & Galatians 5:22–23",
-    verse:"You did not choose me, but I chose you and appointed you so that you might go and bear fruit — fruit that will last… But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness, gentleness and self-control.",
+    verse:"You did not choose me, but I chose you and appointed you so that you might go and bear fruit — fruit that will last — and so that whatever you ask in my name the Father will give you. But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness, gentleness and self-control. Against such things there is no law.",
     bigIdea:"What are you actually producing in people's lives? Trophies fade. Stats get forgotten. But the fruit you bear in people lasts forever.",
     teaching:[
       {ref:"John 15:16",point:"Chosen and appointed to bear fruit",detail:"This is not passive. You were selected and sent. God has a specific harvest He wants to produce through your life."},
@@ -217,7 +217,7 @@ const SERIES=[
     takeaways:["Trophies fade. Stats get forgotten. But fruit you bear in people lasts forever.","You were chosen and appointed — your impact is not accidental.","The fruit of the Spirit grows naturally when you are rooted in the right place."],
     color:TEAL,light:"#E1F5EE"},
   {week:12,series:3,seriesTitle:"Roots and Fruit",title:"Finish Rooted",scripture:"Hebrews 12:1–2 & Micah 6:8",
-    verse:"Let us throw off everything that hinders… And let us run with perseverance the race marked out for us, fixing our eyes on Jesus… He has shown you what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God.",
+    verse:"Therefore, since we are surrounded by such a great cloud of witnesses, let us throw off everything that hinders and the sin that so easily entangles. And let us run with perseverance the race marked out for us, fixing our eyes on Jesus, the pioneer and perfecter of faith. For the joy set before him he endured the cross, scorning its shame, and sat down at the right hand of the throne of God. He has shown you, O mortal, what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God.",
     bigIdea:"Finishing strong is not just athletic — it's spiritual. Staying true to yourself and to God when the world offers shortcuts requires roots that go deep.",
     teaching:[
       {ref:"Heb 12:1",point:"Throw off what hinders",detail:"Not just sin — but weight. Things that aren't necessarily wrong but are slowing you down."},
