@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 
 const BLUE="#1A4F8A";
@@ -241,9 +241,16 @@ export default function FellowshipFriday(){
   const[currentWeek,setCurrentWeek]=useState(1);
   const[view,setView]=useState("guide");
   const[expandedQ,setExpandedQ]=useState(null);
-  const[notes,setNotes]=useState({});
-  const[completedWeeks,setCompletedWeeks]=useState([]);
+  const[notes,setNotes]=useState(()=>{
+    try{const s=localStorage.getItem("ff_notes");return s?JSON.parse(s):{};}catch{return {};}
+  });
+  const[completedWeeks,setCompletedWeeks]=useState(()=>{
+    try{const s=localStorage.getItem("ff_completed");return s?JSON.parse(s):[];}catch{return [];}
+  });
   const[showHandout,setShowHandout]=useState(false);
+
+  useEffect(()=>{try{localStorage.setItem("ff_notes",JSON.stringify(notes));}catch{};},[notes]);
+  useEffect(()=>{try{localStorage.setItem("ff_completed",JSON.stringify(completedWeeks));}catch{};},[completedWeeks]);
 
   const week=SERIES[currentWeek-1];
   const noteKey="week-"+currentWeek;
@@ -409,7 +416,7 @@ export default function FellowshipFriday(){
       {/* Coach notes */}
       <div style={{background:"#141414",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #252525"}}>
         <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Coach notes — Week {currentWeek}</div>
-        <textarea value={notes[noteKey]||""} onChange={e=>setNotes(p=>({...p,[noteKey]:e.target.value}))} placeholder="What came up? Who opened up? What to follow up on?" style={{width:"100%",minHeight:70,padding:"8px",fontSize:13,border:"0.5px solid #222",borderRadius:8,background:"#111",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}/>
+        <textarea value={notes[noteKey]||""} onChange={e=>setNotes(p=>({...p,[noteKey]:e.target.value}))} placeholder="What came up? Who opened up? What to follow up on?" rows={5} style={{width:"100%",minHeight:120,padding:"10px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#111",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.6}}/>
       </div>
 
       {/* Mark complete + handout */}
