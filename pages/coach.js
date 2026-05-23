@@ -129,6 +129,11 @@ export default function Coach(){
   const[modalData,setModalData]=useState(null);
   const[modalLoading,setModalLoading]=useState(false);
   const[musicVotes,setMusicVotes]=useState(null);
+  const[mcCurrentPhoto,setMcCurrentPhoto]=useState(null);
+  const[mcCaption,setMcCaption]=useState("");
+  const[mcWeek,setMcWeek]=useState("");
+  const[mcUploading,setMcUploading]=useState(false);
+  const[mcError,setMcError]=useState("");
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
@@ -139,6 +144,10 @@ export default function Coach(){
       QRCode.default.toDataURL(url,{width:280,margin:2,color:{dark:"#1a1a1a",light:"#ffffff"}}).then(setQrDataUrl);
     });
   },[tab,qrType]);
+
+  useEffect(()=>{
+    if(tab==="mcastles-post")loadMcPhoto();
+  },[tab]);
 
   const loadAll=async()=>{
     setLoading(true);
@@ -178,6 +187,56 @@ export default function Coach(){
         setMusicVotes(counts);
       }
     }catch(e){}
+  };
+
+  const loadMcPhoto=async()=>{
+    try{
+      const{data}=await supabase.from("motivational_photo").select("*").order("created_at",{ascending:false}).limit(1).single();
+      if(data){setMcCurrentPhoto(data);setMcCaption(data.caption||"");setMcWeek(data.week_label||"");}
+    }catch(e){}
+  };
+
+  const uploadMotivationalPhoto=async(file)=>{
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onerror=()=>reject(new Error("Could not read file"));
+      reader.onload=ev=>{
+        const img=new Image();
+        img.onerror=()=>reject(new Error("Could not decode image"));
+        img.onload=()=>{
+          const MAX=900;
+          const scale=Math.min(1,MAX/Math.max(img.width,img.height));
+          const canvas=document.createElement("canvas");
+          canvas.width=Math.round(img.width*scale);
+          canvas.height=Math.round(img.height*scale);
+          canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+          canvas.toBlob(async blob=>{
+            try{
+              const fileName=`motivational_${Date.now()}.jpg`;
+              const{error:upErr}=await supabase.storage.from("athlete-photos").upload(fileName,blob,{contentType:"image/jpeg",upsert:true});
+              if(upErr){reject(upErr);return;}
+              const{data:{publicUrl}}=supabase.storage.from("athlete-photos").getPublicUrl(fileName);
+              resolve(publicUrl);
+            }catch(e){reject(e);}
+          },"image/jpeg",0.85);
+        };
+        img.src=ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const postMcPhoto=async(file)=>{
+    setMcUploading(true);setMcError("");
+    try{
+      let photoUrl=mcCurrentPhoto?.photo_url||null;
+      if(file){photoUrl=await uploadMotivationalPhoto(file);}
+      if(!photoUrl&&!mcCaption.trim()){setMcError("Add a photo or caption first.");setMcUploading(false);return;}
+      await supabase.from("motivational_photo").insert({photo_url:photoUrl,caption:mcCaption.trim(),week_label:mcWeek.trim()});
+      await loadMcPhoto();
+      setMcCaption("");setMcWeek("");
+    }catch(e){setMcError("Upload failed. Try again.");}
+    setMcUploading(false);
   };
 
   const callAI=async(prompt)=>{
@@ -388,6 +447,7 @@ export default function Coach(){
     {id:"photos",label:"Photos",icon:"📸"},
     {id:"engagement",label:"Engagement",icon:"📢"},
     {id:"qr",label:"QR Code",icon:"📱"},
+    {id:"mcastles-post",label:"MCastles 🍑",icon:"🍑"},
   ];
   // Kevin only sees roster, mindset and attendance
   const KEVIN_TABS=["roster","mindset","attendance"];
@@ -404,6 +464,9 @@ export default function Coach(){
   // Adoriyan PIN stored in localStorage
   const getAdoriyanPin=()=>typeof window!=="undefined"?localStorage.getItem("adoriyan_coach_pin"):null;
   const saveAdoriyanPin=(p)=>localStorage.setItem("adoriyan_coach_pin",p);
+  // MCastles PIN stored in localStorage
+  const getMCastlesPin=()=>typeof window!=="undefined"?localStorage.getItem("mcastles_coach_pin"):null;
+  const saveMCastlesPin=(p)=>localStorage.setItem("mcastles_coach_pin",p);
 
   function handlePinKey(k){
     if(k===null)return;
@@ -424,12 +487,19 @@ export default function Coach(){
           const mp=getMalkmusPin();
           if(mp&&newPin===mp){setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
           else{setPinError("Wrong PIN. Try again.");setPin("");}
+        }else if(selectedCoach==="mcastles"){
+          const mcp=getMCastlesPin();
+          if(mcp&&newPin===mcp){setAuthed(true);setCoachRole("mcastles");setTab("overview");setPin("");}
+          else{setPinError("Wrong PIN. Try again.");setPin("");}
         }
       }else if(pinStep==="create"){
         setPinConfirm(newPin);setPin("");setPinStep("confirm");setPinError("");
       }else if(pinStep==="confirm"){
         if(selectedCoach==="malkmus"){
           if(newPin===pinConfirm){saveMalkmusPin(newPin);setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
+          else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+        }else if(selectedCoach==="mcastles"){
+          if(newPin===pinConfirm){saveMCastlesPin(newPin);setAuthed(true);setCoachRole("mcastles");setTab("overview");setPin("");}
           else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
         }else{
           if(newPin===pinConfirm){saveKevinPin(newPin);setAuthed(true);setCoachRole("kevin");setTab("roster");setPin("");}
@@ -444,6 +514,7 @@ export default function Coach(){
     {id:"kevin",name:"Coach Kevin",sub:"Guest Speaker",color:PUR,emoji:"📖"},
     {id:"malkmus",name:"Luke",sub:"Assistant Coach",color:"#1A4F8A",emoji:"📋"},
     {id:"adoriyan",name:"Adoriyan Daniels",sub:"Assistant Coach",color:"#0F6E56",emoji:"💪"},
+    {id:"mcastles",name:"MCastles",sub:"Motivator · Full Access",color:ORANGE,emoji:"🍑🚀"},
   ];
 
   if(!authed) return(
@@ -465,7 +536,7 @@ export default function Coach(){
                   <button key={c.id} onClick={()=>{
                     setSelectedCoach(c.id);
                     setPin("");setPinError("");
-                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin())||(c.id==="adoriyan"&&getAdoriyanPin());
+                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin())||(c.id==="adoriyan"&&getAdoriyanPin())||(c.id==="mcastles"&&getMCastlesPin());
                     setPinStep(hasPin?"enter":"create");
                   }} style={{width:"100%",padding:0,borderRadius:14,border:"1px solid #1e1e1e",background:"linear-gradient(135deg,#0e0e0e,#131313)",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"stretch",textAlign:"left",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)"}}>
                     <div style={{width:4,background:"linear-gradient(180deg,"+c.color+","+c.color+"88)",flexShrink:0}}/>
@@ -532,6 +603,10 @@ export default function Coach(){
                         const mp=getMalkmusPin();
                         if(mp&&val===mp){setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
+                      }else if(selectedCoach==="mcastles"){
+                        const mcp=getMCastlesPin();
+                        if(mcp&&val===mcp){setAuthed(true);setCoachRole("mcastles");setTab("overview");setPin("");}
+                        else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }
                     }else if(pinStep==="create"){
                       setPinConfirm(val);setPinStep("confirm");setPin("");
@@ -541,6 +616,9 @@ export default function Coach(){
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }else if(selectedCoach==="malkmus"){
                         if(val===pinConfirm){saveMalkmusPin(val);setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
+                        else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+                      }else if(selectedCoach==="mcastles"){
+                        if(val===pinConfirm){saveMCastlesPin(val);setAuthed(true);setCoachRole("mcastles");setTab("overview");setPin("");}
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }else{
                         if(val===pinConfirm){saveKevinPin(val);setAuthed(true);setCoachRole("kevin");setTab("roster");setPin("");}
@@ -588,7 +666,7 @@ export default function Coach(){
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
             <div>
               <div style={{fontSize:18,fontWeight:900,color:"#fff",letterSpacing:"-0.01em",textTransform:"uppercase"}}>TF College Group</div>
-              <div style={{fontSize:11,color:"#555",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="adoriyan"?"Adoriyan":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"#444"}}>{isClassDay?"Class day":"No class"}</span></div>
+              <div style={{fontSize:11,color:"#555",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="adoriyan"?"Adoriyan":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"#444"}}>{isClassDay?"Class day":"No class"}</span></div>
             </div>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:11,color:"#555",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
@@ -1953,6 +2031,93 @@ export default function Coach(){
                 </div>
                 );
               })}
+            </div>
+          )}
+
+          {tab==="mcastles-post"&&(
+            <div>
+              {/* Hero banner */}
+              <div style={{borderRadius:16,marginBottom:14,overflow:"hidden",border:"1px solid "+ORANGE+"44",position:"relative"}}>
+                <div style={{background:"linear-gradient(140deg,#1a0800,#0f0600)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+ORANGE+","+GOLD+",transparent)"}}/>
+                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none"}}>🍑</div>
+                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                    <div style={{width:52,height:52,borderRadius:14,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0,boxShadow:"0 0 20px "+ORANGE+"33"}}>🍑🚀</div>
+                    <div>
+                      <div style={{fontSize:9,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.22em",fontWeight:900,marginBottom:2}}>MCASTLES</div>
+                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Photo of the Week</div>
+                      <div style={{fontSize:11,color:"#555",marginTop:1}}>Upload · Motivate · Inspire</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Current posted photo */}
+              {mcCurrentPhoto&&(
+                <div style={{background:"#111",borderRadius:14,padding:"14px",marginBottom:14,border:"0.5px solid #1e1e1e"}}>
+                  <div style={{fontSize:10,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.15em",fontWeight:700,marginBottom:8}}>Currently Live</div>
+                  {mcCurrentPhoto.week_label&&<div style={{fontSize:11,color:"#777",marginBottom:8}}>{mcCurrentPhoto.week_label}</div>}
+                  <img src={mcCurrentPhoto.photo_url} alt="Current motivational" style={{width:"100%",borderRadius:10,maxHeight:260,objectFit:"cover",marginBottom:10,display:"block"}}/>
+                  {mcCurrentPhoto.caption&&<div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>&ldquo;{mcCurrentPhoto.caption}&rdquo;</div>}
+                </div>
+              )}
+
+              {/* Upload form */}
+              <div style={{background:"#111",borderRadius:14,padding:"16px",border:"0.5px solid "+ORANGE+"33"}}>
+                <div style={{fontSize:12,fontWeight:700,color:ORANGE,marginBottom:12,textTransform:"uppercase",letterSpacing:"0.1em"}}>Post New Photo</div>
+
+                {/* Week label */}
+                <div style={{marginBottom:10}}>
+                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Week label (e.g. "Week 3 — May 2026")</div>
+                  <input
+                    value={mcWeek}
+                    onChange={e=>setMcWeek(e.target.value)}
+                    placeholder="Week label..."
+                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",fontSize:13,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",boxSizing:"border-box"}}
+                  />
+                </div>
+
+                {/* Caption */}
+                <div style={{marginBottom:12}}>
+                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Caption / message</div>
+                  <textarea
+                    value={mcCaption}
+                    onChange={e=>setMcCaption(e.target.value)}
+                    placeholder="Write something motivational..."
+                    rows={3}
+                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",fontSize:13,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}
+                  />
+                </div>
+
+                {/* File picker */}
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Photo</div>
+                  <label style={{display:"block",cursor:"pointer"}}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{display:"none"}}
+                      onChange={async e=>{
+                        const file=e.target.files?.[0];
+                        if(!file)return;
+                        await postMcPhoto(file);
+                        e.target.value="";
+                      }}
+                    />
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"14px",borderRadius:10,border:"1px dashed "+ORANGE+"55",background:"#0f0600",color:mcUploading?"#555":ORANGE,fontSize:13,fontWeight:600,transition:"opacity 0.15s",opacity:mcUploading?0.5:1}}>
+                      {mcUploading?(
+                        <>⏳ Uploading...</>
+                      ):(
+                        <>📸 Tap to choose photo &amp; post</>
+                      )}
+                    </div>
+                  </label>
+                </div>
+
+                {mcError&&<div style={{fontSize:12,color:RED,marginBottom:8,padding:"8px 10px",background:"#1a0808",borderRadius:6,border:"0.5px solid "+RED+"33"}}>{mcError}</div>}
+
+                <div style={{fontSize:11,color:"#444",lineHeight:1.5}}>Selecting a photo will immediately upload and post it as the new Photo of the Week visible to all athletes.</div>
+              </div>
             </div>
           )}
           </ErrorBoundary>
