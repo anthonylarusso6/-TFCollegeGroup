@@ -357,15 +357,17 @@ export default function Athlete(){
           await supabase.from("athletes").update({pin}).eq("id",selectedAthlete.id);
           setSelectedAthlete({...selectedAthlete,pin});
           const info=await doCheckin({...selectedAthlete,pin});
-          setCheckinInfo(info);setPin("");setScreen("checkin");
-          if(info&&info.milestoneHit)setMilestone(info.milestoneHit);
+          setCheckinInfo(info);setPin("");
+          if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
+          else setScreen("profile");
         } else {setPinError("PINs don't match. Try again.");setPin("");setPinStep("enter");setPinConfirm("");}
       }
     } else {
       if(pin===saved){
         const info=await doCheckin(selectedAthlete);
-        setCheckinInfo(info);setPin("");setScreen("checkin");setPinError("");
-        if(info&&info.milestoneHit)setMilestone(info.milestoneHit);
+        setCheckinInfo(info);setPin("");setPinError("");
+        if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
+        else setScreen("profile");
       } else {setPinError("Incorrect PIN. Try again.");setPin("");}
     }
   };
