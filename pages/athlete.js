@@ -642,7 +642,7 @@ export default function Athlete(){
   if(screen==="profile"&&selectedAthlete){
     const TABS=[
       {id:"profile",label:"My Profile"},
-      {id:"mcastles",label:"MCastles 🍑🚀"},
+      {id:"mcastles",label:"MCastles"},
       {id:"verse",label:"Verse"},
       {id:"attendance",label:"Attendance"},
       ...(isForge?[{id:"draft",label:"Draft"},{id:"mygroup",label:"My Group"}]:[{id:"mygroup",label:"My Group"}]),
@@ -779,7 +779,7 @@ export default function Athlete(){
             {/* Tab bar */}
             <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414"}}>
               {TABS.map(t=>{
-                const icons={"profile":"👤","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","private":"🔒","stretching":"🧘","journey":"🛤"};
+                const icons={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","private":"🔒","stretching":"🧘","journey":"🛤"};
                 const isActive=tab===t.id;
                 const tabColor=isForge?"#E8720C":STEEL;
                 return(
