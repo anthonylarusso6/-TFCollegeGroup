@@ -12,11 +12,12 @@ export default function MCastlesTab() {
     (async () => {
       try {
         const { data } = await supabase
-          .from("motivational_photo")
+          .from("announcements")
           .select("*")
+          .eq("type", "mcastles")
           .order("created_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
         if (data) setPhoto(data);
       } catch (e) {}
       setLoading(false);
@@ -56,11 +57,11 @@ export default function MCastlesTab() {
             <div style={{ fontSize: 10, color: ORANGE, textTransform: "uppercase", letterSpacing: "0.15em", fontWeight: 700, marginBottom: 10 }}>{photo.week_label}</div>
           )}
 
-          {/* Photo */}
-          {photo.photo_url && (
+          {/* Photo — full image, no cropping */}
+          {photo.day && (
             <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 14, border: "1px solid #1e1e1e", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}>
               <img
-                src={photo.photo_url}
+                src={photo.day}
                 alt="MCastles Photo of the Week"
                 style={{ width: "100%", display: "block" }}
               />
@@ -68,11 +69,11 @@ export default function MCastlesTab() {
           )}
 
           {/* Caption */}
-          {photo.caption && (
+          {photo.message && (
             <div style={{ background: "linear-gradient(135deg,#130800,#0d0500)", borderRadius: 14, padding: "18px 18px", border: "1px solid " + ORANGE + "22", marginBottom: 12, position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,transparent," + ORANGE + "44,transparent)" }} />
               <div style={{ fontSize: 9, color: ORANGE, textTransform: "uppercase", letterSpacing: "0.15em", fontWeight: 900, marginBottom: 10 }}>MCASTLES SAYS</div>
-              <div style={{ fontSize: 16, color: "#ddd", lineHeight: 1.7, fontStyle: "italic" }}>&ldquo;{photo.caption}&rdquo;</div>
+              <div style={{ fontSize: 16, color: "#ddd", lineHeight: 1.7, fontStyle: "italic" }}>&ldquo;{photo.message}&rdquo;</div>
             </div>
           )}
 

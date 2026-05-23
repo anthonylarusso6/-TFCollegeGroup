@@ -258,8 +258,8 @@ export default function Athlete(){
     try{
       const _vd=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
       const _ds=`${_vd.getFullYear()}-${String(_vd.getMonth()+1).padStart(2,'0')}-${String(_vd.getDate()).padStart(2,'0')}`;
-      const{data:vt}=await supabase.from("music_votes").select("genre").eq("athlete_id",athleteId).eq("class_date",_ds).single();
-      if(vt)setMyVote(vt.genre);
+      const{data:vt}=await supabase.from("announcements").select("message").eq("type","music_vote").eq("week_label",_ds).eq("day",athleteId).order("created_at",{ascending:false}).limit(1).maybeSingle();
+      if(vt)setMyVote(vt.message);
     }catch(e){}
   };
 
@@ -267,7 +267,10 @@ export default function Athlete(){
     setMyVote(genre);
     const _d=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
     const dateStr=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
-    try{await supabase.from("music_votes").upsert({athlete_id:selectedAthlete.id,class_date:dateStr,genre},{onConflict:"athlete_id,class_date"});}catch(e){}
+    try{
+      await supabase.from("announcements").delete().eq("type","music_vote").eq("week_label",dateStr).eq("day",selectedAthlete.id);
+      await supabase.from("announcements").insert({type:"music_vote",week_label:dateStr,message:genre,day:selectedAthlete.id,active:true});
+    }catch(e){}
   };
 
   const STREAK_MILESTONES=[3,5,7,10,15,20];

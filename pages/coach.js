@@ -181,12 +181,11 @@ export default function Coach(){
   const loadMusicVotes=async()=>{
     try{
       const _d=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
-      const _dow=_d.getDay();
       const _ds=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
-      const{data}=await supabase.from("music_votes").select("genre").eq("class_date",_ds);
+      const{data}=await supabase.from("announcements").select("message").eq("type","music_vote").eq("week_label",_ds);
       if(data){
         const counts={};
-        data.forEach(r=>{counts[r.genre]=(counts[r.genre]||0)+1;});
+        data.forEach(r=>{counts[r.message]=(counts[r.message]||0)+1;});
         setMusicVotes(counts);
       }
     }catch(e){}
@@ -194,8 +193,8 @@ export default function Coach(){
 
   const loadMcPhoto=async()=>{
     try{
-      const{data}=await supabase.from("motivational_photo").select("*").order("created_at",{ascending:false}).limit(1).maybeSingle();
-      if(data){setMcCurrentPhoto(data);setMcCaption(data.caption||"");setMcWeek(data.week_label||"");}
+      const{data}=await supabase.from("announcements").select("*").eq("type","mcastles").order("created_at",{ascending:false}).limit(1).maybeSingle();
+      if(data){setMcCurrentPhoto(data);setMcCaption(data.message||"");setMcWeek(data.week_label||"");}
     }catch(e){}
   };
 
@@ -232,10 +231,16 @@ export default function Coach(){
   const postMcPhoto=async(file)=>{
     setMcUploading(true);setMcError("");setMcSuccess(false);
     try{
-      let photoUrl=mcCurrentPhoto?.photo_url||null;
+      let photoUrl=mcCurrentPhoto?.day||null;
       if(file){photoUrl=await uploadMotivationalPhoto(file);}
       if(!photoUrl&&!mcCaption.trim()){setMcError("Add a photo or caption first.");setMcUploading(false);return;}
-      const{error:insErr}=await supabase.from("motivational_photo").insert({photo_url:photoUrl,caption:mcCaption.trim(),week_label:mcWeek.trim()});
+      const{error:insErr}=await supabase.from("announcements").insert({
+        message:mcCaption.trim(),
+        week_label:mcWeek.trim(),
+        day:photoUrl,
+        type:"mcastles",
+        active:true
+      });
       if(insErr){setMcError("Save failed: "+insErr.message);setMcUploading(false);return;}
       await loadMcPhoto();
       setMcCaption("");setMcWeek("");setMcFile(null);setMcPreview(null);setMcSuccess(true);
