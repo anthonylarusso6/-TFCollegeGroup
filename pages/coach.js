@@ -433,10 +433,10 @@ export default function Coach(){
   if(!authed) return(
     <>
       <Head><title>Coach — TF College Group</title></Head>
-      <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem",position:"relative",overflow:"hidden"}}>
+      <div style={{height:"100dvh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 1.25rem",position:"relative",overflow:"hidden"}}>
         <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:600,height:400,background:"radial-gradient(ellipse at top,#E8720C10 0%,transparent 70%)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#E8720C,#C0392B,transparent)"}}/>
-        <div style={{textAlign:"center",maxWidth:340,width:"100%",position:"relative"}}>
+        <div style={{textAlign:"center",width:"100%",position:"relative"}}>
 
           {/* Step 1 — Select coach */}
           {pinStep==="select"&&(
