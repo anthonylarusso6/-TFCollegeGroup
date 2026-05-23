@@ -202,6 +202,8 @@ export default function Athlete(){
   const characterGoalRef=useRef();
   const[attendance,setAttendance]=useState([]);
   const[streak,setStreak]=useState(0);
+  const[athleteLb,setAthleteLb]=useState(null);
+  const[milestone,setMilestone]=useState(null);
   const[draft,setDraft]=useState(null);
   const pollRef=useRef(null);
   const athleteIdRef=useRef(null);
@@ -250,6 +252,25 @@ export default function Athlete(){
       if(data){for(const rec of data){if(rec.status==="early")s++;else break;}}
       setStreak(s);
     }catch(e){}
+    try{const{data:lbRow}=await supabase.from("leaderboard").select("*").eq("athlete_id",athleteId).single();if(lbRow)setAthleteLb(lbRow);}catch(e){}
+  };
+
+  const STREAK_MILESTONES=[3,5,7,10,15,20];
+  const EARLY_MILESTONES=[5,10,25,50];
+  const MILESTONE_CONFIGS={
+    streak:{
+      3:{icon:"🔥",headline:"3-Day Streak",msg:"Three in a row. Iron is being forged.",color:GREEN},
+      5:{icon:"⚡",headline:"5-Day Streak",msg:"Five straight. You're locked in.",color:GREEN},
+      7:{icon:"💎",headline:"7-Day Streak",msg:"A full week. Leaders lead.",color:GREEN},
+      10:{icon:"⚒️",headline:"10-Day Streak",msg:"Ten in a row. Anvil-level consistency.",color:GOLD},
+      15:{icon:"🏆",headline:"15-Day Streak",msg:"Fifteen straight. You are elite.",color:GOLD},
+      20:{icon:"👑",headline:"20-Day Streak",msg:"Twenty straight. Legend status.",color:GOLD},
+    },
+    early:{
+      5:{icon:"⭐",headline:"5 Early Arrivals",msg:"Five times early. Keep setting the tone.",color:GREEN},
+      10:{icon:"🌟",headline:"10 Early Arrivals",msg:"Ten early arrivals. Leaders lead by example.",color:GREEN},
+      25:{icon:"🌠",headline:"25 Early Arrivals",msg:"25 times early. You live this.",color:GOLD},
+    },
   };
 
   const doCheckin=async(athlete)=>{
@@ -268,15 +289,32 @@ export default function Athlete(){
     const{error:insertErr}=await supabase.from("attendance").insert({athlete_id:athlete.id,date:today_date,day:today,status,time_logged:timeStr});
     if(insertErr){console.error("Attendance insert error:",insertErr);return{status,time:timeStr,error:insertErr.message};}
     const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id);
+    let milestoneHit=null;
     if(lb&&lb.length>0){
       const updates={};
-      if(status==="early"){updates.early_count=(lb[0].early_count||0)+1;updates.current_streak=(lb[0].current_streak||0)+1;if(updates.current_streak>(lb[0].best_streak||0))updates.best_streak=updates.current_streak;}
+      if(status==="early"){
+        const oldStreak=lb[0].current_streak||0;
+        const oldEarly=lb[0].early_count||0;
+        updates.early_count=oldEarly+1;
+        updates.current_streak=oldStreak+1;
+        if(updates.current_streak>(lb[0].best_streak||0))updates.best_streak=updates.current_streak;
+        if(STREAK_MILESTONES.includes(updates.current_streak)&&!STREAK_MILESTONES.includes(oldStreak)){
+          milestoneHit=MILESTONE_CONFIGS.streak[updates.current_streak]||null;
+        }
+        if(!milestoneHit&&EARLY_MILESTONES.includes(updates.early_count)&&!EARLY_MILESTONES.includes(oldEarly)){
+          milestoneHit=MILESTONE_CONFIGS.early[updates.early_count]||null;
+        }
+      }
       else{updates.late_count=(lb[0].late_count||0)+1;updates.current_streak=0;}
       await supabase.from("leaderboard").update(updates).eq("athlete_id",athlete.id);
     } else {
+      if(status==="early"){
+        if(STREAK_MILESTONES.includes(1))milestoneHit=MILESTONE_CONFIGS.streak[1]||null;
+        if(!milestoneHit&&EARLY_MILESTONES.includes(1))milestoneHit=MILESTONE_CONFIGS.early[1]||null;
+      }
       await supabase.from("leaderboard").insert({athlete_id:athlete.id,early_count:status==="early"?1:0,late_count:status==="late"?1:0,current_streak:status==="early"?1:0,best_streak:status==="early"?1:0});
     }
-    return{status,time:timeStr};
+    return{status,time:timeStr,milestoneHit};
   };
 
   const selectAthlete=async(a)=>{
@@ -305,12 +343,14 @@ export default function Athlete(){
           setSelectedAthlete({...selectedAthlete,pin});
           const info=await doCheckin({...selectedAthlete,pin});
           setCheckinInfo(info);setPin("");setScreen("checkin");
+          if(info&&info.milestoneHit)setMilestone(info.milestoneHit);
         } else {setPinError("PINs don't match. Try again.");setPin("");setPinStep("enter");setPinConfirm("");}
       }
     } else {
       if(pin===saved){
         const info=await doCheckin(selectedAthlete);
         setCheckinInfo(info);setPin("");setScreen("checkin");setPinError("");
+        if(info&&info.milestoneHit)setMilestone(info.milestoneHit);
       } else {setPinError("Incorrect PIN. Try again.");setPin("");}
     }
   };
@@ -657,6 +697,18 @@ export default function Athlete(){
     return(
       <>
         <Head><title>{selectedAthlete.name} — TF College Group</title></Head>
+        {milestone&&(
+          <div onClick={()=>setMilestone(null)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
+            <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:400,height:400,background:"radial-gradient(circle,"+milestone.color+"22 0%,transparent 70%)",pointerEvents:"none"}}/>
+            <div style={{textAlign:"center",position:"relative"}}>
+              <div style={{fontSize:80,marginBottom:20,lineHeight:1}}>{milestone.icon}</div>
+              <div style={{fontSize:11,color:milestone.color,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:8}}>Milestone reached</div>
+              <div style={{fontSize:32,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",marginBottom:12,lineHeight:1.1}}>{milestone.headline}</div>
+              <div style={{fontSize:15,color:"#888",marginBottom:32,lineHeight:1.6,maxWidth:260,margin:"0 auto 32px"}}>{milestone.msg}</div>
+              <button onClick={()=>setMilestone(null)} style={{padding:"14px 32px",borderRadius:16,border:"none",background:"linear-gradient(135deg,"+milestone.color+","+milestone.color+"aa)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>Let's go →</button>
+            </div>
+          </div>
+        )}
         <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
           {/* Profile header */}
           <div style={{background:"linear-gradient(180deg,#0e0600 0%,#0a0505 50%,#080808 100%)",borderBottom:"1px solid #1a0800",position:"relative",overflow:"hidden"}}>
@@ -795,9 +847,43 @@ export default function Athlete(){
                         <div>
                           <div style={{fontSize:8,color:GREEN,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Early arrival streak</div>
                           <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>{streak} <span style={{fontSize:13,color:"#888",fontWeight:400}}>days straight</span></div>
-                          <div style={{fontSize:11,color:"#555",marginTop:1}}>Keep showing up early.</div>
+                          <div style={{fontSize:11,color:"#555",marginTop:1}}>{(()=>{const allM=[3,5,7,10,15,20];const next=allM.find(m=>m>streak);return next?next-streak+" more to "+next+"-day milestone":"Keep showing up early.";})()}</div>
                         </div>
                       </div>
+                    </div>
+                    <div style={{background:"#111",padding:"14px 18px"}}>
+                      <div style={{display:"flex",gap:8,marginBottom:12}}>
+                        <div style={{flex:1,background:"#1a1a1a",borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+                          <div style={{fontSize:22,fontWeight:900,color:GREEN}}>{streak}</div>
+                          <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:2}}>Current</div>
+                        </div>
+                        <div style={{flex:1,background:"#1a1a1a",borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+                          <div style={{fontSize:22,fontWeight:900,color:GOLD}}>{athleteLb?.best_streak||streak}</div>
+                          <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:2}}>Best</div>
+                        </div>
+                        <div style={{flex:1,background:"#1a1a1a",borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+                          <div style={{fontSize:22,fontWeight:900,color:"#ddd"}}>{athleteLb?.early_count||streak}</div>
+                          <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:2}}>Total Early</div>
+                        </div>
+                      </div>
+                      {(()=>{
+                        const allM=[3,5,7,10,15,20];
+                        const next=allM.find(m=>m>streak);
+                        if(!next)return<div style={{fontSize:11,color:GREEN,textAlign:"center"}}>🏆 Elite streak. Keep going.</div>;
+                        const prev=allM.filter(m=>m<streak).pop()||0;
+                        const pct=Math.round(((streak-prev)/(next-prev))*100);
+                        return(
+                          <div>
+                            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                              <div style={{fontSize:10,color:"#555"}}>{streak} days</div>
+                              <div style={{fontSize:10,color:GREEN}}>{next-streak} more to {next}-day milestone</div>
+                            </div>
+                            <div style={{height:4,background:"#222",borderRadius:2,overflow:"hidden"}}>
+                              <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,"+GREEN+","+GOLD+")",borderRadius:2,transition:"width 0.5s"}}/>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
