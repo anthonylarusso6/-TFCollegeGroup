@@ -639,6 +639,7 @@ export default function Athlete(){
   if(screen==="profile"&&selectedAthlete){
     const TABS=[
       {id:"profile",label:"My Profile"},
+      {id:"mcastles",label:"MCastles 🍑🚀"},
       {id:"verse",label:"Verse"},
       {id:"attendance",label:"Attendance"},
       ...(isForge?[{id:"draft",label:"Draft"},{id:"mygroup",label:"My Group"}]:[{id:"mygroup",label:"My Group"}]),
@@ -649,7 +650,6 @@ export default function Athlete(){
       {id:"leaderboard",label:"Leaderboard"},
       {id:"prayer",label:"Prayer"},
       {id:"bracelets",label:"Bracelets"},
-      {id:"mcastles",label:"MCastles 🍑"},
       {id:"photos",label:"Photos"},
       {id:"notes",label:"Notes"},
       {id:"private",label:"Private"},
