@@ -407,19 +407,18 @@ export default function TeamsView({athletes=[]}){
               );
             })()}
 
-            {/* Bracelet row — tap the leader slot above to change */}
-            {brac&&(
-              <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:8,marginBottom:8,background:brac.hex+"12",border:"1px solid "+brac.hex+"33"}}>
+            {/* Bracelet row */}
+            {brac?(
+              <button onClick={()=>setBraceletModal(i)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:8,marginBottom:8,background:brac.hex+"12",border:"1px solid "+brac.hex+"33",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
                 <div style={{width:10,height:10,borderRadius:"50%",background:brac.hex,flexShrink:0}}/>
                 <span style={{fontSize:11,fontWeight:600,color:brac.hex}}>{brac.color}</span>
                 <span style={{fontSize:10,color:"#555",marginLeft:2}}>{brac.ref}</span>
-                <button onClick={e=>{e.stopPropagation();setBracelets(prev=>{const n={...prev};delete n[i];return n;});}} style={{marginLeft:"auto",background:"transparent",border:"none",cursor:"pointer",color:"#444",fontSize:12,padding:"0 2px"}}>×</button>
-              </div>
-            )}
-            {!brac&&(
-              <button onClick={()=>setLeaderPicker(i)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 10px",borderRadius:8,marginBottom:8,border:"1px dashed #252525",background:"transparent",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
+                <span style={{marginLeft:"auto",fontSize:10,color:"#444"}}>change</span>
+              </button>
+            ):(
+              <button onClick={()=>setBraceletModal(i)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 10px",borderRadius:8,marginBottom:8,border:"1px dashed #252525",background:"transparent",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
                 <span style={{fontSize:12}}>📿</span>
-                <span style={{fontSize:11,color:"#444"}}>Tap leader slot to assign bracelet</span>
+                <span style={{fontSize:11,color:"#444"}}>Assign bracelet verse</span>
               </button>
             )}
 
