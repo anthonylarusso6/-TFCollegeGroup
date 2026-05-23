@@ -204,6 +204,7 @@ export default function Athlete(){
   const[streak,setStreak]=useState(0);
   const[athleteLb,setAthleteLb]=useState(null);
   const[milestone,setMilestone]=useState(null);
+  const[myVote,setMyVote]=useState(null);
   const[draft,setDraft]=useState(null);
   const pollRef=useRef(null);
   const athleteIdRef=useRef(null);
@@ -253,6 +254,21 @@ export default function Athlete(){
       setStreak(s);
     }catch(e){}
     try{const{data:lbRow}=await supabase.from("leaderboard").select("*").eq("athlete_id",athleteId).single();if(lbRow)setAthleteLb(lbRow);}catch(e){}
+    try{
+      const _vd=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+      if([2,4].includes(_vd.getDay())){
+        const _ds=`${_vd.getFullYear()}-${String(_vd.getMonth()+1).padStart(2,'0')}-${String(_vd.getDate()).padStart(2,'0')}`;
+        const{data:vt}=await supabase.from("music_votes").select("genre").eq("athlete_id",athleteId).eq("class_date",_ds).single();
+        if(vt)setMyVote(vt.genre);
+      }
+    }catch(e){}
+  };
+
+  const submitVote=async(genre)=>{
+    setMyVote(genre);
+    const _d=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const dateStr=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
+    try{await supabase.from("music_votes").upsert({athlete_id:selectedAthlete.id,class_date:dateStr,genre},{onConflict:"athlete_id,class_date"});}catch(e){}
   };
 
   const STREAK_MILESTONES=[3,5,7,10,15,20];
@@ -323,7 +339,7 @@ export default function Athlete(){
     setFeedbackText("");setFeedbackSent(false);
     setPrayerText("");setPrayerSent(false);
     setInjuryText("");setInjurySent(false);setInjuryOpen(false);
-    setGoalSaved({});setGoalText({});
+    setGoalSaved({});setGoalText({});setMyVote(null);
     setTab("profile");setScreen("login");
     await loadAttendance(a.id);
     await loadDraft();
@@ -778,6 +794,50 @@ export default function Athlete(){
                 {(()=>{const _est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><div style={{fontSize:24}}>🔥</div></div>);})()}
                 <DailyWord announcement={announcement}/>
                 <ClassCountdown/>
+                {(()=>{
+                  const _e=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+                  const _dow=_e.getDay();
+                  const GENRES=[{id:"rock",label:"Rock",emoji:"🎸"},{id:"wgt",label:"White Girl Throwbacks",emoji:"💅"},{id:"rap",label:"Rap / Hip-Hop",emoji:"🎤"},{id:"country",label:"Country",emoji:"🤠"},{id:"pop",label:"Pop",emoji:"🎵"}];
+                  if(_dow===1||_dow===5)return(
+                    <div style={{borderRadius:16,marginBottom:12,overflow:"hidden",border:"1px solid "+GOLD+"33"}}>
+                      <div style={{background:"linear-gradient(140deg,"+GOLD+"20,"+GOLD+"08,#0d0d0d)",padding:"16px",position:"relative",overflow:"hidden",display:"flex",alignItems:"center",gap:14}}>
+                        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"55,transparent)"}}/>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🙏</div>
+                        <div>
+                          <div style={{fontSize:9,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Today's Music</div>
+                          <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>Worship Music</div>
+                          <div style={{fontSize:11,color:"#666",marginTop:2}}>{_dow===1?"Mindset Monday":"Fellowship Friday"} · Proverbs 27:17</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                  if(_dow!==2&&_dow!==4)return null;
+                  return(
+                    <div style={{borderRadius:16,marginBottom:12,overflow:"hidden",border:"1px solid "+ORANGE+"33"}}>
+                      <div style={{background:"linear-gradient(140deg,"+ORANGE+"18,"+ORANGE+"06,#0d0d0d)",padding:"16px 16px 14px",position:"relative",overflow:"hidden"}}>
+                        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+ORANGE+","+ORANGE+"55,transparent)"}}/>
+                        <div style={{position:"absolute",bottom:-8,right:-6,fontSize:60,opacity:0.05,lineHeight:1,userSelect:"none"}}>🎵</div>
+                        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
+                          <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 16px "+ORANGE+"33"}}>🎵</div>
+                          <div>
+                            <div style={{fontSize:9,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Vote Now</div>
+                            <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>Today's Music</div>
+                            {myVote&&<div style={{fontSize:10,color:"#555",marginTop:2}}>Tap to change your vote</div>}
+                          </div>
+                        </div>
+                        <div style={{display:"flex",flexDirection:"column",gap:7}}>
+                          {GENRES.map(g=>(
+                            <button key={g.id} onClick={()=>submitVote(g.id)} style={{padding:"11px 14px",borderRadius:12,border:"1px solid "+(myVote===g.id?ORANGE+"55":"#1e1e1e"),background:myVote===g.id?"linear-gradient(135deg,"+ORANGE+"1a,"+ORANGE+"0d)":"#111",color:myVote===g.id?"#fff":"#888",fontSize:13,fontWeight:myVote===g.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif",display:"flex",alignItems:"center",gap:10,textAlign:"left",transition:"all 0.12s",boxShadow:myVote===g.id?"0 0 10px "+ORANGE+"22":"none"}}>
+                              <span style={{fontSize:18,lineHeight:1}}>{g.emoji}</span>
+                              <span style={{flex:1}}>{g.label}</span>
+                              {myVote===g.id&&<span style={{fontSize:11,color:ORANGE,fontWeight:800}}>✓</span>}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
                 {/* Day schedule — always shows */}
                 {(()=>{
                   const _days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];

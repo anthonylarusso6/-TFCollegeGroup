@@ -128,6 +128,7 @@ export default function Coach(){
   const[modalAth,setModalAth]=useState(null);
   const[modalData,setModalData]=useState(null);
   const[modalLoading,setModalLoading]=useState(false);
+  const[musicVotes,setMusicVotes]=useState(null);
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
@@ -162,6 +163,22 @@ export default function Coach(){
     try{const{data}=await supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false});if(data)setCoachPrayers(data);}catch(e){}
     try{const{data}=await supabase.from("weight_log").select("*").order("date",{ascending:false});if(data)setWeightLogs(data);}catch(e){}
     try{const{data}=await supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name");if(data)setEngAthletes(data);}catch(e){}
+    await loadMusicVotes();
+  };
+
+  const loadMusicVotes=async()=>{
+    try{
+      const _d=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+      const _dow=_d.getDay();
+      if(![1,2,4,5].includes(_dow)){setMusicVotes(null);return;}
+      const _ds=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
+      const{data}=await supabase.from("music_votes").select("genre").eq("class_date",_ds);
+      if(data){
+        const counts={};
+        data.forEach(r=>{counts[r.genre]=(counts[r.genre]||0)+1;});
+        setMusicVotes(counts);
+      }
+    }catch(e){}
   };
 
   const callAI=async(prompt)=>{
@@ -611,6 +628,76 @@ export default function Coach(){
                   </div>
                 ))}
               </div>
+              {(()=>{
+                const _e=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+                const _dow=_e.getDay();
+                const GENRES=[{id:"rock",label:"Rock",emoji:"🎸"},{id:"wgt",label:"White Girl Throwbacks",emoji:"💅"},{id:"rap",label:"Rap / Hip-Hop",emoji:"🎤"},{id:"country",label:"Country",emoji:"🤠"},{id:"pop",label:"Pop",emoji:"🎵"}];
+                if(_dow===1||_dow===5)return(
+                  <div style={{borderRadius:16,marginBottom:12,overflow:"hidden",border:"1px solid "+GOLD+"33"}}>
+                    <div style={{background:"linear-gradient(140deg,"+GOLD+"20,"+GOLD+"08,#0d0d0d)",padding:"16px",position:"relative",overflow:"hidden",display:"flex",alignItems:"center",gap:14}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"55,transparent)"}}/>
+                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🙏</div>
+                      <div>
+                        <div style={{fontSize:9,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Today's Music</div>
+                        <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>Worship Music</div>
+                        <div style={{fontSize:11,color:"#666",marginTop:2}}>{_dow===1?"Mindset Monday":"Fellowship Friday"} · no vote needed</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+                if(_dow!==2&&_dow!==4)return null;
+                const total=musicVotes?Object.values(musicVotes).reduce((a,b)=>a+b,0):0;
+                const topGenre=musicVotes&&total>0?Object.entries(musicVotes).sort((a,b)=>b[1]-a[1])[0]?.[0]:null;
+                return(
+                  <div style={{borderRadius:16,marginBottom:12,overflow:"hidden",border:"1px solid "+ORANGE+"33"}}>
+                    <div style={{background:"linear-gradient(140deg,"+ORANGE+"18,"+ORANGE+"06,#0d0d0d)",padding:"16px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+ORANGE+","+ORANGE+"55,transparent)"}}/>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                        <div style={{display:"flex",alignItems:"center",gap:12}}>
+                          <div style={{width:44,height:44,borderRadius:12,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>🎵</div>
+                          <div>
+                            <div style={{fontSize:9,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Music Vote</div>
+                            <div style={{fontSize:16,fontWeight:900,color:"#fff"}}>Today's Genre</div>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div style={{textAlign:"right"}}>
+                            <div style={{fontSize:20,fontWeight:900,color:ORANGE}}>{total}</div>
+                            <div style={{fontSize:9,color:"#555"}}>votes</div>
+                          </div>
+                          <button onClick={loadMusicVotes} style={{background:"#111",border:"0.5px solid #222",color:"#555",fontSize:11,padding:"5px 10px",borderRadius:8,cursor:"pointer",fontFamily:"Georgia,serif"}}>↻</button>
+                        </div>
+                      </div>
+                      {!musicVotes||total===0?(
+                        <div style={{textAlign:"center",padding:"10px",color:"#444",fontSize:12}}>No votes yet — athletes vote from their profile tab</div>
+                      ):(
+                        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                          {GENRES.map(g=>{
+                            const count=musicVotes[g.id]||0;
+                            const pct=total?Math.round((count/total)*100):0;
+                            const isTop=g.id===topGenre;
+                            return(
+                              <div key={g.id} style={{display:"flex",alignItems:"center",gap:10}}>
+                                <span style={{fontSize:16,width:22,textAlign:"center",flexShrink:0}}>{g.emoji}</span>
+                                <div style={{flex:1}}>
+                                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                                    <span style={{fontSize:11,color:isTop?"#fff":"#777",fontWeight:isTop?700:400}}>{g.label}</span>
+                                    <span style={{fontSize:11,color:isTop?ORANGE:"#444",fontWeight:isTop?700:400}}>{count} {pct>0?<span style={{color:"#333"}}>({pct}%)</span>:""}</span>
+                                  </div>
+                                  <div style={{height:4,background:"#1e1e1e",borderRadius:2,overflow:"hidden"}}>
+                                    <div style={{height:"100%",width:pct+"%",background:isTop?"linear-gradient(90deg,"+ORANGE+","+GOLD+")":"#2a2a2a",borderRadius:2,transition:"width 0.5s"}}/>
+                                  </div>
+                                </div>
+                                {isTop&&<span style={{fontSize:9,color:ORANGE,fontWeight:800,flexShrink:0,letterSpacing:"0.05em"}}>WIN</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
