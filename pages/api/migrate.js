@@ -4,8 +4,6 @@ import { Client } from "pg";
 const SERVICE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtsdXVvaWJ1aGt4dWticW9kZmV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTkzNjg2NiwiZXhwIjoyMDkxNTEyODY2fQ.b4B4Lz2c1lsb7Oj75BB-Jtri7YPTUMO1eJxN1wTV3qo";
 
-const REGIONS = ["us-east-1", "us-west-1", "us-east-2", "eu-west-1", "ap-southeast-1"];
-
 const SQL = `
   CREATE TABLE IF NOT EXISTS music_votes (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -15,7 +13,6 @@ const SQL = `
     created_at timestamptz DEFAULT now(),
     UNIQUE(athlete_id, class_date)
   );
-
   CREATE TABLE IF NOT EXISTS motivational_photo (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     photo_url text,
@@ -25,6 +22,17 @@ const SQL = `
   );
 `;
 
+const ATTEMPTS = [
+  // IPv6 direct — Supabase DB resolves to IPv6 only
+  { host: "2600:1f18:2e13:9d45:1bd8:ad12:48ba:1fd6", port: 5432, user: "postgres", password: SERVICE_KEY },
+  { host: "db.kluuoibuhkxukbqodfet.supabase.co", port: 5432, user: "postgres", password: SERVICE_KEY },
+  // Pooler — us-east-1
+  { host: "aws-0-us-east-1.pooler.supabase.com", port: 5432, user: "postgres.kluuoibuhkxukbqodfet", password: SERVICE_KEY },
+  { host: "aws-0-us-east-1.pooler.supabase.com", port: 6543, user: "postgres.kluuoibuhkxukbqodfet", password: SERVICE_KEY },
+  { host: "aws-0-us-east-1.pooler.supabase.com", port: 5432, user: "postgres", password: SERVICE_KEY },
+  { host: "aws-0-us-east-1.pooler.supabase.com", port: 6543, user: "postgres", password: SERVICE_KEY },
+];
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
   if (req.headers["x-migrate-secret"] !== "tf2026migrate")
@@ -32,48 +40,23 @@ export default async function handler(req, res) {
 
   const errors = [];
 
-  // Try each region's connection pooler
-  for (const region of REGIONS) {
-    for (const port of [5432, 6543]) {
-      const client = new Client({
-        host: `aws-0-${region}.pooler.supabase.com`,
-        port,
-        database: "postgres",
-        user: `postgres.kluuoibuhkxukbqodfet`,
-        password: SERVICE_KEY,
-        ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 5000,
-      });
-      try {
-        await client.connect();
-        await client.query(SQL);
-        await client.end();
-        return res.json({ status: "success", region, port });
-      } catch (e) {
-        errors.push(`${region}:${port} — ${e.message}`);
-        try { await client.end(); } catch (_) {}
-      }
+  for (const cfg of ATTEMPTS) {
+    const client = new Client({
+      ...cfg,
+      database: "postgres",
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 6000,
+    });
+    try {
+      await client.connect();
+      const ver = await client.query("SELECT current_user, version()");
+      await client.query(SQL);
+      await client.end();
+      return res.json({ status: "success", cfg, user: ver.rows[0] });
+    } catch (e) {
+      errors.push(`${cfg.host}:${cfg.port}(${cfg.user}) — ${e.message}`);
+      try { await client.end(); } catch (_) {}
     }
-  }
-
-  // Also try direct host
-  const direct = new Client({
-    host: `db.kluuoibuhkxukbqodfet.supabase.co`,
-    port: 5432,
-    database: "postgres",
-    user: "postgres",
-    password: SERVICE_KEY,
-    ssl: { rejectUnauthorized: false },
-    connectionTimeoutMillis: 5000,
-  });
-  try {
-    await direct.connect();
-    await direct.query(SQL);
-    await direct.end();
-    return res.json({ status: "success", via: "direct" });
-  } catch (e) {
-    errors.push(`direct — ${e.message}`);
-    try { await direct.end(); } catch (_) {}
   }
 
   return res.status(500).json({ status: "failed", errors });
