@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import { GOLD, RED, GREEN, ORANGE } from "../lib/constants";
 
 export default function ClassCountdown(){
-  const[now,setNow]=useState(new Date());
+  const[now,setNow]=useState(null);
 
   useEffect(()=>{
+    setNow(new Date());
     const t=setInterval(()=>setNow(new Date()),1000);
     return()=>clearInterval(t);
   },[]);
+
+  if(!now)return null;
 
   const CLASS_START=new Date("2026-06-18T09:00:00");
   const SEASON_END=new Date("2026-09-10T11:20:00");
