@@ -134,6 +134,9 @@ export default function Coach(){
   const[mcWeek,setMcWeek]=useState("");
   const[mcUploading,setMcUploading]=useState(false);
   const[mcError,setMcError]=useState("");
+  const[mcFile,setMcFile]=useState(null);
+  const[mcPreview,setMcPreview]=useState(null);
+  const[mcSuccess,setMcSuccess]=useState(false);
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
@@ -191,7 +194,7 @@ export default function Coach(){
 
   const loadMcPhoto=async()=>{
     try{
-      const{data}=await supabase.from("motivational_photo").select("*").order("created_at",{ascending:false}).limit(1).single();
+      const{data}=await supabase.from("motivational_photo").select("*").order("created_at",{ascending:false}).limit(1).maybeSingle();
       if(data){setMcCurrentPhoto(data);setMcCaption(data.caption||"");setMcWeek(data.week_label||"");}
     }catch(e){}
   };
@@ -227,15 +230,16 @@ export default function Coach(){
   };
 
   const postMcPhoto=async(file)=>{
-    setMcUploading(true);setMcError("");
+    setMcUploading(true);setMcError("");setMcSuccess(false);
     try{
       let photoUrl=mcCurrentPhoto?.photo_url||null;
       if(file){photoUrl=await uploadMotivationalPhoto(file);}
       if(!photoUrl&&!mcCaption.trim()){setMcError("Add a photo or caption first.");setMcUploading(false);return;}
-      await supabase.from("motivational_photo").insert({photo_url:photoUrl,caption:mcCaption.trim(),week_label:mcWeek.trim()});
+      const{error:insErr}=await supabase.from("motivational_photo").insert({photo_url:photoUrl,caption:mcCaption.trim(),week_label:mcWeek.trim()});
+      if(insErr){setMcError("Save failed: "+insErr.message);setMcUploading(false);return;}
       await loadMcPhoto();
-      setMcCaption("");setMcWeek("");
-    }catch(e){setMcError("Upload failed. Try again.");}
+      setMcCaption("");setMcWeek("");setMcFile(null);setMcPreview(null);setMcSuccess(true);
+    }catch(e){setMcError("Error: "+e.message);}
     setMcUploading(false);
   };
 
@@ -2052,71 +2056,67 @@ export default function Coach(){
                 </div>
               </div>
 
-              {/* Current posted photo */}
+              {/* Currently live */}
               {mcCurrentPhoto&&(
                 <div style={{background:"#111",borderRadius:14,padding:"14px",marginBottom:14,border:"0.5px solid #1e1e1e"}}>
                   <div style={{fontSize:10,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.15em",fontWeight:700,marginBottom:8}}>Currently Live</div>
-                  {mcCurrentPhoto.week_label&&<div style={{fontSize:11,color:"#777",marginBottom:8}}>{mcCurrentPhoto.week_label}</div>}
-                  <img src={mcCurrentPhoto.photo_url} alt="Current motivational" style={{width:"100%",borderRadius:10,maxHeight:260,objectFit:"cover",marginBottom:10,display:"block"}}/>
+                  {mcCurrentPhoto.week_label&&<div style={{fontSize:11,color:"#777",marginBottom:6}}>{mcCurrentPhoto.week_label}</div>}
+                  {mcCurrentPhoto.photo_url&&<img src={mcCurrentPhoto.photo_url} alt="Current motivational" style={{width:"100%",borderRadius:10,maxHeight:220,objectFit:"cover",marginBottom:8,display:"block"}}/>}
                   {mcCurrentPhoto.caption&&<div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>&ldquo;{mcCurrentPhoto.caption}&rdquo;</div>}
                 </div>
               )}
 
-              {/* Upload form */}
+              {/* Post form */}
               <div style={{background:"#111",borderRadius:14,padding:"16px",border:"0.5px solid "+ORANGE+"33"}}>
-                <div style={{fontSize:12,fontWeight:700,color:ORANGE,marginBottom:12,textTransform:"uppercase",letterSpacing:"0.1em"}}>Post New Photo</div>
+                <div style={{fontSize:12,fontWeight:700,color:ORANGE,marginBottom:14,textTransform:"uppercase",letterSpacing:"0.1em"}}>Post New Photo of the Week</div>
 
-                {/* Week label */}
-                <div style={{marginBottom:10}}>
-                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Week label (e.g. "Week 3 — May 2026")</div>
-                  <input
-                    value={mcWeek}
-                    onChange={e=>setMcWeek(e.target.value)}
-                    placeholder="Week label..."
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",fontSize:13,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",boxSizing:"border-box"}}
-                  />
-                </div>
-
-                {/* Caption */}
+                {/* Photo picker */}
                 <div style={{marginBottom:12}}>
-                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Caption / message</div>
-                  <textarea
-                    value={mcCaption}
-                    onChange={e=>setMcCaption(e.target.value)}
-                    placeholder="Write something motivational..."
-                    rows={3}
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",fontSize:13,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}
-                  />
-                </div>
-
-                {/* File picker */}
-                <div style={{marginBottom:14}}>
-                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Photo</div>
+                  <div style={{fontSize:11,color:"#666",marginBottom:6}}>Photo</div>
                   <label style={{display:"block",cursor:"pointer"}}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      style={{display:"none"}}
-                      onChange={async e=>{
-                        const file=e.target.files?.[0];
-                        if(!file)return;
-                        await postMcPhoto(file);
-                        e.target.value="";
-                      }}
-                    />
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"14px",borderRadius:10,border:"1px dashed "+ORANGE+"55",background:"#0f0600",color:mcUploading?"#555":ORANGE,fontSize:13,fontWeight:600,transition:"opacity 0.15s",opacity:mcUploading?0.5:1}}>
-                      {mcUploading?(
-                        <>⏳ Uploading...</>
-                      ):(
-                        <>📸 Tap to choose photo &amp; post</>
-                      )}
-                    </div>
+                    <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
+                      const f=e.target.files?.[0];
+                      if(!f)return;
+                      setMcFile(f);
+                      setMcPreview(URL.createObjectURL(f));
+                      setMcSuccess(false);setMcError("");
+                    }}/>
+                    {mcPreview?(
+                      <div style={{position:"relative"}}>
+                        <img src={mcPreview} style={{width:"100%",borderRadius:10,maxHeight:200,objectFit:"cover",display:"block"}}/>
+                        <div style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,0.7)",borderRadius:6,padding:"3px 8px",fontSize:11,color:ORANGE}}>tap to change</div>
+                      </div>
+                    ):(
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"18px",borderRadius:10,border:"1px dashed "+ORANGE+"55",background:"#0f0600",color:ORANGE,fontSize:13,fontWeight:600}}>
+                        📸 Tap to choose photo
+                      </div>
+                    )}
                   </label>
                 </div>
 
-                {mcError&&<div style={{fontSize:12,color:RED,marginBottom:8,padding:"8px 10px",background:"#1a0808",borderRadius:6,border:"0.5px solid "+RED+"33"}}>{mcError}</div>}
+                {/* Week label */}
+                <div style={{marginBottom:10}}>
+                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Week label</div>
+                  <input value={mcWeek} onChange={e=>setMcWeek(e.target.value)} placeholder='e.g. "Week 3 — May 2026"'
+                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",fontSize:13,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
+                </div>
 
-                <div style={{fontSize:11,color:"#444",lineHeight:1.5}}>Selecting a photo will immediately upload and post it as the new Photo of the Week visible to all athletes.</div>
+                {/* Caption */}
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Caption / message</div>
+                  <textarea value={mcCaption} onChange={e=>setMcCaption(e.target.value)} placeholder="Write something motivational..." rows={3}
+                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",fontSize:13,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}/>
+                </div>
+
+                {mcError&&<div style={{fontSize:12,color:RED,marginBottom:10,padding:"8px 10px",background:"#1a0808",borderRadius:6,border:"0.5px solid "+RED+"33"}}>{mcError}</div>}
+                {mcSuccess&&<div style={{fontSize:12,color:GREEN,marginBottom:10,padding:"8px 10px",background:"#081a0d",borderRadius:6,border:"0.5px solid "+GREEN+"33"}}>✓ Posted! Athletes can see it now.</div>}
+
+                <button
+                  disabled={mcUploading||(!mcFile&&!mcCaption.trim())}
+                  onClick={()=>postMcPhoto(mcFile||null)}
+                  style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:mcUploading?"#333":ORANGE,color:"#fff",fontSize:15,fontWeight:800,cursor:mcUploading?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:(mcUploading||(!mcFile&&!mcCaption.trim()))?0.5:1,letterSpacing:"0.02em"}}>
+                  {mcUploading?"⏳ Posting...":"🍑🚀 Post Photo of the Week"}
+                </button>
               </div>
             </div>
           )}
