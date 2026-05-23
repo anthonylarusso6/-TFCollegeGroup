@@ -512,42 +512,54 @@ export default function Athlete(){
   if(screen==="login")return(
     <>
       <Head><title>Sign In — TF College Group</title></Head>
-      <div style={{height:"100dvh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",textAlign:"center",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 1.25rem",overflow:"hidden"}}>
-        <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:500,height:300,background:"radial-gradient(ellipse at top,"+(isForge?"#C0392B14":"#4a5a6618")+" 0%,transparent 70%)",pointerEvents:"none"}}/>
+      <div style={{height:"100dvh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",textAlign:"center",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 1.5rem",overflow:"hidden"}}>
+        <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:560,height:400,background:"radial-gradient(ellipse at top,"+(isForge?"#C0392B18":"#4a5a6618")+" 0%,transparent 65%)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+(isForge?"#C0392B,#E8720C":"#505a66,#8a9aa4")+",transparent)"}}/>
-        <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:14,left:14,background:"#111",border:"0.5px solid #1e1e1e",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia, serif",padding:"5px 11px",borderRadius:8}}>← Back</button>
-        <div style={{fontSize:8,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",marginBottom:6,background:(isForge?RED:STEEL)+"15",padding:"3px 10px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"33"}}>
+        <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:16,left:16,background:"#111",border:"0.5px solid #222",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia, serif",padding:"7px 14px",borderRadius:10}}>← Back</button>
+
+        {/* Role pill */}
+        <div style={{fontSize:9,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",marginBottom:18,background:(isForge?RED:STEEL)+"15",padding:"4px 14px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"33"}}>
           {isForge?"⚔ The Forge":"⚒ The Iron"}
         </div>
-        <div style={{position:"relative",marginBottom:14}}>
-          <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:"1px solid "+(isForge?RED:STEEL)+"33",pointerEvents:"none"}}/>
-          <div style={{width:68,height:68,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:900,color:"#fff",overflow:"hidden",boxShadow:"0 0 40px "+(isForge?RED:STEEL)+"44"}}>
+
+        {/* Avatar */}
+        <div style={{position:"relative",marginBottom:18}}>
+          <div style={{position:"absolute",inset:-8,borderRadius:"50%",border:"1px solid "+(isForge?RED:STEEL)+"40",pointerEvents:"none"}}/>
+          <div style={{position:"absolute",inset:-16,borderRadius:"50%",border:"0.5px solid "+(isForge?RED:STEEL)+"18",pointerEvents:"none"}}/>
+          <div style={{width:84,height:84,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,fontWeight:900,color:"#fff",overflow:"hidden",boxShadow:"0 0 60px "+(isForge?RED:STEEL)+"55,0 0 120px "+(isForge?RED:STEEL)+"18"}}>
             {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
           </div>
         </div>
-        <div style={{fontSize:22,fontWeight:900,color:"#fff",marginBottom:4,letterSpacing:"-0.01em",textTransform:"uppercase"}}>
+
+        {/* Name */}
+        <div style={{fontSize:26,fontWeight:900,color:"#fff",marginBottom:5,letterSpacing:"-0.02em",textTransform:"uppercase"}}>
           {!selectedAthlete?.pin?selectedAthlete?.name.split(" ")[0]:pinStep==="confirm"?"Confirm PIN":selectedAthlete?.name.split(" ")[0]}
         </div>
-        <div style={{fontSize:12,color:"#555",marginBottom:20,letterSpacing:"0.04em"}}>
+        <div style={{fontSize:12,color:"#555",marginBottom:28,letterSpacing:"0.05em"}}>
           {!selectedAthlete?.pin?"Create a 4-digit PIN":pinStep==="confirm"?"Enter the same 4 digits":"Enter your PIN to check in"}
         </div>
-        <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:16}}>
+
+        {/* PIN dots */}
+        <div style={{display:"flex",justifyContent:"center",gap:18,marginBottom:28}}>
           {[0,1,2,3].map(i=>(
-            <div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+(isForge?RED:STEEL)+(i<pin.length?"":"44"),background:i<pin.length?(isForge?"linear-gradient(135deg,#E8720C,"+RED+")":"linear-gradient(135deg,#8a9aa4,"+STEEL+")"):"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 10px "+(isForge?RED:STEEL)+"88":"none"}}/>
+            <div key={i} style={{width:18,height:18,borderRadius:"50%",border:"2px solid "+(isForge?RED:STEEL)+(i<pin.length?"":"33"),background:i<pin.length?(isForge?"linear-gradient(135deg,#E8720C,"+RED+")":"linear-gradient(135deg,#8a9aa4,"+STEEL+")"):"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 14px "+(isForge?RED:STEEL)+"99":"none"}}/>
           ))}
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
+
+        {/* Keypad */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,width:"100%",maxWidth:300,margin:"0 auto"}}>
           {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
             <button key={i} onClick={()=>{
               if(k===null)return;
               if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
               if(pin.length<4)setPin(p=>p+String(k));
-            }} style={{padding:"14px 8px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#1a1a1a"),background:k===null?"transparent":k==="⌫"?"#141414":"#111",fontSize:20,fontWeight:300,cursor:k===null?"default":"pointer",color:k==="⌫"?"#555":"#e0e0e0",fontFamily:"sans-serif",transition:"background 0.1s"}}>
+            }} style={{padding:"20px 8px",borderRadius:14,border:"0.5px solid "+(k===null?"transparent":"#222"),background:k===null?"transparent":k==="⌫"?"#161616":"#131313",fontSize:26,fontWeight:500,cursor:k===null?"default":"pointer",color:k==="⌫"?"#666":"#ebebeb",fontFamily:"sans-serif",transition:"background 0.1s",lineHeight:1}}>
               {k===null?"":k}
             </button>
           ))}
         </div>
-        {pinError&&<div style={{marginTop:12,fontSize:12,color:"#ff5555",padding:"8px 16px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
+
+        {pinError&&<div style={{marginTop:16,fontSize:12,color:"#ff5555",padding:"9px 18px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
       </div>
     </>
   );
