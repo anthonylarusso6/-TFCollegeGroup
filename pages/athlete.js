@@ -225,7 +225,7 @@ export default function Athlete(){
       }
     }catch(e){console.error("Athletes fetch failed:",e);}
     try{
-      const{data:ann}=await supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1);
+      const{data:ann}=await supabase.from("announcements").select("*").eq("active",true).eq("type","general").order("created_at",{ascending:false}).limit(1);
       if(ann&&ann.length>0)setAnnouncement(ann[0]);
     }catch(e){}
     try{
@@ -269,7 +269,7 @@ export default function Athlete(){
     const dateStr=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
     try{
       await supabase.from("announcements").delete().eq("type","music_vote").eq("week_label",dateStr).eq("day",selectedAthlete.id);
-      await supabase.from("announcements").insert({type:"music_vote",week_label:dateStr,message:genre,day:selectedAthlete.id,active:true});
+      await supabase.from("announcements").insert({type:"music_vote",week_label:dateStr,message:genre,day:selectedAthlete.id,active:false});
     }catch(e){}
   };
 

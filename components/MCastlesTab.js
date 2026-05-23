@@ -59,11 +59,11 @@ export default function MCastlesTab() {
 
           {/* Photo — full image, no cropping */}
           {photo.day && (
-            <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 14, border: "1px solid #1e1e1e", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}>
+            <div style={{ borderRadius: 16, marginBottom: 14, border: "1px solid #1e1e1e", boxShadow: "0 8px 40px rgba(0,0,0,0.6)" }}>
               <img
                 src={photo.day}
                 alt="MCastles Photo of the Week"
-                style={{ width: "100%", display: "block" }}
+                style={{ width: "100%", height: "auto", display: "block", borderRadius: 16 }}
               />
             </div>
           )}
