@@ -2061,7 +2061,7 @@ export default function Coach(){
                 <div style={{background:"#111",borderRadius:14,padding:"14px",marginBottom:14,border:"0.5px solid #1e1e1e"}}>
                   <div style={{fontSize:10,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.15em",fontWeight:700,marginBottom:8}}>Currently Live</div>
                   {mcCurrentPhoto.week_label&&<div style={{fontSize:11,color:"#777",marginBottom:6}}>{mcCurrentPhoto.week_label}</div>}
-                  {mcCurrentPhoto.photo_url&&<img src={mcCurrentPhoto.photo_url} alt="Current motivational" style={{width:"100%",borderRadius:10,maxHeight:220,objectFit:"cover",marginBottom:8,display:"block"}}/>}
+                  {mcCurrentPhoto.photo_url&&<img src={mcCurrentPhoto.photo_url} alt="Current motivational" style={{width:"100%",borderRadius:10,marginBottom:8,display:"block"}}/>}
                   {mcCurrentPhoto.caption&&<div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>&ldquo;{mcCurrentPhoto.caption}&rdquo;</div>}
                 </div>
               )}

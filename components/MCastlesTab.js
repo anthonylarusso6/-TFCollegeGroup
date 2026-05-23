@@ -62,7 +62,7 @@ export default function MCastlesTab() {
               <img
                 src={photo.photo_url}
                 alt="MCastles Photo of the Week"
-                style={{ width: "100%", display: "block", maxHeight: 480, objectFit: "cover" }}
+                style={{ width: "100%", display: "block" }}
               />
             </div>
           )}
