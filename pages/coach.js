@@ -170,7 +170,6 @@ export default function Coach(){
     try{
       const _d=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
       const _dow=_d.getDay();
-      if(![1,2,4,5].includes(_dow)){setMusicVotes(null);return;}
       const _ds=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
       const{data}=await supabase.from("music_votes").select("genre").eq("class_date",_ds);
       if(data){
@@ -645,7 +644,6 @@ export default function Coach(){
                     </div>
                   </div>
                 );
-                if(_dow!==2&&_dow!==4)return null;
                 const total=musicVotes?Object.values(musicVotes).reduce((a,b)=>a+b,0):0;
                 const topGenre=musicVotes&&total>0?Object.entries(musicVotes).sort((a,b)=>b[1]-a[1])[0]?.[0]:null;
                 return(

@@ -256,11 +256,9 @@ export default function Athlete(){
     try{const{data:lbRow}=await supabase.from("leaderboard").select("*").eq("athlete_id",athleteId).single();if(lbRow)setAthleteLb(lbRow);}catch(e){}
     try{
       const _vd=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
-      if([2,4].includes(_vd.getDay())){
-        const _ds=`${_vd.getFullYear()}-${String(_vd.getMonth()+1).padStart(2,'0')}-${String(_vd.getDate()).padStart(2,'0')}`;
-        const{data:vt}=await supabase.from("music_votes").select("genre").eq("athlete_id",athleteId).eq("class_date",_ds).single();
-        if(vt)setMyVote(vt.genre);
-      }
+      const _ds=`${_vd.getFullYear()}-${String(_vd.getMonth()+1).padStart(2,'0')}-${String(_vd.getDate()).padStart(2,'0')}`;
+      const{data:vt}=await supabase.from("music_votes").select("genre").eq("athlete_id",athleteId).eq("class_date",_ds).single();
+      if(vt)setMyVote(vt.genre);
     }catch(e){}
   };
 
@@ -811,7 +809,6 @@ export default function Athlete(){
                       </div>
                     </div>
                   );
-                  if(_dow!==2&&_dow!==4)return null;
                   return(
                     <div style={{borderRadius:16,marginBottom:12,overflow:"hidden",border:"1px solid "+ORANGE+"33"}}>
                       <div style={{background:"linear-gradient(140deg,"+ORANGE+"18,"+ORANGE+"06,#0d0d0d)",padding:"16px 16px 14px",position:"relative",overflow:"hidden"}}>
