@@ -120,8 +120,8 @@ function MindsetNotes({athleteId, athlete}){
 
 // ── Accountability Partner ──────────────────────────────────────
 function AccountabilityPartner({athleteId, athletes}){
-  const myPartner=athletes.find(a=>a.accountability_partner===athleteId||athleteId===a.accountability_partner);
-  const partner=athletes.find(a=>a.id===myPartner?.accountability_partner||a.accountability_partner===athleteId);
+  const me=athletes.find(a=>a.id===athleteId);
+  const partner=athletes.find(a=>a.id===me?.accountability_partner)||athletes.find(a=>a.accountability_partner===athleteId);
   const[lb,setLb]=useState(null);
   useEffect(()=>{
     if(partner){
@@ -323,6 +323,7 @@ export default function Athlete(){
     setFeedbackText("");setFeedbackSent(false);
     setPrayerText("");setPrayerSent(false);
     setInjuryText("");setInjurySent(false);setInjuryOpen(false);
+    setGoalSaved({});setGoalText({});
     setTab("profile");setScreen("login");
     await loadAttendance(a.id);
     await loadDraft();

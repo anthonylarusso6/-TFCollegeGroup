@@ -42,7 +42,7 @@ export default function Landing(){
   const[qrPin,setQrPin]=useState("");
   const[qrPinError,setQrPinError]=useState(false);
   const[loaded,setLoaded]=useState(false);
-  const[time,setTime]=useState(new Date());
+  const[time,setTime]=useState(null);
   const[countdown,setCountdown]=useState(null);
   const[anvilWinner,setAnvilWinner]=useState(null);
   const[athleteCount,setAthleteCount]=useState(null);
@@ -172,7 +172,7 @@ export default function Landing(){
     }
   };
 
-  const estTime=typeof window!=="undefined"?new Date(time.toLocaleString("en-US",{timeZone:"America/New_York"})):new Date();
+  const estTime=(typeof window!=="undefined"&&time)?new Date(time.toLocaleString("en-US",{timeZone:"America/New_York"})):new Date();
   const day=typeof window!=="undefined"?["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][estTime.getDay()]:"Mon";
   const isClassDay=typeof window!=="undefined"&&["Mon","Tue","Thu","Fri"].includes(day);
   const isMonFri=typeof window!=="undefined"&&(day==="Mon"||day==="Fri");

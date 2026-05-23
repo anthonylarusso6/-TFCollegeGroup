@@ -155,10 +155,10 @@ export default function Draft({athletes=[]}){
     const noMore=athletes.filter(a=>![...Object.values(newGroups).flat()].includes(a.name)).length===0;
 
     if(seqDone||noMore){
-      leaders.forEach(async(name,i)=>{
+      await Promise.all(leaders.map(async(name,i)=>{
         const a=athletes.find(x=>x.name===name);
         if(a){try{await supabase.from("athletes").update({role:"forge",group_idx:i,tier:getTier(i,numGroups)}).eq("id",a.id);}catch(e){}}
-      });
+      }));
       setStep("done");
       save({phase:"locked",groups:Object.values(newGroups),locked:true});
     }else{
