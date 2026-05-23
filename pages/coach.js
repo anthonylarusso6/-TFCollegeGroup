@@ -122,6 +122,12 @@ export default function Coach(){
   const[anvilWinner,setAnvilWinner]=useState("");
   const[anvilNote,setAnvilNote]=useState("");
   const[anvilDate,setAnvilDate]=useState("");
+  const[recapOpen,setRecapOpen]=useState(false);
+  const[recapData,setRecapData]=useState(null);
+  const[recapLoading,setRecapLoading]=useState(false);
+  const[modalAth,setModalAth]=useState(null);
+  const[modalData,setModalData]=useState(null);
+  const[modalLoading,setModalLoading]=useState(false);
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
@@ -269,6 +275,44 @@ export default function Coach(){
     }
     setAnvilWinner("");setAnvilNote("");setAnvilDate("");
     await loadAll();
+  };
+
+  const loadRecap=async()=>{
+    setRecapLoading(true);
+    try{
+      const now=new Date();
+      const est=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
+      const day=est.getDay();
+      const monday=new Date(est);
+      monday.setDate(est.getDate()-(day===0?6:day-1));
+      monday.setHours(0,0,0,0);
+      const monStr=monday.getFullYear()+"-"+String(monday.getMonth()+1).padStart(2,"0")+"-"+String(monday.getDate()).padStart(2,"0");
+      const todayStr=est.getFullYear()+"-"+String(est.getMonth()+1).padStart(2,"0")+"-"+String(est.getDate()).padStart(2,"0");
+      const[{data:weekAtt},{data:lbRows},{data:weekInbox}]=await Promise.all([
+        supabase.from("attendance").select("*,athletes(name)").gte("date",monStr).lte("date",todayStr),
+        supabase.from("leaderboard").select("*,athletes(name)").order("current_streak",{ascending:false}),
+        supabase.from("inbox").select("*,athletes(name)").eq("done",false).gte("created_at",monday.toISOString()),
+      ]);
+      setRecapData({weekAtt:weekAtt||[],lbRows:lbRows||[],weekInbox:weekInbox||[]});
+    }catch(e){console.error("Recap load:",e);}
+    setRecapLoading(false);
+  };
+
+  const openAthleteModal=async(ath)=>{
+    setModalAth(ath);
+    setModalData(null);
+    setModalLoading(true);
+    try{
+      const[{data:att},{data:lbRow},{data:msgs},{data:wt},{data:anv}]=await Promise.all([
+        supabase.from("attendance").select("*").eq("athlete_id",ath.id).order("date",{ascending:false}).limit(20),
+        supabase.from("leaderboard").select("*").eq("athlete_id",ath.id).single(),
+        supabase.from("inbox").select("*").eq("athlete_id",ath.id).order("created_at",{ascending:false}).limit(8),
+        supabase.from("weight_log").select("*").eq("athlete_id",ath.id).order("date",{ascending:false}).limit(6),
+        supabase.from("anvil").select("*").eq("athlete_name",ath.name).order("created_at",{ascending:false}),
+      ]);
+      setModalData({att:att||[],lbRow,msgs:msgs||[],wt:wt||[],anv:anv||[]});
+    }catch(e){console.error("Modal load:",e);}
+    setModalLoading(false);
   };
 
   const replyToInbox=async(item,reply)=>{
