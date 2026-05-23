@@ -630,6 +630,80 @@ export default function Coach(){
                   <button onClick={saveAnnouncement} style={{padding:"8px 20px",borderRadius:8,border:"none",background:PUR,color:"#fff",fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia, serif"}}>Save & push to athletes →</button>
                 </div>
               </div>
+              <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
+                <div onClick={()=>{setRecapOpen(o=>{if(!o&&!recapData)loadRecap();return!o;})}}
+                     style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"16px 18px",cursor:"pointer",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
+                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📊</div>
+                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📊</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>This Week</div>
+                      <div style={{fontSize:18,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Weekly Recap</div>
+                      <div style={{fontSize:11,color:"#666",marginTop:1}}>Attendance, streaks, follow-ups</div>
+                    </div>
+                    <div style={{fontSize:18,color:"#444",transition:"transform 0.2s",transform:recapOpen?"rotate(180deg)":"none"}}>▾</div>
+                  </div>
+                </div>
+                {recapOpen&&(
+                  <div style={{background:"#0e0e0e",padding:"16px 18px"}}>
+                    {recapLoading&&<div style={{fontSize:13,color:"#555",textAlign:"center",padding:"1rem 0"}}>Loading...</div>}
+                    {recapData&&(()=>{
+                      const{weekAtt,lbRows,weekInbox}=recapData;
+                      const activeAthletes=athletes.filter(a=>a.status==="active");
+                      const uniqueAttendees=[...new Set(weekAtt.map(r=>r.athlete_id))];
+                      const attendancePct=activeAthletes.length>0?Math.round((uniqueAttendees.length/activeAthletes.length)*100):0;
+                      const missedThis=(athletes.filter(a=>a.status==="active"&&!uniqueAttendees.includes(a.id)));
+                      const onStreak=lbRows.filter(lb=>(lb.current_streak||0)>=3);
+                      const earlyThisWeek=weekAtt.filter(r=>r.status==="early");
+                      return(
+                        <div>
+                          <div style={{display:"flex",gap:8,marginBottom:14}}>
+                            <div style={{flex:1,background:"#111",borderRadius:12,padding:"12px",textAlign:"center",border:"0.5px solid #1e1e1e"}}>
+                              <div style={{fontSize:28,fontWeight:900,color:attendancePct>=80?GREEN:attendancePct>=60?GOLD:RED}}>{attendancePct}%</div>
+                              <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:2}}>Attendance</div>
+                              <div style={{fontSize:10,color:"#444",marginTop:2}}>{uniqueAttendees.length}/{activeAthletes.length} athletes</div>
+                            </div>
+                            <div style={{flex:1,background:"#111",borderRadius:12,padding:"12px",textAlign:"center",border:"0.5px solid #1e1e1e"}}>
+                              <div style={{fontSize:28,fontWeight:900,color:GREEN}}>{earlyThisWeek.length}</div>
+                              <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:2}}>Early</div>
+                              <div style={{fontSize:10,color:"#444",marginTop:2}}>this week</div>
+                            </div>
+                            <div style={{flex:1,background:"#111",borderRadius:12,padding:"12px",textAlign:"center",border:"0.5px solid #1e1e1e"}}>
+                              <div style={{fontSize:28,fontWeight:900,color:weekInbox.length>0?RED:"#555"}}>{weekInbox.length}</div>
+                              <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:2}}>Unread</div>
+                              <div style={{fontSize:10,color:"#444",marginTop:2}}>follow-ups</div>
+                            </div>
+                          </div>
+                          {onStreak.length>0&&(
+                            <div style={{marginBottom:12}}>
+                              <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:8}}>🔥 On a streak (3+)</div>
+                              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                                {onStreak.map((lb,i)=>(
+                                  <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:20,background:"#1a1500",border:"0.5px solid "+GOLD+"33"}}>
+                                    <span style={{fontSize:11,fontWeight:700,color:GOLD}}>{lb.current_streak}🔥</span>
+                                    <span style={{fontSize:11,color:"#ccc"}}>{lb.athletes?.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {missedThis.length>0&&(
+                            <div>
+                              <div style={{fontSize:10,color:RED,textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:8}}>⚠ Missed this week</div>
+                              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                                {missedThis.map((a,i)=>(
+                                  <div key={i} style={{padding:"5px 10px",borderRadius:20,background:"#1a0808",border:"0.5px solid "+RED+"33",fontSize:11,color:"#aaa"}}>{a.name}</div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
               {(injuries.length>0||messages.length>0||prayers.length>0)&&(
                 <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+RED+"33"}}>
                   <div style={{background:"linear-gradient(140deg,"+RED+"30,"+RED+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
@@ -816,7 +890,7 @@ export default function Coach(){
                         </label>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                            <div style={{fontSize:13,fontWeight:500,color:"#ddd"}}>{a.name}</div>
+                            <div onClick={e=>{e.stopPropagation();openAthleteModal(a);}} style={{fontSize:13,fontWeight:500,color:"#ddd",cursor:"pointer",textDecoration:"underline",textDecorationColor:"#444"}}>{a.name}</div>
                             {hasInjury&&<span style={{fontSize:10,background:"#2a0808",color:RED,padding:"1px 6px",borderRadius:4,fontWeight:500}}>🤕 Injured</span>}
                           </div>
                           <div style={{fontSize:11,color:"#666"}}>{a.sport} · {a.gender} · <span style={{color:a.role==="forge"?RED:STEEL}}>{a.role==="forge"?"Forge":"Iron"}</span></div>
@@ -1685,7 +1759,7 @@ export default function Coach(){
                           </div>
                           <div style={{flex:1,minWidth:0}}>
                             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-                              <div style={{fontSize:13,fontWeight:500,color:"#ddd"}}>{lb.athletes?.name}</div>
+                              <div onClick={()=>{const a=athletes.find(x=>x.name===lb.athletes?.name);if(a)openAthleteModal(a);}} style={{fontSize:13,fontWeight:500,color:"#ddd",cursor:"pointer",textDecoration:"underline",textDecorationColor:"#444"}}>{lb.athletes?.name}</div>
                               <div style={{fontSize:13,fontWeight:700,color:lbSort==="callout"?RED:GOLD}}>{val}</div>
                             </div>
                             <div style={{height:5,background:"#222",borderRadius:3,overflow:"hidden"}}>
@@ -1799,6 +1873,96 @@ export default function Coach(){
           </ErrorBoundary>
         </div>
       </div>
+      {modalAth&&(
+        <div style={{position:"fixed",inset:0,zIndex:9000,background:"rgba(0,0,0,0.85)"}} onClick={()=>{setModalAth(null);setModalData(null);}}>
+          <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"#0e0e0e",borderRadius:"24px 24px 0 0",maxHeight:"90vh",overflowY:"auto",border:"1px solid #1e1e1e",borderBottom:"none",fontFamily:"Georgia,serif"}}>
+            <div style={{width:40,height:4,borderRadius:2,background:"#333",margin:"12px auto 0"}}/>
+            <div style={{padding:"16px 20px 14px",borderBottom:"0.5px solid #1a1a1a",display:"flex",alignItems:"center",gap:14}}>
+              <div style={{width:52,height:52,borderRadius:"50%",background:modalAth.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden",border:"2px solid "+(modalAth.role==="forge"?RED:STEEL)+"55"}}>
+                {modalAth.photo_url?<img src={modalAth.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:modalAth.name[0]}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>{modalAth.name}</div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:3}}>
+                  {modalAth.sport&&<span style={{fontSize:10,color:"#666"}}>{modalAth.sport}</span>}
+                  <span style={{fontSize:10,color:modalAth.role==="forge"?RED:STEEL,fontWeight:700,textTransform:"uppercase"}}>{modalAth.role||"iron"}</span>
+                  {modalAth.status==="sleeping"&&<span style={{fontSize:10,color:"#666"}}>· sleeping</span>}
+                </div>
+              </div>
+              <button onClick={()=>{setModalAth(null);setModalData(null);}} style={{background:"transparent",border:"none",color:"#444",fontSize:20,cursor:"pointer",padding:"4px"}}>✕</button>
+            </div>
+            {modalLoading&&<div style={{textAlign:"center",padding:"3rem",color:"#555",fontSize:13}}>Loading...</div>}
+            {modalData&&(()=>{
+              const{att,lbRow,msgs,wt,anv}=modalData;
+              const streak=lbRow?.current_streak||0;
+              const early=lbRow?.early_count||0;
+              const best=lbRow?.best_streak||0;
+              const lastAtt=att.slice(0,8);
+              return(
+                <div style={{padding:"16px 20px 40px"}}>
+                  <div style={{display:"flex",gap:8,marginBottom:16}}>
+                    {[{label:"Streak",val:streak,color:GREEN,icon:"🔥"},{label:"Best",val:best,color:GOLD,icon:"⭐"},{label:"Early",val:early,color:"#ddd",icon:"⏰"},{label:"Late",val:lbRow?.late_count||0,color:RED,icon:"⚠"}].map(s=>(
+                      <div key={s.label} style={{flex:1,background:"#111",borderRadius:10,padding:"8px",textAlign:"center",border:"0.5px solid #1e1e1e"}}>
+                        <div style={{fontSize:8,marginBottom:2}}>{s.icon}</div>
+                        <div style={{fontSize:20,fontWeight:900,color:s.color}}>{s.val}</div>
+                        <div style={{fontSize:8,color:"#555",textTransform:"uppercase",letterSpacing:"0.06em"}}>{s.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {lastAtt.length>0&&(
+                    <div style={{marginBottom:16}}>
+                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Recent attendance</div>
+                      <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                        {lastAtt.map((r,i)=>(
+                          <div key={i} style={{textAlign:"center"}}>
+                            <div style={{width:28,height:28,borderRadius:8,background:r.status==="early"?GREEN+"22":r.status==="late"?"#2a1500":"#1a1a1a",border:"0.5px solid "+(r.status==="early"?GREEN:r.status==="late"?GOLD:"#2a2a2a"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10}}>{r.status==="early"?"✓":r.status==="late"?"↓":"?"}</div>
+                            <div style={{fontSize:7,color:"#444",marginTop:2,whiteSpace:"nowrap"}}>{r.date?.slice(5)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {(modalAth.athletic_goal||modalAth.character_goal)&&(
+                    <div style={{marginBottom:16}}>
+                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Goals</div>
+                      {modalAth.athletic_goal&&<div style={{background:"#111",borderRadius:10,padding:"10px 12px",marginBottom:6,borderLeft:"3px solid "+GREEN}}><div style={{fontSize:9,color:GREEN,marginBottom:3,fontWeight:700}}>ATHLETIC</div><div style={{fontSize:12,color:"#ccc"}}>{modalAth.athletic_goal}</div></div>}
+                      {modalAth.character_goal&&<div style={{background:"#111",borderRadius:10,padding:"10px 12px",borderLeft:"3px solid "+PUR}}><div style={{fontSize:9,color:PUR,marginBottom:3,fontWeight:700}}>CHARACTER</div><div style={{fontSize:12,color:"#ccc"}}>{modalAth.character_goal}</div></div>}
+                    </div>
+                  )}
+                  {msgs.filter(m=>!m.done).length>0&&(
+                    <div style={{marginBottom:16}}>
+                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Recent messages</div>
+                      {msgs.filter(m=>!m.done).slice(0,3).map((m,i)=>{
+                        const typeColor=m.type==="injury"?RED:m.type==="prayer"?GREEN:PUR;
+                        return<div key={i} style={{background:"#111",borderRadius:10,padding:"10px 12px",marginBottom:6,borderLeft:"3px solid "+typeColor}}><div style={{fontSize:9,color:typeColor,marginBottom:3,fontWeight:700,textTransform:"uppercase"}}>{m.type}</div><div style={{fontSize:12,color:"#ccc",fontStyle:"italic"}}>"{m.message}"</div></div>;
+                      })}
+                    </div>
+                  )}
+                  {wt.length>0&&(
+                    <div style={{marginBottom:16}}>
+                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Weight log</div>
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                        {wt.map((w,i)=>(
+                          <div key={i} style={{background:"#111",borderRadius:8,padding:"6px 10px",border:"0.5px solid #1e1e1e"}}>
+                            <div style={{fontSize:13,fontWeight:700,color:"#ddd"}}>{w.weight}<span style={{fontSize:10,color:"#555"}}>lb</span></div>
+                            <div style={{fontSize:9,color:"#444"}}>{w.date?.slice(5)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {anv.length>0&&(
+                    <div>
+                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>⚒ Anvil awards ({anv.length})</div>
+                      {anv.map((a,i)=><div key={i} style={{background:"#1f1700",borderRadius:8,padding:"8px 12px",marginBottom:4,border:"0.5px solid "+GOLD+"33",display:"flex",justifyContent:"space-between"}}><span style={{fontSize:12,color:GOLD}}>{a.type==="group"?"Group":"Individual"}</span><span style={{fontSize:11,color:"#666"}}>{a.date_awarded}</span></div>)}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
     </>
   );
 }
