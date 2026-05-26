@@ -206,6 +206,7 @@ export default function Athlete(){
   const[athleteLb,setAthleteLb]=useState(null);
   const[milestone,setMilestone]=useState(null);
   const[myVote,setMyVote]=useState(null);
+  const[groupmeLink,setGroupmeLink]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
   const[draft,setDraft]=useState(null);
   const pollRef=useRef(null);
   const athleteIdRef=useRef(null);
@@ -231,6 +232,10 @@ export default function Athlete(){
     try{
       const{data:anv}=await supabase.from("anvil").select("athlete_name,date_awarded,note").order("created_at",{ascending:false}).limit(1);
       if(anv&&anv.length>0)setAnvilWinner(anv[0]);
+    }catch(e){}
+    try{
+      const{data:gm}=await supabase.from("announcements").select("day").eq("type","groupme_link").order("created_at",{ascending:false}).limit(1).maybeSingle();
+      if(gm?.day)setGroupmeLink(gm.day);
     }catch(e){}
     setLoading(false);
   };
@@ -1115,6 +1120,23 @@ export default function Athlete(){
                     </div>
                   )}
                 </div>
+                <a href={groupmeLink} target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",marginBottom:12}}>
+                  <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid #00aff033"}}>
+                    <div style={{background:"linear-gradient(140deg,#001828,#000d18,#0d0d0d)",padding:"16px 18px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#00aff0,#00aff055,transparent)"}}/>
+                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none"}}>💬</div>
+                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,#00aff044,#00aff022)",border:"1px solid #00aff044",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px #00aff033"}}>💬</div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:8,color:"#00aff0",textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Group Chat</div>
+                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Join GroupMe</div>
+                          <div style={{fontSize:11,color:"#555",marginTop:1}}>Tap to join the team group chat</div>
+                        </div>
+                        <div style={{fontSize:18,color:"#00aff044"}}>→</div>
+                      </div>
+                    </div>
+                  </div>
+                </a>
               </div>
             )}
 

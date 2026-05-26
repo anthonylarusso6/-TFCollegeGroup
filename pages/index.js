@@ -53,7 +53,7 @@ export default function Landing(){
   const[classCount,setClassCount]=useState(null);
   const[photo,setPhoto]=useState(null);
   const[notifGranted,setNotifGranted]=useState(typeof window!=="undefined"&&"Notification" in window&&Notification.permission==="granted"&&localStorage.getItem("notif_disabled")!=="true");
-  const GROUPME_LINK="https://groupme.com/join_group/111967377/1JobSG7L";
+  const[groupmeLink,setGroupmeLink]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
 
   useEffect(()=>{
     import("qrcode").then(QRCode=>{
@@ -132,6 +132,7 @@ export default function Landing(){
         setWeekProgress({current,total:totalWeeks,pct:Math.round((current/totalWeeks)*100)});
       }
       try{const{data}=await supabase.from("culture_photos").select("*").order("created_at",{ascending:false}).limit(1);if(data&&data[0])setPhoto(data[0]);}catch(e){}
+      try{const{data}=await supabase.from("announcements").select("day").eq("type","groupme_link").order("created_at",{ascending:false}).limit(1).maybeSingle();if(data?.day)setGroupmeLink(data.day);}catch(e){}
       try{
         const r=await fetch("https://api.open-meteo.com/v1/forecast?latitude=35.9606&longitude=-83.9207&current_weather=true&temperature_unit=fahrenheit");
         const d=await r.json();
@@ -468,7 +469,7 @@ export default function Landing(){
 
           {/* GroupMe + Notifications */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
-            <a href={GROUPME_LINK} target="_blank" rel="noreferrer" style={{textDecoration:"none"}}>
+            <a href={groupmeLink} target="_blank" rel="noreferrer" style={{textDecoration:"none"}}>
               <div style={{background:"#111",borderRadius:14,padding:"14px",border:"1px solid #1e1e1e",textAlign:"center",cursor:"pointer"}}
                 onMouseEnter={e=>e.currentTarget.style.borderColor="#00aff0aa"}
                 onMouseLeave={e=>e.currentTarget.style.borderColor="#1e1e1e"}>

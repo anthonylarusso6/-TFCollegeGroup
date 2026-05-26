@@ -137,6 +137,10 @@ export default function Coach(){
   const[mcFile,setMcFile]=useState(null);
   const[mcPreview,setMcPreview]=useState(null);
   const[mcSuccess,setMcSuccess]=useState(false);
+  const[groupmeLink,setGroupmeLink]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
+  const[groupmeLinkInput,setGroupmeLinkInput]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
+  const[groupmeLinkSaving,setGroupmeLinkSaving]=useState(false);
+  const[groupmeLinkSaved,setGroupmeLinkSaved]=useState(false);
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
@@ -176,6 +180,7 @@ export default function Coach(){
     try{const{data}=await supabase.from("weight_log").select("*").order("date",{ascending:false});if(data)setWeightLogs(data);}catch(e){}
     try{const{data}=await supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name");if(data)setEngAthletes(data);}catch(e){}
     await loadMusicVotes();
+    await loadGroupmeLink();
   };
 
   const loadMusicVotes=async()=>{
@@ -196,6 +201,26 @@ export default function Coach(){
       const{data}=await supabase.from("announcements").select("*").eq("type","mcastles").order("created_at",{ascending:false}).limit(1).maybeSingle();
       if(data){setMcCurrentPhoto(data);setMcCaption(data.message||"");setMcWeek(data.week_label||"");}
     }catch(e){}
+  };
+
+  const loadGroupmeLink=async()=>{
+    try{
+      const{data}=await supabase.from("announcements").select("day").eq("type","groupme_link").order("created_at",{ascending:false}).limit(1).maybeSingle();
+      if(data?.day){setGroupmeLink(data.day);setGroupmeLinkInput(data.day);}
+    }catch(e){}
+  };
+
+  const saveGroupmeLink=async()=>{
+    if(!groupmeLinkInput.trim())return;
+    setGroupmeLinkSaving(true);
+    try{
+      const{error}=await supabase.from("announcements").insert({type:"groupme_link",day:groupmeLinkInput.trim(),active:true,message:"GroupMe invite link"});
+      if(error){alert("Save failed: "+error.message);setGroupmeLinkSaving(false);return;}
+      setGroupmeLink(groupmeLinkInput.trim());
+      setGroupmeLinkSaved(true);
+      setTimeout(()=>setGroupmeLinkSaved(false),2500);
+    }catch(e){alert("Save failed: "+e.message);}
+    setGroupmeLinkSaving(false);
   };
 
   const uploadMotivationalPhoto=async(file)=>{
@@ -1583,6 +1608,15 @@ export default function Coach(){
                     <div style={{fontSize:12,color:"#777"}}>{s}</div>
                   </div>
                 ))}
+              </div>
+              <div style={{background:"#111",borderRadius:20,padding:"16px 18px",marginTop:12,border:"1px solid #00aff033"}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#00aff0",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6}}>💬 GroupMe Invite Link</div>
+                <div style={{fontSize:11,color:"#555",marginBottom:10}}>This link appears in the athlete portal and home page. Update it here whenever GroupMe gives you a new code.</div>
+                <a href={groupmeLink} target="_blank" rel="noreferrer" style={{display:"block",padding:"8px 12px",borderRadius:8,background:"#00aff011",border:"0.5px solid #00aff022",fontSize:11,color:"#00aff0",textDecoration:"none",marginBottom:10,wordBreak:"break-all"}}>{groupmeLink}</a>
+                <input value={groupmeLinkInput} onChange={e=>setGroupmeLinkInput(e.target.value)} placeholder="https://groupme.com/join_group/..." style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #333",fontSize:12,background:"#1a1a1a",color:"#ddd",boxSizing:"border-box",marginBottom:8,fontFamily:"Georgia,serif"}}/>
+                <button onClick={saveGroupmeLink} disabled={groupmeLinkSaving||!groupmeLinkInput.trim()} style={{width:"100%",padding:"10px",borderRadius:10,border:"none",background:groupmeLinkSaved?"#1E6B3A":"#00aff0",color:"#fff",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                  {groupmeLinkSaved?"✓ Link updated!":groupmeLinkSaving?"Saving...":"Update GroupMe Link →"}
+                </button>
               </div>
             </div>
           )}
