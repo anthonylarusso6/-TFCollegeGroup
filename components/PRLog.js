@@ -58,22 +58,42 @@ const DEFAULT_PROGRAM={
   ],
 };
 
+// Epley estimated 1RM formula
+const epley=(w,r)=>r===1?w:Math.round(w*(1+r/30));
+
+const CATS=[
+  {id:"lower", label:"Lower Body", emoji:"🦵", ref:225},
+  {id:"push",  label:"Push",       emoji:"💪", ref:175},
+  {id:"pull",  label:"Pull",       emoji:"🤜", ref:155},
+  {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:255},
+];
+
+const getCat=(name)=>{
+  const n=name.toLowerCase();
+  if(n.includes("deadlift")||n.includes(" clean")||n.includes("snatch")||n.includes("swing")||n.includes("rdl")||n.includes("hinge"))return "hinge";
+  if(n.includes("squat")||n.includes("lunge")||n.includes("step up"))return "lower";
+  if(n.includes("bench")||n.includes("press")||n.includes("push")||n.includes("dip")||n.includes("jerk"))return "push";
+  if(n.includes("pull")||n.includes("row")||n.includes("curl"))return "pull";
+  return null;
+};
+
 export default function PRLog({athleteId}){
   const today=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date().getDay()];
   const defaultDay=DAYS.includes(today)?today:"Mon";
+  const[view,setView]=useState("log");
   const[activeDay,setActiveDay]=useState(defaultDay);
   const[program,setProgram]=useState(null);
   const[phase,setPhase]=useState("");
-  const[logs,setLogs]=useState({});// {liftName: [{weight,reps,date,id}]}
-  const[inputs,setInputs]=useState({});// {liftName: {weight:"",reps:""}}
+  const[logs,setLogs]=useState({});
+  const[inputs,setInputs]=useState({});
   const[saving,setSaving]=useState(null);
   const[saved,setSaved]=useState(null);
   const[loadError,setLoadError]=useState("");
   const[expanded,setExpanded]=useState(null);
   const[deleting,setDeleting]=useState(null);
   const[confirmDelete,setConfirmDelete]=useState(null);
+  const[selLift,setSelLift]=useState(null);
 
-  // Load coach program
   useEffect(()=>{
     (async()=>{
       try{
@@ -91,7 +111,6 @@ export default function PRLog({athleteId}){
     })();
   },[]);
 
-  // Load existing logs for this athlete
   useEffect(()=>{
     if(!athleteId)return;
     (async()=>{
@@ -130,38 +149,83 @@ export default function PRLog({athleteId}){
       day:activeDay,
       tier:tier||1,
     };
-    const{data,error}=await supabase.from("pr_log").insert(entry).select().single();
-    if(error){setLoadError(error.message);setSaving(null);return;}
-    setLogs(prev=>{
-      const existing=prev[liftName]||[];
-      return{...prev,[liftName]:[data,...existing]};
-    });
-    setInputs(prev=>({...prev,[liftName]:{weight:"",reps:""}}));
-    setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);
+    try{
+      const{data,error}=await supabase.from("pr_log").insert(entry).select().single();
+      if(error){setLoadError(error.message);setSaving(null);return;}
+      setLogs(prev=>{
+        const existing=prev[liftName]||[];
+        return{...prev,[liftName]:[data,...existing]};
+      });
+      setInputs(prev=>({...prev,[liftName]:{weight:"",reps:""}}));
+      setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);
+    }catch(e){setLoadError(e.message);setSaving(null);}
   };
 
   const deleteLog=async(logId,liftName)=>{
     setDeleting(logId);
-    try{await supabase.from("pr_log").delete().eq("id",logId);}catch(e){console.error(e);}
+    try{await supabase.from("pr_log").delete().eq("id",logId);}catch(e){}
     setLogs(prev=>{
       const updated=(prev[liftName]||[]).filter(l=>l.id!==logId);
       return{...prev,[liftName]:updated};
     });
     setDeleting(null);
+    setConfirmDelete(null);
   };
 
-  // Personal record for a lift
   const getPR=(liftName)=>{
     const liftLogs=logs[liftName]||[];
     if(!liftLogs.length)return null;
     return Math.max(...liftLogs.map(l=>parseFloat(l.weight)||0));
   };
 
-  // Last logged weight
   const getLast=(liftName)=>{
     const liftLogs=logs[liftName]||[];
     return liftLogs[0]?.weight||null;
   };
+
+  // ── Dashboard computed data ──────────────────────────────────
+  const allLiftNames=Object.keys(logs).filter(k=>logs[k].length>0);
+
+  const liftPRs={};
+  allLiftNames.forEach(name=>{
+    const entries=logs[name];
+    const best=entries.reduce((b,e)=>{
+      const orm=epley(parseFloat(e.weight)||0,parseInt(e.reps)||1);
+      return orm>b.orm?{...e,orm}:b;
+    },{orm:0});
+    liftPRs[name]=best;
+  });
+
+  const selEntries=selLift
+    ?(logs[selLift]||[]).slice().sort((a,b)=>new Date(a.date)-new Date(b.date))
+    :[];
+  const selOrms=selEntries.map(e=>epley(parseFloat(e.weight)||0,parseInt(e.reps)||1));
+
+  // Radar
+  const catPRs={};
+  CATS.forEach(cat=>{
+    const catLifts=allLiftNames.filter(l=>getCat(l)===cat.id);
+    if(!catLifts.length)return;
+    const best=Math.max(...catLifts.map(l=>liftPRs[l]?.orm||0));
+    if(best>0)catPRs[cat.id]=best;
+  });
+  const activeCats=CATS.filter(c=>catPRs[c.id]);
+  const N=activeCats.length;
+  const RCX=100,RCY=100,RR=70;
+  const rAngle=(i)=>(2*Math.PI*i/Math.max(N,1))-Math.PI/2;
+  const rPt=(i,r)=>[RCX+r*Math.cos(rAngle(i)),RCY+r*Math.sin(rAngle(i))];
+  const rScores=activeCats.map(c=>Math.min(1,catPRs[c.id]/c.ref));
+  const rFillPts=activeCats.map((_,i)=>{const[x,y]=rPt(i,rScores[i]*RR);return`${x},${y}`;}).join(" ");
+
+  // Trend sparkline
+  const cW=100,cH=55;
+  const oMin=selOrms.length?Math.min(...selOrms)-5:0;
+  const oMax=selOrms.length?Math.max(...selOrms)+5:100;
+  const tPts=selOrms.map((o,i)=>{
+    const x=(i/(Math.max(selOrms.length-1,1)))*cW;
+    const y=cH-((o-oMin)/(Math.max(oMax-oMin,1)))*cH;
+    return`${x},${y}`;
+  }).join(" ");
 
   if(!program)return(
     <div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading program...</div>
@@ -169,140 +233,351 @@ export default function PRLog({athleteId}){
 
   return(
     <div>
-      {/* Phase banner */}
-      {phase&&(
-        <div style={{background:"linear-gradient(135deg,#1a1400,#221b00)",borderRadius:12,padding:"10px 14px",marginBottom:10,border:"1px solid "+GOLD+"33",display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:18}}>⚡</span>
-          <div>
-            <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.08em"}}>Current phase</div>
-            <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{phase}</div>
-          </div>
-        </div>
-      )}
-
-      {loadError&&(
-        <div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>
-          Error: {loadError}
-        </div>
-      )}
-
-      {/* Day selector */}
+      {/* View toggle */}
       <div style={{display:"flex",gap:6,marginBottom:12}}>
-        {DAYS.map(d=>{
-          const isActive=activeDay===d;
-          const isToday=d===defaultDay;
-          return(
-            <button key={d} onClick={()=>setActiveDay(d)} style={{flex:1,padding:"10px 4px",borderRadius:10,border:"1px solid "+(isActive?ORANGE:"#e0e0e0"),background:isActive?ORANGE:"#fff",color:isActive?"#fff":"#888",fontSize:12,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",position:"relative"}}>
-              {isToday&&!isActive&&<div style={{position:"absolute",top:3,right:3,width:6,height:6,borderRadius:"50%",background:GREEN}}/>}
-              {d}
-            </button>
-          );
-        })}
+        {[{id:"log",label:"🏋️ Log"},{id:"dashboard",label:"📊 Dashboard"}].map(v=>(
+          <button key={v.id} onClick={()=>setView(v.id)}
+            style={{flex:1,padding:"11px",borderRadius:10,
+              border:"1px solid "+(view===v.id?GOLD:"#e0e0e0"),
+              background:view===v.id?"linear-gradient(135deg,"+GOLD+"22,"+GOLD+"11)":"#f9f9f9",
+              color:view===v.id?GOLD:"#888",fontSize:13,fontWeight:view===v.id?700:400,
+              cursor:"pointer",fontFamily:"Georgia,serif"}}>
+            {v.label}
+          </button>
+        ))}
       </div>
 
-      {/* Day header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-        <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{DAY_LABELS[activeDay]}'s Lifts</div>
-        <div style={{fontSize:11,color:"#aaa"}}>{todayLifts.length} lifts</div>
-      </div>
-
-      {/* Lift cards */}
-      {todayLifts.map((lift,i)=>{
-        const tc=TIER_COLORS[lift.tier]||TIER_COLORS[1];
-        const pr=getPR(lift.name);
-        const last=getLast(lift.name);
-        const inp=inputs[lift.name]||{weight:"",reps:""};
-        const isSaving=saving===lift.name;
-        const isSaved=saved===lift.name;
-        const liftHistory=logs[lift.name]||[];
-        const isExpanded=expanded===lift.name;
-
-        return(
-          <div key={i} style={{background:"#fff",borderRadius:12,marginBottom:8,border:"1px solid "+tc.border+"33",overflow:"hidden",borderTop:"3px solid "+tc.border}}>
-            {/* Lift header */}
-            <div style={{padding:"12px 14px"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-                <div>
-                  <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{lift.name}</div>
-                  <div style={{fontSize:10,fontWeight:600,color:tc.color,marginTop:2}}>{tc.label}</div>
-                </div>
-                <div style={{textAlign:"right"}}>
-                  {pr&&<div style={{fontSize:12,fontWeight:700,color:GOLD}}>PR: {pr} lbs</div>}
-                  {last&&<div style={{fontSize:11,color:"#aaa"}}>Last: {last} lbs</div>}
-                </div>
-              </div>
-
-              {/* Input row */}
-              <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Weight (lbs)</div>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    value={inp.weight}
-                    onChange={e=>setInput(lift.name,"weight",e.target.value)}
-                    placeholder={last?`Last: ${last}`:"0"}
-                    style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}
-                  />
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Reps</div>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={inp.reps}
-                    onChange={e=>setInput(lift.name,"reps",e.target.value)}
-                    placeholder="0"
-                    style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}
-                  />
-                </div>
-                <div style={{paddingTop:18}}>
-                  <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving} style={{padding:"10px 14px",borderRadius:8,border:"none",background:inp.weight?(isSaved?GREEN:tc.border):"#e0e0e0",color:inp.weight?"#fff":"#aaa",fontSize:13,fontWeight:700,cursor:inp.weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:52}}>
-                    {isSaved?"✓":isSaving?"...":"Log"}
-                  </button>
-                </div>
+      {/* ── LOG VIEW ─────────────────────────────────────────── */}
+      {view==="log"&&(
+        <div>
+          {phase&&(
+            <div style={{background:"linear-gradient(135deg,#1a1400,#221b00)",borderRadius:12,padding:"10px 14px",marginBottom:10,border:"1px solid "+GOLD+"33",display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:18}}>⚡</span>
+              <div>
+                <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.08em"}}>Current phase</div>
+                <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{phase}</div>
               </div>
             </div>
+          )}
 
-            {/* History toggle */}
-            {liftHistory.length>0&&(
-              <div>
-                <button onClick={()=>setExpanded(isExpanded?null:lift.name)} style={{width:"100%",padding:"8px 14px",background:"#fafafa",border:"none",borderTop:"0.5px solid #f0f0f0",fontSize:11,color:"#888",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",display:"flex",justifyContent:"space-between"}}>
-                  <span>History ({liftHistory.length} sessions)</span>
-                  <span>{isExpanded?"▲":"▼"}</span>
+          {loadError&&(
+            <div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>
+              Error: {loadError}
+            </div>
+          )}
+
+          <div style={{display:"flex",gap:6,marginBottom:12}}>
+            {DAYS.map(d=>{
+              const isActive=activeDay===d;
+              const isToday=d===defaultDay;
+              return(
+                <button key={d} onClick={()=>setActiveDay(d)} style={{flex:1,padding:"10px 4px",borderRadius:10,border:"1px solid "+(isActive?ORANGE:"#e0e0e0"),background:isActive?ORANGE:"#fff",color:isActive?"#fff":"#888",fontSize:12,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",position:"relative"}}>
+                  {isToday&&!isActive&&<div style={{position:"absolute",top:3,right:3,width:6,height:6,borderRadius:"50%",background:GREEN}}/>}
+                  {d}
                 </button>
-                {isExpanded&&(
-                  <div style={{padding:"8px 14px",background:"#fafafa",borderTop:"0.5px solid #f0f0f0"}}>
-                    {liftHistory.slice(0,5).map((h,hi)=>(
-                      <div key={hi} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:hi<Math.min(liftHistory.length,5)-1?"0.5px solid #f0f0f0":"none"}}>
-                        <div style={{fontSize:11,color:"#888"}}>{new Date(h.date).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
-                        <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a"}}>{h.weight} lbs × {h.reps||1} reps</div>
-                        {h.weight===pr&&<div style={{fontSize:10,color:GOLD,fontWeight:700}}>PR 🏆</div>}
-                        {confirmDelete===h.id?(
-                          <div style={{display:"flex",gap:4,marginLeft:4}}>
-                            <button onClick={()=>{deleteLog(h.id,lift.name);setConfirmDelete(null);}} style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:"none",background:"#C0392B",color:"#fff",cursor:"pointer",fontFamily:"Georgia,serif"}}>Delete</button>
-                            <button onClick={()=>setConfirmDelete(null)} style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:"0.5px solid #ddd",background:"#fff",color:"#888",cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
+              );
+            })}
+          </div>
+
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{DAY_LABELS[activeDay]}'s Lifts</div>
+            <div style={{fontSize:11,color:"#aaa"}}>{todayLifts.length} lifts</div>
+          </div>
+
+          {todayLifts.map((lift,i)=>{
+            const tc=TIER_COLORS[lift.tier]||TIER_COLORS[1];
+            const pr=getPR(lift.name);
+            const last=getLast(lift.name);
+            const inp=inputs[lift.name]||{weight:"",reps:""};
+            const isSaving=saving===lift.name;
+            const isSaved=saved===lift.name;
+            const liftHistory=logs[lift.name]||[];
+            const isExpanded=expanded===lift.name;
+
+            return(
+              <div key={i} style={{background:"#fff",borderRadius:12,marginBottom:8,border:"1px solid "+tc.border+"33",overflow:"hidden",borderTop:"3px solid "+tc.border}}>
+                <div style={{padding:"12px 14px"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+                    <div>
+                      <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{lift.name}</div>
+                      <div style={{fontSize:10,fontWeight:600,color:tc.color,marginTop:2}}>{tc.label}</div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      {pr&&<div style={{fontSize:12,fontWeight:700,color:GOLD}}>PR: {pr} lbs</div>}
+                      {last&&<div style={{fontSize:11,color:"#aaa"}}>Last: {last} lbs</div>}
+                    </div>
+                  </div>
+
+                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Weight (lbs)</div>
+                      <input type="number" inputMode="decimal" value={inp.weight}
+                        onChange={e=>setInput(lift.name,"weight",e.target.value)}
+                        placeholder={last?`Last: ${last}`:"0"}
+                        style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Reps</div>
+                      <input type="number" inputMode="numeric" value={inp.reps}
+                        onChange={e=>setInput(lift.name,"reps",e.target.value)}
+                        placeholder="0"
+                        style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
+                    </div>
+                    <div style={{paddingTop:18}}>
+                      <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
+                        style={{padding:"10px 14px",borderRadius:8,border:"none",background:inp.weight?(isSaved?GREEN:tc.border):"#e0e0e0",color:inp.weight?"#fff":"#aaa",fontSize:13,fontWeight:700,cursor:inp.weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:52}}>
+                        {isSaved?"✓":isSaving?"...":"Log"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Live est. 1RM preview */}
+                  {inp.weight&&inp.reps&&(
+                    <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6}}>
+                      est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>
+                      {pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>getPR(lift.name)&&
+                        <span style={{marginLeft:8,background:GOLD,color:"#000",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
+                      }
+                    </div>
+                  )}
+                </div>
+
+                {liftHistory.length>0&&(
+                  <div>
+                    <button onClick={()=>setExpanded(isExpanded?null:lift.name)} style={{width:"100%",padding:"8px 14px",background:"#fafafa",border:"none",borderTop:"0.5px solid #f0f0f0",fontSize:11,color:"#888",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",display:"flex",justifyContent:"space-between"}}>
+                      <span>History ({liftHistory.length} sessions)</span>
+                      <span>{isExpanded?"▲":"▼"}</span>
+                    </button>
+                    {isExpanded&&(
+                      <div style={{padding:"8px 14px",background:"#fafafa",borderTop:"0.5px solid #f0f0f0"}}>
+                        {liftHistory.slice(0,5).map((h,hi)=>(
+                          <div key={hi} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:hi<Math.min(liftHistory.length,5)-1?"0.5px solid #f0f0f0":"none"}}>
+                            <div style={{fontSize:11,color:"#888"}}>{new Date(h.date).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
+                            <div style={{fontSize:12,fontWeight:600,color:"#1a1a1a"}}>{h.weight} lbs × {h.reps||1} reps</div>
+                            {h.weight===pr&&<div style={{fontSize:10,color:GOLD,fontWeight:700}}>PR 🏆</div>}
+                            {confirmDelete===h.id?(
+                              <div style={{display:"flex",gap:4,marginLeft:4}}>
+                                <button onClick={()=>deleteLog(h.id,lift.name)} style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:"none",background:RED,color:"#fff",cursor:"pointer",fontFamily:"Georgia,serif"}}>Delete</button>
+                                <button onClick={()=>setConfirmDelete(null)} style={{fontSize:11,padding:"4px 8px",borderRadius:6,border:"0.5px solid #ddd",background:"#fff",color:"#888",cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
+                              </div>
+                            ):(
+                              <button onClick={()=>setConfirmDelete(h.id)} disabled={deleting===h.id} style={{fontSize:12,padding:"4px 10px",borderRadius:6,border:"0.5px solid #ffcccc",background:"#fff5f5",color:RED,cursor:"pointer",fontFamily:"Georgia,serif",marginLeft:4,minWidth:36}}>
+                                {deleting===h.id?"...":"🗑"}
+                              </button>
+                            )}
                           </div>
-                        ):(
-                          <button onClick={()=>setConfirmDelete(h.id)} disabled={deleting===h.id} style={{fontSize:12,padding:"4px 10px",borderRadius:6,border:"0.5px solid #ffcccc",background:"#fff5f5",color:"#C0392B",cursor:"pointer",fontFamily:"Georgia,serif",marginLeft:4,minWidth:36}}>
-                            {deleting===h.id?"...":"🗑"}
-                          </button>
-                        )}
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        );
-      })}
+            );
+          })}
 
-      {todayLifts.length===0&&(
-        <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-          <div style={{fontSize:32,marginBottom:8}}>🏋️</div>
-          <div style={{fontSize:13,color:"#888"}}>No lifts programmed for {DAY_LABELS[activeDay]} yet.</div>
-          <div style={{fontSize:12,color:"#aaa",marginTop:4}}>Coach Ant will update the program soon.</div>
+          {todayLifts.length===0&&(
+            <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
+              <div style={{fontSize:32,marginBottom:8}}>🏋️</div>
+              <div style={{fontSize:13,color:"#888"}}>No lifts programmed for {DAY_LABELS[activeDay]} yet.</div>
+              <div style={{fontSize:12,color:"#aaa",marginTop:4}}>Coach Ant will update the program soon.</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── DASHBOARD VIEW ───────────────────────────────────── */}
+      {view==="dashboard"&&(
+        <div>
+          {allLiftNames.length===0?(
+            <div style={{background:BG,borderRadius:12,padding:"2.5rem",textAlign:"center",border:"1px solid #222"}}>
+              <div style={{fontSize:40,marginBottom:12}}>📊</div>
+              <div style={{fontSize:14,fontWeight:500,color:"#fff",marginBottom:6}}>No lift data yet</div>
+              <div style={{fontSize:12,color:"#555"}}>Log sessions in the Log tab to see your strength dashboard.</div>
+            </div>
+          ):(
+            <>
+              {/* PR Board */}
+              <div style={{marginBottom:16}}>
+                <div style={{fontSize:11,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>🏆 Personal Records · Est. 1RM</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  {allLiftNames.map(name=>{
+                    const pr=liftPRs[name];
+                    const catId=getCat(name);
+                    const catObj=CATS.find(c=>c.id===catId);
+                    const isSel=selLift===name;
+                    const allOrms=(logs[name]||[]).map(e=>epley(parseFloat(e.weight)||0,parseInt(e.reps)||1));
+                    const prev=allOrms.length>1?allOrms[1]:null;
+                    const delta=prev?pr.orm-prev:null;
+                    return(
+                      <div key={name} onClick={()=>setSelLift(isSel?null:name)}
+                        style={{padding:"12px",background:isSel?BG:"#fff",borderRadius:12,
+                          border:"1px solid "+(isSel?GOLD+"66":"#e8e8e8"),cursor:"pointer",
+                          boxShadow:isSel?"0 0 16px "+GOLD+"22":"none",
+                          position:"relative",overflow:"hidden"}}>
+                        {isSel&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+",transparent)"}}/>}
+                        <div style={{fontSize:9,color:isSel?"#666":"#aaa",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                          {catObj?.emoji||"🏋️"} {name}
+                        </div>
+                        <div style={{fontSize:24,fontWeight:900,color:isSel?"#fff":"#1a1a1a",lineHeight:1}}>{pr.orm}</div>
+                        <div style={{fontSize:9,color:isSel?"#666":"#aaa",marginTop:3}}>{pr.weight}×{pr.reps||1} · est. 1RM</div>
+                        {delta!==null&&(
+                          <div style={{position:"absolute",top:10,right:10,fontSize:10,fontWeight:700,
+                            color:delta>0?GREEN:delta<0?RED:"#aaa"}}>
+                            {delta>0?"↑+":delta<0?"↓":""}{delta!==0?Math.abs(delta):"—"}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 1RM Trend chart */}
+              {selLift&&(
+                <div style={{background:BG,borderRadius:14,padding:"1rem 1.25rem",marginBottom:16,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+ORANGE+")"}}/>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+                    <div>
+                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em"}}>{selLift}</div>
+                      <div style={{fontSize:11,color:GOLD,marginTop:2}}>Estimated 1RM over time</div>
+                    </div>
+                    {selOrms.length>0&&(
+                      <div style={{textAlign:"right"}}>
+                        <div style={{fontSize:22,fontWeight:900,color:"#fff"}}>{selOrms[selOrms.length-1]}</div>
+                        <div style={{fontSize:9,color:"#555"}}>current est. 1RM</div>
+                      </div>
+                    )}
+                  </div>
+                  {selOrms.length>1?(
+                    <svg viewBox={`-4 -4 ${cW+8} ${cH+8}`} style={{width:"100%",height:75,overflow:"visible"}}>
+                      <defs>
+                        <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={GOLD} stopOpacity="0.3"/>
+                          <stop offset="100%" stopColor={GOLD} stopOpacity="0"/>
+                        </linearGradient>
+                      </defs>
+                      <polygon points={`0,${cH} ${tPts} ${cW},${cH}`} fill="url(#tg)"/>
+                      <polyline points={tPts} fill="none" stroke={GOLD} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      {selOrms.map((o,i)=>{
+                        const x=(i/(Math.max(selOrms.length-1,1)))*cW;
+                        const y=cH-((o-oMin)/(Math.max(oMax-oMin,1)))*cH;
+                        const isLast=i===selOrms.length-1;
+                        const isPR=o===Math.max(...selOrms);
+                        return(
+                          <g key={i}>
+                            <circle cx={x} cy={y} r={isLast?4:isPR?3.5:2} fill={isLast?"#fff":isPR?GOLD:GOLD+"88"} stroke={isLast?GOLD:"none"} strokeWidth="2"/>
+                            {isLast&&<text x={x} y={y-8} textAnchor="middle" fontSize="9" fill="#fff" fontFamily="Georgia">{o}</text>}
+                            {isPR&&!isLast&&<text x={x} y={y-8} textAnchor="middle" fontSize="8" fill={GOLD} fontFamily="Georgia">PR</text>}
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  ):(
+                    <div style={{textAlign:"center",fontSize:11,color:"#444",padding:"12px 0"}}>
+                      Log at least 2 sessions to see the trend.
+                    </div>
+                  )}
+                  {selEntries.length>0&&(
+                    <div style={{display:"flex",gap:6,marginTop:8,overflowX:"auto",scrollbarWidth:"none"}}>
+                      {selEntries.slice(-6).reverse().map((e,i)=>(
+                        <div key={i} style={{flexShrink:0,textAlign:"center",padding:"6px 10px",background:"#111",borderRadius:8,border:"0.5px solid #222"}}>
+                          <div style={{fontSize:12,fontWeight:700,color:"#fff"}}>{epley(parseFloat(e.weight)||0,parseInt(e.reps)||1)}</div>
+                          <div style={{fontSize:9,color:"#555"}}>{e.weight}×{e.reps||1}</div>
+                          <div style={{fontSize:9,color:"#444"}}>{new Date(e.date).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!selLift&&(
+                <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginBottom:16,padding:"10px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #eee"}}>
+                  Tap any lift card above to see its trend chart
+                </div>
+              )}
+
+              {/* Radar chart */}
+              {activeCats.length>=3&&(
+                <div style={{background:"#fff",borderRadius:14,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#1a1a1a",marginBottom:4}}>📡 Strength Profile</div>
+                  <div style={{fontSize:11,color:"#aaa",marginBottom:14}}>How your strength stacks up across movement patterns</div>
+                  <svg viewBox="0 0 200 200" style={{width:"100%",maxWidth:260,display:"block",margin:"0 auto"}}>
+                    {[0.25,0.5,0.75,1.0].map((r,ri)=>(
+                      <polygon key={ri}
+                        points={activeCats.map((_,i)=>{const[x,y]=rPt(i,r*RR);return`${x},${y}`;}).join(" ")}
+                        fill={ri===3?"none":"none"}
+                        stroke={ri===3?"#e8e8e8":"#f0f0f0"}
+                        strokeWidth="1"/>
+                    ))}
+                    {activeCats.map((_,i)=>{
+                      const[x,y]=rPt(i,RR);
+                      return<line key={i} x1={RCX} y1={RCY} x2={x} y2={y} stroke="#ebebeb" strokeWidth="1"/>;
+                    })}
+                    {/* Filled area */}
+                    <polygon points={rFillPts} fill={GOLD+"28"} stroke={GOLD} strokeWidth="2.5" strokeLinejoin="round"/>
+                    {/* Dots */}
+                    {activeCats.map((c,i)=>{
+                      const[x,y]=rPt(i,rScores[i]*RR);
+                      return(
+                        <g key={i}>
+                          <circle cx={x} cy={y} r="5" fill={GOLD} stroke="#fff" strokeWidth="2"/>
+                          <circle cx={x} cy={y} r="8" fill={GOLD} fillOpacity="0.15"/>
+                        </g>
+                      );
+                    })}
+                    {/* Labels */}
+                    {activeCats.map((c,i)=>{
+                      const[x,y]=rPt(i,RR+18);
+                      return(
+                        <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle"
+                          fontSize="9.5" fill="#555" fontFamily="Georgia">
+                          {c.emoji} {c.label}
+                        </text>
+                      );
+                    })}
+                    {/* Score labels on dots */}
+                    {activeCats.map((c,i)=>{
+                      const[x,y]=rPt(i,rScores[i]*RR);
+                      const offset=rScores[i]>0.5?-10:10;
+                      return(
+                        <text key={i} x={x} y={y+offset} textAnchor="middle" fontSize="8" fill={GOLD} fontWeight="700" fontFamily="Georgia">
+                          {Math.round(rScores[i]*100)}%
+                        </text>
+                      );
+                    })}
+                  </svg>
+                  {/* Category breakdown */}
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:14}}>
+                    {activeCats.map((c,i)=>{
+                      const pct=Math.round(rScores[i]*100);
+                      const bar=rScores[i];
+                      return(
+                        <div key={i} style={{padding:"10px 12px",background:"#f9f9f9",borderRadius:10,border:"0.5px solid #f0f0f0"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                            <div style={{fontSize:11,fontWeight:600,color:"#1a1a1a"}}>{c.emoji} {c.label}</div>
+                            <div style={{fontSize:12,fontWeight:700,color:GOLD}}>{catPRs[c.id]}</div>
+                          </div>
+                          <div style={{height:5,background:"#ebebeb",borderRadius:3,overflow:"hidden"}}>
+                            <div style={{width:(pct)+"%",height:"100%",background:"linear-gradient(90deg,"+GOLD+","+ORANGE+")",borderRadius:3}}/>
+                          </div>
+                          <div style={{fontSize:9,color:"#aaa",marginTop:4}}>{pct}% of reference · {c.ref} lbs target</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{fontSize:9,color:"#ccc",textAlign:"center",marginTop:10}}>Reference = strong college T&F standard per category</div>
+                </div>
+              )}
+
+              {activeCats.length<3&&activeCats.length>0&&(
+                <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",border:"0.5px solid #eee",textAlign:"center"}}>
+                  <div style={{fontSize:11,color:"#aaa"}}>Log lifts in at least 3 movement categories to unlock the strength profile chart.</div>
+                  <div style={{fontSize:10,color:"#bbb",marginTop:4}}>Categories: Lower Body, Push, Pull, Hinge</div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>
