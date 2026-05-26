@@ -709,7 +709,7 @@ export default function Coach(){
           </div>
           <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414"}}>
             {TABS.map(t=>{
-              const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱"};
+              const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱","mcastles-post":"🍑"};
               const isActive=tab===t.id;
               return(
               <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"10px 12px 8px",background:isActive?"#0e0e0e":"transparent",border:"none",borderBottom:"2px solid "+(isActive?"#E8720C":"transparent"),borderRight:"none",borderLeft:"none",borderTop:"none",color:isActive?"#fff":"#444",fontSize:10,fontWeight:isActive?800:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.12s",textTransform:isActive?"uppercase":"none",letterSpacing:isActive?"0.04em":"0"}}>
