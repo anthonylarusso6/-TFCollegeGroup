@@ -769,7 +769,7 @@ export default function Athlete(){
               <div style={{position:"relative",flexShrink:0}}>
                 <div style={{position:"absolute",inset:-5,borderRadius:"50%",border:"1px solid "+(isForge?RED:STEEL)+"44",pointerEvents:"none"}}/>
                 <div style={{width:70,height:70,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:900,color:"#fff",overflow:"hidden",boxShadow:"0 0 30px "+(isForge?RED:STEEL)+"44"}}>
-                  {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:selectedAthlete.name[0]}
+                  {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>{e.target.style.display="none";}}/>:selectedAthlete.name[0]}
                 </div>
               </div>
               <div style={{flex:1,minWidth:0}}>
@@ -976,7 +976,7 @@ export default function Athlete(){
                       <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒</div>
                       <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GOLD+"12,transparent 70%)",pointerEvents:"none"}}/>
                       <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>⚒️</div>
+                        {(()=>{const wa=athletes.find(a=>a.name===anvilWinner.athlete_name);return(<div style={{width:56,height:56,borderRadius:"50%",background:"linear-gradient(145deg,"+GOLD+","+GOLD+"88)",border:"2px solid "+GOLD,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:700,color:"#1a1a1a",flexShrink:0,boxShadow:"0 0 20px "+GOLD+"55"}}>{wa?.photo_url?<img src={wa.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>{e.target.style.display="none";}} alt=""/>:<span>⚒️</span>}</div>);})()}
                         <div>
                           <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>This week's Anvil</div>
                           <div style={{fontSize:20,fontWeight:900,color:GOLD,letterSpacing:"-0.02em"}}>{anvilWinner.athlete_name}</div>
