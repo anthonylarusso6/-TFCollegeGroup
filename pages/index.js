@@ -100,7 +100,17 @@ export default function Landing(){
     // Load data
     const loadData=async()=>{
       try{const{count}=await supabase.from("athletes").select("id",{count:"exact",head:true}).eq("status","active");if(count)setAthleteCount(count);}catch(e){}
-      try{const{data}=await supabase.from("anvil").select("*").order("created_at",{ascending:false}).limit(1);if(data&&data[0])setAnvilWinner(data[0]);}catch(e){}
+      try{
+        const{data:anvData}=await supabase.from("anvil").select("*").order("created_at",{ascending:false}).limit(1);
+        if(anvData&&anvData[0]){
+          const winner=anvData[0];
+          try{
+            const{data:athData}=await supabase.from("athletes").select("photo_url").eq("name",winner.athlete_name).maybeSingle();
+            winner.photo_url=athData?.photo_url||null;
+          }catch(e){}
+          setAnvilWinner(winner);
+        }
+      }catch(e){}
       try{
         const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
         const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
@@ -113,11 +123,20 @@ export default function Landing(){
       }catch(e){}
       try{
         const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
+        let names=[];
         if(data&&data[0]&&data[0].leaders&&data[0].leaders.some(l=>l)){
-          setForgeLeaders(data[0].leaders.filter(Boolean));
+          names=data[0].leaders.filter(Boolean);
         }else{
           const{data:aths}=await supabase.from("athletes").select("name").eq("role","forge").eq("status","active");
-          if(aths&&aths.length>0)setForgeLeaders(aths.map(a=>a.name));
+          if(aths&&aths.length>0)names=aths.map(a=>a.name);
+        }
+        if(names.length>0){
+          try{
+            const{data:athObjs}=await supabase.from("athletes").select("name,photo_url").in("name",names);
+            const photoMap={};
+            (athObjs||[]).forEach(a=>{photoMap[a.name]=a.photo_url||null;});
+            setForgeLeaders(names.map(n=>({name:n,photo_url:photoMap[n]||null})));
+          }catch(e){setForgeLeaders(names.map(n=>({name:n,photo_url:null})));}
         }
       }catch(e){}
       // Season progress — weeks since June 18
@@ -302,12 +321,18 @@ export default function Landing(){
               <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+RED+",transparent)"}}/>
               <div style={{fontSize:11,color:RED,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>🔴 This week's Forge</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                {forgeLeaders.map((name,i)=>(
+                {forgeLeaders.map((leader,i)=>{
+                  const name=typeof leader==="string"?leader:leader.name;
+                  const photoUrl=typeof leader==="object"?leader.photo_url:null;
+                  return(
                   <div key={i} style={{background:"#1a0d0d",borderRadius:8,padding:"8px 10px",display:"flex",alignItems:"center",gap:8,border:"0.5px solid "+RED+"22"}}>
-                    <div style={{width:28,height:28,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0}}>{(name||"?")[0]}</div>
+                    <div style={{width:32,height:32,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                      {photoUrl?<img src={photoUrl} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>{e.target.style.display="none";}} alt=""/>:(name||"?")[0]}
+                    </div>
                     <div style={{fontSize:12,color:"#ddd",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
