@@ -13,38 +13,64 @@ export default function WeightTracker({athleteId}){
   const[showGoalInput,setShowGoalInput]=useState(false);
 
   const loadEntries=async()=>{
-    const{data,error:err}=await supabase.from("weight_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true});
-    if(err){setError("Could not load: "+err.message);return;}
-    setEntries(data||[]);
-    const savedGoal=localStorage.getItem("goal_weight_"+athleteId);
-    const savedMode=localStorage.getItem("goal_mode_"+athleteId);
-    if(savedGoal)setGoalWeight(savedGoal);
-    if(savedMode)setGoalMode(savedMode);
+    try{
+      const{data,error:err}=await supabase.from("weight_log").select("*").eq("athlete_id",athleteId).order("date",{ascending:true});
+      if(err){setError("Could not load entries: "+err.message);return;}
+      setEntries(data||[]);
+    }catch(e){setError("Could not load entries.");}
   };
 
-  useEffect(()=>{loadEntries();},[]);
+  const loadGoal=async()=>{
+    try{
+      const{data}=await supabase.from("announcements").select("message,week_label").eq("type","weight_goal").eq("day",String(athleteId)).order("created_at",{ascending:false}).limit(1).maybeSingle();
+      if(data){
+        if(data.message)setGoalWeight(data.message);
+        if(data.week_label)setGoalMode(data.week_label);
+      }else{
+        const savedGoal=localStorage.getItem("goal_weight_"+athleteId);
+        const savedMode=localStorage.getItem("goal_mode_"+athleteId);
+        if(savedGoal)setGoalWeight(savedGoal);
+        if(savedMode)setGoalMode(savedMode);
+      }
+    }catch(e){
+      const savedGoal=localStorage.getItem("goal_weight_"+athleteId);
+      const savedMode=localStorage.getItem("goal_mode_"+athleteId);
+      if(savedGoal)setGoalWeight(savedGoal);
+      if(savedMode)setGoalMode(savedMode);
+    }
+  };
+
+  useEffect(()=>{loadEntries();loadGoal();},[]);
 
   const save=async()=>{
     if(!weight)return;
     setSaving(true);setError("");
-    const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
-    const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
-    const existing=entries.find(e=>e.date===today);
-    if(existing){
-      const{error:err}=await supabase.from("weight_log").update({weight:parseFloat(weight)}).eq("id",existing.id);
-      if(err){setError("Save failed: "+err.message);setSaving(false);return;}
-    }else{
-      const{error:err}=await supabase.from("weight_log").insert({athlete_id:athleteId,date:today,weight:parseFloat(weight)});
-      if(err){setError("Save failed: "+err.message);setSaving(false);return;}
+    try{
+      const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+      const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
+      const existing=entries.find(e=>e.date===today);
+      if(existing){
+        const{error:err}=await supabase.from("weight_log").update({weight:parseFloat(weight)}).eq("id",existing.id);
+        if(err){setError("Save failed: "+err.message);return;}
+      }else{
+        const{error:err}=await supabase.from("weight_log").insert({athlete_id:athleteId,date:today,weight:parseFloat(weight)});
+        if(err){setError("Save failed: "+err.message);return;}
+      }
+      await loadEntries();
+      setWeight("");setSaved(true);setTimeout(()=>setSaved(false),3000);
+    }catch(e){
+      setError("Save failed. Please try again.");
+    }finally{
+      setSaving(false);
     }
-    await loadEntries();
-    setWeight("");setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),3000);
   };
 
-  const saveGoal=(val,mode)=>{
-    localStorage.setItem("goal_weight_"+athleteId,val);
-    localStorage.setItem("goal_mode_"+athleteId,mode);
+  const saveGoal=async(val,mode)=>{
     setGoalWeight(val);setGoalMode(mode);setShowGoalInput(false);
+    try{localStorage.setItem("goal_weight_"+athleteId,val);localStorage.setItem("goal_mode_"+athleteId,mode);}catch(e){}
+    try{
+      await supabase.from("announcements").insert({type:"weight_goal",day:String(athleteId),message:String(val),week_label:mode,active:true});
+    }catch(e){}
   };
 
   const first=entries[0]?.weight!=null?parseFloat(entries[0].weight):null;
@@ -161,7 +187,7 @@ export default function WeightTracker({athleteId}){
             {saved?"✓":saving?"...":"Save"}
           </button>
         </div>
-        {error&&<div style={{fontSize:12,color:RED}}>{error}</div>}
+        {error&&<div style={{fontSize:13,color:"#fff",background:RED,borderRadius:8,padding:"10px 14px",marginBottom:8,fontWeight:500}}>{error}</div>}
         <div style={{fontSize:10,color:"#444",textAlign:"center"}}>Private — only you can see this</div>
       </div>
 
@@ -218,7 +244,7 @@ export default function WeightTracker({athleteId}){
                     <div style={{fontSize:20,fontWeight:800,color:"#1a1a1a"}}>{latest||0}</div>
                     <div style={{fontSize:9,color:"#aaa"}}>current</div>
                   </div>
-                  <div style={{color:"#ccc"}}>{goalMode==="lose"?"→":"→"}</div>
+                  <div style={{color:"#ccc"}}>→</div>
                   <div style={{textAlign:"center"}}>
                     <div style={{fontSize:20,fontWeight:800,color:progressColor}}>{goal}</div>
                     <div style={{fontSize:9,color:"#aaa"}}>{goalMode==="lose"?"goal (low)":"goal (high)"}</div>
