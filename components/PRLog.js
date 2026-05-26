@@ -58,14 +58,14 @@ const DEFAULT_PROGRAM={
   ],
 };
 
-// Epley estimated 1RM formula
 const epley=(w,r)=>r===1?w:Math.round(w*(1+r/30));
 
+// T&F weighted: hinge/lower matter most for explosiveness
 const CATS=[
-  {id:"lower", label:"Lower Body", emoji:"🦵", ref:225},
-  {id:"push",  label:"Push",       emoji:"💪", ref:175},
-  {id:"pull",  label:"Pull",       emoji:"🤜", ref:155},
-  {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:255},
+  {id:"lower", label:"Lower Body", emoji:"🦵", ref:225, w:0.30},
+  {id:"push",  label:"Push",       emoji:"💪", ref:175, w:0.20},
+  {id:"pull",  label:"Pull",       emoji:"🤜", ref:155, w:0.15},
+  {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:255, w:0.35},
 ];
 
 const getCat=(name)=>{
@@ -75,6 +75,16 @@ const getCat=(name)=>{
   if(n.includes("bench")||n.includes("press")||n.includes("push")||n.includes("dip")||n.includes("jerk"))return "push";
   if(n.includes("pull")||n.includes("row")||n.includes("curl"))return "pull";
   return null;
+};
+
+const rankSuffix=(n)=>n===1?"st":n===2?"nd":n===3?"rd":"th";
+const rankMedal=(n)=>n===1?"🥇":n===2?"🥈":n===3?"🥉":null;
+
+const piColor=(score)=>{
+  if(score>=700)return GOLD;
+  if(score>=500)return GREEN;
+  if(score>=300)return ORANGE;
+  return STEEL;
 };
 
 export default function PRLog({athleteId}){
@@ -93,6 +103,9 @@ export default function PRLog({athleteId}){
   const[deleting,setDeleting]=useState(null);
   const[confirmDelete,setConfirmDelete]=useState(null);
   const[selLift,setSelLift]=useState(null);
+  const[teamPrLogs,setTeamPrLogs]=useState([]);
+  const[latestBW,setLatestBW]=useState(null);
+  const[teamLoaded,setTeamLoaded]=useState(false);
 
   useEffect(()=>{
     (async()=>{
@@ -128,6 +141,23 @@ export default function PRLog({athleteId}){
     })();
   },[athleteId]);
 
+  // Load team data + bodyweight lazily when dashboard opens
+  useEffect(()=>{
+    if(view!=="dashboard"||teamLoaded||!athleteId)return;
+    (async()=>{
+      try{
+        const{data}=await supabase.from("pr_log").select("athlete_id,lift,weight,reps");
+        setTeamPrLogs(data||[]);
+      }catch(e){}
+      try{
+        const{data}=await supabase.from("weight_log").select("weight").eq("athlete_id",athleteId)
+          .order("date",{ascending:false}).limit(1).maybeSingle();
+        if(data?.weight)setLatestBW(parseFloat(data.weight));
+      }catch(e){}
+      setTeamLoaded(true);
+    })();
+  },[view,athleteId]);
+
   const todayLifts=(program&&program[activeDay])||[];
 
   const setInput=(liftName,field,val)=>{
@@ -141,21 +171,13 @@ export default function PRLog({athleteId}){
     const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
     const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
     const entry={
-      athlete_id:athleteId,
-      lift:liftName,
-      weight:parseFloat(inp.weight),
-      reps:parseInt(inp.reps)||1,
-      date:today,
-      day:activeDay,
-      tier:tier||1,
+      athlete_id:athleteId,lift:liftName,weight:parseFloat(inp.weight),
+      reps:parseInt(inp.reps)||1,date:today,day:activeDay,tier:tier||1,
     };
     try{
       const{data,error}=await supabase.from("pr_log").insert(entry).select().single();
       if(error){setLoadError(error.message);setSaving(null);return;}
-      setLogs(prev=>{
-        const existing=prev[liftName]||[];
-        return{...prev,[liftName]:[data,...existing]};
-      });
+      setLogs(prev=>{const existing=prev[liftName]||[];return{...prev,[liftName]:[data,...existing]};});
       setInputs(prev=>({...prev,[liftName]:{weight:"",reps:""}}));
       setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);
     }catch(e){setLoadError(e.message);setSaving(null);}
@@ -164,44 +186,29 @@ export default function PRLog({athleteId}){
   const deleteLog=async(logId,liftName)=>{
     setDeleting(logId);
     try{await supabase.from("pr_log").delete().eq("id",logId);}catch(e){}
-    setLogs(prev=>{
-      const updated=(prev[liftName]||[]).filter(l=>l.id!==logId);
-      return{...prev,[liftName]:updated};
-    });
-    setDeleting(null);
-    setConfirmDelete(null);
+    setLogs(prev=>({...prev,[liftName]:(prev[liftName]||[]).filter(l=>l.id!==logId)}));
+    setDeleting(null);setConfirmDelete(null);
   };
 
   const getPR=(liftName)=>{
-    const liftLogs=logs[liftName]||[];
-    if(!liftLogs.length)return null;
-    return Math.max(...liftLogs.map(l=>parseFloat(l.weight)||0));
+    const ll=logs[liftName]||[];
+    if(!ll.length)return null;
+    return Math.max(...ll.map(l=>parseFloat(l.weight)||0));
   };
+  const getLast=(liftName)=>(logs[liftName]||[])[0]?.weight||null;
 
-  const getLast=(liftName)=>{
-    const liftLogs=logs[liftName]||[];
-    return liftLogs[0]?.weight||null;
-  };
-
-  // ── Dashboard computed data ──────────────────────────────────
+  // ── Dashboard computed ─────────────────────────────────────
   const allLiftNames=Object.keys(logs).filter(k=>logs[k].length>0);
 
   const liftPRs={};
   allLiftNames.forEach(name=>{
-    const entries=logs[name];
-    const best=entries.reduce((b,e)=>{
+    const best=(logs[name]||[]).reduce((b,e)=>{
       const orm=epley(parseFloat(e.weight)||0,parseInt(e.reps)||1);
       return orm>b.orm?{...e,orm}:b;
     },{orm:0});
     liftPRs[name]=best;
   });
 
-  const selEntries=selLift
-    ?(logs[selLift]||[]).slice().sort((a,b)=>new Date(a.date)-new Date(b.date))
-    :[];
-  const selOrms=selEntries.map(e=>epley(parseFloat(e.weight)||0,parseInt(e.reps)||1));
-
-  // Radar
   const catPRs={};
   CATS.forEach(cat=>{
     const catLifts=allLiftNames.filter(l=>getCat(l)===cat.id);
@@ -210,14 +217,56 @@ export default function PRLog({athleteId}){
     if(best>0)catPRs[cat.id]=best;
   });
   const activeCats=CATS.filter(c=>catPRs[c.id]);
-  const N=activeCats.length;
-  const RCX=100,RCY=100,RR=70;
-  const rAngle=(i)=>(2*Math.PI*i/Math.max(N,1))-Math.PI/2;
-  const rPt=(i,r)=>[RCX+r*Math.cos(rAngle(i)),RCY+r*Math.sin(rAngle(i))];
-  const rScores=activeCats.map(c=>Math.min(1,catPRs[c.id]/c.ref));
-  const rFillPts=activeCats.map((_,i)=>{const[x,y]=rPt(i,rScores[i]*RR);return`${x},${y}`;}).join(" ");
+
+  // Power Index (0–1000): weighted composite across categories
+  const powerIndex=(()=>{
+    let score=0,totalW=0;
+    CATS.forEach(c=>{
+      if(catPRs[c.id]!=null){
+        score+=Math.min(1,catPRs[c.id]/c.ref)*c.w;
+        totalW+=c.w;
+      }
+    });
+    if(!totalW)return 0;
+    return Math.round((score/totalW)*1000);
+  })();
+  const piCol=piColor(powerIndex);
+
+  // Team ranks per category
+  const catRanks={};
+  if(teamLoaded&&teamPrLogs.length>0){
+    const teamByAth={};
+    teamPrLogs.forEach(r=>{
+      const orm=epley(parseFloat(r.weight)||0,parseInt(r.reps)||1);
+      if(!teamByAth[r.athlete_id])teamByAth[r.athlete_id]={};
+      if(!teamByAth[r.athlete_id][r.lift]||orm>teamByAth[r.athlete_id][r.lift])
+        teamByAth[r.athlete_id][r.lift]=orm;
+    });
+    CATS.forEach(cat=>{
+      if(!catPRs[cat.id])return;
+      const scores=[];
+      Object.entries(teamByAth).forEach(([,lifts])=>{
+        const best=Math.max(0,...Object.entries(lifts).filter(([n])=>getCat(n)===cat.id).map(([,o])=>o));
+        if(best>0)scores.push(best);
+      });
+      scores.sort((a,b)=>b-a);
+      const rank=scores.findIndex(s=>s===catPRs[cat.id])+1;
+      catRanks[cat.id]={rank:rank||scores.length,total:scores.length};
+    });
+  }
+
+  // Relative strength (est. 1RM / bodyweight)
+  const relStrength={};
+  if(latestBW&&latestBW>0){
+    allLiftNames.forEach(name=>{
+      if(liftPRs[name]?.orm)
+        relStrength[name]=parseFloat((liftPRs[name].orm/latestBW).toFixed(2));
+    });
+  }
 
   // Trend sparkline
+  const selEntries=selLift?(logs[selLift]||[]).slice().sort((a,b)=>new Date(a.date)-new Date(b.date)):[];
+  const selOrms=selEntries.map(e=>epley(parseFloat(e.weight)||0,parseInt(e.reps)||1));
   const cW=100,cH=55;
   const oMin=selOrms.length?Math.min(...selOrms)-5:0;
   const oMax=selOrms.length?Math.max(...selOrms)+5:100;
@@ -226,6 +275,14 @@ export default function PRLog({athleteId}){
     const y=cH-((o-oMin)/(Math.max(oMax-oMin,1)))*cH;
     return`${x},${y}`;
   }).join(" ");
+
+  // Radar
+  const N=activeCats.length;
+  const RCX=100,RCY=100,RR=70;
+  const rAngle=(i)=>(2*Math.PI*i/Math.max(N,1))-Math.PI/2;
+  const rPt=(i,r)=>[RCX+r*Math.cos(rAngle(i)),RCY+r*Math.sin(rAngle(i))];
+  const rScores=activeCats.map(c=>Math.min(1,catPRs[c.id]/c.ref));
+  const rFillPts=activeCats.map((_,i)=>{const[x,y]=rPt(i,rScores[i]*RR);return`${x},${y}`;}).join(" ");
 
   if(!program)return(
     <div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading program...</div>
@@ -247,7 +304,7 @@ export default function PRLog({athleteId}){
         ))}
       </div>
 
-      {/* ── LOG VIEW ─────────────────────────────────────────── */}
+      {/* ── LOG VIEW ────────────────────────────────────────── */}
       {view==="log"&&(
         <div>
           {phase&&(
@@ -259,13 +316,7 @@ export default function PRLog({athleteId}){
               </div>
             </div>
           )}
-
-          {loadError&&(
-            <div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>
-              Error: {loadError}
-            </div>
-          )}
-
+          {loadError&&<div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>Error: {loadError}</div>}
           <div style={{display:"flex",gap:6,marginBottom:12}}>
             {DAYS.map(d=>{
               const isActive=activeDay===d;
@@ -278,12 +329,10 @@ export default function PRLog({athleteId}){
               );
             })}
           </div>
-
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
             <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{DAY_LABELS[activeDay]}'s Lifts</div>
             <div style={{fontSize:11,color:"#aaa"}}>{todayLifts.length} lifts</div>
           </div>
-
           {todayLifts.map((lift,i)=>{
             const tc=TIER_COLORS[lift.tier]||TIER_COLORS[1];
             const pr=getPR(lift.name);
@@ -293,7 +342,6 @@ export default function PRLog({athleteId}){
             const isSaved=saved===lift.name;
             const liftHistory=logs[lift.name]||[];
             const isExpanded=expanded===lift.name;
-
             return(
               <div key={i} style={{background:"#fff",borderRadius:12,marginBottom:8,border:"1px solid "+tc.border+"33",overflow:"hidden",borderTop:"3px solid "+tc.border}}>
                 <div style={{padding:"12px 14px"}}>
@@ -307,7 +355,6 @@ export default function PRLog({athleteId}){
                       {last&&<div style={{fontSize:11,color:"#aaa"}}>Last: {last} lbs</div>}
                     </div>
                   </div>
-
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
                     <div style={{flex:1}}>
                       <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Weight (lbs)</div>
@@ -330,23 +377,19 @@ export default function PRLog({athleteId}){
                       </button>
                     </div>
                   </div>
-
-                  {/* Live est. 1RM preview */}
                   {inp.weight&&inp.reps&&(
                     <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6}}>
                       est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>
-                      {pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>getPR(lift.name)&&
+                      {pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&
                         <span style={{marginLeft:8,background:GOLD,color:"#000",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
                       }
                     </div>
                   )}
                 </div>
-
                 {liftHistory.length>0&&(
                   <div>
                     <button onClick={()=>setExpanded(isExpanded?null:lift.name)} style={{width:"100%",padding:"8px 14px",background:"#fafafa",border:"none",borderTop:"0.5px solid #f0f0f0",fontSize:11,color:"#888",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",display:"flex",justifyContent:"space-between"}}>
-                      <span>History ({liftHistory.length} sessions)</span>
-                      <span>{isExpanded?"▲":"▼"}</span>
+                      <span>History ({liftHistory.length} sessions)</span><span>{isExpanded?"▲":"▼"}</span>
                     </button>
                     {isExpanded&&(
                       <div style={{padding:"8px 14px",background:"#fafafa",borderTop:"0.5px solid #f0f0f0"}}>
@@ -374,7 +417,6 @@ export default function PRLog({athleteId}){
               </div>
             );
           })}
-
           {todayLifts.length===0&&(
             <div style={{background:"#fff",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
               <div style={{fontSize:32,marginBottom:8}}>🏋️</div>
@@ -385,7 +427,7 @@ export default function PRLog({athleteId}){
         </div>
       )}
 
-      {/* ── DASHBOARD VIEW ───────────────────────────────────── */}
+      {/* ── DASHBOARD VIEW ──────────────────────────────────── */}
       {view==="dashboard"&&(
         <div>
           {allLiftNames.length===0?(
@@ -396,8 +438,69 @@ export default function PRLog({athleteId}){
             </div>
           ):(
             <>
-              {/* PR Board */}
-              <div style={{marginBottom:16}}>
+              {/* ── Power Index hero ── */}
+              <div style={{background:BG,borderRadius:16,padding:"1.5rem",marginBottom:14,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
+                <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+piCol+","+piCol+"44)"}}/>
+                <div style={{position:"absolute",bottom:-20,right:-10,fontSize:110,opacity:0.04,lineHeight:1,userSelect:"none"}}>⚡</div>
+                <div style={{display:"flex",alignItems:"center",gap:20}}>
+                  {/* Circular gauge */}
+                  <div style={{position:"relative",width:88,height:88,flexShrink:0}}>
+                    <svg viewBox="0 0 88 88" style={{width:88,height:88,transform:"rotate(-90deg)"}}>
+                      <circle cx="44" cy="44" r="36" fill="none" stroke="#1e1e1e" strokeWidth="8"/>
+                      <circle cx="44" cy="44" r="36" fill="none" stroke={piCol} strokeWidth="8"
+                        strokeDasharray={`${(powerIndex/1000)*226.2} 226.2`}
+                        strokeLinecap="round"
+                        style={{filter:`drop-shadow(0 0 6px ${piCol}88)`,transition:"stroke-dasharray 0.6s ease"}}/>
+                    </svg>
+                    <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                      <div style={{fontSize:22,fontWeight:900,color:piCol,lineHeight:1}}>{powerIndex}</div>
+                      <div style={{fontSize:8,color:"#555",marginTop:1}}>/ 1000</div>
+                    </div>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:4}}>TF Power Index</div>
+                    <div style={{fontSize:20,fontWeight:900,color:"#fff",lineHeight:1.1,marginBottom:6}}>
+                      {powerIndex>=700?"Elite strength":""}
+                      {powerIndex>=500&&powerIndex<700?"Strong baseline":""}
+                      {powerIndex>=300&&powerIndex<500?"Building force":""}
+                      {powerIndex<300?"Just getting started":""}
+                    </div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {CATS.map(c=>{
+                        const has=catPRs[c.id]!=null;
+                        const pct=has?Math.round(Math.min(1,catPRs[c.id]/c.ref)*100):0;
+                        return(
+                          <div key={c.id} style={{display:"flex",alignItems:"center",gap:3,padding:"3px 8px",borderRadius:6,background:has?"#1a1a1a":"#111",border:"0.5px solid "+(has?piCol+"44":"#1a1a1a")}}>
+                            <span style={{fontSize:10}}>{c.emoji}</span>
+                            <span style={{fontSize:10,color:has?piCol:"#333",fontWeight:has?600:400}}>{has?pct+"%":"—"}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {!latestBW&&(
+                      <div style={{fontSize:9,color:"#444",marginTop:6}}>Log body weight in the Weight tab to enable relative strength</div>
+                    )}
+                  </div>
+                </div>
+                {/* Category count */}
+                <div style={{marginTop:14,display:"flex",gap:6}}>
+                  {CATS.map(c=>{
+                    const has=catPRs[c.id]!=null;
+                    const pct=has?Math.min(1,catPRs[c.id]/c.ref):0;
+                    return(
+                      <div key={c.id} style={{flex:1}}>
+                        <div style={{height:3,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}>
+                          <div style={{height:"100%",width:(pct*100)+"%",background:has?piCol:"#333",borderRadius:2,transition:"width 0.5s ease"}}/>
+                        </div>
+                        <div style={{fontSize:8,color:has?"#555":"#333",marginTop:3,textAlign:"center"}}>{c.emoji}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* ── PR Board ── */}
+              <div style={{marginBottom:14}}>
                 <div style={{fontSize:11,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>🏆 Personal Records · Est. 1RM</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
                   {allLiftNames.map(name=>{
@@ -405,25 +508,35 @@ export default function PRLog({athleteId}){
                     const catId=getCat(name);
                     const catObj=CATS.find(c=>c.id===catId);
                     const isSel=selLift===name;
+                    const rel=relStrength[name];
+                    const rank=catId&&catRanks[catId];
                     const allOrms=(logs[name]||[]).map(e=>epley(parseFloat(e.weight)||0,parseInt(e.reps)||1));
-                    const prev=allOrms.length>1?allOrms[1]:null;
-                    const delta=prev?pr.orm-prev:null;
+                    const delta=allOrms.length>1?pr.orm-allOrms[1]:null;
                     return(
                       <div key={name} onClick={()=>setSelLift(isSel?null:name)}
                         style={{padding:"12px",background:isSel?BG:"#fff",borderRadius:12,
                           border:"1px solid "+(isSel?GOLD+"66":"#e8e8e8"),cursor:"pointer",
-                          boxShadow:isSel?"0 0 16px "+GOLD+"22":"none",
-                          position:"relative",overflow:"hidden"}}>
+                          boxShadow:isSel?"0 0 16px "+GOLD+"22":"none",position:"relative",overflow:"hidden"}}>
                         {isSel&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+",transparent)"}}/>}
-                        <div style={{fontSize:9,color:isSel?"#666":"#aaa",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        <div style={{fontSize:9,color:isSel?"#555":"#aaa",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                           {catObj?.emoji||"🏋️"} {name}
                         </div>
-                        <div style={{fontSize:24,fontWeight:900,color:isSel?"#fff":"#1a1a1a",lineHeight:1}}>{pr.orm}</div>
-                        <div style={{fontSize:9,color:isSel?"#666":"#aaa",marginTop:3}}>{pr.weight}×{pr.reps||1} · est. 1RM</div>
+                        <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:2}}>
+                          <div style={{fontSize:24,fontWeight:900,color:isSel?"#fff":"#1a1a1a",lineHeight:1}}>{pr.orm}</div>
+                          {rel&&<div style={{fontSize:10,color:isSel?piCol:GOLD,fontWeight:600}}>{rel}×BW</div>}
+                        </div>
+                        <div style={{fontSize:9,color:isSel?"#555":"#aaa"}}>{pr.weight}×{pr.reps||1} · est. 1RM</div>
+                        {/* Delta badge */}
                         {delta!==null&&(
                           <div style={{position:"absolute",top:10,right:10,fontSize:10,fontWeight:700,
                             color:delta>0?GREEN:delta<0?RED:"#aaa"}}>
                             {delta>0?"↑+":delta<0?"↓":""}{delta!==0?Math.abs(delta):"—"}
+                          </div>
+                        )}
+                        {/* Team rank */}
+                        {rank&&teamLoaded&&(
+                          <div style={{marginTop:5,fontSize:9,color:isSel?"#555":rank.rank<=3?GOLD:"#aaa",fontWeight:rank.rank<=3?700:400}}>
+                            {rankMedal(rank.rank)&&rankMedal(rank.rank)+" "}#{rank.rank}{rankSuffix(rank.rank)} of {rank.total} · {catObj?.label}
                           </div>
                         )}
                       </div>
@@ -432,14 +545,14 @@ export default function PRLog({athleteId}){
                 </div>
               </div>
 
-              {/* 1RM Trend chart */}
+              {/* ── 1RM Trend ── */}
               {selLift&&(
-                <div style={{background:BG,borderRadius:14,padding:"1rem 1.25rem",marginBottom:16,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
+                <div style={{background:BG,borderRadius:14,padding:"1rem 1.25rem",marginBottom:14,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+ORANGE+")"}}/>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
                     <div>
                       <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em"}}>{selLift}</div>
-                      <div style={{fontSize:11,color:GOLD,marginTop:2}}>Estimated 1RM over time</div>
+                      <div style={{fontSize:11,color:GOLD,marginTop:2}}>Est. 1RM over time</div>
                     </div>
                     {selOrms.length>0&&(
                       <div style={{textAlign:"right"}}>
@@ -473,9 +586,7 @@ export default function PRLog({athleteId}){
                       })}
                     </svg>
                   ):(
-                    <div style={{textAlign:"center",fontSize:11,color:"#444",padding:"12px 0"}}>
-                      Log at least 2 sessions to see the trend.
-                    </div>
+                    <div style={{textAlign:"center",fontSize:11,color:"#444",padding:"12px 0"}}>Log at least 2 sessions to see the trend.</div>
                   )}
                   {selEntries.length>0&&(
                     <div style={{display:"flex",gap:6,marginTop:8,overflowX:"auto",scrollbarWidth:"none"}}>
@@ -490,86 +601,85 @@ export default function PRLog({athleteId}){
                   )}
                 </div>
               )}
-
               {!selLift&&(
-                <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginBottom:16,padding:"10px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #eee"}}>
-                  Tap any lift card above to see its trend chart
+                <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginBottom:14,padding:"10px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #eee"}}>
+                  Tap any lift card to see its trend chart
                 </div>
               )}
 
-              {/* Radar chart */}
+              {/* ── Radar chart ── */}
               {activeCats.length>=3&&(
                 <div style={{background:"#fff",borderRadius:14,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"#1a1a1a",marginBottom:4}}>📡 Strength Profile</div>
-                  <div style={{fontSize:11,color:"#aaa",marginBottom:14}}>How your strength stacks up across movement patterns</div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#1a1a1a",marginBottom:2}}>📡 Strength Profile</div>
+                  <div style={{fontSize:11,color:"#aaa",marginBottom:14}}>Movement pattern balance across all logged lifts</div>
                   <svg viewBox="0 0 200 200" style={{width:"100%",maxWidth:260,display:"block",margin:"0 auto"}}>
                     {[0.25,0.5,0.75,1.0].map((r,ri)=>(
                       <polygon key={ri}
                         points={activeCats.map((_,i)=>{const[x,y]=rPt(i,r*RR);return`${x},${y}`;}).join(" ")}
-                        fill={ri===3?"none":"none"}
-                        stroke={ri===3?"#e8e8e8":"#f0f0f0"}
-                        strokeWidth="1"/>
+                        fill="none" stroke={ri===3?"#e8e8e8":"#f0f0f0"} strokeWidth="1"/>
                     ))}
                     {activeCats.map((_,i)=>{
                       const[x,y]=rPt(i,RR);
                       return<line key={i} x1={RCX} y1={RCY} x2={x} y2={y} stroke="#ebebeb" strokeWidth="1"/>;
                     })}
-                    {/* Filled area */}
-                    <polygon points={rFillPts} fill={GOLD+"28"} stroke={GOLD} strokeWidth="2.5" strokeLinejoin="round"/>
-                    {/* Dots */}
-                    {activeCats.map((c,i)=>{
+                    <polygon points={rFillPts} fill={piCol+"28"} stroke={piCol} strokeWidth="2.5" strokeLinejoin="round"/>
+                    {activeCats.map((_,i)=>{
                       const[x,y]=rPt(i,rScores[i]*RR);
                       return(
                         <g key={i}>
-                          <circle cx={x} cy={y} r="5" fill={GOLD} stroke="#fff" strokeWidth="2"/>
-                          <circle cx={x} cy={y} r="8" fill={GOLD} fillOpacity="0.15"/>
+                          <circle cx={x} cy={y} r="5" fill={piCol} stroke="#fff" strokeWidth="2"/>
+                          <circle cx={x} cy={y} r="9" fill={piCol} fillOpacity="0.12"/>
                         </g>
                       );
                     })}
-                    {/* Labels */}
                     {activeCats.map((c,i)=>{
                       const[x,y]=rPt(i,RR+18);
                       return(
-                        <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle"
-                          fontSize="9.5" fill="#555" fontFamily="Georgia">
+                        <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize="9.5" fill="#555" fontFamily="Georgia">
                           {c.emoji} {c.label}
                         </text>
                       );
                     })}
-                    {/* Score labels on dots */}
-                    {activeCats.map((c,i)=>{
+                    {activeCats.map((_,i)=>{
                       const[x,y]=rPt(i,rScores[i]*RR);
-                      const offset=rScores[i]>0.5?-10:10;
                       return(
-                        <text key={i} x={x} y={y+offset} textAnchor="middle" fontSize="8" fill={GOLD} fontWeight="700" fontFamily="Georgia">
+                        <text key={i} x={x} y={y+(rScores[i]>0.5?-10:10)} textAnchor="middle" fontSize="8" fill={piCol} fontWeight="700" fontFamily="Georgia">
                           {Math.round(rScores[i]*100)}%
                         </text>
                       );
                     })}
                   </svg>
-                  {/* Category breakdown */}
+                  {/* Category breakdown with team ranks */}
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:14}}>
                     {activeCats.map((c,i)=>{
                       const pct=Math.round(rScores[i]*100);
-                      const bar=rScores[i];
+                      const rank=catRanks[c.id];
+                      const rel=latestBW?parseFloat((catPRs[c.id]/latestBW).toFixed(2)):null;
                       return(
                         <div key={i} style={{padding:"10px 12px",background:"#f9f9f9",borderRadius:10,border:"0.5px solid #f0f0f0"}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
                             <div style={{fontSize:11,fontWeight:600,color:"#1a1a1a"}}>{c.emoji} {c.label}</div>
-                            <div style={{fontSize:12,fontWeight:700,color:GOLD}}>{catPRs[c.id]}</div>
+                            <div style={{fontSize:14,fontWeight:700,color:piCol}}>{catPRs[c.id]}</div>
                           </div>
-                          <div style={{height:5,background:"#ebebeb",borderRadius:3,overflow:"hidden"}}>
-                            <div style={{width:(pct)+"%",height:"100%",background:"linear-gradient(90deg,"+GOLD+","+ORANGE+")",borderRadius:3}}/>
+                          {rel&&<div style={{fontSize:9,color:GOLD,fontWeight:600,marginBottom:4}}>{rel}× bodyweight</div>}
+                          <div style={{height:4,background:"#ebebeb",borderRadius:2,overflow:"hidden",marginBottom:5}}>
+                            <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,"+piCol+","+ORANGE+")",borderRadius:2}}/>
                           </div>
-                          <div style={{fontSize:9,color:"#aaa",marginTop:4}}>{pct}% of reference · {c.ref} lbs target</div>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                            <div style={{fontSize:9,color:"#aaa"}}>{pct}% of target</div>
+                            {rank&&teamLoaded&&(
+                              <div style={{fontSize:9,fontWeight:700,color:rank.rank<=3?GOLD:"#aaa"}}>
+                                {rankMedal(rank.rank)||""}#{rank.rank}{rankSuffix(rank.rank)}/{rank.total}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
                   </div>
-                  <div style={{fontSize:9,color:"#ccc",textAlign:"center",marginTop:10}}>Reference = strong college T&F standard per category</div>
+                  <div style={{fontSize:9,color:"#ccc",textAlign:"center",marginTop:10}}>Reference standards = strong college T&F baseline per movement</div>
                 </div>
               )}
-
               {activeCats.length<3&&activeCats.length>0&&(
                 <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",border:"0.5px solid #eee",textAlign:"center"}}>
                   <div style={{fontSize:11,color:"#aaa"}}>Log lifts in at least 3 movement categories to unlock the strength profile chart.</div>
