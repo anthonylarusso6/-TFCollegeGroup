@@ -180,6 +180,15 @@ export default function PRLog({athleteId}){
       setLogs(prev=>{const existing=prev[liftName]||[];return{...prev,[liftName]:[data,...existing]};});
       setInputs(prev=>({...prev,[liftName]:{weight:"",reps:""}}));
       setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);
+      // Nudge athlete to log weight if they haven't today
+      try{
+        const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+        const todayStr=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
+        const{data:wLog}=await supabase.from("weight_log").select("id").eq("athlete_id",athleteId).eq("date",todayStr).maybeSingle();
+        if(!wLog){
+          fetch("/api/send-notification",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({athleteId,title:"💪 Great session!",body:"Don't forget to log your weight today ⚖️",url:"/athlete"})}).catch(()=>{});
+        }
+      }catch(e){}
     }catch(e){setLoadError(e.message);setSaving(null);}
   };
 
