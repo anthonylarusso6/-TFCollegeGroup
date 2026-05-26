@@ -65,12 +65,16 @@ export default function WeightTracker({athleteId}){
     }
   };
 
-  const saveGoal=async(val,mode)=>{
-    setGoalWeight(val);setGoalMode(mode);setShowGoalInput(false);
+  const persistGoal=async(val,mode)=>{
     try{localStorage.setItem("goal_weight_"+athleteId,val);localStorage.setItem("goal_mode_"+athleteId,mode);}catch(e){}
     try{
       await supabase.from("announcements").insert({type:"weight_goal",day:String(athleteId),message:String(val),week_label:mode,active:true});
     }catch(e){}
+  };
+
+  const saveGoal=async(val,mode)=>{
+    setGoalWeight(val);setGoalMode(mode);setShowGoalInput(false);
+    await persistGoal(val,mode);
   };
 
   const first=entries[0]?.weight!=null?parseFloat(entries[0].weight):null;
@@ -202,7 +206,7 @@ export default function WeightTracker({athleteId}){
         {(showGoalInput||goal)&&(
           <div style={{display:"flex",gap:6,marginBottom:12}}>
             {[{id:"lose",label:"🔻 Lose weight"},{id:"gain",label:"📈 Gain weight"}].map(m=>(
-              <button key={m.id} onClick={()=>setGoalMode(m.id)} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+(goalMode===m.id?ORANGE:"#e0e0e0"),background:goalMode===m.id?ORANGE+"15":"#fafafa",color:goalMode===m.id?ORANGE:"#888",fontSize:12,fontWeight:goalMode===m.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+              <button key={m.id} onClick={()=>{setGoalMode(m.id);if(goalWeight)persistGoal(goalWeight,m.id);}} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+(goalMode===m.id?ORANGE:"#e0e0e0"),background:goalMode===m.id?ORANGE+"15":"#fafafa",color:goalMode===m.id?ORANGE:"#888",fontSize:12,fontWeight:goalMode===m.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
                 {m.label}
               </button>
             ))}
