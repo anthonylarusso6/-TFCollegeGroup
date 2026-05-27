@@ -1387,36 +1387,79 @@ export default function Athlete(){
                   </div>
                 ):(
                   <div>
-                    {myLeader&&(
-                      <div style={{background:LB[myGroupIdx]||"#f5f5f5",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"2px solid "+(LC[myGroupIdx]||PUR)}}>
-                        <div style={{fontSize:11,color:LC[myGroupIdx]||PUR,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:8}}>Your group</div>
-                        <div style={{fontSize:18,fontWeight:500,color:"#1a1a1a",marginBottom:4}}>{myLeader}</div>
-                        <div style={{fontSize:12,color:"#888",marginBottom:12}}>Your leader this week</div>
-                        {myBracelet&&(
-                          <div style={{marginBottom:12}}>
-                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                              <div style={{width:10,height:10,borderRadius:"50%",background:myBracelet.hex}}/>
-                              <span style={{fontSize:12,fontWeight:500,color:myBracelet.hex}}>{myBracelet.color} — {myBracelet.ref}</span>
-                            </div>
-                            <div style={{fontSize:14,color:"#1a1a1a",fontStyle:"italic",lineHeight:1.7,padding:"10px 12px",background:"rgba(255,255,255,0.6)",borderRadius:8,borderLeft:"3px solid "+myBracelet.hex}}>
-                              "{myBracelet.text}"
-                            </div>
-                          </div>
-                        )}
-                        {myTier&&<div style={{fontSize:11,fontWeight:500,color:TIER_COLORS[myTier]?.color||"#888",background:TIER_COLORS[myTier]?.bg||"#f5f5f5",display:"inline-block",padding:"2px 10px",borderRadius:6,marginBottom:10}}>Tier {myTier}</div>}
-                        {myGroup&&myGroup.length>0&&(
-                          <div>
-                            <div style={{fontSize:11,fontWeight:500,color:LC[myGroupIdx]||PUR,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:6}}>Your teammates</div>
-                            {myGroup.map(name=>(
-                              <div key={name} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"rgba(255,255,255,0.7)",borderRadius:8,marginBottom:4}}>
-                                <div style={{width:28,height:28,borderRadius:"50%",background:"#888",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:600,color:"#fff"}}>{name[0]}</div>
-                                <div style={{fontSize:13,color:"#1a1a1a"}}>{name}</div>
+                    {myLeader&&(()=>{
+                      const gc=myBracelet?.hex||LC[effectiveGroupIdx%LC.length]||PUR;
+                      const leaderAth=athletes.find(a=>a.name===myLeader);
+                      const amLeader=myLeaderIdx>=0;
+                      return(
+                        <div>
+                          {/* Group identity card */}
+                          <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",border:"1px solid "+gc+"44",boxShadow:"0 8px 32px "+gc+"18"}}>
+                            <div style={{height:3,background:"linear-gradient(90deg,"+gc+","+gc+"44,transparent)"}}/>
+                            <div style={{background:"linear-gradient(140deg,"+gc+"22,"+gc+"06,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
+                              <div style={{position:"absolute",bottom:-10,right:-4,fontSize:80,opacity:0.05,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒</div>
+                              <div style={{fontSize:9,color:gc,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:14}}>
+                                {amLeader?"You&#39;re Leading This Group":"Your Group"}
                               </div>
-                            ))}
+                              {/* Leader row */}
+                              <div style={{display:"flex",alignItems:"center",gap:14}}>
+                                <div style={{width:64,height:64,borderRadius:"50%",border:"2px solid "+gc,overflow:"hidden",flexShrink:0,background:"#222",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:700,color:gc,boxShadow:"0 0 24px "+gc+"44"}}>
+                                  {leaderAth?.photo_url?<img src={leaderAth.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(myLeader||"?")[0]}
+                                </div>
+                                <div style={{flex:1}}>
+                                  <div style={{fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>{myLeader}</div>
+                                  <div style={{fontSize:11,color:"#666",marginTop:3}}>{amLeader?"Group Leader · That&#39;s you":"Group Leader"}</div>
+                                  {myTier&&(
+                                    <div style={{marginTop:6}}>
+                                      <span style={{fontSize:10,background:gc+"22",color:gc,padding:"3px 10px",borderRadius:20,fontWeight:700,border:"0.5px solid "+gc+"44"}}>Tier {myTier}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {/* Scripture */}
+                            {myBracelet&&(
+                              <div style={{background:"#111",padding:"14px 18px",borderTop:"0.5px solid #1a1a1a"}}>
+                                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                                  <div style={{width:10,height:10,borderRadius:"50%",background:gc,boxShadow:"0 0 8px "+gc+"88",flexShrink:0}}/>
+                                  <span style={{fontSize:10,fontWeight:700,color:gc,textTransform:"uppercase",letterSpacing:"0.07em"}}>{myBracelet.color} — {myBracelet.ref}</span>
+                                </div>
+                                <div style={{fontSize:14,color:"#ddd",fontStyle:"italic",lineHeight:1.8,fontFamily:"Georgia,serif",padding:"10px 14px",background:gc+"0D",borderRadius:10,borderLeft:"2px solid "+gc}}>
+                                  &#8220;{myBracelet.text}&#8221;
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    )}
+
+                          {/* Teammates grid */}
+                          {myGroup&&myGroup.length>0&&(
+                            <div style={{background:"#0e0e0e",borderRadius:16,overflow:"hidden",border:"0.5px solid #1e1e1e",marginBottom:12}}>
+                              <div style={{padding:"12px 16px",borderBottom:"0.5px solid #1a1a1a",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                                <div style={{fontSize:11,fontWeight:700,color:"#666",textTransform:"uppercase",letterSpacing:"0.1em"}}>Teammates</div>
+                                <div style={{fontSize:10,color:"#444"}}>{myGroup.length} member{myGroup.length!==1?"s":""}</div>
+                              </div>
+                              <div style={{padding:"10px 12px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                                {myGroup.map((name,i)=>{
+                                  const ath=athletes.find(a=>a.name===name);
+                                  const isMe=name===selectedAthlete?.name;
+                                  return(
+                                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:isMe?gc+"18":"#151515",borderRadius:12,border:"0.5px solid "+(isMe?gc+"44":"#222")}}>
+                                      <div style={{width:38,height:38,borderRadius:"50%",background:isMe?gc+"33":"#222",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:isMe?gc:"#555",flexShrink:0,overflow:"hidden",border:"1.5px solid "+(isMe?gc:"#2a2a2a")}}>
+                                        {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(name||"?")[0]}
+                                      </div>
+                                      <div style={{minWidth:0}}>
+                                        <div style={{fontSize:12,fontWeight:isMe?700:500,color:isMe?gc:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name.split(" ")[0]}</div>
+                                        {isMe&&<div style={{fontSize:9,color:gc+"88",marginTop:1}}>you</div>}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
