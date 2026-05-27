@@ -155,7 +155,7 @@ export default function PRLog({athleteId,gender}){
     })();
   },[athleteId]);
 
-  // Load team data + bodyweight lazily when dashboard opens
+  // Load team data lazily when dashboard opens
   useEffect(()=>{
     if(view!=="dashboard"||teamLoaded||!athleteId)return;
     (async()=>{
@@ -167,19 +167,34 @@ export default function PRLog({athleteId,gender}){
         const{data}=await supabase.from("athletes").select("id,gender").eq("status","active");
         setTeamAthletes(data||[]);
       }catch(e){}
+      setTeamLoaded(true);
+    })();
+  },[view,athleteId]);
+
+  // Load latest bodyweight eagerly so BW toggle works in the log view
+  useEffect(()=>{
+    if(!athleteId)return;
+    (async()=>{
       try{
         const{data}=await supabase.from("weight_log").select("weight").eq("athlete_id",athleteId)
           .order("date",{ascending:false}).limit(1).maybeSingle();
         if(data?.weight)setLatestBW(parseFloat(data.weight));
       }catch(e){}
-      setTeamLoaded(true);
     })();
-  },[view,athleteId]);
+  },[athleteId]);
 
   const todayLifts=(program&&program[activeDay])||[];
 
   const setInput=(liftName,field,val)=>{
     setInputs(prev=>({...prev,[liftName]:{...prev[liftName],[field]:val}}));
+  };
+
+  const toggleBW=(liftName)=>{
+    setInputs(prev=>{
+      const cur=prev[liftName]||{};
+      const on=!cur.bw;
+      return{...prev,[liftName]:{...cur,bw:on,weight:on&&latestBW?String(latestBW):on?"":cur.weight||""}};
+    });
   };
 
   const saveLog=async(liftName,tier)=>{
@@ -403,11 +418,28 @@ export default function PRLog({athleteId,gender}){
                   </div>
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Weight (lbs)</div>
-                      <input type="number" inputMode="decimal" value={inp.weight}
-                        onChange={e=>setInput(lift.name,"weight",e.target.value)}
-                        placeholder={last?`Last: ${last}`:"0"}
-                        style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
+                        <div style={{fontSize:10,color:"#aaa"}}>Weight (lbs)</div>
+                        <button onClick={()=>toggleBW(lift.name)}
+                          style={{fontSize:9,padding:"2px 7px",borderRadius:5,
+                            border:"1px solid "+(inp.bw?GREEN:"#ddd"),
+                            background:inp.bw?GREEN+"22":"#f5f5f5",
+                            color:inp.bw?GREEN:"#999",cursor:"pointer",
+                            fontFamily:"Georgia,serif",fontWeight:inp.bw?700:400}}>
+                          ⚖️ BW{latestBW?" ("+latestBW+")":""}
+                        </button>
+                      </div>
+                      <input type="number" inputMode="decimal"
+                        value={inp.weight}
+                        readOnly={!!inp.bw}
+                        onChange={e=>!inp.bw&&setInput(lift.name,"weight",e.target.value)}
+                        placeholder={inp.bw&&!latestBW?"Log weight first":last?`Last: ${last}`:"0"}
+                        style={{width:"100%",padding:"10px",borderRadius:8,
+                          border:"1px solid "+(inp.bw?GREEN+"55":"#e0e0e0"),
+                          fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",
+                          background:inp.bw?"#f0fff4":"#fafafa",
+                          color:inp.bw?GREEN:"#1a1a1a",
+                          boxSizing:"border-box",fontWeight:600}}/>
                     </div>
                     <div style={{flex:1}}>
                       <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Reps</div>
