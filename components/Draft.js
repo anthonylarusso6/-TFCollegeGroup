@@ -128,20 +128,16 @@ export default function Draft({athletes=[]}){
       }catch(e){console.error("Load draft:",e);}
       setLoading(false);
     })();
-
-    // Poll every 3s so coach sees picks from Forge leaders in real time
     pollTimer=setInterval(async()=>{
       try{
         const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
         if(!data||!data[0])return;
-        // Skip re-render if data hasn't changed
         const snap=JSON.stringify({g:data[0].groups,b:data[0].bracelets,p:data[0].phase});
         if(snap===lastSnapshotRef.current)return;
         lastSnapshotRef.current=snap;
         applyDraftData(data[0],picksPerGroup);
       }catch(e){}
     },3000);
-
     return()=>clearInterval(pollTimer);
   },[applyDraftData]);
 
@@ -153,7 +149,6 @@ export default function Draft({athletes=[]}){
     });
   },[numGroups]);
 
-  // Only save columns that actually exist in the draft table
   const save=async(updates={})=>{
     setSaveError("");
     const payload={
@@ -162,7 +157,6 @@ export default function Draft({athletes=[]}){
       groups:Array.from({length:numGroups},(_,i)=>groups[i]||[]),
       ...updates,
     };
-    // Strip columns that don't exist in the schema
     delete payload.group_count;
     delete payload.picks_per_group;
     delete payload.pick_order;
@@ -240,194 +234,417 @@ export default function Draft({athletes=[]}){
 
   const takenRefs=Object.values(bracelets).filter(Boolean).map(b=>typeof b==="object"?b.ref:b);
   const assigned=[...Object.values(groups).flat()];
-  const pool=athletes.filter(a=>!assigned.includes(a.name)&&(!search||a.name.toLowerCase().includes(search.toLowerCase())));
+  const activeAthletes=athletes.filter(a=>a.status==="active");
+  const pool=activeAthletes.filter(a=>!assigned.includes(a.name)&&(!search||a.name.toLowerCase().includes(search.toLowerCase())));
   const curGroup=pickSeq[pickIdx];
   const curLeader=leaders[curGroup];
   const isDone=pickIdx>=pickSeq.length||pool.length===0;
+  const stepNum=step==="setup"?0:step==="bracelet"?1:step==="draft"?2:3;
+  const STEP_LABELS=["Setup","Bracelets","Draft","Complete"];
 
   if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888"}}>Loading...</div>;
 
   return(
     <div>
-      {/* Header */}
-      <div style={{background:BG,borderRadius:12,padding:"12px 14px",marginBottom:12,border:"1px solid #222",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+
+      {/* ── HEADER ── */}
+      <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:10,border:"1px solid #1e1e1e",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>🎯 Draft Board</div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+            <div style={{fontSize:15,fontWeight:700,color:"#fff"}}>🎯 Draft Board</div>
             {(step==="draft"||step==="bracelet")&&(
-              <div style={{display:"flex",alignItems:"center",gap:4,background:"#1a3a1a",borderRadius:8,padding:"2px 8px",border:"0.5px solid "+GREEN+"44"}}>
-                <div style={{width:6,height:6,borderRadius:"50%",background:GREEN,boxShadow:"0 0 6px "+GREEN}}/>
-                <span style={{fontSize:9,color:GREEN,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em"}}>Live</span>
+              <div style={{display:"flex",alignItems:"center",gap:4,background:"#0d2010",borderRadius:8,padding:"2px 8px",border:"0.5px solid "+GREEN+"55"}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:GREEN,boxShadow:"0 0 8px "+GREEN}}/>
+                <span style={{fontSize:9,color:GREEN,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.1em"}}>Live</span>
               </div>
             )}
           </div>
-          <div style={{fontSize:11,color:"#555",marginTop:2}}>
-            {step==="setup"&&"Step 1 — Set up groups"}
-            {step==="bracelet"&&"Step 2 — Leaders picking bracelets · auto-refreshing"}
-            {step==="draft"&&`Step 3 — Pick ${pickIdx+1} of ${pickSeq.length} · auto-refreshing every 3s`}
-            {step==="done"&&"✅ Draft complete — edit in Teams tab"}
+          <div style={{fontSize:10,color:"#444",textTransform:"uppercase",letterSpacing:"0.06em"}}>
+            {step==="setup"&&"Configure groups & leaders"}
+            {step==="bracelet"&&"Leaders choosing bracelets"}
+            {step==="draft"&&`Pick ${pickIdx+1} of ${pickSeq.length} · auto-refreshing`}
+            {step==="done"&&"Draft locked · manage in Teams tab"}
           </div>
         </div>
-        <button onClick={reset} style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid #444",background:"transparent",color:"#777",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>Reset</button>
+        <button onClick={reset} style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",background:"transparent",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>Reset</button>
       </div>
 
-      {/* Save error */}
+      {/* ── STEP PROGRESS BAR ── */}
+      <div style={{display:"flex",alignItems:"flex-start",marginBottom:16,padding:"0 2px"}}>
+        {STEP_LABELS.map((s,i)=>(
+          <div key={s} style={{display:"flex",alignItems:"center",flex:i<STEP_LABELS.length-1?"1":"0"}}>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <div style={{
+                width:26,height:26,borderRadius:"50%",
+                background:i<stepNum?GREEN:i===stepNum?ORANGE:"#1a1a1a",
+                border:"2px solid "+(i<stepNum?GREEN:i===stepNum?ORANGE:"#252525"),
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:10,fontWeight:700,color:i<=stepNum?"#fff":"#444",
+              }}>{i<stepNum?"✓":i+1}</div>
+              <div style={{fontSize:8,color:i===stepNum?ORANGE:i<stepNum?GREEN:"#333",textTransform:"uppercase",letterSpacing:"0.04em",fontWeight:i===stepNum?700:500,whiteSpace:"nowrap"}}>{s}</div>
+            </div>
+            {i<STEP_LABELS.length-1&&(
+              <div style={{flex:1,height:1.5,background:i<stepNum?GREEN+"55":"#1e1e1e",margin:"0 6px",marginTop:11}}/>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* ── SAVE ERROR ── */}
       {saveError&&(
-        <div style={{background:"#1a0808",borderRadius:10,padding:"10px 14px",marginBottom:10,border:"0.5px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <span style={{fontSize:12,color:"#C0392B"}}>⚠ {saveError}</span>
-          <button onClick={()=>setSaveError("")} style={{background:"transparent",border:"none",color:"#666",fontSize:14,cursor:"pointer",padding:"0 4px"}}>×</button>
+        <div style={{background:"#180606",borderRadius:10,padding:"10px 14px",marginBottom:10,border:"0.5px solid "+RED+"55",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <span style={{fontSize:12,color:RED}}>⚠ {saveError}</span>
+          <button onClick={()=>setSaveError("")} style={{background:"transparent",border:"none",color:"#666",fontSize:18,cursor:"pointer",lineHeight:1}}>×</button>
         </div>
       )}
 
-      {/* STEP 1: SETUP */}
+      {/* ════════════════════════════
+          STEP 1 — SETUP
+      ════════════════════════════ */}
       {step==="setup"&&(
         <div>
-          <div style={{background:"#111",borderRadius:12,padding:"16px",marginBottom:10,border:"0.5px solid #1e1e1e"}}>
+          <div style={{background:"#111",borderRadius:12,padding:"16px 14px",marginBottom:10,border:"0.5px solid #1e1e1e"}}>
+
             {/* Group count */}
-            <div style={{fontSize:12,fontWeight:600,color:"#ddd",marginBottom:8}}>Number of groups</div>
-            <div style={{display:"flex",gap:8,marginBottom:16}}>
-              {[1,2,3,4,5,6].map(n=>(
-                <button key={n} onClick={()=>setNumGroups(n)} style={{width:38,height:38,borderRadius:8,border:"1px solid "+(numGroups===n?ORANGE:"#333"),background:numGroups===n?ORANGE:"#1a1a1a",color:numGroups===n?"#fff":"#888",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>{n}</button>
+            <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Number of groups</div>
+            <div style={{display:"flex",gap:8,marginBottom:18}}>
+              {[2,3,4,5,6].map(n=>(
+                <button key={n} onClick={()=>setNumGroups(n)} style={{
+                  width:44,height:44,borderRadius:10,
+                  border:"1.5px solid "+(numGroups===n?ORANGE:"#252525"),
+                  background:numGroups===n?ORANGE+"20":"transparent",
+                  color:numGroups===n?ORANGE:"#555",
+                  fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",
+                }}>{n}</button>
               ))}
             </div>
 
             {/* Picks per group */}
-            <div style={{fontSize:12,fontWeight:600,color:"#ddd",marginBottom:6}}>Athletes per group: <span style={{color:ORANGE}}>{picksPerGroup}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+              <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em"}}>Athletes per group</div>
+              <div style={{fontSize:20,fontWeight:800,color:ORANGE,lineHeight:1}}>{picksPerGroup}</div>
+            </div>
             <input type="range" min={2} max={12} value={picksPerGroup} onChange={e=>setPicksPerGroup(+e.target.value)} style={{width:"100%",accentColor:ORANGE,marginBottom:4}}/>
-            <div style={{fontSize:11,color:"#555",marginBottom:16}}>{numGroups} groups × {picksPerGroup} picks = {numGroups*picksPerGroup} total athletes</div>
+            <div style={{fontSize:10,color:"#3a3a3a",marginBottom:18,textAlign:"right"}}>{numGroups} groups × {picksPerGroup} = <span style={{color:"#555"}}>{numGroups*picksPerGroup} total athletes</span></div>
 
-            {/* Leader selectors */}
-            <div style={{fontSize:12,fontWeight:600,color:"#ddd",marginBottom:8}}>Select Forge leaders</div>
-            <input value={leaderSearch} onChange={e=>setLeaderSearch(e.target.value)} placeholder="🔍 Search..." style={{width:"100%",padding:"8px 12px",borderRadius:8,border:"0.5px solid #222",fontSize:13,fontFamily:"Georgia,serif",marginBottom:10,boxSizing:"border-box",background:"#1a1a1a",color:"#ddd"}}/>
-            {Array.from({length:numGroups},(_,i)=>(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,padding:"8px 10px",borderRadius:8,background:leaders[i]?COLORS[i%COLORS.length]+"18":"#0e0e0e",border:"1px solid "+(leaders[i]?COLORS[i%COLORS.length]+"44":"#252525")}}>
-                <div style={{width:10,height:10,borderRadius:"50%",background:COLORS[i%COLORS.length],flexShrink:0}}/>
-                <div style={{fontSize:11,color:COLORS[i%COLORS.length],fontWeight:700,minWidth:60}}>G{i+1} · T{getTier(i,numGroups)}</div>
-                {leaders[i]?(
-                  <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <div style={{fontSize:13,fontWeight:600,color:COLORS[i%COLORS.length]}}>{leaders[i]}</div>
-                    <button onClick={()=>{const l=[...leaders];l[i]="";setLeaders(l);}} style={{background:"transparent",border:"none",color:COLORS[i%COLORS.length],fontSize:16,cursor:"pointer",padding:0}}>×</button>
+            {/* Leader slots */}
+            <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Forge leaders</div>
+            {Array.from({length:numGroups},(_,i)=>{
+              const color=COLORS[i%COLORS.length];
+              const isSet=!!leaders[i];
+              return(
+                <div key={i} style={{
+                  display:"flex",alignItems:"center",gap:10,marginBottom:6,
+                  padding:"10px 12px",borderRadius:10,
+                  background:isSet?color+"14":"#0d0d0d",
+                  border:"1px solid "+(isSet?color+"55":"#1a1a1a"),
+                }}>
+                  <div style={{
+                    width:30,height:30,borderRadius:"50%",background:color,flexShrink:0,
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    fontSize:11,fontWeight:700,color:"#fff",
+                  }}>G{i+1}</div>
+                  <div style={{flex:1}}>
+                    {isSet?(
+                      <div style={{fontSize:13,fontWeight:600,color}}>{leaders[i]}</div>
+                    ):(
+                      <div style={{fontSize:12,color:"#2e2e2e"}}>Tap a name below</div>
+                    )}
+                    <div style={{fontSize:9,color:"#3a3a3a",marginTop:1,textTransform:"uppercase",letterSpacing:"0.05em"}}>Tier {getTier(i,numGroups)}</div>
                   </div>
-                ):(
-                  <div style={{fontSize:12,color:"#444",flex:1}}>Tap a name below →</div>
-                )}
+                  {isSet&&(
+                    <button onClick={()=>{const l=[...leaders];l[i]="";setLeaders(l);}} style={{background:"transparent",border:"none",color:"#555",fontSize:20,cursor:"pointer",padding:"0 2px",lineHeight:1}}>×</button>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Athlete picker */}
+            <div style={{marginTop:12}}>
+              <input value={leaderSearch} onChange={e=>setLeaderSearch(e.target.value)} placeholder="🔍 Search athletes…" style={{width:"100%",padding:"9px 12px",borderRadius:8,border:"0.5px solid #1e1e1e",fontSize:13,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box",background:"#0d0d0d",color:"#ddd",outline:"none"}}/>
+              <div style={{maxHeight:190,overflowY:"auto",borderRadius:8,border:"0.5px solid #1a1a1a"}}>
+                {activeAthletes.filter(a=>!leaders.includes(a.name)&&(!leaderSearch||a.name.toLowerCase().includes(leaderSearch.toLowerCase()))).map(a=>{
+                  const emptySlot=leaders.findIndex(l=>!l);
+                  const slotColor=emptySlot>=0?COLORS[emptySlot%COLORS.length]:null;
+                  return(
+                    <button key={a.id} onClick={()=>{if(emptySlot>=0){const l=[...leaders];l[emptySlot]=a.name;setLeaders(l);}}} disabled={emptySlot<0}
+                      style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#0d0d0d",border:"none",borderBottom:"0.5px solid #141414",cursor:emptySlot>=0?"pointer":"default",fontFamily:"Georgia,serif",textAlign:"left",opacity:emptySlot>=0?1:0.3}}>
+                      <div style={{width:32,height:32,borderRadius:"50%",background:STEEL,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,color:"#fff"}}>
+                        {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
+                      </div>
+                      <div style={{flex:1,fontSize:13,color:"#ccc"}}>{a.name}</div>
+                      {emptySlot>=0&&<div style={{fontSize:10,color:slotColor,fontWeight:600,background:slotColor+"1a",padding:"3px 8px",borderRadius:6,flexShrink:0}}>→ G{emptySlot+1}</div>}
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-            <div style={{maxHeight:200,overflowY:"auto",border:"0.5px solid #1e1e1e",borderRadius:8,marginTop:6}}>
-              {athletes.filter(a=>
-                !leaders.includes(a.name)&&
-                (!leaderSearch||a.name.toLowerCase().includes(leaderSearch.toLowerCase()))
-              ).map(a=>{
-                const emptySlot=leaders.findIndex(l=>!l);
-                return(
-                  <button key={a.id} onClick={()=>{
-                    if(emptySlot>=0){const l=[...leaders];l[emptySlot]=a.name;setLeaders(l);}
-                  }} disabled={emptySlot<0} style={{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#141414",border:"none",borderBottom:"0.5px solid #1e1e1e",cursor:emptySlot>=0?"pointer":"default",fontFamily:"Georgia,serif",textAlign:"left",opacity:emptySlot>=0?1:0.4}}>
-                    <div style={{width:32,height:32,borderRadius:"50%",background:STEEL,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,color:"#fff"}}>
-                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
-                    </div>
-                    <div style={{fontSize:13,color:"#ddd"}}>{a.name}</div>
-                    {emptySlot>=0&&<div style={{marginLeft:"auto",fontSize:11,color:COLORS[emptySlot%COLORS.length],fontWeight:600}}>→ G{emptySlot+1}</div>}
-                  </button>
-                );
-              })}
             </div>
           </div>
-          <button onClick={startBracelets} disabled={leaders.some(l=>!l)} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:leaders.some(l=>!l)?"#222":ORANGE,color:leaders.some(l=>!l)?"#555":"#fff",fontSize:14,fontWeight:700,cursor:leaders.some(l=>!l)?"not-allowed":"pointer",fontFamily:"Georgia,serif"}}>
+
+          <button onClick={startBracelets} disabled={leaders.some(l=>!l)} style={{
+            width:"100%",padding:"15px",borderRadius:10,border:"none",
+            background:leaders.some(l=>!l)?"#191919":ORANGE,
+            color:leaders.some(l=>!l)?"#3a3a3a":"#fff",
+            fontSize:14,fontWeight:700,cursor:leaders.some(l=>!l)?"not-allowed":"pointer",
+            fontFamily:"Georgia,serif",
+          }}>
             Next → Assign Bracelets
           </button>
         </div>
       )}
 
-      {/* STEP 2: BRACELETS */}
+      {/* ════════════════════════════
+          STEP 2 — BRACELETS
+      ════════════════════════════ */}
       {step==="bracelet"&&(
         <div>
           {Array.from({length:numGroups},(_,i)=>{
             const color=COLORS[i%COLORS.length];
-            const currentBrac=bracelets[i];
+            const brac=bracelets[i];
             return(
-              <div key={i} style={{background:"#141414",borderRadius:12,padding:"14px",marginBottom:8,border:"2px solid "+color}}>
-                <div style={{fontSize:13,fontWeight:700,color,marginBottom:8}}>⚒ {leaders[i]} — Group {i+1}</div>
-                <select value={currentBrac?.ref||""} onChange={e=>{const b=BRACELETS.find(x=>x.ref===e.target.value)||null;setBracelets(p=>({...p,[i]:b}));}}
-                  style={{width:"100%",padding:"8px",borderRadius:8,border:"1px solid "+color+"33",fontSize:12,fontFamily:"Georgia,serif",marginBottom:6,background:"#1a1a1a",color:"#ddd"}}>
-                  <option value="">— Choose bracelet —</option>
-                  {BRACELETS.filter(b=>!takenRefs.includes(b.ref)||currentBrac?.ref===b.ref).map(b=>(
-                    <option key={b.ref} value={b.ref}>{b.color} — {b.ref}</option>
-                  ))}
-                </select>
-                {currentBrac&&(
-                  <div style={{padding:"8px",background:currentBrac.hex+"22",borderRadius:8,border:"1px solid "+currentBrac.hex+"33"}}>
-                    <div style={{fontSize:11,fontWeight:600,color:currentBrac.hex}}>{currentBrac.ref}</div>
-                    <div style={{fontSize:11,color:"#888",fontStyle:"italic",marginTop:2}}>"{currentBrac.text}"</div>
+              <div key={i} style={{background:"#0d0d0d",borderRadius:14,padding:"14px",marginBottom:10,border:"2px solid "+color+"55"}}>
+                {/* Group header */}
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+                  <div style={{width:38,height:38,borderRadius:"50%",background:color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#fff",flexShrink:0}}>G{i+1}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:15,fontWeight:700,color}}>{leaders[i]}</div>
+                    <div style={{fontSize:10,color:"#444",marginTop:1}}>Tier {getTier(i,numGroups)} · pick a bracelet</div>
                   </div>
+                  {brac&&(
+                    <div style={{width:24,height:24,borderRadius:"50%",background:brac.hex,border:"2px solid #1a1a1a",flexShrink:0,boxShadow:"0 0 10px "+brac.hex+"88"}}/>
+                  )}
+                </div>
+
+                {/* Bracelet swatch grid — 6 per row */}
+                <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8,marginBottom:12}}>
+                  {BRACELETS.map(b=>{
+                    const isTaken=takenRefs.includes(b.ref)&&brac?.ref!==b.ref;
+                    const isSelected=brac?.ref===b.ref;
+                    return(
+                      <button key={b.ref}
+                        onClick={()=>{if(!isTaken){setBracelets(p=>({...p,[i]:BRACELETS.find(x=>x.ref===b.ref)||null}));}}}
+                        title={b.color+" — "+b.ref}
+                        style={{
+                          width:"100%",aspectRatio:"1",borderRadius:"50%",padding:0,
+                          background:b.hex,
+                          border:isSelected?"3px solid #fff":isTaken?"2px solid transparent":"2px solid "+b.hex+"33",
+                          cursor:isTaken?"not-allowed":"pointer",
+                          opacity:isTaken?0.18:1,
+                          boxShadow:isSelected?"0 0 0 2px "+b.hex+", 0 0 14px "+b.hex+"99":"none",
+                          outline:"none",
+                        }}/>
+                    );
+                  })}
+                </div>
+
+                {/* Selected preview */}
+                {brac?(
+                  <div style={{padding:"10px 12px",background:brac.hex+"18",borderRadius:10,border:"1px solid "+brac.hex+"44"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+                      <div style={{width:12,height:12,borderRadius:"50%",background:brac.hex,flexShrink:0}}/>
+                      <div style={{fontSize:12,fontWeight:600,color:brac.hex}}>{brac.color} · {brac.ref}</div>
+                    </div>
+                    <div style={{fontSize:11,color:"#888",fontStyle:"italic",paddingLeft:20}}>"{brac.text}"</div>
+                  </div>
+                ):(
+                  <div style={{textAlign:"center",padding:"6px",color:"#2e2e2e",fontSize:11}}>Tap a swatch to assign</div>
                 )}
               </div>
             );
           })}
-          <button onClick={startDraft} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:GOLD,color:"#1a1a1a",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",marginTop:4}}>
+
+          <button onClick={startDraft} style={{
+            width:"100%",padding:"15px",borderRadius:10,border:"none",
+            background:GOLD,color:"#0f0f0f",fontSize:14,fontWeight:700,
+            cursor:"pointer",fontFamily:"Georgia,serif",marginTop:4,
+          }}>
             🏁 Start Draft!
           </button>
         </div>
       )}
 
-      {/* STEP 3: DRAFT */}
+      {/* ════════════════════════════
+          STEP 3 — DRAFT
+      ════════════════════════════ */}
       {step==="draft"&&(
         <div>
           {!isDone?(
             <>
-              <div style={{background:"linear-gradient(135deg,#111,#1a1a1a)",borderRadius:14,padding:"16px",marginBottom:12,border:"2px solid "+COLORS[curGroup%COLORS.length],textAlign:"center"}}>
-                <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Now picking · {pickIdx+1}/{pickSeq.length}</div>
-                <div style={{fontSize:24,fontWeight:800,color:COLORS[curGroup%COLORS.length]}}>{curLeader}</div>
-                <div style={{fontSize:11,color:"#555",marginTop:4}}>Group {curGroup+1} · Tier {getTier(curGroup,numGroups)} · {(groups[curGroup]||[]).length} picked</div>
+              {/* ON THE CLOCK — hero card */}
+              {(()=>{
+                const col=COLORS[curGroup%COLORS.length];
+                const pickedCount=(groups[curGroup]||[]).length-1;
+                return(
+                  <div style={{
+                    background:"linear-gradient(145deg,"+col+"1e,"+col+"08)",
+                    borderRadius:16,padding:"18px 18px 16px",marginBottom:12,
+                    border:"2px solid "+col+"77",
+                    position:"relative",overflow:"hidden",
+                  }}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+col+","+col+"33)"}}/>
+                    <div style={{fontSize:9,color:col,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:8,opacity:0.9}}>On the clock</div>
+                    <div style={{fontSize:30,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",marginBottom:6,lineHeight:1}}>{curLeader}</div>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+                      <div style={{fontSize:11,color:"#666"}}>Group {curGroup+1}</div>
+                      <div style={{width:3,height:3,borderRadius:"50%",background:"#2e2e2e"}}/>
+                      <div style={{fontSize:11,color:"#666"}}>Tier {getTier(curGroup,numGroups)}</div>
+                      <div style={{width:3,height:3,borderRadius:"50%",background:"#2e2e2e"}}/>
+                      <div style={{fontSize:11,color:col,fontWeight:600}}>{pickedCount} picked</div>
+                    </div>
+                    {/* Pick progress */}
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{flex:1,height:4,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:(pickIdx/pickSeq.length*100)+"%",background:"linear-gradient(90deg,"+col+","+col+"88)",borderRadius:2,transition:"width 0.4s ease"}}/>
+                      </div>
+                      <div style={{fontSize:10,color:"#555",flexShrink:0,fontWeight:600}}>{pickIdx+1} / {pickSeq.length}</div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* SNAKE ORDER PREVIEW */}
+              <div style={{marginBottom:12,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+                <div style={{display:"flex",gap:5,paddingBottom:2,minWidth:"max-content"}}>
+                  {pickSeq.slice(Math.max(0,pickIdx-1),Math.min(pickSeq.length,pickIdx+9)).map((gIdx,offset)=>{
+                    const absIdx=Math.max(0,pickIdx-1)+offset;
+                    const isPast=absIdx<pickIdx;
+                    const isCurrent=absIdx===pickIdx;
+                    const col=COLORS[gIdx%COLORS.length];
+                    return(
+                      <div key={offset} style={{
+                        flexShrink:0,padding:"5px 10px",borderRadius:8,textAlign:"center",minWidth:46,
+                        background:isCurrent?col:isPast?"#111":"#151515",
+                        border:"1px solid "+(isCurrent?col:isPast?col+"1a":col+"33"),
+                        opacity:isPast?0.35:1,
+                      }}>
+                        <div style={{fontSize:11,fontWeight:isCurrent?700:400,color:isCurrent?"#fff":col}}>G{gIdx+1}</div>
+                        <div style={{fontSize:8,color:isCurrent?"#ffffffaa":"#444",marginTop:1,letterSpacing:"0.04em"}}>{isCurrent?"NOW":"#"+(absIdx+1)}</div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search athletes..." style={{width:"100%",padding:"10px 14px",borderRadius:10,border:"1px solid #222",fontSize:14,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box",background:"#111",color:"#ddd"}}/>
-              <div style={{background:"#141414",borderRadius:12,border:"0.5px solid #1e1e1e",overflow:"hidden",marginBottom:12}}>
-                {pool.length===0?<div style={{textAlign:"center",padding:"2rem",color:"#555",fontSize:13}}>No athletes available</div>:
-                  pool.map(a=>(
-                    <button key={a.id} onClick={()=>pick(a.name)} style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 14px",background:"#141414",border:"none",borderBottom:"0.5px solid #1e1e1e",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
-                      <div style={{width:36,height:36,borderRadius:"50%",background:STEEL,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:600,color:"#fff"}}>
+
+              {/* ATHLETE SEARCH + POOL */}
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search athletes…" style={{width:"100%",padding:"10px 14px",borderRadius:10,border:"1px solid #1e1e1e",fontSize:14,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box",background:"#111",color:"#ddd",outline:"none"}}/>
+              <div style={{background:"#0d0d0d",borderRadius:12,border:"0.5px solid #161616",overflow:"hidden",marginBottom:14}}>
+                {pool.length===0?(
+                  <div style={{textAlign:"center",padding:"2rem",color:"#444",fontSize:13}}>No athletes available</div>
+                ):pool.map(a=>{
+                  const col=COLORS[curGroup%COLORS.length];
+                  return(
+                    <button key={a.id} onClick={()=>pick(a.name)} style={{
+                      width:"100%",display:"flex",alignItems:"center",gap:12,
+                      padding:"13px 14px",background:"#0d0d0d",
+                      border:"none",borderBottom:"0.5px solid #121212",
+                      cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",
+                    }}>
+                      <div style={{width:40,height:40,borderRadius:"50%",background:STEEL,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:600,color:"#fff"}}>
                         {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
                       </div>
-                      <div style={{flex:1,fontSize:14,color:"#ddd"}}>{a.name}</div>
-                      <div style={{fontSize:18,color:COLORS[curGroup%COLORS.length],fontWeight:700}}>+</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:14,fontWeight:500,color:"#e0e0e0"}}>{a.name}</div>
+                        {a.sport&&<div style={{fontSize:11,color:"#555",marginTop:1}}>{a.sport}</div>}
+                      </div>
+                      <div style={{
+                        width:34,height:34,borderRadius:"50%",flexShrink:0,
+                        background:col+"1e",border:"1.5px solid "+col+"66",
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        fontSize:18,fontWeight:700,color:col,
+                      }}>+</div>
                     </button>
-                  ))
-                }
+                  );
+                })}
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:6}}>
-                {Array.from({length:numGroups},(_,i)=>(
-                  <div key={i} style={{background:"#141414",borderRadius:8,padding:"8px",border:"1px solid "+(i===curGroup?COLORS[i%COLORS.length]+"88":"#222")}}>
-                    <div style={{fontSize:10,fontWeight:700,color:COLORS[i%COLORS.length],marginBottom:4}}>Group {i+1} ({(groups[i]||[]).length})</div>
-                    {(groups[i]||[]).map(n=><div key={n} style={{fontSize:11,color:"#888"}}>{n}</div>)}
-                  </div>
-                ))}
+
+              {/* GROUP BOARDS */}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:8}}>
+                {Array.from({length:numGroups},(_,i)=>{
+                  const col=COLORS[i%COLORS.length];
+                  const isCurrent=i===curGroup;
+                  const members=groups[i]||[];
+                  const brac=bracelets[i];
+                  return(
+                    <div key={i} style={{
+                      background:isCurrent?col+"18":"#0d0d0d",
+                      borderRadius:10,padding:"10px 10px 8px",
+                      border:"1.5px solid "+(isCurrent?col:col+"22"),
+                    }}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:5}}>
+                        <div style={{display:"flex",alignItems:"center",gap:5}}>
+                          <div style={{width:7,height:7,borderRadius:"50%",background:col}}/>
+                          <div style={{fontSize:10,fontWeight:700,color,textTransform:"uppercase",letterSpacing:"0.06em"}}>G{i+1}</div>
+                          {isCurrent&&<div style={{fontSize:8,color:col,fontWeight:700,letterSpacing:"0.06em"}}>▶</div>}
+                        </div>
+                        <div style={{fontSize:9,color:"#3a3a3a"}}>{members.length-1}/{picksPerGroup-1}</div>
+                      </div>
+                      <div style={{fontSize:11,fontWeight:600,color:isCurrent?col:"#999",marginBottom:4,paddingLeft:12}}>⚒ {leaders[i]||"—"}</div>
+                      {members.slice(1).map(n=>(
+                        <div key={n} style={{fontSize:10,color:"#666",paddingLeft:12,padding:"1px 0 1px 12px"}}>· {n}</div>
+                      ))}
+                      {brac&&(
+                        <div style={{marginTop:5,paddingLeft:12,display:"flex",alignItems:"center",gap:4}}>
+                          <div style={{width:7,height:7,borderRadius:"50%",background:brac.hex,flexShrink:0}}/>
+                          <div style={{fontSize:8,color:"#444"}}>{brac.ref}</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </>
           ):(
-            <div style={{textAlign:"center",padding:"2rem"}}>
-              <div style={{fontSize:48,marginBottom:12}}>🏆</div>
-              <div style={{fontSize:18,fontWeight:700,color:GREEN,marginBottom:16}}>Draft Complete!</div>
-              <button onClick={()=>setStep("done")} style={{padding:"12px 24px",borderRadius:10,border:"none",background:GOLD,color:"#1a1a1a",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>View Groups →</button>
+            <div style={{textAlign:"center",padding:"3rem 1rem"}}>
+              <div style={{fontSize:64,marginBottom:16}}>🏆</div>
+              <div style={{fontSize:22,fontWeight:800,color:GOLD,marginBottom:6,letterSpacing:"-0.02em"}}>Draft Complete!</div>
+              <div style={{fontSize:12,color:"#555",marginBottom:24}}>{numGroups} groups · iron sharpens iron</div>
+              <button onClick={()=>setStep("done")} style={{padding:"13px 28px",borderRadius:10,border:"none",background:GOLD,color:"#0f0f0f",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>View Groups →</button>
             </div>
           )}
         </div>
       )}
 
-      {/* DONE */}
+      {/* ════════════════════════════
+          DONE / LOCKED
+      ════════════════════════════ */}
       {step==="done"&&(
         <div>
-          <div style={{background:"linear-gradient(135deg,#0d1f0d,#1a3a1f)",borderRadius:12,padding:"12px 14px",marginBottom:12,border:"1px solid "+GREEN+"44",textAlign:"center"}}>
-            <div style={{fontSize:15,fontWeight:700,color:GREEN}}>✅ Draft Complete — edit groups in the Teams tab</div>
+          <div style={{background:"linear-gradient(135deg,#091a0b,#0c2210)",borderRadius:12,padding:"13px 16px",marginBottom:14,border:"1px solid "+GREEN+"33",textAlign:"center"}}>
+            <div style={{fontSize:10,color:GREEN,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:4}}>Draft complete</div>
+            <div style={{fontSize:13,fontWeight:600,color:"#ddd"}}>Groups are locked · manage in Teams tab</div>
           </div>
+
           {Array.from({length:numGroups},(_,i)=>{
             const color=COLORS[i%COLORS.length];
             const brac=bracelets[i];
+            const members=groups[i]||[];
             return(
-              <div key={i} style={{background:"#141414",borderRadius:12,padding:"12px",marginBottom:8,border:"2px solid "+color}}>
-                <div style={{fontSize:13,fontWeight:700,color,marginBottom:6}}>⚒ {leaders[i]} — Group {i+1} · Tier {getTier(i,numGroups)}</div>
-                {brac&&<div style={{fontSize:11,color:"#888",marginBottom:6,fontStyle:"italic"}}>📿 {brac.ref} — "{brac.text}"</div>}
-                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
-                  {(groups[i]||[]).map(n=><span key={n} style={{fontSize:11,padding:"3px 8px",borderRadius:12,background:color+"11",color,border:"1px solid "+color+"33"}}>{n}</span>)}
+              <div key={i} style={{background:"#0d0d0d",borderRadius:14,padding:"14px",marginBottom:10,border:"2px solid "+color+"44"}}>
+                {/* Header */}
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                  <div style={{width:38,height:38,borderRadius:"50%",background:color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#fff",flexShrink:0}}>G{i+1}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:14,fontWeight:700,color}}>⚒ {leaders[i]}</div>
+                    <div style={{fontSize:10,color:"#444",marginTop:1}}>Tier {getTier(i,numGroups)} · {members.length-1} athletes</div>
+                  </div>
+                  {brac&&(
+                    <div style={{width:22,height:22,borderRadius:"50%",background:brac.hex,border:"2px solid #1a1a1a",flexShrink:0,boxShadow:"0 0 8px "+brac.hex+"66"}}/>
+                  )}
+                </div>
+
+                {/* Bracelet */}
+                {brac&&(
+                  <div style={{padding:"8px 11px",background:brac.hex+"14",borderRadius:8,marginBottom:10,border:"0.5px solid "+brac.hex+"33"}}>
+                    <div style={{fontSize:10,fontWeight:600,color:brac.hex}}>{brac.ref}</div>
+                    <div style={{fontSize:10,color:"#777",fontStyle:"italic",marginTop:1}}>"{brac.text}"</div>
+                  </div>
+                )}
+
+                {/* Roster chips */}
+                <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+                  {members.slice(1).map(n=>(
+                    <span key={n} style={{fontSize:11,padding:"4px 10px",borderRadius:12,background:color+"14",color,border:"1px solid "+color+"33",fontWeight:500}}>{n}</span>
+                  ))}
                 </div>
               </div>
             );
