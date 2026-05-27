@@ -139,8 +139,8 @@ export default function Landing(){
           }catch(e){setForgeLeaders(names.map(n=>({name:n,photo_url:null})));}
         }
       }catch(e){}
-      // Season progress — weeks since June 18
-      const start=new Date("2026-06-18");
+      // Season progress — weeks since May 19
+      const start=new Date("2026-05-19T09:00:00");
       const nowDate=new Date();
       const totalWeeks=12;
       if(nowDate<start){

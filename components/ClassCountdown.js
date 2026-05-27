@@ -76,9 +76,9 @@ export default function ClassCountdown(){
         <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,"+ORANGE+","+GOLD+")",borderRadius:3,transition:"width 0.5s"}}/>
       </div>
       <div style={{display:"flex",justifyContent:"space-between"}}>
-        <div style={{fontSize:9,color:"#444"}}>Jun 18</div>
+        <div style={{fontSize:9,color:"#444"}}>May 19</div>
         <div style={{fontSize:9,color:ORANGE,fontWeight:600}}>{pct}% complete</div>
-        <div style={{fontSize:9,color:"#444"}}>Sep 10</div>
+        <div style={{fontSize:9,color:"#444"}}>Aug 11</div>
       </div>
     </div>
   );
