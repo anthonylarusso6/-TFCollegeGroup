@@ -99,9 +99,9 @@ const strTier=(pct)=>{
 };
 
 const piColor=(score)=>{
-  if(score>=800)return GOLD;
-  if(score>=600)return GREEN;
-  if(score>=400)return ORANGE;
+  if(score>=80)return GOLD;
+  if(score>=60)return GREEN;
+  if(score>=40)return ORANGE;
   return STEEL;
 };
 
@@ -290,14 +290,14 @@ export default function PRLog({athleteId,gender}){
   }
   const getRef=(catId)=>teamAvgRefs[catId]||CATS.find(c=>c.id===catId)?.ref||1;
 
-  // Power Index (0–1000): weighted composite vs team averages
+  // Power Index (0–100): weighted composite vs team averages
   const powerIndex=(()=>{
     let score=0,totalW=0;
     CATS.forEach(c=>{
       if(catPRs[c.id]!=null){score+=Math.min(1,catPRs[c.id]/getRef(c.id))*c.w;totalW+=c.w;}
     });
     if(!totalW)return 0;
-    return Math.round((score/totalW)*1000);
+    return Math.round((score/totalW)*100);
   })();
   const piCol=piColor(powerIndex);
 
@@ -594,22 +594,22 @@ export default function PRLog({athleteId,gender}){
                     <svg viewBox="0 0 88 88" style={{width:88,height:88,transform:"rotate(-90deg)"}}>
                       <circle cx="44" cy="44" r="36" fill="none" stroke="#1e1e1e" strokeWidth="8"/>
                       <circle cx="44" cy="44" r="36" fill="none" stroke={piCol} strokeWidth="8"
-                        strokeDasharray={`${(powerIndex/1000)*226.2} 226.2`}
+                        strokeDasharray={`${(powerIndex/100)*226.2} 226.2`}
                         strokeLinecap="round"
                         style={{filter:`drop-shadow(0 0 6px ${piCol}88)`,transition:"stroke-dasharray 0.6s ease"}}/>
                     </svg>
                     <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
                       <div style={{fontSize:22,fontWeight:900,color:piCol,lineHeight:1}}>{powerIndex}</div>
-                      <div style={{fontSize:8,color:"#555",marginTop:1}}>/ 1000</div>
+                      <div style={{fontSize:8,color:"#555",marginTop:1}}>/ 100</div>
                     </div>
                   </div>
                   <div style={{flex:1}}>
                     <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:4}}>TF Power Index</div>
                     <div style={{fontSize:20,fontWeight:900,color:"#fff",lineHeight:1.1,marginBottom:6}}>
-                      {powerIndex>=900?"Above team average":""}
-                      {powerIndex>=700&&powerIndex<900?"Near team average":""}
-                      {powerIndex>=500&&powerIndex<700?"Building strength":""}
-                      {powerIndex<500?"Just getting started":""}
+                      {powerIndex>=90?"Above team average":""}
+                      {powerIndex>=70&&powerIndex<90?"Near team average":""}
+                      {powerIndex>=50&&powerIndex<70?"Building strength":""}
+                      {powerIndex<50?"Just getting started":""}
                     </div>
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                       {CATS.map(c=>{
