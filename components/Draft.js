@@ -89,43 +89,55 @@ export default function Draft({athletes=[]}){
   const[leaderSearch,setLeaderSearch]=useState("");
   const[saveError,setSaveError]=useState("");
 
+  const applyDraftData=useCallback((d,currentPP)=>{
+    setDraftId(d.id);
+    const loadedLeaders=d.leaders||[];
+    const n=Math.max(loadedLeaders.filter(Boolean).length,2);
+    setNumGroups(n);
+    const l=Array(n).fill("");
+    loadedLeaders.slice(0,n).forEach((name,i)=>{if(name)l[i]=name;});
+    setLeaders(l);
+    if(d.bracelets){
+      const b={};d.bracelets.forEach((br,i)=>{if(br)b[i]=typeof br==="string"?BRACELETS.find(x=>x.ref===br)||br:br;});
+      setBracelets(b);
+    }
+    if(d.groups){
+      const g={};d.groups.forEach((arr,i)=>{g[i]=arr||[];});setGroups(g);
+    }
+    const phase=d.phase||"setup";
+    setStep(phase==="locked"?"done":phase);
+    if(phase==="draft"||phase==="bracelet"){
+      const maxMembers=Math.max(...(d.groups||[]).map(g=>(g||[]).length),0);
+      const pp=Math.max(maxMembers,currentPP||4);
+      setPicksPerGroup(pp);
+      const seq=makeSnake(n,pp);
+      setPickSeq(seq);
+      const leaders=(d.leaders||[]).filter(Boolean);
+      const totalPicked=Math.max(0,(d.groups||[]).flat().length-leaders.length);
+      setPickIdx(Math.max(0,totalPicked));
+    }
+  },[]);
+
   useEffect(()=>{
+    let pollTimer=null;
     (async()=>{
       try{
         const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
-        if(data&&data[0]){
-          const d=data[0];
-          setDraftId(d.id);
-          // Derive group count from leaders array — group_count column doesn't exist
-          const loadedLeaders=d.leaders||[];
-          const n=Math.max(loadedLeaders.filter(Boolean).length,2);
-          setNumGroups(n);
-          const l=Array(n).fill("");
-          loadedLeaders.slice(0,n).forEach((name,i)=>{if(name)l[i]=name;});
-          setLeaders(l);
-          if(d.bracelets){
-            const b={};d.bracelets.forEach((br,i)=>{if(br)b[i]=typeof br==="string"?BRACELETS.find(x=>x.ref===br)||br:br;});
-            setBracelets(b);
-          }
-          if(d.groups){
-            const g={};d.groups.forEach((arr,i)=>{g[i]=arr||[];});setGroups(g);
-          }
-          const phase=d.phase||"setup";
-          setStep(phase==="locked"?"done":phase);
-          if(phase==="draft"){
-            const maxMembers=Math.max(...(d.groups||[]).map(g=>(g||[]).length),1);
-            const pp=Math.max(maxMembers,picksPerGroup);
-            setPicksPerGroup(pp);
-            const seq=makeSnake(n,pp);
-            setPickSeq(seq);
-            const totalPicked=(d.groups||[]).flat().length;
-            setPickIdx(Math.max(0,totalPicked-n));
-          }
-        }
+        if(data&&data[0])applyDraftData(data[0],picksPerGroup);
       }catch(e){console.error("Load draft:",e);}
       setLoading(false);
     })();
-  },[]);
+
+    // Poll every 3s so coach sees picks from Forge leaders in real time
+    pollTimer=setInterval(async()=>{
+      try{
+        const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
+        if(data&&data[0])applyDraftData(data[0],picksPerGroup);
+      }catch(e){}
+    },3000);
+
+    return()=>clearInterval(pollTimer);
+  },[applyDraftData]);
 
   useEffect(()=>{
     setLeaders(prev=>{
@@ -234,11 +246,19 @@ export default function Draft({athletes=[]}){
       {/* Header */}
       <div style={{background:BG,borderRadius:12,padding:"12px 14px",marginBottom:12,border:"1px solid #222",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div>
-          <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>🎯 Draft Board</div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{fontSize:14,fontWeight:700,color:"#fff"}}>🎯 Draft Board</div>
+            {(step==="draft"||step==="bracelet")&&(
+              <div style={{display:"flex",alignItems:"center",gap:4,background:"#1a3a1a",borderRadius:8,padding:"2px 8px",border:"0.5px solid "+GREEN+"44"}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:GREEN,boxShadow:"0 0 6px "+GREEN}}/>
+                <span style={{fontSize:9,color:GREEN,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em"}}>Live</span>
+              </div>
+            )}
+          </div>
           <div style={{fontSize:11,color:"#555",marginTop:2}}>
             {step==="setup"&&"Step 1 — Set up groups"}
-            {step==="bracelet"&&"Step 2 — Assign bracelets"}
-            {step==="draft"&&`Step 3 — Pick ${pickIdx+1} of ${pickSeq.length}`}
+            {step==="bracelet"&&"Step 2 — Leaders picking bracelets · auto-refreshing"}
+            {step==="draft"&&`Step 3 — Pick ${pickIdx+1} of ${pickSeq.length} · auto-refreshing every 3s`}
             {step==="done"&&"✅ Draft complete — edit in Teams tab"}
           </div>
         </div>
