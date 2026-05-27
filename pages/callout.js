@@ -46,8 +46,8 @@ export default function Callout(){
   };
 
   const submitLog=async()=>{
-    const vLabel=violation?.label==="Other"?otherText:(violation?.label||violation);
-    const baseCrunches=typeof violation==="object"?violation?.crunches||30:30;
+    const vLabel=violation==="Other"?otherText:violation;
+    const baseCrunches=30;
     const crunches=type==="selfreport"?25*count:baseCrunches*count;
     try{
       await supabase.from("callouts").insert({
