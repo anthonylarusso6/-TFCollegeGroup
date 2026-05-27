@@ -74,8 +74,13 @@ const CATS_F=[
   {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:165, w:0.35},
 ];
 
+const VERT_LIFTS=new Set(["pvc max vert"]);
+const EXCLUDED_CATS=new Set(["weighted box dips","ab rollout","mb slam to shotput","mb oh sit up throw"]);
+const isVert=(name)=>VERT_LIFTS.has((name||"").toLowerCase());
+
 const getCat=(name)=>{
-  const n=name.toLowerCase();
+  const n=(name||"").toLowerCase();
+  if(EXCLUDED_CATS.has(n)||VERT_LIFTS.has(n))return null;
   if(n.includes("deadlift")||n.includes(" clean")||n.includes("snatch")||n.includes("swing")||n.includes("rdl")||n.includes("hinge"))return "hinge";
   if(n.includes("squat")||n.includes("lunge")||n.includes("step up"))return "lower";
   if(n.includes("bench")||n.includes("press")||n.includes("push")||n.includes("dip")||n.includes("jerk"))return "push";
@@ -412,55 +417,102 @@ export default function PRLog({athleteId,gender}){
                       <div style={{fontSize:10,fontWeight:600,color:tc.color,marginTop:2}}>{tc.label}</div>
                     </div>
                     <div style={{textAlign:"right"}}>
-                      {pr&&<div style={{fontSize:12,fontWeight:700,color:GOLD}}>PR: {pr} lbs</div>}
-                      {last&&<div style={{fontSize:11,color:"#aaa"}}>Last: {last} lbs</div>}
+                      {pr&&<div style={{fontSize:12,fontWeight:700,color:GOLD}}>PR: {pr} {isVert(lift.name)?"in":"lbs"}</div>}
+                      {last&&<div style={{fontSize:11,color:"#aaa"}}>Last: {last} {isVert(lift.name)?"in":"lbs"}</div>}
                     </div>
                   </div>
-                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <div style={{flex:1}}>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-                        <div style={{fontSize:10,color:"#aaa"}}>Weight (lbs)</div>
-                        <button onClick={()=>toggleBW(lift.name)}
-                          style={{fontSize:9,padding:"2px 7px",borderRadius:5,
-                            border:"1px solid "+(inp.bw?GREEN:"#ddd"),
-                            background:inp.bw?GREEN+"22":"#f5f5f5",
-                            color:inp.bw?GREEN:"#999",cursor:"pointer",
-                            fontFamily:"Georgia,serif",fontWeight:inp.bw?700:400}}>
-                          ⚖️ BW{latestBW?" ("+latestBW+")":""}
-                        </button>
+                  {isVert(lift.name)?(
+                    <div>
+                      <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:10,color:PUR,fontWeight:600,marginBottom:3}}>⬆️ Height (inches)</div>
+                          <input type="number" inputMode="decimal" value={inp.weight}
+                            onChange={e=>setInput(lift.name,"weight",e.target.value)}
+                            placeholder={last?`Last: ${last}`:"e.g. 28"}
+                            style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid "+PUR+"44",
+                              fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",
+                              background:"#faf8ff",boxSizing:"border-box",fontWeight:600}}/>
+                        </div>
+                        <div>
+                          <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
+                            style={{padding:"10px 14px",borderRadius:8,border:"none",
+                              background:inp.weight?(isSaved?GREEN:PUR):"#e0e0e0",
+                              color:inp.weight?"#fff":"#aaa",fontSize:13,fontWeight:700,
+                              cursor:inp.weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:52}}>
+                            {isSaved?"✓":isSaving?"...":"Log"}
+                          </button>
+                        </div>
                       </div>
-                      <input type="number" inputMode="decimal"
-                        value={inp.weight}
-                        readOnly={!!inp.bw}
-                        onChange={e=>!inp.bw&&setInput(lift.name,"weight",e.target.value)}
-                        placeholder={inp.bw&&!latestBW?"Log weight first":last?`Last: ${last}`:"0"}
-                        style={{width:"100%",padding:"10px",borderRadius:8,
-                          border:"1px solid "+(inp.bw?GREEN+"55":"#e0e0e0"),
-                          fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",
-                          background:inp.bw?"#f0fff4":"#fafafa",
-                          color:inp.bw?GREEN:"#1a1a1a",
-                          boxSizing:"border-box",fontWeight:600}}/>
+                      <div style={{marginTop:8}}>
+                        <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Contact time (ms) <span style={{color:"#555",fontSize:9}}>— optional · for RSI</span></div>
+                        <input type="number" inputMode="numeric" value={inp.ctTime||""}
+                          onChange={e=>setInput(lift.name,"ctTime",e.target.value)}
+                          placeholder="e.g. 250"
+                          style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid #e8e8e8",
+                            fontSize:13,fontFamily:"Georgia,serif",textAlign:"center",
+                            background:"#fafafa",boxSizing:"border-box",color:"#888"}}/>
+                      </div>
+                      {inp.weight&&(
+                        <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6,display:"flex",gap:12,justifyContent:"center",alignItems:"center",flexWrap:"wrap"}}>
+                          <span>Jump: <span style={{color:PUR,fontWeight:700}}>{inp.weight} in</span></span>
+                          {inp.ctTime&&parseFloat(inp.ctTime)>0&&(
+                            <span>RSI: <span style={{color:GOLD,fontWeight:700}}>{parseFloat(((parseFloat(inp.weight)*0.0254)/(parseFloat(inp.ctTime)/1000)).toFixed(2))}</span></span>
+                          )}
+                          {pr&&parseFloat(inp.weight)>pr&&(
+                            <span style={{background:PUR,color:"#fff",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Reps</div>
-                      <input type="number" inputMode="numeric" value={inp.reps}
-                        onChange={e=>setInput(lift.name,"reps",e.target.value)}
-                        placeholder="0"
-                        style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
-                    </div>
-                    <div style={{paddingTop:18}}>
-                      <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
-                        style={{padding:"10px 14px",borderRadius:8,border:"none",background:inp.weight?(isSaved?GREEN:tc.border):"#e0e0e0",color:inp.weight?"#fff":"#aaa",fontSize:13,fontWeight:700,cursor:inp.weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:52}}>
-                        {isSaved?"✓":isSaving?"...":"Log"}
-                      </button>
-                    </div>
-                  </div>
-                  {inp.weight&&inp.reps&&(
-                    <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6}}>
-                      est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>
-                      {pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&
-                        <span style={{marginLeft:8,background:GOLD,color:"#000",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
-                      }
+                  ):(
+                    <div>
+                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                        <div style={{flex:1}}>
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
+                            <div style={{fontSize:10,color:"#aaa"}}>Weight (lbs)</div>
+                            <button onClick={()=>toggleBW(lift.name)}
+                              style={{fontSize:9,padding:"2px 7px",borderRadius:5,
+                                border:"1px solid "+(inp.bw?GREEN:"#ddd"),
+                                background:inp.bw?GREEN+"22":"#f5f5f5",
+                                color:inp.bw?GREEN:"#999",cursor:"pointer",
+                                fontFamily:"Georgia,serif",fontWeight:inp.bw?700:400}}>
+                              ⚖️ BW{latestBW?" ("+latestBW+")":""}
+                            </button>
+                          </div>
+                          <input type="number" inputMode="decimal"
+                            value={inp.weight}
+                            readOnly={!!inp.bw}
+                            onChange={e=>!inp.bw&&setInput(lift.name,"weight",e.target.value)}
+                            placeholder={inp.bw&&!latestBW?"Log weight first":last?`Last: ${last}`:"0"}
+                            style={{width:"100%",padding:"10px",borderRadius:8,
+                              border:"1px solid "+(inp.bw?GREEN+"55":"#e0e0e0"),
+                              fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",
+                              background:inp.bw?"#f0fff4":"#fafafa",
+                              color:inp.bw?GREEN:"#1a1a1a",
+                              boxSizing:"border-box",fontWeight:600}}/>
+                        </div>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Reps</div>
+                          <input type="number" inputMode="numeric" value={inp.reps}
+                            onChange={e=>setInput(lift.name,"reps",e.target.value)}
+                            placeholder="0"
+                            style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
+                        </div>
+                        <div style={{paddingTop:18}}>
+                          <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
+                            style={{padding:"10px 14px",borderRadius:8,border:"none",background:inp.weight?(isSaved?GREEN:tc.border):"#e0e0e0",color:inp.weight?"#fff":"#aaa",fontSize:13,fontWeight:700,cursor:inp.weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:52}}>
+                            {isSaved?"✓":isSaving?"...":"Log"}
+                          </button>
+                        </div>
+                      </div>
+                      {inp.weight&&inp.reps&&(
+                        <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6}}>
+                          est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>
+                          {pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&
+                            <span style={{marginLeft:8,background:GOLD,color:"#000",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
+                          }
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -585,27 +637,35 @@ export default function PRLog({athleteId,gender}){
                     const pr=liftPRs[name];
                     const catId=getCat(name);
                     const catObj=CATS.find(c=>c.id===catId);
+                    const vert=isVert(name);
+                    const excl=EXCLUDED_CATS.has(name.toLowerCase());
                     const isSel=selLift===name;
-                    const rel=relStrength[name];
+                    const rel=!vert&&!excl?relStrength[name]:null;
                     const rank=catId&&catRanks[catId];
                     const allOrms=(logs[name]||[]).map(e=>epley(parseFloat(e.weight)||0,parseInt(e.reps)||1));
                     const delta=allOrms.length>1?pr.orm-allOrms[1]:null;
                     return(
                       <div key={name} onClick={()=>setSelLift(isSel?null:name)}
                         style={{padding:"12px",background:isSel?BG:"#fff",borderRadius:12,
-                          border:"1px solid "+(isSel?GOLD+"66":"#e8e8e8"),cursor:"pointer",
-                          boxShadow:isSel?"0 0 16px "+GOLD+"22":"none",position:"relative",overflow:"hidden"}}>
-                        {isSel&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+",transparent)"}}/>}
+                          border:"1px solid "+(isSel?(vert?PUR+"66":GOLD+"66"):"#e8e8e8"),cursor:"pointer",
+                          boxShadow:isSel?"0 0 16px "+(vert?PUR:GOLD)+"22":"none",position:"relative",overflow:"hidden"}}>
+                        {isSel&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+(vert?PUR:GOLD)+",transparent)"}}/>}
                         <div style={{fontSize:9,color:isSel?"#555":"#aaa",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                          {catObj?.emoji||"🏋️"} {name}
+                          {vert?"⬆️":catObj?.emoji||"🏋️"} {name}
                         </div>
                         <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:2}}>
-                          <div style={{fontSize:24,fontWeight:900,color:isSel?"#fff":"#1a1a1a",lineHeight:1}}>{pr.orm}</div>
+                          <div style={{fontSize:24,fontWeight:900,color:isSel?"#fff":"#1a1a1a",lineHeight:1}}>{vert?pr.weight:pr.orm}</div>
                           {rel&&<div style={{fontSize:10,color:isSel?piCol:GOLD,fontWeight:600}}>{rel}×BW</div>}
                         </div>
-                        <div style={{fontSize:9,color:isSel?"#555":"#aaa"}}>{pr.weight}×{pr.reps||1} · est. 1RM</div>
-                        {/* Tier badge */}
-                        {catObj&&catPRs[catId]&&(()=>{
+                        <div style={{fontSize:9,color:isSel?"#555":"#aaa"}}>
+                          {vert?`${pr.weight} in · personal best`:excl?"logged · not in Power Index":`${pr.weight}×${pr.reps||1} · est. 1RM`}
+                        </div>
+                        {/* Tier / vert / excl badge */}
+                        {vert?(
+                          <div style={{display:"inline-block",marginTop:5,padding:"2px 8px",borderRadius:6,background:isSel?PUR+"44":PUR+"22",color:isSel?"#cbb6ff":PUR,fontSize:9,fontWeight:700}}>⬆️ Vertical</div>
+                        ):excl?(
+                          <div style={{display:"inline-block",marginTop:5,padding:"2px 8px",borderRadius:6,background:"#f5f5f5",color:"#999",fontSize:9,fontWeight:500}}>Core / Power</div>
+                        ):catObj&&catPRs[catId]&&(()=>{
                           const catPct=Math.round(Math.min(100,catPRs[catId]/catObj.ref*100));
                           const t=strTier(catPct);
                           return(
