@@ -86,6 +86,13 @@ const getCat=(name)=>{
 const rankSuffix=(n)=>n===1?"st":n===2?"nd":n===3?"rd":"th";
 const rankMedal=(n)=>n===1?"🥇":n===2?"🥈":n===3?"🥉":null;
 
+const strTier=(pct)=>{
+  if(pct>=90)return{label:"Elite",color:GOLD,bg:GOLD+"28"};
+  if(pct>=70)return{label:"Strong",color:GREEN,bg:GREEN+"28"};
+  if(pct>=50)return{label:"Building",color:ORANGE,bg:ORANGE+"28"};
+  return{label:"Starting",color:STEEL,bg:STEEL+"28"};
+};
+
 const piColor=(score)=>{
   if(score>=700)return GOLD;
   if(score>=500)return GREEN;
@@ -565,6 +572,16 @@ export default function PRLog({athleteId,gender}){
                           {rel&&<div style={{fontSize:10,color:isSel?piCol:GOLD,fontWeight:600}}>{rel}×BW</div>}
                         </div>
                         <div style={{fontSize:9,color:isSel?"#555":"#aaa"}}>{pr.weight}×{pr.reps||1} · est. 1RM</div>
+                        {/* Tier badge */}
+                        {catObj&&catPRs[catId]&&(()=>{
+                          const catPct=Math.round(Math.min(100,catPRs[catId]/catObj.ref*100));
+                          const t=strTier(catPct);
+                          return(
+                            <div style={{display:"inline-block",marginTop:5,padding:"2px 8px",borderRadius:6,background:isSel?t.bg+"88":t.bg,color:t.color,fontSize:9,fontWeight:700,letterSpacing:"0.04em"}}>
+                              {t.label}
+                            </div>
+                          );
+                        })()}
                         {/* Delta badge */}
                         {delta!==null&&(
                           <div style={{position:"absolute",top:10,right:10,fontSize:10,fontWeight:700,
@@ -572,10 +589,10 @@ export default function PRLog({athleteId,gender}){
                             {delta>0?"↑+":delta<0?"↓":""}{delta!==0?Math.abs(delta):"—"}
                           </div>
                         )}
-                        {/* Team rank + percentile */}
+                        {/* Plain-language team rank */}
                         {rank&&teamLoaded&&(
-                          <div style={{marginTop:5,fontSize:9,color:isSel?"#555":rank.rank<=3?GOLD:"#aaa",fontWeight:rank.rank<=3?700:400}}>
-                            {rankMedal(rank.rank)&&rankMedal(rank.rank)+" "}#{rank.rank}{rankSuffix(rank.rank)}/{rank.total} · {rank.pct!=null?"Top "+(rank.pct<5?5:rank.pct<10?10:Math.round(rank.pct/10)*10+1)+"%":""} · {genderLabel}
+                          <div style={{marginTop:4,fontSize:9,color:isSel?"#555":rank.rank<=3?GOLD:"#aaa",fontWeight:rank.rank<=3?700:400,lineHeight:1.4}}>
+                            {rankMedal(rank.rank)&&rankMedal(rank.rank)+" "}{rank.rank}{rankSuffix(rank.rank)} on your team{rank.pct!=null?" · top "+(rank.pct<5?5:rank.pct<10?10:Math.round(rank.pct/10)*10+1)+"% of "+genderLabel.toLowerCase():""}
                           </div>
                         )}
                       </div>
@@ -694,24 +711,24 @@ export default function PRLog({athleteId,gender}){
                       const pct=Math.round(rScores[i]*100);
                       const rank=catRanks[c.id];
                       const rel=latestBW?parseFloat((catPRs[c.id]/latestBW).toFixed(2)):null;
+                      const t=strTier(pct);
                       return(
-                        <div key={i} style={{padding:"10px 12px",background:"#f9f9f9",borderRadius:10,border:"0.5px solid #f0f0f0"}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2}}>
+                        <div key={i} style={{padding:"10px 12px",background:"#f9f9f9",borderRadius:10,border:"1px solid "+t.color+"33"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                             <div style={{fontSize:11,fontWeight:600,color:"#1a1a1a"}}>{c.emoji} {c.label}</div>
-                            <div style={{fontSize:14,fontWeight:700,color:piCol}}>{catPRs[c.id]}</div>
+                            <div style={{padding:"2px 8px",borderRadius:6,background:t.bg,color:t.color,fontSize:9,fontWeight:700}}>{t.label}</div>
                           </div>
+                          <div style={{fontSize:18,fontWeight:900,color:"#1a1a1a",lineHeight:1,marginBottom:2}}>{catPRs[c.id]} <span style={{fontSize:10,color:"#aaa",fontWeight:400}}>lbs</span></div>
                           {rel&&<div style={{fontSize:9,color:GOLD,fontWeight:600,marginBottom:4}}>{rel}× bodyweight</div>}
-                          <div style={{height:4,background:"#ebebeb",borderRadius:2,overflow:"hidden",marginBottom:5}}>
-                            <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,"+piCol+","+ORANGE+")",borderRadius:2}}/>
+                          <div style={{height:4,background:"#ebebeb",borderRadius:2,overflow:"hidden",marginBottom:6}}>
+                            <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,"+t.color+","+t.color+"88)",borderRadius:2}}/>
                           </div>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                            <div style={{fontSize:9,color:"#aaa"}}>{pct}% of {genderLabel.toLowerCase()} standard</div>
-                            {rank&&teamLoaded&&(
-                              <div style={{fontSize:9,fontWeight:700,color:rank.rank<=3?GOLD:"#aaa"}}>
-                                {rankMedal(rank.rank)||""}#{rank.rank}/{rank.total} {rank.pct!=null?"·Top "+(rank.pct<5?5:rank.pct<10?10:Math.round(rank.pct/10)*10+1)+"%":""}
-                              </div>
-                            )}
-                          </div>
+                          <div style={{fontSize:9,color:"#aaa",marginBottom:rank&&teamLoaded?4:0}}>{pct}% of {genderLabel.toLowerCase()} standard</div>
+                          {rank&&teamLoaded&&(
+                            <div style={{fontSize:9,fontWeight:rank.rank<=3?700:400,color:rank.rank<=3?GOLD:"#888"}}>
+                              {rankMedal(rank.rank)&&rankMedal(rank.rank)+" "}{rank.rank}{rankSuffix(rank.rank)} on your team{rank.pct!=null?" · top "+(rank.pct<5?5:rank.pct<10?10:Math.round(rank.pct/10)*10+1)+"% of "+genderLabel.toLowerCase():""}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
