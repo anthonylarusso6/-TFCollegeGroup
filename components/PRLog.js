@@ -60,12 +60,18 @@ const DEFAULT_PROGRAM={
 
 const epley=(w,r)=>r===1?w:Math.round(w*(1+r/30));
 
-// T&F weighted: hinge/lower matter most for explosiveness
-const CATS=[
+// Gender-specific T&F reference standards
+const CATS_M=[
   {id:"lower", label:"Lower Body", emoji:"🦵", ref:225, w:0.30},
   {id:"push",  label:"Push",       emoji:"💪", ref:175, w:0.20},
   {id:"pull",  label:"Pull",       emoji:"🤜", ref:155, w:0.15},
   {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:255, w:0.35},
+];
+const CATS_F=[
+  {id:"lower", label:"Lower Body", emoji:"🦵", ref:145, w:0.30},
+  {id:"push",  label:"Push",       emoji:"💪", ref:95,  w:0.20},
+  {id:"pull",  label:"Pull",       emoji:"🤜", ref:85,  w:0.15},
+  {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:165, w:0.35},
 ];
 
 const getCat=(name)=>{
@@ -87,7 +93,7 @@ const piColor=(score)=>{
   return STEEL;
 };
 
-export default function PRLog({athleteId}){
+export default function PRLog({athleteId,gender}){
   const today=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date().getDay()];
   const defaultDay=DAYS.includes(today)?today:"Mon";
   const[view,setView]=useState("log");
@@ -104,6 +110,7 @@ export default function PRLog({athleteId}){
   const[confirmDelete,setConfirmDelete]=useState(null);
   const[selLift,setSelLift]=useState(null);
   const[teamPrLogs,setTeamPrLogs]=useState([]);
+  const[teamAthletes,setTeamAthletes]=useState([]);
   const[latestBW,setLatestBW]=useState(null);
   const[teamLoaded,setTeamLoaded]=useState(false);
 
@@ -148,6 +155,10 @@ export default function PRLog({athleteId}){
       try{
         const{data}=await supabase.from("pr_log").select("athlete_id,lift,weight,reps");
         setTeamPrLogs(data||[]);
+      }catch(e){}
+      try{
+        const{data}=await supabase.from("athletes").select("id,gender").eq("status","active");
+        setTeamAthletes(data||[]);
       }catch(e){}
       try{
         const{data}=await supabase.from("weight_log").select("weight").eq("athlete_id",athleteId)
@@ -207,6 +218,10 @@ export default function PRLog({athleteId}){
   const getLast=(liftName)=>(logs[liftName]||[])[0]?.weight||null;
 
   // ── Dashboard computed ─────────────────────────────────────
+  const isFemale=gender==="female"||gender==="Female"||gender==="F"||gender==="f"||gender==="woman"||gender==="Woman";
+  const CATS=isFemale?CATS_F:CATS_M;
+  const genderLabel=isFemale?"Women's":"Men's";
+
   const allLiftNames=Object.keys(logs).filter(k=>logs[k].length>0);
 
   const liftPRs={};
@@ -241,11 +256,24 @@ export default function PRLog({athleteId}){
   })();
   const piCol=piColor(powerIndex);
 
-  // Team ranks per category
+  // Team ranks — same gender only, with percentile
   const catRanks={};
   if(teamLoaded&&teamPrLogs.length>0){
+    // Build gender map from fetched athletes
+    const genderMap={};
+    teamAthletes.forEach(a=>{genderMap[String(a.id)]=a.gender;});
+    const myGender=gender||"";
+    const sameGender=(aid)=>{
+      const g=genderMap[String(aid)]||"";
+      if(!myGender)return true;
+      const mF=isFemale;
+      const oF=g==="female"||g==="Female"||g==="F"||g==="f"||g==="woman"||g==="Woman";
+      return mF===oF;
+    };
+
     const teamByAth={};
     teamPrLogs.forEach(r=>{
+      if(!sameGender(r.athlete_id))return;
       const orm=epley(parseFloat(r.weight)||0,parseInt(r.reps)||1);
       if(!teamByAth[r.athlete_id])teamByAth[r.athlete_id]={};
       if(!teamByAth[r.athlete_id][r.lift]||orm>teamByAth[r.athlete_id][r.lift])
@@ -260,7 +288,9 @@ export default function PRLog({athleteId}){
       });
       scores.sort((a,b)=>b-a);
       const rank=scores.findIndex(s=>s===catPRs[cat.id])+1;
-      catRanks[cat.id]={rank:rank||scores.length,total:scores.length};
+      const total=scores.length;
+      const pct=total>0?Math.round(((rank-1)/total)*100):null;
+      catRanks[cat.id]={rank:rank||total,total,pct};
     });
   }
 
@@ -542,10 +572,10 @@ export default function PRLog({athleteId}){
                             {delta>0?"↑+":delta<0?"↓":""}{delta!==0?Math.abs(delta):"—"}
                           </div>
                         )}
-                        {/* Team rank */}
+                        {/* Team rank + percentile */}
                         {rank&&teamLoaded&&(
                           <div style={{marginTop:5,fontSize:9,color:isSel?"#555":rank.rank<=3?GOLD:"#aaa",fontWeight:rank.rank<=3?700:400}}>
-                            {rankMedal(rank.rank)&&rankMedal(rank.rank)+" "}#{rank.rank}{rankSuffix(rank.rank)} of {rank.total} · {catObj?.label}
+                            {rankMedal(rank.rank)&&rankMedal(rank.rank)+" "}#{rank.rank}{rankSuffix(rank.rank)}/{rank.total} · {rank.pct!=null?"Top "+(rank.pct<5?5:rank.pct<10?10:Math.round(rank.pct/10)*10+1)+"%":""} · {genderLabel}
                           </div>
                         )}
                       </div>
@@ -675,10 +705,10 @@ export default function PRLog({athleteId}){
                             <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,"+piCol+","+ORANGE+")",borderRadius:2}}/>
                           </div>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                            <div style={{fontSize:9,color:"#aaa"}}>{pct}% of target</div>
+                            <div style={{fontSize:9,color:"#aaa"}}>{pct}% of {genderLabel.toLowerCase()} standard</div>
                             {rank&&teamLoaded&&(
                               <div style={{fontSize:9,fontWeight:700,color:rank.rank<=3?GOLD:"#aaa"}}>
-                                {rankMedal(rank.rank)||""}#{rank.rank}{rankSuffix(rank.rank)}/{rank.total}
+                                {rankMedal(rank.rank)||""}#{rank.rank}/{rank.total} {rank.pct!=null?"·Top "+(rank.pct<5?5:rank.pct<10?10:Math.round(rank.pct/10)*10+1)+"%":""}
                               </div>
                             )}
                           </div>
@@ -686,7 +716,7 @@ export default function PRLog({athleteId}){
                       );
                     })}
                   </div>
-                  <div style={{fontSize:9,color:"#ccc",textAlign:"center",marginTop:10}}>Reference standards = strong college T&F baseline per movement</div>
+                  <div style={{fontSize:9,color:"#ccc",textAlign:"center",marginTop:10}}>{genderLabel} reference standards · strong college T&F baseline per movement</div>
                 </div>
               )}
               {activeCats.length<3&&activeCats.length>0&&(

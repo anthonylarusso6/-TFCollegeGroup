@@ -273,9 +273,20 @@ export default function WeightTracker({ athleteId }) {
   const pts = weights.map((w, i) => { const x = (i / (Math.max(weights.length - 1, 1))) * chartW; return `${x},${toY(w)}`; }).join(" ");
   const raPts = raWeights.map((w, i) => { const x = (i / (Math.max(raWeights.length - 1, 1))) * chartW; return `${x},${toY(w)}`; }).join(" ");
 
+  // Maintenance: ±3 lb tolerance zone
+  const MAINTAIN_RANGE = 3;
+
   // Goal progress
   const getProgress = () => {
     if (!goal || first == null || latest == null) return { pct: 0, onTrack: false, lbsLeft: null, msg: "" };
+    if (goalMode === "maintain") {
+      const inRange = Math.abs(latest - goal) <= MAINTAIN_RANGE;
+      const deviation = parseFloat((latest - goal).toFixed(1));
+      const recent = entries.slice(-14);
+      const inRangeDays = recent.filter(e => Math.abs(parseFloat(e.weight) - goal) <= MAINTAIN_RANGE).length;
+      const stabilityPct = recent.length > 0 ? Math.round((inRangeDays / recent.length) * 100) : 0;
+      return { pct: stabilityPct, onTrack: inRange, lbsLeft: deviation, goalReached: false, isMaintain: true, inRange, deviation, stabilityPct, msg: inRange ? `✅ In range — ${Math.abs(deviation) < 0.1 ? "spot on!" : Math.abs(deviation).toFixed(1) + " lbs " + (deviation > 0 ? "above" : "below") + " target"}` : `⚠ ${Math.abs(deviation).toFixed(1)} lbs ${deviation > 0 ? "above" : "below"} your maintenance target` };
+    }
     if (goalMode === "lose") {
       const pct = (first - goal) > 0 ? Math.min(100, Math.round(((first - latest) / (first - goal)) * 100)) : 0;
       const lbsLeft = parseFloat((latest - goal).toFixed(1));
@@ -291,7 +302,7 @@ export default function WeightTracker({ athleteId }) {
     }
   };
   const progress = getProgress();
-  const progressColor = progress.goalReached ? GREEN : progress.onTrack ? ORANGE : RED;
+  const progressColor = progress.isMaintain ? (progress.inRange ? GREEN : RED) : progress.goalReached ? GREEN : progress.onTrack ? ORANGE : RED;
 
   // Weekly log
   const byWeek = [];
@@ -363,10 +374,24 @@ export default function WeightTracker({ athleteId }) {
                   </g>
                 );
               })}
-              {goal && goal >= chartMin && goal <= chartMax && (
+              {goal && goalMode !== "maintain" && goal >= chartMin && goal <= chartMax && (
                 <>
                   <line x1="0" y1={toY(goal)} x2={chartW} y2={toY(goal)} stroke={GOLD} strokeWidth="1.5" strokeDasharray="5,4" />
                   <text x={chartW + 2} y={toY(goal) + 3} fontSize="8" fill={GOLD} fontFamily="Georgia">goal</text>
+                </>
+              )}
+              {goal && goalMode === "maintain" && (
+                <>
+                  {(goal + MAINTAIN_RANGE) <= chartMax && (goal + MAINTAIN_RANGE) >= chartMin && (
+                    <line x1="0" y1={toY(goal + MAINTAIN_RANGE)} x2={chartW} y2={toY(goal + MAINTAIN_RANGE)} stroke={GREEN} strokeWidth="1" strokeDasharray="4,3" opacity="0.6" />
+                  )}
+                  {(goal - MAINTAIN_RANGE) >= chartMin && (goal - MAINTAIN_RANGE) <= chartMax && (
+                    <line x1="0" y1={toY(goal - MAINTAIN_RANGE)} x2={chartW} y2={toY(goal - MAINTAIN_RANGE)} stroke={GREEN} strokeWidth="1" strokeDasharray="4,3" opacity="0.6" />
+                  )}
+                  {goal >= chartMin && goal <= chartMax && (
+                    <line x1="0" y1={toY(goal)} x2={chartW} y2={toY(goal)} stroke={GREEN} strokeWidth="1.5" strokeDasharray="5,4" />
+                  )}
+                  <text x={chartW + 2} y={toY(goal) + 3} fontSize="8" fill={GREEN} fontFamily="Georgia">±3</text>
                 </>
               )}
             </svg>
@@ -425,9 +450,9 @@ export default function WeightTracker({ athleteId }) {
         </div>
         {(showGoalInput || goal) && (
           <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-            {[{ id: "lose", label: "🔻 Lose weight" }, { id: "gain", label: "📈 Gain weight" }].map(m => (
+            {[{ id: "lose", label: "🔻 Lose" }, { id: "maintain", label: "⚖️ Maintain" }, { id: "gain", label: "📈 Gain" }].map(m => (
               <button key={m.id} onClick={() => { setGoalMode(m.id); if (goalWeight) persistGoal(goalWeight, m.id); }}
-                style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid " + (goalMode === m.id ? ORANGE : "#e0e0e0"), background: goalMode === m.id ? ORANGE + "15" : "#fafafa", color: goalMode === m.id ? ORANGE : "#888", fontSize: 12, fontWeight: goalMode === m.id ? 700 : 400, cursor: "pointer", fontFamily: "Georgia,serif" }}>
+                style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid " + (goalMode === m.id ? ORANGE : "#e0e0e0"), background: goalMode === m.id ? ORANGE + "15" : "#fafafa", color: goalMode === m.id ? ORANGE : "#888", fontSize: 11, fontWeight: goalMode === m.id ? 700 : 400, cursor: "pointer", fontFamily: "Georgia,serif" }}>
                 {m.label}
               </button>
             ))}
@@ -447,13 +472,37 @@ export default function WeightTracker({ athleteId }) {
                 {progress.msg}
               </div>
             )}
+            {/* Maintenance stability display */}
+            {progress.isMaintain && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: "#f9f9f9", borderRadius: 10, border: "0.5px solid #eee" }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a" }}>{goal}</div>
+                    <div style={{ fontSize: 9, color: "#aaa" }}>target lbs</div>
+                  </div>
+                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: "#f9f9f9", borderRadius: 10, border: "0.5px solid #eee" }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#aaa" }}>{goal - MAINTAIN_RANGE}–{goal + MAINTAIN_RANGE}</div>
+                    <div style={{ fontSize: 9, color: "#aaa" }}>±3 lb zone</div>
+                  </div>
+                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: progress.stabilityPct >= 80 ? GREEN + "11" : "#f9f9f9", borderRadius: 10, border: "0.5px solid " + (progress.stabilityPct >= 80 ? GREEN + "33" : "#eee") }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: progress.stabilityPct >= 80 ? GREEN : "#1a1a1a" }}>{progress.stabilityPct}%</div>
+                    <div style={{ fontSize: 9, color: "#aaa" }}>in range (14d)</div>
+                  </div>
+                </div>
+                <div style={{ height: 6, background: "#f0f0f0", borderRadius: 3, overflow: "hidden" }}>
+                  <div style={{ width: progress.stabilityPct + "%", height: "100%", background: "linear-gradient(90deg," + GREEN + "," + GREEN + "88)", borderRadius: 3 }} />
+                </div>
+              </div>
+            )}
             {/* Predicted date */}
-            {predictedDate && !progress.goalReached && (
+            {predictedDate && !progress.goalReached && !progress.isMaintain && (
               <div style={{ fontSize: 11, color: "#1a1a1a", marginBottom: 10, padding: "7px 12px", background: "#f5f9ff", borderRadius: 8, border: "0.5px solid #d0e0ff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ color: "#888" }}>📅 At your current rate:</span>
                 <span style={{ fontWeight: 700 }}>{predictedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
               </div>
             )}
+            {/* Directional progress ring — lose/gain only */}
+            {!progress.isMaintain && (
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
               <div style={{ position: "relative", width: 72, height: 72, flexShrink: 0 }}>
                 <svg viewBox="0 0 72 72" style={{ width: 72, height: 72, transform: "rotate(-90deg)" }}>
@@ -482,6 +531,7 @@ export default function WeightTracker({ athleteId }) {
                 )}
               </div>
             </div>
+            )}
           </div>
         )}
         {!goal && !showGoalInput && <div style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>Set a target and track your progress.</div>}

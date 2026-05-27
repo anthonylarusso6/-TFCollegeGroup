@@ -1481,7 +1481,7 @@ export default function Athlete(){
             )}
 
 
-            {tab==="prs"&&<PRLog athleteId={selectedAthlete.id}/>}
+            {tab==="prs"&&<PRLog athleteId={selectedAthlete.id} gender={selectedAthlete.gender}/>}
             {tab==="stretching"&&<StretchingTab/>}
 
             {tab==="journey"&&(
