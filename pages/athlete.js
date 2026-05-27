@@ -701,7 +701,6 @@ export default function Athlete(){
     const draftLeaders=draft?.leaders||[];
     const draftGroups=draft?.groups||[];
     const draftBracelets=draft?.bracelets||[];
-    const draftTiers=draft?.tiers||[];
     const draftPhase=draft?.phase;
     const myLeaderIdx=isForge?draftLeaders.indexOf(selectedAthlete.name):-1;
     // For Forge leaders, use their leader index; for Iron, use group_idx
@@ -709,7 +708,7 @@ export default function Athlete(){
     const myLeader=effectiveGroupIdx!=null?draftLeaders[effectiveGroupIdx]:null;
     const myGroup=effectiveGroupIdx!=null?draftGroups[effectiveGroupIdx]:null;
     const myBracelet=effectiveGroupIdx!=null?BRACELETS.find(b=>b.ref===draftBracelets[effectiveGroupIdx]?.ref):null;
-    const myTier=effectiveGroupIdx!=null?draftTiers[effectiveGroupIdx]:null;
+    const myTier=selectedAthlete?.tier||null;
     const takenBracelets=(draftBracelets||[]).filter(Boolean).map(b=>b?.ref);
     const myBraceletPicked=myLeaderIdx>=0?draftBracelets[myLeaderIdx]:null;
 
