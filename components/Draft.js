@@ -1,6 +1,46 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { BG, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+
+const playPickSound=()=>{
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [[523,0],[659,0.12],[784,0.24],[1047,0.38]].forEach(([freq,t])=>{
+      const o=ctx.createOscillator();const g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type="sine";o.frequency.setValueAtTime(freq,ctx.currentTime+t);
+      g.gain.setValueAtTime(0.25,ctx.currentTime+t);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.35);
+      o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+0.35);
+    });
+  }catch(e){}
+};
+
+const playTickSound=()=>{
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type="square";o.frequency.setValueAtTime(880,ctx.currentTime);
+    g.gain.setValueAtTime(0.08,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.07);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+0.07);
+  }catch(e){}
+};
+
+const playDraftCompleteSound=()=>{
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [[523,0,0.6],[659,0.1,0.6],[784,0.2,0.6],[1047,0.35,0.9],[1319,0.55,1.1]].forEach(([freq,t,dur])=>{
+      const o=ctx.createOscillator();const g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type="sine";o.frequency.setValueAtTime(freq,ctx.currentTime+t);
+      g.gain.setValueAtTime(0.3,ctx.currentTime+t);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+dur);
+      o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+dur);
+    });
+  }catch(e){}
+};
 
 const COLORS=["#534AB7","#C0392B","#1E6B3A","#D4AF37","#E8720C","#1A4F8A"];
 const BRACELETS=[
@@ -140,6 +180,7 @@ export default function Draft({athletes=[]}){
   };
 
   const pick=async(athleteName)=>{
+    playPickSound();
     const gIdx=pickSeq[pickIdx];
     const newGroups={...groups,[gIdx]:[...(groups[gIdx]||[]),athleteName]};
     const newIdx=pickIdx+1;
@@ -159,6 +200,7 @@ export default function Draft({athletes=[]}){
         const a=athletes.find(x=>x.name===name);
         if(a){try{await supabase.from("athletes").update({role:"forge",group_idx:i,tier:getTier(i,numGroups)}).eq("id",a.id);}catch(e){}}
       }));
+      setTimeout(playDraftCompleteSound,200);
       setStep("done");
       save({phase:"locked",groups:Object.values(newGroups),locked:true});
     }else{

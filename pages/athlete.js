@@ -24,6 +24,32 @@ import { supabase } from "../lib/supabase";
 const LC=["#534AB7","#0F6E56","#854F0B","#993556"];
 const LB=["#EEEDFE","#E1F5EE","#FAEEDA","#FBEAF0"];
 
+const playPickSound=()=>{
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [[523,0],[659,0.12],[784,0.24],[1047,0.38]].forEach(([freq,t])=>{
+      const o=ctx.createOscillator();const g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type="sine";o.frequency.setValueAtTime(freq,ctx.currentTime+t);
+      g.gain.setValueAtTime(0.25,ctx.currentTime+t);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.35);
+      o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+0.35);
+    });
+  }catch(e){}
+};
+
+const playTickSound=()=>{
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator();const g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type="square";o.frequency.setValueAtTime(880,ctx.currentTime);
+    g.gain.setValueAtTime(0.08,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.07);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+0.07);
+  }catch(e){}
+};
+
 const CUTOFFS={Mon:{h:9,m:0},Tue:{h:9,m:30},Thu:{h:9,m:30},Fri:{h:9,m:0}};
 const CLASS_DAYS=["Mon","Tue","Thu","Fri"];
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -63,6 +89,7 @@ function CountdownPicker({onTimeout}){
   const[timeLeft,setTimeLeft]=useState(10);
   useEffect(()=>{
     if(timeLeft<=0){onTimeout();return;}
+    if(timeLeft<=3)playTickSound();
     const t=setTimeout(()=>setTimeLeft(p=>p-1),1000);
     return()=>clearTimeout(t);
   },[timeLeft,onTimeout]);
@@ -705,6 +732,7 @@ export default function Athlete(){
 
     const pickAthlete=async(name)=>{
       if(!isMyTurn)return;
+      playPickSound();
       const ng=(draftGroups||Array(numLeaders).fill([])).map(g=>[...g]);
       // Enforce 4-pick max per group
       if(ng[myLeaderIdx].length>=MAX_PICKS_PER_GROUP){
