@@ -205,7 +205,7 @@ export default function Draft({athletes=[]}){
     }
 
     const seqDone=newIdx>=pickSeq.length;
-    const noMore=athletes.filter(a=>![...Object.values(newGroups).flat()].includes(a.name)).length===0;
+    const noMore=activeAthletes.filter(a=>![...Object.values(newGroups).flat()].includes(a.name)).length===0;
 
     if(seqDone||noMore){
       await Promise.all(leaders.map(async(name,i)=>{
@@ -241,6 +241,8 @@ export default function Draft({athletes=[]}){
   const isDone=pickIdx>=pickSeq.length||pool.length===0;
   const stepNum=step==="setup"?0:step==="bracelet"?1:step==="draft"?2:3;
   const STEP_LABELS=["Setup","Bracelets","Draft","Complete"];
+  const clockCol=curGroup!==undefined?COLORS[curGroup%COLORS.length]:COLORS[0];
+  const clockPickedCount=curGroup!==undefined?(groups[curGroup]||[]).length-1:0;
 
   if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888"}}>Loading...</div>;
 
@@ -425,7 +427,7 @@ export default function Draft({athletes=[]}){
                         onClick={()=>{if(!isTaken){setBracelets(p=>({...p,[i]:BRACELETS.find(x=>x.ref===b.ref)||null}));}}}
                         title={b.color+" — "+b.ref}
                         style={{
-                          width:"100%",aspectRatio:"1",borderRadius:"50%",padding:0,
+                          width:"100%",aspectRatio:"1",minHeight:44,borderRadius:"50%",padding:0,
                           background:b.hex,
                           border:isSelected?"3px solid #fff":isTaken?"2px solid transparent":"2px solid "+b.hex+"33",
                           cursor:isTaken?"not-allowed":"pointer",
@@ -471,36 +473,29 @@ export default function Draft({athletes=[]}){
           {!isDone?(
             <>
               {/* ON THE CLOCK — hero card */}
-              {(()=>{
-                const col=COLORS[curGroup%COLORS.length];
-                const pickedCount=(groups[curGroup]||[]).length-1;
-                return(
-                  <div style={{
-                    background:"linear-gradient(145deg,"+col+"1e,"+col+"08)",
-                    borderRadius:16,padding:"18px 18px 16px",marginBottom:12,
-                    border:"2px solid "+col+"77",
-                    position:"relative",overflow:"hidden",
-                  }}>
-                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+col+","+col+"33)"}}/>
-                    <div style={{fontSize:9,color:col,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:8,opacity:0.9}}>On the clock</div>
-                    <div style={{fontSize:30,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",marginBottom:6,lineHeight:1}}>{curLeader}</div>
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-                      <div style={{fontSize:11,color:"#666"}}>Group {curGroup+1}</div>
-                      <div style={{width:3,height:3,borderRadius:"50%",background:"#2e2e2e"}}/>
-                      <div style={{fontSize:11,color:"#666"}}>Tier {getTier(curGroup,numGroups)}</div>
-                      <div style={{width:3,height:3,borderRadius:"50%",background:"#2e2e2e"}}/>
-                      <div style={{fontSize:11,color:col,fontWeight:600}}>{pickedCount} picked</div>
-                    </div>
-                    {/* Pick progress */}
-                    <div style={{display:"flex",alignItems:"center",gap:10}}>
-                      <div style={{flex:1,height:4,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}>
-                        <div style={{height:"100%",width:(pickIdx/pickSeq.length*100)+"%",background:"linear-gradient(90deg,"+col+","+col+"88)",borderRadius:2,transition:"width 0.4s ease"}}/>
-                      </div>
-                      <div style={{fontSize:10,color:"#555",flexShrink:0,fontWeight:600}}>{pickIdx+1} / {pickSeq.length}</div>
-                    </div>
+              <div style={{
+                background:"linear-gradient(145deg,"+clockCol+"1e,"+clockCol+"08)",
+                borderRadius:16,padding:"18px 18px 16px",marginBottom:12,
+                border:"2px solid "+clockCol+"77",
+                position:"relative",overflow:"hidden",
+              }}>
+                <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+clockCol+","+clockCol+"33)"}}/>
+                <div style={{fontSize:9,color:clockCol,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:8,opacity:0.9}}>On the clock</div>
+                <div style={{fontSize:30,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",marginBottom:6,lineHeight:1}}>{curLeader}</div>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+                  <div style={{fontSize:11,color:"#666"}}>Group {(curGroup||0)+1}</div>
+                  <div style={{width:3,height:3,borderRadius:"50%",background:"#2e2e2e"}}/>
+                  <div style={{fontSize:11,color:"#666"}}>Tier {getTier(curGroup||0,numGroups)}</div>
+                  <div style={{width:3,height:3,borderRadius:"50%",background:"#2e2e2e"}}/>
+                  <div style={{fontSize:11,color:clockCol,fontWeight:600}}>{clockPickedCount} picked</div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{flex:1,height:4,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:(pickSeq.length>0?pickIdx/pickSeq.length*100:0)+"%",background:"linear-gradient(90deg,"+clockCol+","+clockCol+"88)",borderRadius:2,transition:"width 0.4s ease"}}/>
                   </div>
-                );
-              })()}
+                  <div style={{fontSize:10,color:"#555",flexShrink:0,fontWeight:600}}>{pickIdx+1} / {pickSeq.length}</div>
+                </div>
+              </div>
 
               {/* SNAKE ORDER PREVIEW */}
               <div style={{marginBottom:12,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
