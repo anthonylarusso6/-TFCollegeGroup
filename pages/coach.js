@@ -524,6 +524,10 @@ export default function Coach(){
           const mp=getMalkmusPin();
           if(mp&&newPin===mp){setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
           else{setPinError("Wrong PIN. Try again.");setPin("");}
+        }else if(selectedCoach==="adoriyan"){
+          const ap=getAdoriyanPin();
+          if(ap&&newPin===ap){setAuthed(true);setCoachRole("adoriyan");setTab("overview");setPin("");}
+          else{setPinError("Wrong PIN. Try again.");setPin("");}
         }else if(selectedCoach==="mcastles"){
           const mcp=getMCastlesPin();
           if(mcp&&newPin===mcp){setAuthed(true);setCoachRole("mcastles");setTab("overview");setPin("");}
@@ -532,7 +536,10 @@ export default function Coach(){
       }else if(pinStep==="create"){
         setPinConfirm(newPin);setPin("");setPinStep("confirm");setPinError("");
       }else if(pinStep==="confirm"){
-        if(selectedCoach==="malkmus"){
+        if(selectedCoach==="adoriyan"){
+          if(newPin===pinConfirm){saveAdoriyanPin(newPin);setAuthed(true);setCoachRole("adoriyan");setTab("overview");setPin("");}
+          else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+        }else if(selectedCoach==="malkmus"){
           if(newPin===pinConfirm){saveMalkmusPin(newPin);setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
           else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
         }else if(selectedCoach==="mcastles"){

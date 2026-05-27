@@ -1325,7 +1325,7 @@ export default function Athlete(){
                           <div style={{fontSize:11,color:"#666"}}>You&#39;re up when it&#39;s your turn — auto-refreshing</div>
                         </div>
                         <div style={{background:"#0e0e0e",padding:"10px 18px",display:"flex",alignItems:"center",gap:8}}>
-                          <div style={{fontSize:10,color:"#555"}}>Pick {allPicked.length+1} of {totalPicks} · {available.length} athletes remaining</div>
+                          <div style={{fontSize:10,color:"#555"}}>Pick {pickedNonLeaders.length+1} of {totalPicks} · {available.length} athletes remaining</div>
                         </div>
                       </div>
                     )}
