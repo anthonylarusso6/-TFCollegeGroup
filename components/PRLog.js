@@ -92,16 +92,16 @@ const rankSuffix=(n)=>n===1?"st":n===2?"nd":n===3?"rd":"th";
 const rankMedal=(n)=>n===1?"🥇":n===2?"🥈":n===3?"🥉":null;
 
 const strTier=(pct)=>{
-  if(pct>=90)return{label:"Elite",color:GOLD,bg:GOLD+"28"};
-  if(pct>=70)return{label:"Strong",color:GREEN,bg:GREEN+"28"};
-  if(pct>=50)return{label:"Building",color:ORANGE,bg:ORANGE+"28"};
+  if(pct>=120)return{label:"Elite",color:GOLD,bg:GOLD+"28"};
+  if(pct>=100)return{label:"Strong",color:GREEN,bg:GREEN+"28"};
+  if(pct>=80) return{label:"Building",color:ORANGE,bg:ORANGE+"28"};
   return{label:"Starting",color:STEEL,bg:STEEL+"28"};
 };
 
 const piColor=(score)=>{
-  if(score>=700)return GOLD;
-  if(score>=500)return GREEN;
-  if(score>=300)return ORANGE;
+  if(score>=800)return GOLD;
+  if(score>=600)return GREEN;
+  if(score>=400)return ORANGE;
   return STEEL;
 };
 
@@ -269,14 +269,32 @@ export default function PRLog({athleteId,gender}){
   });
   const activeCats=CATS.filter(c=>catPRs[c.id]);
 
-  // Power Index (0–1000): weighted composite across categories
+  // Team average refs — actual group averages used as benchmark (computed before Power Index)
+  const teamAvgRefs={};
+  if(teamLoaded&&teamPrLogs.length>0){
+    const gm={};
+    teamAthletes.forEach(a=>{gm[String(a.id)]=a.gender;});
+    CATS.forEach(cat=>{
+      const athBests={};
+      teamPrLogs.forEach(r=>{
+        if(getCat(r.lift)!==cat.id)return;
+        const g=gm[String(r.athlete_id)]||"";
+        const oF=g==="female"||g==="Female"||g==="F"||g==="f"||g==="woman"||g==="Woman";
+        if(isFemale!==oF)return;
+        const orm=epley(parseFloat(r.weight)||0,parseInt(r.reps)||1);
+        if(!athBests[r.athlete_id]||orm>athBests[r.athlete_id])athBests[r.athlete_id]=orm;
+      });
+      const bests=Object.values(athBests).filter(v=>v>0);
+      if(bests.length>=2)teamAvgRefs[cat.id]=Math.round(bests.reduce((s,v)=>s+v,0)/bests.length);
+    });
+  }
+  const getRef=(catId)=>teamAvgRefs[catId]||CATS.find(c=>c.id===catId)?.ref||1;
+
+  // Power Index (0–1000): weighted composite vs team averages
   const powerIndex=(()=>{
     let score=0,totalW=0;
     CATS.forEach(c=>{
-      if(catPRs[c.id]!=null){
-        score+=Math.min(1,catPRs[c.id]/c.ref)*c.w;
-        totalW+=c.w;
-      }
+      if(catPRs[c.id]!=null){score+=Math.min(1,catPRs[c.id]/getRef(c.id))*c.w;totalW+=c.w;}
     });
     if(!totalW)return 0;
     return Math.round((score/totalW)*1000);
@@ -286,7 +304,6 @@ export default function PRLog({athleteId,gender}){
   // Team ranks — same gender only, with percentile
   const catRanks={};
   if(teamLoaded&&teamPrLogs.length>0){
-    // Build gender map from fetched athletes
     const genderMap={};
     teamAthletes.forEach(a=>{genderMap[String(a.id)]=a.gender;});
     const myGender=gender||"";
@@ -297,7 +314,6 @@ export default function PRLog({athleteId,gender}){
       const oF=g==="female"||g==="Female"||g==="F"||g==="f"||g==="woman"||g==="Woman";
       return mF===oF;
     };
-
     const teamByAth={};
     teamPrLogs.forEach(r=>{
       if(!sameGender(r.athlete_id))return;
@@ -347,7 +363,7 @@ export default function PRLog({athleteId,gender}){
   const RCX=100,RCY=100,RR=70;
   const rAngle=(i)=>(2*Math.PI*i/Math.max(N,1))-Math.PI/2;
   const rPt=(i,r)=>[RCX+r*Math.cos(rAngle(i)),RCY+r*Math.sin(rAngle(i))];
-  const rScores=activeCats.map(c=>Math.min(1,catPRs[c.id]/c.ref));
+  const rScores=activeCats.map(c=>Math.min(1,catPRs[c.id]/getRef(c.id)));
   const rFillPts=activeCats.map((_,i)=>{const[x,y]=rPt(i,rScores[i]*RR);return`${x},${y}`;}).join(" ");
 
   if(!program)return(
@@ -590,15 +606,15 @@ export default function PRLog({athleteId,gender}){
                   <div style={{flex:1}}>
                     <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:4}}>TF Power Index</div>
                     <div style={{fontSize:20,fontWeight:900,color:"#fff",lineHeight:1.1,marginBottom:6}}>
-                      {powerIndex>=700?"Elite strength":""}
-                      {powerIndex>=500&&powerIndex<700?"Strong baseline":""}
-                      {powerIndex>=300&&powerIndex<500?"Building force":""}
-                      {powerIndex<300?"Just getting started":""}
+                      {powerIndex>=900?"Above team average":""}
+                      {powerIndex>=700&&powerIndex<900?"Near team average":""}
+                      {powerIndex>=500&&powerIndex<700?"Building strength":""}
+                      {powerIndex<500?"Just getting started":""}
                     </div>
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                       {CATS.map(c=>{
                         const has=catPRs[c.id]!=null;
-                        const pct=has?Math.round(Math.min(1,catPRs[c.id]/c.ref)*100):0;
+                        const pct=has?Math.round(Math.min(1,catPRs[c.id]/getRef(c.id))*100):0;
                         return(
                           <div key={c.id} style={{display:"flex",alignItems:"center",gap:3,padding:"3px 8px",borderRadius:6,background:has?"#1a1a1a":"#111",border:"0.5px solid "+(has?piCol+"44":"#1a1a1a")}}>
                             <span style={{fontSize:10}}>{c.emoji}</span>
@@ -616,7 +632,7 @@ export default function PRLog({athleteId,gender}){
                 <div style={{marginTop:14,display:"flex",gap:6}}>
                   {CATS.map(c=>{
                     const has=catPRs[c.id]!=null;
-                    const pct=has?Math.min(1,catPRs[c.id]/c.ref):0;
+                    const pct=has?Math.min(1,catPRs[c.id]/getRef(c.id)):0;
                     return(
                       <div key={c.id} style={{flex:1}}>
                         <div style={{height:3,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}>
@@ -666,7 +682,7 @@ export default function PRLog({athleteId,gender}){
                         ):excl?(
                           <div style={{display:"inline-block",marginTop:5,padding:"2px 8px",borderRadius:6,background:"#f5f5f5",color:"#999",fontSize:9,fontWeight:500}}>Core / Power</div>
                         ):catObj&&catPRs[catId]&&(()=>{
-                          const catPct=Math.round(Math.min(100,catPRs[catId]/catObj.ref*100));
+                          const catPct=Math.round(catPRs[catId]/getRef(catId)*100);
                           const t=strTier(catPct);
                           return(
                             <div style={{display:"inline-block",marginTop:5,padding:"2px 8px",borderRadius:6,background:isSel?t.bg+"88":t.bg,color:t.color,fontSize:9,fontWeight:700,letterSpacing:"0.04em"}}>
@@ -815,7 +831,7 @@ export default function PRLog({athleteId,gender}){
                           <div style={{height:4,background:"#ebebeb",borderRadius:2,overflow:"hidden",marginBottom:6}}>
                             <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,"+t.color+","+t.color+"88)",borderRadius:2}}/>
                           </div>
-                          <div style={{fontSize:9,color:"#aaa",marginBottom:rank&&teamLoaded?4:0}}>{pct}% of {genderLabel.toLowerCase()} standard</div>
+                          <div style={{fontSize:9,color:"#aaa",marginBottom:rank&&teamLoaded?4:0}}>{pct}% of {genderLabel.toLowerCase()} team avg{teamAvgRefs[c.id]?` (${teamAvgRefs[c.id]} lbs)`:""}</div>
                           {rank&&teamLoaded&&(
                             <div style={{fontSize:9,fontWeight:rank.rank<=3?700:400,color:rank.rank<=3?GOLD:"#888"}}>
                               {rankMedal(rank.rank)&&rankMedal(rank.rank)+" "}{rank.rank}{rankSuffix(rank.rank)} on your team{rank.pct!=null?" · top "+(rank.pct<5?5:rank.pct<10?10:Math.round(rank.pct/10)*10+1)+"% of "+genderLabel.toLowerCase():""}
@@ -825,7 +841,7 @@ export default function PRLog({athleteId,gender}){
                       );
                     })}
                   </div>
-                  <div style={{fontSize:9,color:"#ccc",textAlign:"center",marginTop:10}}>{genderLabel} reference standards · strong college T&F baseline per movement</div>
+                  <div style={{fontSize:9,color:"#ccc",textAlign:"center",marginTop:10}}>{genderLabel} team averages · {teamLoaded?`${Object.keys(teamAvgRefs).length} categories computed from group data`:"loading team data..."}</div>
                 </div>
               )}
               {activeCats.length<3&&activeCats.length>0&&(
