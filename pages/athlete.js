@@ -75,15 +75,21 @@ const TIER_COLORS={
   3:{bg:"#FAEEDA",border:"#854F0B",color:"#633806",label:"Tier 3"},
 };
 
+// Correct snake order: [0,1,2,3, 3,2,1,0, 0,1,2,3, ...]
 const snakeSeq=(total,numGroups=4)=>{
-  const order=[];let i=0,dir=1;
-  while(order.length<total){
-    order.push(i);
-    if(i===numGroups-1)dir=-1;
-    if(i===0&&order.length>1)dir=1;
-    i+=dir;
+  const seq=[];
+  for(let r=0;seq.length<total;r++){
+    const row=Array.from({length:numGroups},(_,i)=>i);
+    seq.push(...(r%2===0?row:[...row].reverse()));
   }
-  return order;
+  return seq.slice(0,total);
+};
+
+const getTier=(idx,n)=>{
+  if(n<=2)return idx===0?1:2;
+  if(n===3)return idx<2?1:2;
+  if(n===4)return idx<2?1:idx===2?2:3;
+  return idx<2?1:idx<4?2:3;
 };
 function CountdownPicker({onTimeout}){
   const[timeLeft,setTimeLeft]=useState(10);
@@ -237,6 +243,7 @@ export default function Athlete(){
   const[draft,setDraft]=useState(null);
   const pollRef=useRef(null);
   const athleteIdRef=useRef(null);
+  const isPickingRef=useRef(false);
 
   useEffect(()=>{loadData();},[]);
 
@@ -708,12 +715,15 @@ export default function Athlete(){
 
     const nonLeaders=(athletes||[]).filter(a=>!draftLeaders.includes(a.name)).map(a=>a.name);
     const allPicked=(draftGroups||[]).flat();
+    // Exclude leaders from pickIdx so snake order starts at 0 (leaders occupy groups[i][0])
+    const pickedNonLeaders=allPicked.filter(n=>!draftLeaders.includes(n));
     const available=nonLeaders.filter(n=>!allPicked.includes(n));
     const totalPicks=nonLeaders.length;
     const numLeaders=draftLeaders.filter(Boolean).length||4;
-    const MAX_PICKS_PER_GROUP=numLeaders>0&&nonLeaders.length>0?Math.ceil(nonLeaders.length/numLeaders):4;
+    // +1 because leader occupies slot 0 in each group array
+    const MAX_PICKS_PER_GROUP=numLeaders>0&&nonLeaders.length>0?Math.ceil(nonLeaders.length/numLeaders)+1:5;
     const pickSeq=snakeSeq(totalPicks,numLeaders);
-    const pickIdx=allPicked.length;
+    const pickIdx=pickedNonLeaders.length;
     const currentPickerIdx=pickSeq[pickIdx]??0;
     const isMyTurn=myLeaderIdx===currentPickerIdx&&draftPhase==="draft";
     const draftComplete=draftPhase==="locked"||(available.length===0&&draftPhase==="draft");
@@ -731,34 +741,45 @@ export default function Athlete(){
     };
 
     const pickAthlete=async(name)=>{
-      if(!isMyTurn)return;
+      if(!isMyTurn||isPickingRef.current)return;
+      isPickingRef.current=true;
       playPickSound();
-      const ng=(draftGroups||Array(numLeaders).fill([])).map(g=>[...g]);
-      // Enforce 4-pick max per group
-      if(ng[myLeaderIdx].length>=MAX_PICKS_PER_GROUP){
-        alert(`Your group is full! Each group can only have ${MAX_PICKS_PER_GROUP} athletes.`);
-        return;
-      }
-      ng[myLeaderIdx].push(name);
-      const newAvailable=available.filter(n=>n!==name);
-      const newPickIdx=pickIdx+1;
-      const done=newPickIdx>=pickSeq.length||newAvailable.length===0;
-      await supabase.from("draft").update({
-        groups:ng,
-        phase:done?"locked":"draft",
-        locked:done,
-      }).eq("id",draft.id);
-      if(done){
-        for(let i=0;i<ng.length;i++){
-          for(const n of ng[i]){
-            const ath=athletes.find(a=>a.name===n);
-            if(ath)await supabase.from("athletes").update({group_idx:i,tier:draftTiers[i]}).eq("id",ath.id);
+      try{
+        // Re-read latest draft state from DB to guard against concurrent picks
+        const{data:latest}=await supabase.from("draft").select("*").eq("id",draft.id).single();
+        if(!latest||latest.phase==="locked"){await loadDraft();return;}
+        const latestGroups=(latest.groups||[]).map(g=>[...g]);
+        if(latestGroups[myLeaderIdx]&&latestGroups[myLeaderIdx].includes(name)){await loadDraft();return;}
+        if(latestGroups[myLeaderIdx]&&latestGroups[myLeaderIdx].length>=MAX_PICKS_PER_GROUP){await loadDraft();return;}
+        latestGroups[myLeaderIdx]=latestGroups[myLeaderIdx]||[];
+        latestGroups[myLeaderIdx].push(name);
+        const latestAllPicked=latestGroups.flat();
+        const latestPickedNL=latestAllPicked.filter(n=>!draftLeaders.includes(n));
+        const newPickIdx=latestPickedNL.length;
+        const latestNonLeaders=nonLeaders.filter(n=>!latestAllPicked.includes(n));
+        const done=newPickIdx>=pickSeq.length||latestNonLeaders.length===0;
+        await supabase.from("draft").update({
+          groups:latestGroups,
+          phase:done?"locked":"draft",
+          locked:done,
+        }).eq("id",draft.id);
+        if(done){
+          for(let i=0;i<latestGroups.length;i++){
+            for(const n of latestGroups[i]){
+              const ath=athletes.find(a=>a.name===n);
+              if(ath){
+                try{await supabase.from("athletes").update({group_idx:i,tier:getTier(i,numLeaders)}).eq("id",ath.id);}catch(e){}
+              }
+            }
+            const leader=athletes.find(a=>a.name===draftLeaders[i]);
+            if(leader){
+              try{await supabase.from("athletes").update({group_idx:i,tier:getTier(i,numLeaders),bracelet:draftBracelets[i]?.ref}).eq("id",leader.id);}catch(e){}
+            }
           }
-          const leader=athletes.find(a=>a.name===draftLeaders[i]);
-          if(leader)await supabase.from("athletes").update({group_idx:i,tier:draftTiers[i],bracelet:draftBracelets[i]?.ref}).eq("id",leader.id);
         }
-      }
-      await loadDraft();
+        await loadDraft();
+      }catch(e){console.error("pickAthlete:",e);}
+      finally{isPickingRef.current=false;}
     };
 
     return(
@@ -1261,10 +1282,16 @@ export default function Athlete(){
                             <div>
                               <div style={{fontSize:9,color:RED,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:4}}>🔴 Your pick</div>
                               <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>Choose your next athlete</div>
-                              <div style={{fontSize:11,color:"#888",marginTop:2}}>{(draftGroups[myLeaderIdx]||[]).length} of {MAX_PICKS_PER_GROUP} slots filled</div>
+                              <div style={{fontSize:11,color:"#888",marginTop:2}}>{pickedNonLeaders.length} of {MAX_PICKS_PER_GROUP-1} picks used</div>
                             </div>
-                            <CountdownPicker onTimeout={()=>{
-                              if(available.length>0)pickAthlete(available[0]);
+                            <CountdownPicker onTimeout={async()=>{
+                              // Re-read available from DB to avoid stale closure
+                              try{
+                                const{data}=await supabase.from("draft").select("groups").eq("id",draft.id).single();
+                                const latestPicked=(data?.groups||[]).flat();
+                                const freshAvail=nonLeaders.filter(n=>!latestPicked.includes(n));
+                                if(freshAvail.length>0)pickAthlete(freshAvail[0]);
+                              }catch(e){if(available.length>0)pickAthlete(available[0]);}
                             }}/>
                           </div>
                         </div>

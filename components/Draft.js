@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { BG, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 
@@ -88,6 +88,7 @@ export default function Draft({athletes=[]}){
   const[loading,setLoading]=useState(true);
   const[leaderSearch,setLeaderSearch]=useState("");
   const[saveError,setSaveError]=useState("");
+  const lastSnapshotRef=useRef(null);
 
   const applyDraftData=useCallback((d,currentPP)=>{
     setDraftId(d.id);
@@ -132,7 +133,12 @@ export default function Draft({athletes=[]}){
     pollTimer=setInterval(async()=>{
       try{
         const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
-        if(data&&data[0])applyDraftData(data[0],picksPerGroup);
+        if(!data||!data[0])return;
+        // Skip re-render if data hasn't changed
+        const snap=JSON.stringify({g:data[0].groups,b:data[0].bracelets,p:data[0].phase});
+        if(snap===lastSnapshotRef.current)return;
+        lastSnapshotRef.current=snap;
+        applyDraftData(data[0],picksPerGroup);
       }catch(e){}
     },3000);
 
