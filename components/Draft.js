@@ -192,6 +192,7 @@ export default function Draft({athletes=[]}){
   };
 
   const pick=async(athleteName)=>{
+    if(leaders.includes(athleteName))return;
     playPickSound();
     const gIdx=pickSeq[pickIdx];
     const newGroups={...groups,[gIdx]:[...(groups[gIdx]||[]),athleteName]};
@@ -235,7 +236,7 @@ export default function Draft({athletes=[]}){
   const takenRefs=Object.values(bracelets).filter(Boolean).map(b=>typeof b==="object"?b.ref:b);
   const assigned=[...Object.values(groups).flat()];
   const activeAthletes=athletes.filter(a=>a.status==="active");
-  const pool=activeAthletes.filter(a=>!assigned.includes(a.name)&&(!search||a.name.toLowerCase().includes(search.toLowerCase())));
+  const pool=activeAthletes.filter(a=>!assigned.includes(a.name)&&!leaders.includes(a.name)&&(!search||a.name.toLowerCase().includes(search.toLowerCase())));
   const curGroup=pickSeq[pickIdx];
   const curLeader=leaders[curGroup];
   const isDone=pickIdx>=pickSeq.length||pool.length===0;
@@ -574,7 +575,7 @@ export default function Draft({athletes=[]}){
                         <div style={{fontSize:9,color:"#3a3a3a"}}>{members.length-1}/{picksPerGroup-1}</div>
                       </div>
                       <div style={{fontSize:11,fontWeight:600,color:isCurrent?col:"#999",marginBottom:4,paddingLeft:12}}>⚒ {leaders[i]||"—"}</div>
-                      {members.slice(1).map(n=>(
+                      {members.slice(1).filter(n=>n!==leaders[i]).map(n=>(
                         <div key={n} style={{fontSize:10,color:"#666",paddingLeft:12,padding:"1px 0 1px 12px"}}>· {n}</div>
                       ))}
                       {brac&&(
@@ -637,7 +638,7 @@ export default function Draft({athletes=[]}){
 
                 {/* Roster chips */}
                 <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
-                  {members.slice(1).map(n=>(
+                  {members.slice(1).filter(n=>n!==leaders[i]).map(n=>(
                     <span key={n} style={{fontSize:11,padding:"4px 10px",borderRadius:12,background:color+"14",color,border:"1px solid "+color+"33",fontWeight:500}}>{n}</span>
                   ))}
                 </div>
