@@ -62,6 +62,8 @@ export default function WeightTracker({ athleteId }) {
   const[savingNote, setSavingNote] = useState(false);
   const[notifState, setNotifState] = useState("idle"); // idle | requesting | enabled | denied | unsupported
   const[notifLoading, setNotifLoading] = useState(false);
+  const[confirmDelete, setConfirmDelete] = useState(null);
+  const[deleting, setDeleting] = useState(null);
 
   const loadEntries = async () => {
     try {
@@ -158,6 +160,16 @@ export default function WeightTracker({ athleteId }) {
       setNotes(prev => ({ ...prev, [date]: noteInput.trim() }));
     } catch (e) {}
     setSavingNote(false); setEditingNote(null); setNoteInput("");
+  };
+
+  const deleteEntry = async (id) => {
+    setDeleting(id);
+    try {
+      await supabase.from("weight_log").delete().eq("id", id);
+      setEntries(prev => prev.filter(e => e.id !== id));
+    } catch(e) {}
+    setDeleting(null);
+    setConfirmDelete(null);
   };
 
   const enableNotifications = async () => {
@@ -612,13 +624,32 @@ export default function WeightTracker({ athleteId }) {
                 </div>
                 {week.entries.map((e, ei) => (
                   <div key={ei} style={{ padding: "7px 10px", background: "#f9f9f9", borderRadius: 8, marginBottom: 4 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
                       <div style={{ fontSize: 12, color: "#888" }}>{new Date(e.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</div>
                       <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>{e.weight} lbs</div>
-                      <button onClick={() => { setEditingNote(e.date); setNoteInput(notes[e.date] || ""); }}
-                        style={{ fontSize: 11, color: notes[e.date] ? ORANGE : "#ccc", background: "none", border: "none", cursor: "pointer", padding: "0 4px" }}>
-                        {notes[e.date] ? "✏️" : "+ note"}
-                      </button>
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
+                        <button onClick={() => { setEditingNote(e.date); setNoteInput(notes[e.date] || ""); }}
+                          style={{ fontSize: 11, color: notes[e.date] ? ORANGE : "#ccc", background: "none", border: "none", cursor: "pointer", padding: "0 4px" }}>
+                          {notes[e.date] ? "✏️" : "+ note"}
+                        </button>
+                        {confirmDelete === e.id ? (
+                          <>
+                            <button onClick={() => deleteEntry(e.id)} disabled={deleting === e.id}
+                              style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "none", background: RED, color: "#fff", cursor: "pointer", fontFamily: "Georgia,serif" }}>
+                              {deleting === e.id ? "..." : "Delete"}
+                            </button>
+                            <button onClick={() => setConfirmDelete(null)}
+                              style={{ fontSize: 11, padding: "3px 7px", borderRadius: 5, border: "0.5px solid #ddd", background: "#fff", color: "#888", cursor: "pointer", fontFamily: "Georgia,serif" }}>
+                              ✕
+                            </button>
+                          </>
+                        ) : (
+                          <button onClick={() => setConfirmDelete(e.id)}
+                            style={{ fontSize: 12, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ffcccc", background: "#fff5f5", color: RED, cursor: "pointer", fontFamily: "Georgia,serif" }}>
+                            🗑
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {notes[e.date] && editingNote !== e.date && (
                       <div style={{ fontSize: 11, color: "#888", marginTop: 4, fontStyle: "italic" }}>"{notes[e.date]}"</div>
