@@ -222,6 +222,24 @@ export default function Draft({athletes=[]}){
     }
   };
 
+  const undoPick=async()=>{
+    if(pickIdx<=0)return;
+    const prevIdx=pickIdx-1;
+    const gIdx=pickSeq[prevIdx];
+    const members=groups[gIdx]||[];
+    if(members.length<=1)return;
+    const lastAthlete=members[members.length-1];
+    const newGroups={...groups,[gIdx]:members.slice(0,-1)};
+    setGroups(newGroups);
+    setPickIdx(prevIdx);
+    const ath=athletes.find(a=>a.name===lastAthlete);
+    if(ath){
+      try{await supabase.from("athletes").update({role:"iron",group_idx:null,tier:null}).eq("id",ath.id);}
+      catch(e){console.error("Undo athlete:",e);}
+    }
+    save({groups:Object.values(newGroups),phase:"draft"});
+  };
+
   const reset=async()=>{
     setConfirmReset(false);
     setStep("setup");setLeaders(Array(numGroups).fill(""));
@@ -530,8 +548,13 @@ export default function Draft({athletes=[]}){
                 </div>
               </div>
 
-              {/* ATHLETE SEARCH + POOL */}
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search athletes…" style={{width:"100%",padding:"10px 14px",borderRadius:10,border:"1px solid #1e1e1e",fontSize:14,fontFamily:"Georgia,serif",marginBottom:8,boxSizing:"border-box",background:"#111",color:"#ddd",outline:"none"}}/>
+              {/* UNDO + SEARCH ROW */}
+              <div style={{display:"flex",gap:8,marginBottom:8,alignItems:"center"}}>
+                <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search athletes…" style={{flex:1,padding:"10px 14px",borderRadius:10,border:"1px solid #1e1e1e",fontSize:14,fontFamily:"Georgia,serif",boxSizing:"border-box",background:"#111",color:"#ddd",outline:"none"}}/>
+                {pickIdx>0&&(
+                  <button onClick={undoPick} style={{flexShrink:0,padding:"10px 14px",borderRadius:10,border:"1px solid #2a2a2a",background:"#111",color:"#888",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>↩ Undo</button>
+                )}
+              </div>
               <div style={{background:"#0d0d0d",borderRadius:12,border:"0.5px solid #161616",overflow:"hidden",marginBottom:14}}>
                 {pool.length===0?(
                   <div style={{textAlign:"center",padding:"2rem",color:"#444",fontSize:13}}>No athletes available</div>
