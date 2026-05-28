@@ -84,6 +84,7 @@ export default function Draft({athletes=[]}){
   const[pickSeq,setPickSeq]=useState([]);
   const[pickIdx,setPickIdx]=useState(0);
   const[search,setSearch]=useState("");
+  const[confirmReset,setConfirmReset]=useState(false);
   const[draftId,setDraftId]=useState(null);
   const[loading,setLoading]=useState(true);
   const[leaderSearch,setLeaderSearch]=useState("");
@@ -222,7 +223,7 @@ export default function Draft({athletes=[]}){
   };
 
   const reset=async()=>{
-    if(!confirm("Reset draft? This will clear all groups and set everyone back to Iron."))return;
+    setConfirmReset(false);
     setStep("setup");setLeaders(Array(numGroups).fill(""));
     setBracelets({});setGroups({});setPickSeq([]);setPickIdx(0);setSaveError("");
     try{
@@ -269,7 +270,15 @@ export default function Draft({athletes=[]}){
             {step==="done"&&"Draft locked · manage in Teams tab"}
           </div>
         </div>
-        <button onClick={reset} style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",background:"transparent",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>Reset</button>
+        {confirmReset?(
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:10,color:RED}}>Erase everything?</span>
+            <button onClick={reset} style={{padding:"5px 10px",borderRadius:7,border:"1px solid "+RED,background:RED+"22",color:RED,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>Yes, reset</button>
+            <button onClick={()=>setConfirmReset(false)} style={{padding:"5px 10px",borderRadius:7,border:"0.5px solid #2a2a2a",background:"transparent",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
+          </div>
+        ):(
+          <button onClick={()=>setConfirmReset(true)} style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",background:"transparent",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>Reset</button>
+        )}
       </div>
 
       {/* ── STEP PROGRESS BAR ── */}
