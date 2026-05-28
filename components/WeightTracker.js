@@ -353,7 +353,7 @@ export default function WeightTracker({ athleteId }) {
             <div style={{ display: "flex", alignItems: "center", gap: 5, background: streak >= 7 ? GOLD + "22" : "#1a1a1a", border: "1px solid " + (streak >= 7 ? GOLD + "44" : "#333"), borderRadius: 8, padding: "4px 10px" }}>
               <span style={{ fontSize: 14 }}>{streak >= 14 ? "🔥" : streak >= 7 ? "⚡" : "📅"}</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: streak >= 7 ? GOLD : "#aaa" }}>{streak}</span>
-              <span style={{ fontSize: 9, color: "#555" }}>day streak</span>
+              <span style={{ fontSize: 9, color: "#555" }}>in a row</span>
             </div>
           )}
         </div>
@@ -445,7 +445,7 @@ export default function WeightTracker({ athleteId }) {
 
       {/* ── Notification card ── */}
       {notifState !== "unsupported" && (
-        <div style={{ background: BG, borderRadius: 12, padding: "12px 16px", marginBottom: 12, border: "1px solid #222", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ background: "#111", borderRadius: 12, padding: "12px 16px", marginBottom: 12, border: "1px solid #1e1e1e", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div>
             <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, marginBottom: 2 }}>🔔 Weight Reminders</div>
             <div style={{ fontSize: 10, color: "#555" }}>
@@ -469,16 +469,16 @@ export default function WeightTracker({ athleteId }) {
       )}
 
       {/* ── Goal card ── */}
-      <div style={{ background: "#fff", borderRadius: 12, padding: "1.25rem", marginBottom: 12, border: "0.5px solid #e0e0e0" }}>
+      <div style={{ background: "#111", borderRadius: 16, padding: "1.25rem", marginBottom: 12, border: "1px solid #222" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: goal ? 12 : 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>🎯 Goal weight</div>
-          <button onClick={() => setShowGoalInput(!showGoalInput)} style={{ fontSize: 12, color: ORANGE, background: "none", border: "none", cursor: "pointer", fontFamily: "Georgia,serif", fontWeight: 500 }}>{goal ? "Edit" : "Set goal →"}</button>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>🎯 Goal Weight</div>
+          <button onClick={() => setShowGoalInput(!showGoalInput)} style={{ fontSize: 12, color: ORANGE, background: "none", border: "none", cursor: "pointer", fontFamily: "Georgia,serif", fontWeight: 600 }}>{goal ? "Edit" : "Set goal →"}</button>
         </div>
         {(showGoalInput || goal) && (
           <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
             {[{ id: "lose", label: "🔻 Lose" }, { id: "maintain", label: "⚖️ Maintain" }, { id: "gain", label: "📈 Gain" }].map(m => (
               <button key={m.id} onClick={() => { setGoalMode(m.id); if (goalWeight) persistGoal(goalWeight, m.id); }}
-                style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid " + (goalMode === m.id ? ORANGE : "#e0e0e0"), background: goalMode === m.id ? ORANGE + "15" : "#fafafa", color: goalMode === m.id ? ORANGE : "#888", fontSize: 11, fontWeight: goalMode === m.id ? 700 : 400, cursor: "pointer", fontFamily: "Georgia,serif" }}>
+                style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid " + (goalMode === m.id ? ORANGE+"66" : "#252525"), background: goalMode === m.id ? ORANGE+"18" : "#1a1a1a", color: goalMode === m.id ? ORANGE : "#555", fontSize: 11, fontWeight: goalMode === m.id ? 700 : 400, cursor: "pointer", fontFamily: "Georgia,serif" }}>
                 {m.label}
               </button>
             ))}
@@ -487,7 +487,7 @@ export default function WeightTracker({ athleteId }) {
         {showGoalInput && (
           <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
             <input type="text" inputMode="decimal" value={goalWeight} onChange={e => setGoalWeight(e.target.value)} placeholder={goalMode === "lose" ? "Target low (lbs)" : "Target high (lbs)"}
-              style={{ flex: 1, padding: "10px", borderRadius: 8, border: "0.5px solid #e0e0e0", fontSize: 14, fontFamily: "Georgia,serif", background: "#fafafa", textAlign: "center" }} />
+              style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid #333", fontSize: 14, fontFamily: "Georgia,serif", background: "#1a1a1a", color: "#fff", textAlign: "center" }} />
             <button onClick={() => saveGoal(goalWeight, goalMode)} style={{ padding: "10px 16px", borderRadius: 8, border: "none", background: ORANGE, color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "Georgia,serif" }}>Save</button>
           </div>
         )}
@@ -498,120 +498,141 @@ export default function WeightTracker({ athleteId }) {
                 {progress.msg}
               </div>
             )}
-            {/* Maintenance stability display */}
             {progress.isMaintain && (
               <div style={{ marginBottom: 12 }}>
                 <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: "#f9f9f9", borderRadius: 10, border: "0.5px solid #eee" }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: "#1a1a1a" }}>{goal}</div>
-                    <div style={{ fontSize: 9, color: "#aaa" }}>target lbs</div>
+                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: "#1a1a1a", borderRadius: 10, border: "0.5px solid #252525" }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>{goal}</div>
+                    <div style={{ fontSize: 9, color: "#555" }}>target lbs</div>
                   </div>
-                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: "#f9f9f9", borderRadius: 10, border: "0.5px solid #eee" }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: "#aaa" }}>{goal - MAINTAIN_RANGE}–{goal + MAINTAIN_RANGE}</div>
-                    <div style={{ fontSize: 9, color: "#aaa" }}>±3 lb zone</div>
+                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: "#1a1a1a", borderRadius: 10, border: "0.5px solid #252525" }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: "#888" }}>{goal - MAINTAIN_RANGE}–{goal + MAINTAIN_RANGE}</div>
+                    <div style={{ fontSize: 9, color: "#555" }}>±3 lb zone</div>
                   </div>
-                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: progress.stabilityPct >= 80 ? GREEN + "11" : "#f9f9f9", borderRadius: 10, border: "0.5px solid " + (progress.stabilityPct >= 80 ? GREEN + "33" : "#eee") }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: progress.stabilityPct >= 80 ? GREEN : "#1a1a1a" }}>{progress.stabilityPct}%</div>
-                    <div style={{ fontSize: 9, color: "#aaa" }}>in range (14d)</div>
+                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: progress.stabilityPct >= 80 ? GREEN + "11" : "#1a1a1a", borderRadius: 10, border: "0.5px solid " + (progress.stabilityPct >= 80 ? GREEN + "33" : "#252525") }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: progress.stabilityPct >= 80 ? GREEN : "#fff" }}>{progress.stabilityPct}%</div>
+                    <div style={{ fontSize: 9, color: "#555" }}>in range (14d)</div>
                   </div>
                 </div>
-                <div style={{ height: 6, background: "#f0f0f0", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: 6, background: "#1a1a1a", borderRadius: 3, overflow: "hidden" }}>
                   <div style={{ width: progress.stabilityPct + "%", height: "100%", background: "linear-gradient(90deg," + GREEN + "," + GREEN + "88)", borderRadius: 3 }} />
                 </div>
               </div>
             )}
-            {/* Predicted date */}
             {predictedDate && !progress.goalReached && !progress.isMaintain && (
-              <div style={{ fontSize: 11, color: "#1a1a1a", marginBottom: 10, padding: "7px 12px", background: "#f5f9ff", borderRadius: 8, border: "0.5px solid #d0e0ff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ color: "#888" }}>📅 At your current rate:</span>
-                <span style={{ fontWeight: 700 }}>{predictedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+              <div style={{ fontSize: 11, color: "#aaa", marginBottom: 10, padding: "7px 12px", background: "#1a1a1a", borderRadius: 8, border: "0.5px solid #252525", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#555" }}>📅 At your current rate:</span>
+                <span style={{ fontWeight: 700, color: "#fff" }}>{predictedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
               </div>
             )}
-            {/* Directional progress ring — lose/gain only */}
             {!progress.isMaintain && (
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
               <div style={{ position: "relative", width: 72, height: 72, flexShrink: 0 }}>
                 <svg viewBox="0 0 72 72" style={{ width: 72, height: 72, transform: "rotate(-90deg)" }}>
-                  <circle cx="36" cy="36" r="30" fill="none" stroke="#f0f0f0" strokeWidth="7" />
+                  <circle cx="36" cy="36" r="30" fill="none" stroke="#222" strokeWidth="7" />
                   <circle cx="36" cy="36" r="30" fill="none" stroke={progressColor} strokeWidth="7"
                     strokeDasharray={`${Math.min(progress.pct, 100) * 1.885} 188.5`} strokeLinecap="round"
-                    style={{ filter: `drop-shadow(0 0 4px ${progressColor}88)` }} />
+                    style={{ filter: `drop-shadow(0 0 6px ${progressColor}88)` }} />
                 </svg>
                 <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ fontSize: 14, fontWeight: 900, color: progressColor, lineHeight: 1 }}>{Math.min(progress.pct, 100)}</div>
-                  <div style={{ fontSize: 9, color: "#aaa" }}>%</div>
+                  <div style={{ fontSize: 9, color: "#555" }}>%</div>
                 </div>
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 8 }}>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: 800, color: "#1a1a1a" }}>{latest || 0}</div><div style={{ fontSize: 9, color: "#aaa" }}>current</div></div>
-                  <div style={{ color: "#ccc" }}>→</div>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: 800, color: progressColor }}>{goal}</div><div style={{ fontSize: 9, color: "#aaa" }}>{goalMode === "lose" ? "goal (low)" : "goal (high)"}</div></div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{latest || 0}</div><div style={{ fontSize: 9, color: "#555" }}>current</div></div>
+                  <div style={{ color: "#333" }}>→</div>
+                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: 800, color: progressColor }}>{goal}</div><div style={{ fontSize: 9, color: "#555" }}>{goalMode === "lose" ? "goal (low)" : "goal (high)"}</div></div>
                 </div>
-                <div style={{ height: 8, background: "#f0f0f0", borderRadius: 4, overflow: "visible", position: "relative" }}>
+                <div style={{ height: 8, background: "#1a1a1a", borderRadius: 4, overflow: "visible", position: "relative" }}>
                   <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: Math.min(progress.pct, 100) + "%", background: `linear-gradient(90deg,${progressColor},${progressColor}99)`, borderRadius: 4, boxShadow: `0 0 8px ${progressColor}66` }} />
-                  <div style={{ position: "absolute", top: "50%", left: Math.min(progress.pct, 100) + "%", transform: "translate(-50%,-50%)", width: 16, height: 16, borderRadius: "50%", background: progressColor, border: "2px solid #fff", boxShadow: `0 0 8px ${progressColor}` }} />
+                  <div style={{ position: "absolute", top: "50%", left: Math.min(progress.pct, 100) + "%", transform: "translate(-50%,-50%)", width: 16, height: 16, borderRadius: "50%", background: progressColor, border: "2px solid #111", boxShadow: `0 0 8px ${progressColor}` }} />
                 </div>
                 {!progress.goalReached && progress.lbsLeft != null && (
-                  <div style={{ fontSize: 11, color: "#aaa", marginTop: 6, textAlign: "center" }}>{Math.abs(progress.lbsLeft)} lbs to go</div>
+                  <div style={{ fontSize: 11, color: "#555", marginTop: 6, textAlign: "center" }}>{Math.abs(progress.lbsLeft)} lbs to go</div>
                 )}
               </div>
             </div>
             )}
           </div>
         )}
-        {!goal && !showGoalInput && <div style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>Set a target and track your progress.</div>}
+        {!goal && !showGoalInput && <div style={{ fontSize: 12, color: "#555", marginTop: 4 }}>Set a target and track your progress.</div>}
       </div>
 
       {/* ── Mon/Fri weigh-in consistency grid ── */}
-      {entries.length > 0 && (
-        <div style={{ background: "#fff", borderRadius: 12, padding: "1.25rem", marginBottom: 12, border: "0.5px solid #e0e0e0" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>📆 Weigh-In Consistency</div>
-              <div style={{ fontSize: 10, color: "#aaa", marginTop: 2 }}>Mon &amp; Fri — last 10 weeks</div>
+      {entries.length > 0 && (()=>{
+        const logged = calDots.mon.filter(d=>d.logged).length + calDots.fri.filter(d=>d.logged).length;
+        const pct = Math.round((logged/20)*100);
+        return(
+        <div style={{ background:"#0f0f0f", borderRadius:16, marginBottom:12, overflow:"hidden", border:"1px solid #1e1e1e", position:"relative" }}>
+          <div style={{ height:3, background:"linear-gradient(90deg,"+GREEN+","+GREEN+"66,transparent)" }}/>
+          <div style={{ position:"absolute", top:0, right:0, bottom:0, width:"35%", background:"radial-gradient(ellipse at right,"+GREEN+"08,transparent 70%)", pointerEvents:"none" }}/>
+          <div style={{ padding:"16px 16px 12px", position:"relative" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
+              <div>
+                <div style={{ fontSize:8, color:GREEN, textTransform:"uppercase", letterSpacing:"0.2em", fontWeight:900, marginBottom:3 }}>10 Weeks</div>
+                <div style={{ fontSize:17, fontWeight:900, color:"#fff", letterSpacing:"-0.02em" }}>Weigh-In Log</div>
+                <div style={{ fontSize:10, color:"#555", marginTop:2 }}>Mon &amp; Fri before the workout</div>
+              </div>
+              <div style={{ textAlign:"center", background:GREEN+"18", border:"1px solid "+GREEN+"33", borderRadius:12, padding:"8px 14px" }}>
+                <div style={{ fontSize:22, fontWeight:900, color:GREEN, lineHeight:1 }}>{logged}<span style={{ fontSize:11, color:GREEN+"88", fontWeight:500 }}>/20</span></div>
+                <div style={{ fontSize:9, color:"#555", marginTop:2, textTransform:"uppercase", letterSpacing:"0.06em" }}>{pct}% hit</div>
+              </div>
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a" }}>{calDots.mon.filter(d => d.logged).length + calDots.fri.filter(d => d.logged).length}<span style={{ fontSize: 10, color: "#aaa", fontWeight: 400 }}>/20</span></div>
-              <div style={{ fontSize: 9, color: "#aaa" }}>sessions logged</div>
+
+            {/* Progress bar */}
+            <div style={{ height:4, background:"#1a1a1a", borderRadius:2, marginBottom:14, overflow:"hidden" }}>
+              <div style={{ width:pct+"%", height:"100%", background:"linear-gradient(90deg,"+GREEN+","+GREEN+"88)", borderRadius:2, boxShadow:"0 0 8px "+GREEN+"55", transition:"width 0.6s ease" }}/>
             </div>
-          </div>
-          <div style={{ marginBottom: 6 }}>
-            {[{ label: "Mon", dots: calDots.mon }, { label: "Fri", dots: calDots.fri }].map(row => (
-              <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: "#888", width: 22, flexShrink: 0 }}>{row.label}</div>
-                {row.dots.map((dot, i) => (
-                  <div key={i} title={dot.date} style={{ flex: 1, height: 14, borderRadius: 3, background: dot.logged ? GREEN : "#f0f0f0", minWidth: 0 }} />
+
+            {/* Grid rows */}
+            {[{ label:"Mon", dots:calDots.mon }, { label:"Fri", dots:calDots.fri }].map(row=>(
+              <div key={row.label} style={{ display:"flex", alignItems:"center", gap:4, marginBottom:6 }}>
+                <div style={{ fontSize:9, fontWeight:800, color:"#555", width:24, flexShrink:0, textTransform:"uppercase", letterSpacing:"0.08em" }}>{row.label}</div>
+                {row.dots.map((dot,i)=>(
+                  <div key={i} title={dot.date} style={{ flex:1, height:18, borderRadius:4, minWidth:0,
+                    background: dot.logged ? "linear-gradient(180deg,"+GREEN+"cc,"+GREEN+"88)" : "#161616",
+                    border:"1px solid "+(dot.logged ? GREEN+"55" : "#1e1e1e"),
+                    boxShadow: dot.logged ? "0 0 8px "+GREEN+"44" : "none",
+                  }}/>
                 ))}
               </div>
             ))}
-          </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 10, height: 10, borderRadius: 2, background: GREEN }} /><span style={{ fontSize: 9, color: "#aaa" }}>Logged</span></div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 10, height: 10, borderRadius: 2, background: "#f0f0f0" }} /><span style={{ fontSize: 9, color: "#aaa" }}>Missed</span></div>
-            {streak > 0 && <div style={{ marginLeft: "auto", fontSize: 10, color: streak >= 5 ? GOLD : "#aaa", fontWeight: streak >= 5 ? 700 : 400 }}>🔥 {streak} in a row</div>}
+
+            {streak > 0 && (
+              <div style={{ marginTop:10, display:"flex", alignItems:"center", justifyContent:"flex-end", gap:6 }}>
+                <div style={{ height:1, flex:1, background:"#1a1a1a" }}/>
+                <div style={{ display:"flex", alignItems:"center", gap:5, background: streak>=5 ? GOLD+"18":"#161616", border:"1px solid "+(streak>=5?GOLD+"44":"#252525"), borderRadius:20, padding:"5px 12px" }}>
+                  <span style={{ fontSize:13 }}>🔥</span>
+                  <span style={{ fontSize:12, fontWeight:800, color:streak>=5?GOLD:"#aaa" }}>{streak}</span>
+                  <span style={{ fontSize:9, color:streak>=5?GOLD+"88":"#555" }}>in a row</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ── Day-of-week insight ── */}
       {dowAvgs.length >= 3 && (
-        <div style={{ background: "#fff", borderRadius: 12, padding: "1.25rem", marginBottom: 12, border: "0.5px solid #e0e0e0" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a", marginBottom: 4 }}>📊 Day-of-week pattern</div>
-          <div style={{ fontSize: 11, color: "#aaa", marginBottom: 10 }}>Your average weight by day</div>
+        <div style={{ background: "#111", borderRadius: 16, padding: "1.25rem", marginBottom: 12, border: "1px solid #1e1e1e" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 2 }}>📊 Day-of-Week Pattern</div>
+          <div style={{ fontSize: 10, color: "#555", marginBottom: 12 }}>Average weight by day</div>
           {dowAvgs.map((d, i) => {
             const isHeaviest = i === 0;
             const isLightest = i === dowAvgs.length - 1;
             const range = dowAvgs[0].avg - dowAvgs[dowAvgs.length - 1].avg;
             const barPct = range > 0 ? ((d.avg - dowAvgs[dowAvgs.length - 1].avg) / range) * 100 : 50;
             return (
-              <div key={d.day} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 7 }}>
-                <div style={{ width: 30, fontSize: 11, color: isHeaviest ? RED : isLightest ? GREEN : "#888", fontWeight: isHeaviest || isLightest ? 700 : 400 }}>{d.day}</div>
-                <div style={{ flex: 1, height: 6, background: "#f0f0f0", borderRadius: 3, overflow: "hidden" }}>
-                  <div style={{ width: barPct + "%", height: "100%", background: isHeaviest ? RED + "88" : isLightest ? GREEN : "#ddd", borderRadius: 3 }} />
+              <div key={d.day} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <div style={{ width: 30, fontSize: 11, color: isHeaviest ? RED : isLightest ? GREEN : "#555", fontWeight: isHeaviest || isLightest ? 700 : 400 }}>{d.day}</div>
+                <div style={{ flex: 1, height: 6, background: "#1a1a1a", borderRadius: 3, overflow: "hidden" }}>
+                  <div style={{ width: barPct + "%", height: "100%", background: isHeaviest ? RED : isLightest ? GREEN : "#333", borderRadius: 3, boxShadow: (isHeaviest||isLightest) ? "0 0 6px "+(isHeaviest?RED:GREEN)+"66" : "none" }} />
                 </div>
-                <div style={{ width: 40, fontSize: 11, fontWeight: 600, color: isHeaviest ? RED : isLightest ? GREEN : "#1a1a1a", textAlign: "right" }}>{d.avg}</div>
-                {(isHeaviest || isLightest) && <div style={{ fontSize: 9, color: isHeaviest ? RED : GREEN, width: 40 }}>{isHeaviest ? "heaviest" : "lightest"}</div>}
+                <div style={{ width: 40, fontSize: 11, fontWeight: 600, color: isHeaviest ? RED : isLightest ? GREEN : "#888", textAlign: "right" }}>{d.avg}</div>
+                {(isHeaviest || isLightest) && <div style={{ fontSize: 9, color: isHeaviest ? RED : GREEN, width: 44 }}>{isHeaviest ? "heaviest" : "lightest"}</div>}
               </div>
             );
           })}
@@ -620,8 +641,8 @@ export default function WeightTracker({ athleteId }) {
 
       {/* ── Weekly log with fluctuation + notes ── */}
       {byWeek.length > 0 && (
-        <div style={{ background: "#fff", borderRadius: 12, padding: "1.25rem", border: "0.5px solid #e0e0e0" }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a", marginBottom: 12 }}>Weekly log</div>
+        <div style={{ background: "#111", borderRadius: 16, padding: "1.25rem", border: "1px solid #1e1e1e" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 12 }}>📋 Weekly Log</div>
           {[...byWeek].reverse().map((week, wi) => {
             const prevWeek = [...byWeek].reverse()[wi + 1];
             const weekDiff = prevWeek ? parseFloat((week.avg - prevWeek.avg).toFixed(1)) : null;
@@ -629,31 +650,31 @@ export default function WeightTracker({ athleteId }) {
             const range = weekRanges[week.key];
             const spread = range ? parseFloat((range.max - range.min).toFixed(1)) : null;
             return (
-              <div key={wi} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: wi < byWeek.length - 1 ? "0.5px solid #f0f0f0" : "none" }}>
+              <div key={wi} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: wi < byWeek.length - 1 ? "0.5px solid #1e1e1e" : "none" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "#1a1a1a" }}>{week.label}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#ccc" }}>{week.label}</div>
                     {spread !== null && spread > 0 && (
-                      <div style={{ fontSize: 9, color: "#bbb", marginTop: 1 }}>Range: {range.min}–{range.max} lbs ({spread} lb spread)</div>
+                      <div style={{ fontSize: 9, color: "#444", marginTop: 1 }}>{range.min}–{range.max} lbs · {spread} lb spread</div>
                     )}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a" }}>{week.avg} lbs</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{week.avg} lbs</span>
                     {weekDiff !== null && (
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 6, background: isGoodDir ? "#EAF3DE" : weekDiff === 0 ? "#f5f5f5" : "#FCEBEB", color: isGoodDir ? GREEN : weekDiff === 0 ? "#888" : RED }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: isGoodDir ? GREEN+"18" : weekDiff === 0 ? "#1a1a1a" : RED+"18", color: isGoodDir ? GREEN : weekDiff === 0 ? "#555" : RED, border:"1px solid "+(isGoodDir?GREEN+"33":weekDiff===0?"#252525":RED+"33") }}>
                         {weekDiff > 0 ? "↑ +" : weekDiff < 0 ? "↓ " : "→ "}{Math.abs(weekDiff)}
                       </span>
                     )}
                   </div>
                 </div>
                 {week.entries.map((e, ei) => (
-                  <div key={ei} style={{ padding: "7px 10px", background: "#f9f9f9", borderRadius: 8, marginBottom: 4 }}>
+                  <div key={ei} style={{ padding: "7px 10px", background: "#1a1a1a", borderRadius: 8, marginBottom: 4, border:"0.5px solid #222" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
-                      <div style={{ fontSize: 12, color: "#888" }}>{new Date(e.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a1a" }}>{e.weight} lbs</div>
+                      <div style={{ fontSize: 12, color: "#555" }}>{new Date(e.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</div>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{e.weight} lbs</div>
                       <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
                         <button onClick={() => { setEditingNote(e.date); setNoteInput(notes[e.date] || ""); }}
-                          style={{ fontSize: 11, color: notes[e.date] ? ORANGE : "#ccc", background: "none", border: "none", cursor: "pointer", padding: "0 4px" }}>
+                          style={{ fontSize: 11, color: notes[e.date] ? ORANGE : "#444", background: "none", border: "none", cursor: "pointer", padding: "0 4px" }}>
                           {notes[e.date] ? "✏️" : "+ note"}
                         </button>
                         {confirmDelete === e.id ? (
@@ -663,32 +684,32 @@ export default function WeightTracker({ athleteId }) {
                               {deleting === e.id ? "..." : "Delete"}
                             </button>
                             <button onClick={() => setConfirmDelete(null)}
-                              style={{ fontSize: 11, padding: "3px 7px", borderRadius: 5, border: "0.5px solid #ddd", background: "#fff", color: "#888", cursor: "pointer", fontFamily: "Georgia,serif" }}>
+                              style={{ fontSize: 11, padding: "3px 7px", borderRadius: 5, border: "0.5px solid #333", background: "#222", color: "#888", cursor: "pointer", fontFamily: "Georgia,serif" }}>
                               ✕
                             </button>
                           </>
                         ) : (
                           <button onClick={() => setConfirmDelete(e.id)}
-                            style={{ fontSize: 12, padding: "3px 8px", borderRadius: 5, border: "0.5px solid #ffcccc", background: "#fff5f5", color: RED, cursor: "pointer", fontFamily: "Georgia,serif" }}>
+                            style={{ fontSize: 12, padding: "3px 8px", borderRadius: 5, border: "0.5px solid "+RED+"44", background: RED+"11", color: RED, cursor: "pointer", fontFamily: "Georgia,serif" }}>
                             🗑
                           </button>
                         )}
                       </div>
                     </div>
                     {notes[e.date] && editingNote !== e.date && (
-                      <div style={{ fontSize: 11, color: "#888", marginTop: 4, fontStyle: "italic" }}>"{notes[e.date]}"</div>
+                      <div style={{ fontSize: 11, color: "#555", marginTop: 4, fontStyle: "italic" }}>"{notes[e.date]}"</div>
                     )}
                     {editingNote === e.date && (
                       <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
                         <input autoFocus value={noteInput} onChange={ev => setNoteInput(ev.target.value)}
                           placeholder='e.g. "competition day", "post-travel"'
-                          style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: "0.5px solid #ddd", fontSize: 11, fontFamily: "Georgia,serif", background: "#fff" }} />
+                          style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: "1px solid #333", fontSize: 11, fontFamily: "Georgia,serif", background: "#222", color: "#fff" }} />
                         <button onClick={() => saveNote(e.date)} disabled={savingNote}
                           style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: ORANGE, color: "#fff", fontSize: 11, cursor: "pointer", fontFamily: "Georgia,serif" }}>
                           {savingNote ? "..." : "Save"}
                         </button>
                         <button onClick={() => { setEditingNote(null); setNoteInput(""); }}
-                          style={{ padding: "6px 10px", borderRadius: 6, border: "0.5px solid #ddd", background: "#fff", color: "#888", fontSize: 11, cursor: "pointer", fontFamily: "Georgia,serif" }}>
+                          style={{ padding: "6px 10px", borderRadius: 6, border: "0.5px solid #333", background: "#222", color: "#555", fontSize: 11, cursor: "pointer", fontFamily: "Georgia,serif" }}>
                           ✕
                         </button>
                       </div>
