@@ -212,16 +212,27 @@ export default function WeightTracker({ athleteId }) {
   const diff = first != null && latest != null ? parseFloat((latest - first).toFixed(1)) : null;
   const goal = parseFloat(goalWeight) || null;
 
-  // Streak
+  // Streak — consecutive Mon/Fri weigh-ins (grace for today if not yet logged)
   const streak = (() => {
     if (!entries.length) return 0;
     const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+    const todayStr = estNow.getFullYear() + "-" + String(estNow.getMonth() + 1).padStart(2, "0") + "-" + String(estNow.getDate()).padStart(2, "0");
     const dateSet = new Set(entries.map(e => e.date));
-    let s = 0;
+    const sessions = [];
     const d = new Date(estNow);
-    while (true) {
-      const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-      if (dateSet.has(key)) { s++; d.setDate(d.getDate() - 1); } else break;
+    while (sessions.length < 52) {
+      const dow = d.getDay();
+      if (dow === 1 || dow === 5) {
+        const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+        sessions.push(key);
+      }
+      d.setDate(d.getDate() - 1);
+    }
+    let s = 0;
+    for (const key of sessions) {
+      if (key === todayStr && !dateSet.has(key)) continue;
+      if (dateSet.has(key)) s++;
+      else break;
     }
     return s;
   })();
@@ -235,17 +246,20 @@ export default function WeightTracker({ athleteId }) {
   // Predicted goal date
   const predictedDate = goal ? predictGoalDate(entries, goal, goalMode) : null;
 
-  // Calendar dots (last 35 days)
+  // Calendar dots — Mon/Fri weigh-in days only (last 10 weeks)
   const calDots = (() => {
     const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
     const dateSet = new Set(entries.map(e => e.date));
-    const dots = [];
-    for (let i = 34; i >= 0; i--) {
-      const d = new Date(estNow); d.setDate(d.getDate() - i);
+    const mon = [], fri = [];
+    const d = new Date(estNow);
+    while (mon.length < 10 || fri.length < 10) {
+      const dow = d.getDay();
       const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-      dots.push({ date: key, logged: dateSet.has(key) });
+      if (dow === 1 && mon.length < 10) mon.unshift({ date: key, logged: dateSet.has(key) });
+      if (dow === 5 && fri.length < 10) fri.unshift({ date: key, logged: dateSet.has(key) });
+      d.setDate(d.getDate() - 1);
     }
-    return dots;
+    return { mon, fri };
   })();
 
   // Day-of-week averages
@@ -435,7 +449,7 @@ export default function WeightTracker({ athleteId }) {
           <div>
             <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, marginBottom: 2 }}>🔔 Weight Reminders</div>
             <div style={{ fontSize: 10, color: "#555" }}>
-              {notifState === "enabled" ? "Reminders on — Mon & Fri before lift" : notifState === "denied" ? "Blocked — enable in browser settings" : "Get reminded Mon & Fri before lift + after sessions"}
+              {notifState === "enabled" ? "Reminders on — Mon & Fri mornings" : notifState === "denied" ? "Blocked — enable in browser settings" : "Get notified Mon & Fri before the workout"}
             </div>
           </div>
           {notifState === "enabled" ? (
@@ -549,23 +563,33 @@ export default function WeightTracker({ athleteId }) {
         {!goal && !showGoalInput && <div style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>Set a target and track your progress.</div>}
       </div>
 
-      {/* ── Calendar consistency grid ── */}
+      {/* ── Mon/Fri weigh-in consistency grid ── */}
       {entries.length > 0 && (
         <div style={{ background: "#fff", borderRadius: 12, padding: "1.25rem", marginBottom: 12, border: "0.5px solid #e0e0e0" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>📆 Consistency</div>
-            <div style={{ fontSize: 11, color: "#aaa" }}>{calDots.filter(d => d.logged).length}/35 days</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#1a1a1a" }}>📆 Weigh-In Consistency</div>
+              <div style={{ fontSize: 10, color: "#aaa", marginTop: 2 }}>Mon &amp; Fri — last 10 weeks</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a" }}>{calDots.mon.filter(d => d.logged).length + calDots.fri.filter(d => d.logged).length}<span style={{ fontSize: 10, color: "#aaa", fontWeight: 400 }}>/20</span></div>
+              <div style={{ fontSize: 9, color: "#aaa" }}>sessions logged</div>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
-            {calDots.map((dot, i) => (
-              <div key={i} title={dot.date}
-                style={{ width: 11, height: 11, borderRadius: 3, background: dot.logged ? GREEN : "#f0f0f0", flexShrink: 0 }} />
+          <div style={{ marginBottom: 6 }}>
+            {[{ label: "Mon", dots: calDots.mon }, { label: "Fri", dots: calDots.fri }].map(row => (
+              <div key={row.label} style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: "#888", width: 22, flexShrink: 0 }}>{row.label}</div>
+                {row.dots.map((dot, i) => (
+                  <div key={i} title={dot.date} style={{ flex: 1, height: 14, borderRadius: 3, background: dot.logged ? GREEN : "#f0f0f0", minWidth: 0 }} />
+                ))}
+              </div>
             ))}
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 10, height: 10, borderRadius: 2, background: GREEN }} /><span style={{ fontSize: 9, color: "#aaa" }}>Logged</span></div>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 10, height: 10, borderRadius: 2, background: "#f0f0f0" }} /><span style={{ fontSize: 9, color: "#aaa" }}>Missed</span></div>
-            {streak > 0 && <div style={{ marginLeft: "auto", fontSize: 10, color: streak >= 7 ? GOLD : "#aaa", fontWeight: streak >= 7 ? 700 : 400 }}>🔥 {streak}-day streak</div>}
+            {streak > 0 && <div style={{ marginLeft: "auto", fontSize: 10, color: streak >= 5 ? GOLD : "#aaa", fontWeight: streak >= 5 ? 700 : 400 }}>🔥 {streak} in a row</div>}
           </div>
         </div>
       )}
