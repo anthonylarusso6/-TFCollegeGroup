@@ -1428,9 +1428,9 @@ export default function Coach(){
 
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
                         {[{label:"Start",val:first,color:"#888"},{label:"Current",val:latest,color:"#fff"},{label:"Entries",val:entries.length,color:PUR}].map(s=>(
-                          <div key={s.label} style={{background:"#1a1a1a",borderRadius:10,padding:"10px 8px",textAlign:"center",border:"0.5px solid #252525"}}>
-                            <div style={{fontSize:18,fontWeight:700,color:s.color}}>{s.val!=null?s.val:"—"}</div>
-                            <div style={{fontSize:10,color:"#555",marginTop:2}}>{s.label}</div>
+                          <div key={s.label} style={{background:"#1a1a1a",borderRadius:10,padding:"10px 8px",textAlign:"center",border:"0.5px solid #222"}}>
+                            <div style={{fontSize:18,fontWeight:800,color:s.color}}>{s.val!=null?s.val:"—"}</div>
+                            <div style={{fontSize:10,color:"#555",marginTop:3,textTransform:"uppercase",letterSpacing:"0.06em"}}>{s.label}</div>
                           </div>
                         ))}
                       </div>
@@ -1461,7 +1461,7 @@ export default function Coach(){
                           const cur=parseFloat(e.weight);
                           const wd=prev!=null?parseFloat((cur-prev).toFixed(1)):null;
                           return(
-                            <div key={ei} style={{flexShrink:0,background:ei===entries.length-1?"#2a2a2a":"#1a1a1a",borderRadius:8,padding:"6px 10px",textAlign:"center",minWidth:54,border:"0.5px solid "+(ei===entries.length-1?"#444":"#252525")}}>
+                            <div key={ei} style={{flexShrink:0,background:ei===entries.length-1?"#222":"#1a1a1a",borderRadius:10,padding:"6px 10px",textAlign:"center",minWidth:54,border:"1px solid "+(ei===entries.length-1?"#333":"#202020")}}>
                               <div style={{fontSize:13,fontWeight:700,color:ei===entries.length-1?"#fff":"#aaa"}}>{cur}</div>
                               {wd!=null&&<div style={{fontSize:10,color:wd<0?GREEN:wd>0?RED:"#888",fontWeight:600}}>{wd>0?"↑":wd<0?"↓":"→"}{Math.abs(wd)}</div>}
                               <div style={{fontSize:10,color:"#555",fontWeight:600}}>{e.date?.slice(5)}</div>
@@ -1530,9 +1530,10 @@ export default function Coach(){
               if(!rows.length)return null;
               return(
                 <div style={{marginBottom:16}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,paddingBottom:8,borderBottom:"1px solid #1e1e1e"}}>
-                    <div style={{width:6,height:6,borderRadius:"50%",background:accentColor,flexShrink:0}}/>
-                    <div style={{fontSize:12,fontWeight:700,color:accentColor,textTransform:"uppercase",letterSpacing:"0.12em"}}>{gLabel} Rankings</div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,paddingBottom:10,borderBottom:"1px solid #1e1e1e"}}>
+                    <div style={{width:3,height:18,borderRadius:2,background:accentColor,flexShrink:0}}/>
+                    <div style={{fontSize:13,fontWeight:800,color:accentColor,textTransform:"uppercase",letterSpacing:"0.14em"}}>{gLabel} Rankings</div>
+                    <div style={{flex:1,height:1,background:"linear-gradient(90deg,"+accentColor+"22,transparent)"}}/>
                   </div>
                   {cats.map(cat=>{
                     const catRows=[];
@@ -1551,26 +1552,27 @@ export default function Coach(){
                     if(!catRows.length)return null;
                     const pctOf=(orm)=>Math.round(Math.min(100,orm/cat.ref*100));
                     return(
-                      <div key={cat.id} style={{marginBottom:14}}>
-                        <div style={{fontSize:11,color:accentColor,fontWeight:700,marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
-                          <span>{cat.emoji}</span><span style={{textTransform:"uppercase",letterSpacing:"0.08em"}}>{cat.label}</span>
-                          <span style={{color:"#444",fontWeight:400,fontSize:10,textTransform:"none"}}>— top est. 1RM</span>
+                      <div key={cat.id} style={{marginBottom:14,background:"#0e0e0e",borderRadius:12,padding:"12px 12px 8px",border:"0.5px solid #1a1a1a"}}>
+                        <div style={{fontSize:11,color:accentColor,fontWeight:700,marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                          <span style={{fontSize:14}}>{cat.emoji}</span>
+                          <span style={{textTransform:"uppercase",letterSpacing:"0.1em",fontSize:11}}>{cat.label}</span>
+                          <span style={{color:"#444",fontWeight:400,fontSize:10,textTransform:"none",marginLeft:2}}>· est. 1RM</span>
                         </div>
                         {catRows.slice(0,5).map((r,ri)=>(
-                          <div key={ri} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:ri===0?"#1a1600":"#141414",borderRadius:10,marginBottom:5,border:"0.5px solid "+(ri===0?GOLD+"33":"#1e1e1e")}}>
-                            <div style={{width:22,fontSize:12,fontWeight:700,color:ri===0?GOLD:ri===1?"#aaa":ri===2?ORANGE:"#555",textAlign:"center",flexShrink:0}}>
+                          <div key={ri} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",background:ri===0?GOLD+"12":"#151515",borderRadius:10,marginBottom:5,border:"1px solid "+(ri===0?GOLD+"33":"#1e1e1e")}}>
+                            <div style={{width:22,fontSize:ri<3?15:12,fontWeight:700,color:ri===0?GOLD:ri===1?"#ccc":ri===2?ORANGE:"#555",textAlign:"center",flexShrink:0}}>
                               {ri===0?"🥇":ri===1?"🥈":ri===2?"🥉":`${ri+1}.`}
                             </div>
-                            <div style={{width:32,height:32,borderRadius:"50%",overflow:"hidden",flexShrink:0,background:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:600,color:"#fff",border:"1.5px solid "+(ri===0?GOLD+"55":"#222")}}>
+                            <div style={{width:32,height:32,borderRadius:"50%",overflow:"hidden",flexShrink:0,background:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:600,color:"#fff",border:"1.5px solid "+(ri===0?GOLD+"66":"#252525")}}>
                               {r.photo?<img src={r.photo} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:r.name[0]}
                             </div>
                             <div style={{flex:1,minWidth:0}}>
-                              <div style={{fontSize:13,fontWeight:ri===0?700:500,color:ri===0?"#fff":"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.name}</div>
-                              <div style={{fontSize:10,color:"#555",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.liftName}</div>
+                              <div style={{fontSize:13,fontWeight:ri===0?700:500,color:ri===0?"#fff":"#bbb",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.name}</div>
+                              <div style={{fontSize:10,color:"#444",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.liftName}</div>
                             </div>
                             <div style={{textAlign:"right",flexShrink:0}}>
-                              <div style={{fontSize:16,fontWeight:700,color:ri===0?GOLD:"#ddd"}}>{r.orm}</div>
-                              <div style={{fontSize:9,color:"#555"}}>{pctOf(r.orm)}% of std</div>
+                              <div style={{fontSize:16,fontWeight:700,color:ri===0?GOLD:"#ccc"}}>{r.orm}</div>
+                              <div style={{fontSize:9,color:"#444"}}>{pctOf(r.orm)}% of ref</div>
                             </div>
                           </div>
                         ))}
@@ -1590,7 +1592,7 @@ export default function Coach(){
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+",#C084FC,"+GOLD+"44)"}}/>
                     <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none"}}>🏆</div>
                     <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🏆</div>
+                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>🏆</div>
                       <div>
                         <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Strength Room</div>
                         <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Team Leaderboard</div>
