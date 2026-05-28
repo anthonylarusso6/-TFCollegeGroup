@@ -89,6 +89,7 @@ export default function Draft({athletes=[]}){
   const[loading,setLoading]=useState(true);
   const[leaderSearch,setLeaderSearch]=useState("");
   const[saveError,setSaveError]=useState("");
+  const[hasResetSnapshot,setHasResetSnapshot]=useState(()=>typeof window!=="undefined"&&!!localStorage.getItem("draft_reset_snapshot"));
   const lastSnapshotRef=useRef(null);
 
   const applyDraftData=useCallback((d,currentPP)=>{
@@ -179,6 +180,9 @@ export default function Draft({athletes=[]}){
 
   const startBracelets=()=>{
     if(leaders.some(l=>!l)){alert("Select all leaders first!");return;}
+    // Starting a new draft intentionally — discard any undo snapshot
+    localStorage.removeItem("draft_reset_snapshot");
+    setHasResetSnapshot(false);
     const g={};
     leaders.forEach((l,i)=>{g[i]=[l];});
     setGroups(g);
@@ -242,6 +246,13 @@ export default function Draft({athletes=[]}){
 
   const reset=async()=>{
     setConfirmReset(false);
+    // Save snapshot to localStorage before wiping — enables undo
+    try{
+      localStorage.setItem("draft_reset_snapshot",JSON.stringify({
+        step,leaders,bracelets,groups,pickSeq,pickIdx,numGroups,picksPerGroup,draftId
+      }));
+      setHasResetSnapshot(true);
+    }catch(e){}
     setStep("setup");setLeaders(Array(numGroups).fill(""));
     setBracelets({});setGroups({});setPickSeq([]);setPickIdx(0);setSaveError("");
     try{
@@ -250,6 +261,57 @@ export default function Draft({athletes=[]}){
         phase:"setup",leaders:[],groups:[],bracelets:[],locked:false
       }).eq("id",draftId);
     }catch(e){console.error("Reset error:",e);}
+  };
+
+  const undoReset=async()=>{
+    const raw=localStorage.getItem("draft_reset_snapshot");
+    if(!raw)return;
+    let snap;
+    try{snap=JSON.parse(raw);}catch(e){return;}
+    // Restore React state
+    setStep(snap.step||"setup");
+    setLeaders(snap.leaders||[]);
+    setBracelets(snap.bracelets||{});
+    setGroups(snap.groups||{});
+    setPickSeq(snap.pickSeq||[]);
+    setPickIdx(snap.pickIdx||0);
+    setNumGroups(snap.numGroups||4);
+    setPicksPerGroup(snap.picksPerGroup||4);
+    setSaveError("");
+    const id=snap.draftId||draftId;
+    const n=snap.numGroups||4;
+    const phase=snap.step==="done"?"locked":snap.step||"setup";
+    // Restore draft record in Supabase
+    if(id){
+      try{
+        await supabase.from("draft").update({
+          phase,
+          leaders:(snap.leaders||[]).slice(0,n),
+          groups:Array.from({length:n},(_,i)=>(snap.groups||{})[i]||[]),
+          bracelets:Array.from({length:n},(_,i)=>(snap.bracelets||{})[i]||null),
+          locked:snap.step==="done",
+        }).eq("id",id);
+      }catch(e){console.error("Undo restore draft:",e);}
+    }
+    // Restore athlete records
+    const restores=[];
+    for(let i=0;i<n;i++){
+      const leaderName=(snap.leaders||[])[i];
+      if(leaderName){
+        const a=athletes.find(x=>x.name===leaderName);
+        if(a)restores.push(supabase.from("athletes").update({role:snap.step==="done"?"forge":"iron",group_idx:i,tier:getTier(i,n)}).eq("id",a.id).catch(e=>{}));
+      }
+      const members=((snap.groups||{})[i]||[]);
+      for(let j=1;j<members.length;j++){
+        const name=members[j];
+        if(name===leaderName)continue;
+        const a=athletes.find(x=>x.name===name);
+        if(a)restores.push(supabase.from("athletes").update({role:"iron",group_idx:i,tier:getTier(i,n)}).eq("id",a.id).catch(e=>{}));
+      }
+    }
+    await Promise.all(restores);
+    localStorage.removeItem("draft_reset_snapshot");
+    setHasResetSnapshot(false);
   };
 
   const takenRefs=Object.values(bracelets).filter(Boolean).map(b=>typeof b==="object"?b.ref:b);
@@ -333,6 +395,19 @@ export default function Draft({athletes=[]}){
       ════════════════════════════ */}
       {step==="setup"&&(
         <div>
+          {/* ── UNDO RESET BANNER ── */}
+          {hasResetSnapshot&&(
+            <div style={{background:"#0d1a0d",borderRadius:12,padding:"14px 16px",marginBottom:12,border:"1px solid "+GREEN+"55",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:GREEN,marginBottom:2}}>↩ Previous draft saved</div>
+                <div style={{fontSize:11,color:"#555"}}>You can restore groups, picks, and bracelets from before the reset</div>
+              </div>
+              <div style={{display:"flex",gap:8,flexShrink:0}}>
+                <button onClick={undoReset} style={{padding:"9px 14px",borderRadius:9,border:"none",background:GREEN,color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>Restore</button>
+                <button onClick={()=>{localStorage.removeItem("draft_reset_snapshot");setHasResetSnapshot(false);}} style={{padding:"9px 10px",borderRadius:9,border:"0.5px solid #2a2a2a",background:"transparent",color:"#444",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>Discard</button>
+              </div>
+            </div>
+          )}
           <div style={{background:"#111",borderRadius:12,padding:"16px 14px",marginBottom:10,border:"0.5px solid #1e1e1e"}}>
 
             {/* Group count */}
