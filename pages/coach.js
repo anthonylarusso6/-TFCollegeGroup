@@ -89,6 +89,7 @@ export default function Coach(){
   const[attendance,setAttendance]=useState([]);
   const[inbox,setInbox]=useState([]);
   const[anvil,setAnvil]=useState([]);
+  const[anvilPrizes,setAnvilPrizes]=useState({});
   const[leaderboard,setLeaderboard]=useState([]);
   const[announcement,setAnnouncement]=useState("");
   const[currentAnnouncement,setCurrentAnnouncement]=useState(null);
@@ -181,6 +182,7 @@ export default function Coach(){
     try{const{data}=await supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false});if(data)setCoachPrayers(data);}catch(e){}
     try{const{data}=await supabase.from("weight_log").select("*").order("date",{ascending:false});if(data)setWeightLogs(data);}catch(e){}
     try{const{data}=await supabase.from("pr_log").select("*").order("date",{ascending:false});if(data)setPrLogs(data);}catch(e){}
+    try{const{data}=await supabase.from("announcements").select("day,message").eq("type","anvil_prize").eq("active",true);if(data){const m={};data.forEach(r=>{try{m[r.day]=JSON.parse(r.message);}catch(e){}});setAnvilPrizes(m);}}catch(e){}
     try{const{data}=await supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name");if(data)setEngAthletes(data);}catch(e){}
     await loadMusicVotes();
     await loadGroupmeLink();
@@ -1978,11 +1980,22 @@ export default function Coach(){
                               <span style={{fontSize:10,color:"#555"}}>{w.date_awarded}</span>
                             </div>
                             {w.note&&(
-                              <div style={{background:isCurrent?GOLD+"0D":"#111",borderRadius:8,padding:"8px 10px",borderLeft:"2px solid "+(isCurrent?GOLD:"#333")}}>
+                              <div style={{background:isCurrent?GOLD+"0D":"#111",borderRadius:8,padding:"8px 10px",borderLeft:"2px solid "+(isCurrent?GOLD:"#333"),marginBottom:anvilPrizes[String(w.id)]?6:0}}>
                                 <div style={{fontSize:9,color:isCurrent?GOLD+"88":"#444",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Why they earned it</div>
                                 <div style={{fontSize:12,color:isCurrent?"#e8d5a0":"#aaa",lineHeight:1.6,fontStyle:"italic"}}>"{w.note}"</div>
                               </div>
                             )}
+                            {anvilPrizes[String(w.id)]&&(()=>{
+                              const ps=anvilPrizes[String(w.id)];
+                              const PRIZE_EMOJIS={tee:"🎽",hoodie:"🧥",shaker:"🥤",earbuds:"🎧",giftcard:"💳"};
+                              return(
+                                <div style={{display:"inline-flex",alignItems:"center",gap:6,background:isCurrent?GOLD+"15":"#161616",borderRadius:8,padding:"5px 10px",border:"1px solid "+(isCurrent?GOLD+"44":"#252525"),marginTop:2}}>
+                                  <span style={{fontSize:14}}>{PRIZE_EMOJIS[ps.prize]||"🎁"}</span>
+                                  <span style={{fontSize:11,color:isCurrent?GOLD:"#888",fontWeight:600}}>{ps.label}</span>
+                                  {ps.size&&<span style={{fontSize:10,color:"#555"}}>· {ps.size}</span>}
+                                </div>
+                              );
+                            })()}
                           </div>
                           <button onClick={async()=>{
                             if(!window.confirm("Remove this Anvil award?"))return;

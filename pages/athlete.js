@@ -1601,7 +1601,7 @@ export default function Athlete(){
 
             {tab==="verse"&&<VerseOfDay/>}
 
-            {tab==="anvil"&&<AnvilHistory/>}
+            {tab==="anvil"&&<AnvilHistory athleteId={selectedAthlete?.id} athleteName={selectedAthlete?.name}/>}
 
             {tab==="photos"&&<GroupPhotos/>}
 
