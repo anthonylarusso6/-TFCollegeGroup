@@ -17,6 +17,7 @@ import GoalsCountdown from "../components/GoalsCountdown";
 import GroupPhotos from "../components/GroupPhotos";
 import AchievementBadges from "../components/AchievementBadges";
 import MCastlesTab from "../components/MCastlesTab";
+import InjuryBodyMap from "../components/InjuryBodyMap";
 
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
@@ -687,6 +688,7 @@ export default function Athlete(){
       ...(isForge?[{id:"draft",label:"Draft"},{id:"mygroup",label:"My Group"}]:[{id:"mygroup",label:"My Group"}]),
       {id:"anvil",label:"Anvil"},
       {id:"weight",label:"Weight"},
+      {id:"body",label:"Body Map"},
       {id:"prs",label:"Iron Room"},
       {id:"stretching",label:"Stretch"},
       {id:"leaderboard",label:"Leaderboard"},
@@ -832,7 +834,7 @@ export default function Athlete(){
             {/* Tab bar */}
             <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414"}}>
               {TABS.map(t=>{
-                const icons={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","private":"🔒","stretching":"🧘","journey":"🛤"};
+                const icons={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","body":"🫁","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","private":"🔒","stretching":"🧘","journey":"🛤"};
                 const isActive=tab===t.id;
                 const tabColor=isForge?"#E8720C":STEEL;
                 return(
@@ -1596,6 +1598,8 @@ export default function Athlete(){
 
 
             {tab==="weight"&&<WeightTracker athleteId={selectedAthlete.id}/>}
+
+            {tab==="body"&&<InjuryBodyMap athleteId={selectedAthlete.id}/>}
 
             {tab==="goals"&&<GoalsCountdown athlete={selectedAthlete}/>}
 
