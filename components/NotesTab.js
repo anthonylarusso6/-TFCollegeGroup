@@ -38,6 +38,7 @@ export default function NotesTab({athleteId}){
   const[drafts,setDrafts]=useState({});
   const[saving,setSaving]=useState(null);
   const[saved,setSaved]=useState(null);
+  const[saveError,setSaveError]=useState(null);
 
   useEffect(()=>{
     if(!athleteId)return;
@@ -60,26 +61,31 @@ export default function NotesTab({athleteId}){
 
   const saveNote=async(key,val)=>{
     if(!val.trim())return;
-    setSaving(key);setSaved(null);
+    setSaving(key);setSaved(null);setSaveError(null);
     const isFF=key.startsWith("ff_");
     const weekNum=key.split("_").pop();
     const type=isFF?"ff_note":"mm_note";
+    const trimmed=val.trim();
     try{
-      // Delete any existing entry for this week/type/athlete, then insert fresh
-      await supabase.from("announcements").delete()
+      const{error:delErr}=await supabase.from("announcements").delete()
         .eq("type",type).eq("day",String(athleteId)).eq("week_label",weekNum);
-      await supabase.from("announcements").insert({
+      if(delErr)throw delErr;
+      const{error:insErr}=await supabase.from("announcements").insert({
         type,
         day:String(athleteId),
         week_label:weekNum,
-        message:val.trim(),
+        message:trimmed,
         active:true,
       });
-      setNotes(prev=>({...prev,[key]:val.trim()}));
+      if(insErr)throw insErr;
+      setNotes(prev=>({...prev,[key]:trimmed}));
+      setDrafts(prev=>({...prev,[key]:trimmed}));
       setSaved(key);
       setTimeout(()=>setSaved(k=>k===key?null:k),3000);
     }catch(e){
       console.error("Note save error",e);
+      setSaveError(key);
+      setTimeout(()=>setSaveError(k=>k===key?null:k),4000);
     }
     setSaving(null);
   };
@@ -114,13 +120,15 @@ export default function NotesTab({athleteId}){
         const isDirty=draft!==saved_val&&draft.trim().length>0;
         const isSaving=saving===key;
         const isSaved=saved===key;
+        const isError=saveError===key;
         return(
-          <div key={i} style={{background:"#111",borderRadius:14,padding:"14px",marginBottom:10,border:"1px solid "+(isDirty?"#333":isSaved?GREEN+"44":"#1a1a1a"),borderLeft:"3px solid "+w.color,transition:"border-color 0.2s"}}>
+          <div key={i} style={{background:"#111",borderRadius:14,padding:"14px",marginBottom:10,border:"1px solid "+(isError?RED+"55":isDirty?"#333":isSaved?GREEN+"44":"#1a1a1a"),borderLeft:"3px solid "+w.color,transition:"border-color 0.2s"}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
               <div style={{fontSize:10,color:w.color,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.08em"}}>Week {w.week}</div>
               {isSaved&&<div style={{fontSize:10,color:GREEN,fontWeight:700}}>✓ Saved</div>}
               {isSaving&&<div style={{fontSize:10,color:"#555"}}>Saving...</div>}
-              {saved_val&&!isSaving&&!isSaved&&<div style={{fontSize:10,color:"#444"}}>✓ saved</div>}
+              {isError&&<div style={{fontSize:10,color:RED,fontWeight:700}}>Save failed — try again</div>}
+              {saved_val&&!isSaving&&!isSaved&&!isError&&<div style={{fontSize:10,color:"#444"}}>✓ saved</div>}
             </div>
             <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:6,letterSpacing:"-0.01em"}}>{w.title}</div>
             <div style={{background:w.color+"12",borderRadius:8,padding:"8px 12px",marginBottom:8,borderLeft:"2px solid "+w.color+"44"}}>
