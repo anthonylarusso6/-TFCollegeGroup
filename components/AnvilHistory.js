@@ -12,11 +12,10 @@ const ANVIL_CATS=[
 const catInfo=(id)=>ANVIL_CATS.find(c=>c.id===id)||{id:id||"",emoji:"⚒",color:GOLD};
 
 const PRIZES=[
-  {id:"tee",     label:"Anvil Tee Shirt",      emoji:"🎽",sizes:["S","M","L","XL","XXL"]},
-  {id:"hoodie",  label:"Anvil Hoodie",          emoji:"🧥",sizes:["S","M","L","XL","XXL"]},
-  {id:"shaker",  label:"Shaker Bottle",         emoji:"🥤",sizes:null},
-  {id:"earbuds", label:"Wireless Earbuds",      emoji:"🎧",sizes:null},
-  {id:"giftcard",label:"$25 Dick's Gift Card",  emoji:"💳",sizes:null},
+  {id:"tee",     label:"Anvil Tee Shirt",      emoji:"🎽",sizes:["S","M","L","XL","XXL"],        optionLabel:"Size"},
+  {id:"shorts",  label:"Athletic Shorts",       emoji:"🩳",sizes:["S","M","L","XL","XXL"],        optionLabel:"Size"},
+  {id:"dicks",   label:"$25 Dick's Gift Card",  emoji:"🏪",sizes:null,                            optionLabel:null},
+  {id:"food_gc", label:"$25 Food Gift Card",    emoji:"🍽️",sizes:["Chipotle","Chick-fil-A","Domino's","Smoothie King","Raising Cane's"],optionLabel:"Restaurant"},
 ];
 
 export default function AnvilHistory({athleteId,athleteName}){
@@ -88,7 +87,7 @@ export default function AnvilHistory({athleteId,athleteName}){
         <div style={{background:"linear-gradient(135deg,#1f1700,#2a2000)",borderRadius:16,padding:"2rem",marginBottom:12,border:"1px solid "+GOLD+"44",textAlign:"center"}}>
           <div style={{fontSize:52,marginBottom:8,filter:"drop-shadow(0 0 16px "+GOLD+"44)"}}>⚒</div>
           <div style={{fontSize:15,fontWeight:700,color:GOLD,marginBottom:4}}>The Anvil</div>
-          <div style={{fontSize:12,color:"#555",lineHeight:1.6}}>Awarded each week to the one athlete<br/>who did what nobody else did.</div>
+          <div style={{fontSize:12,color:"#555",lineHeight:1.6}}>Awarded every two weeks to the one athlete<br/>who did what nobody else did.</div>
           <div style={{fontSize:10,color:"#444",marginTop:12,fontStyle:"italic",letterSpacing:"0.06em"}}>EARNED. NOT GIVEN.</div>
         </div>
       )}
@@ -100,7 +99,7 @@ export default function AnvilHistory({athleteId,athleteName}){
           <div style={{background:"linear-gradient(160deg,#1f1700 0%,#0f0e00 60%,#0d0d0d 100%)",padding:"20px 18px 18px",position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",bottom:-12,right:-4,fontSize:100,opacity:0.06,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒</div>
             <div style={{fontSize:9,color:GOLD,textTransform:"uppercase",letterSpacing:"0.22em",fontWeight:900,marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
-              <span>⚡</span><span>This week&#39;s Anvil winner</span>
+              <span>⚡</span><span>Current Anvil Winner</span>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:14}}>
               <div style={{width:72,height:72,borderRadius:"50%",flexShrink:0,border:"3px solid "+GOLD,overflow:"hidden",background:"#333",boxShadow:"0 0 32px "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:700,color:GOLD}}>
@@ -150,7 +149,7 @@ export default function AnvilHistory({athleteId,athleteName}){
                   <div style={{fontSize:36,filter:"drop-shadow(0 0 10px "+GOLD+"66)"}}>{PRIZES.find(p=>p.id===prizeSelection.prize)?.emoji||"🎁"}</div>
                   <div style={{flex:1}}>
                     <div style={{fontSize:15,fontWeight:800,color:GOLD}}>{prizeSelection.label}</div>
-                    {prizeSelection.size&&<div style={{fontSize:12,color:"#888",marginTop:2}}>Size: <span style={{color:"#fff",fontWeight:600}}>{prizeSelection.size}</span></div>}
+                    {prizeSelection.size&&<div style={{fontSize:12,color:"#888",marginTop:2}}>{PRIZES.find(p=>p.id===prizeSelection.prize)?.optionLabel||"Size"}: <span style={{color:"#fff",fontWeight:600}}>{prizeSelection.size}</span></div>}
                     <div style={{fontSize:10,color:GREEN,marginTop:4,fontWeight:600}}>✓ Coach has been notified</div>
                   </div>
                   <button onClick={()=>{setPendingPrize(prizeSelection.prize);setPendingSize(prizeSelection.size);}}
@@ -188,16 +187,17 @@ export default function AnvilHistory({athleteId,athleteName}){
                   })}
                 </div>
 
-                {/* Size picker — shown when sized prize selected */}
+                {/* Size / option picker — shown when prize has sub-options */}
                 {pendingPrizeObj?.sizes&&(
                   <div style={{marginBottom:14}}>
-                    <div style={{fontSize:10,color:"#666",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.08em"}}>Select size</div>
+                    <div style={{fontSize:10,color:"#666",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.08em"}}>Select {pendingPrizeObj.optionLabel||"size"}</div>
                     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                       {pendingPrizeObj.sizes.map(sz=>{
                         const isSz=pendingSize===sz;
+                        const isRestaurant=pendingPrizeObj.optionLabel==="Restaurant";
                         return(
                           <button key={sz} onClick={()=>setPendingSize(sz)}
-                            style={{padding:"10px 16px",borderRadius:10,border:"2px solid "+(isSz?GOLD:"#252525"),background:isSz?"linear-gradient(135deg,"+GOLD+"22,"+GOLD+"11)":"#1a1a1a",color:isSz?GOLD:"#666",fontSize:13,fontWeight:isSz?800:400,cursor:"pointer",fontFamily:"Georgia,serif",minWidth:52,transition:"all 0.1s",boxShadow:isSz?"0 0 12px "+GOLD+"33":"none"}}>
+                            style={{padding:isRestaurant?"10px 14px":"10px 16px",borderRadius:10,border:"2px solid "+(isSz?GOLD:"#252525"),background:isSz?"linear-gradient(135deg,"+GOLD+"22,"+GOLD+"11)":"#1a1a1a",color:isSz?GOLD:"#666",fontSize:isRestaurant?12:13,fontWeight:isSz?800:400,cursor:"pointer",fontFamily:"Georgia,serif",minWidth:isRestaurant?0:52,transition:"all 0.1s",boxShadow:isSz?"0 0 12px "+GOLD+"33":"none"}}>
                             {sz}
                           </button>
                         );

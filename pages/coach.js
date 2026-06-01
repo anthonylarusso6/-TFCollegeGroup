@@ -1852,7 +1852,7 @@ export default function Coach(){
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>⚒️</div>
                     <div>
-                      <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Weekly Honor</div>
+                      <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Bi-Weekly Honor</div>
                       <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Award the Anvil</div>
                       <div style={{fontSize:11,color:"#666",marginTop:1}}>Earned. Not given. The highest individual honor in TF College Group.</div>
                     </div>
@@ -1987,7 +1987,7 @@ export default function Coach(){
                             )}
                             {anvilPrizes[String(w.id)]&&(()=>{
                               const ps=anvilPrizes[String(w.id)];
-                              const PRIZE_EMOJIS={tee:"🎽",hoodie:"🧥",shaker:"🥤",earbuds:"🎧",giftcard:"💳"};
+                              const PRIZE_EMOJIS={tee:"🎽",shorts:"🩳",dicks:"🏪",food_gc:"🍽️"};
                               return(
                                 <div style={{display:"inline-flex",alignItems:"center",gap:6,background:isCurrent?GOLD+"15":"#161616",borderRadius:8,padding:"5px 10px",border:"1px solid "+(isCurrent?GOLD+"44":"#252525"),marginTop:2}}>
                                   <span style={{fontSize:14}}>{PRIZE_EMOJIS[ps.prize]||"🎁"}</span>
