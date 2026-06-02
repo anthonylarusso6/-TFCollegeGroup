@@ -9,82 +9,80 @@ const STATUS = {
   pain:{ color:RED,   label:"In Pain",       emoji:"🔴" },
 };
 
-// s:"e"=ellipse(cx,cy,rx,ry)  s:"p"=path(d,lx,ly=label center)
+// All zones use s:"p" (path). Head uses s:"e" (ellipse).
+// Arms hang at natural ~10° angle. Elbows/wrists are path slices — no protruding circles.
+// Coordinates: center x=100, viewBox="12 4 176 420"
 const FRONT=[
-  {id:"head",           name:"Head",           lbl:"Head",    s:"e",cx:100,cy:38, rx:22,ry:26},
-  {id:"neck",           name:"Neck",           lbl:"Neck",    s:"p",d:"M 91,62 Q 100,66 109,62 L 109,83 Q 100,86 91,83 Z",lx:100,ly:73},
-  {id:"left_shoulder",  name:"Left Shoulder",  lbl:"L.Shldr", s:"p",d:"M 55,83 Q 34,92 30,120 L 56,120 Q 58,102 68,92 L 90,86 Q 73,88 55,83 Z",lx:47,ly:104},
-  {id:"right_shoulder", name:"Right Shoulder", lbl:"R.Shldr", s:"p",d:"M 145,83 Q 166,92 170,120 L 144,120 Q 142,102 132,92 L 110,86 Q 127,88 145,83 Z",lx:153,ly:104},
-  {id:"chest",          name:"Chest",          lbl:"Chest",   s:"p",d:"M 56,120 L 56,162 L 144,162 L 144,120 Q 122,128 100,128 Q 78,128 56,120 Z",lx:100,ly:140},
-  {id:"left_upper_arm", name:"Left Upper Arm", lbl:"L.Arm",   s:"p",d:"M 30,120 Q 20,138 18,168 L 34,172 Q 38,148 46,132 L 56,120 Z",lx:26,ly:146},
-  {id:"right_upper_arm",name:"Right Upper Arm",lbl:"R.Arm",   s:"p",d:"M 170,120 Q 180,138 182,168 L 166,172 Q 162,148 154,132 L 144,120 Z",lx:174,ly:146},
-  {id:"left_elbow",     name:"Left Elbow",     lbl:"L.Elbow", s:"e",cx:24, cy:186,rx:11,ry:10},
-  {id:"right_elbow",    name:"Right Elbow",    lbl:"R.Elbow", s:"e",cx:176,cy:186,rx:11,ry:10},
-  {id:"left_forearm",   name:"Left Forearm",   lbl:"L.Fore",  s:"p",d:"M 18,172 Q 16,206 20,228 L 34,228 L 34,206 L 34,172 Z",lx:24,ly:202},
-  {id:"right_forearm",  name:"Right Forearm",  lbl:"R.Fore",  s:"p",d:"M 182,172 Q 184,206 180,228 L 166,228 L 166,206 L 166,172 Z",lx:176,ly:202},
-  {id:"core",           name:"Core / Abs",     lbl:"Core",    s:"p",d:"M 56,162 L 56,208 Q 78,230 100,232 Q 122,230 144,208 L 144,162 Z",lx:100,ly:188},
-  {id:"left_wrist",     name:"Left Wrist",     lbl:"L.Wrist", s:"e",cx:26, cy:238,rx:12,ry:12},
-  {id:"right_wrist",    name:"Right Wrist",    lbl:"R.Wrist", s:"e",cx:174,cy:238,rx:12,ry:12},
-  {id:"left_hip",       name:"Left Hip",       lbl:"L.Hip",   s:"p",d:"M 56,208 Q 55,230 58,248 L 80,248 L 80,232 Q 68,230 56,208 Z",lx:63,ly:232},
-  {id:"right_hip",      name:"Right Hip",      lbl:"R.Hip",   s:"p",d:"M 144,208 Q 145,230 142,248 L 120,248 L 120,232 Q 132,230 144,208 Z",lx:137,ly:232},
-  {id:"left_quad",      name:"Left Quad",      lbl:"L.Quad",  s:"p",d:"M 58,248 L 56,312 L 84,312 L 82,248 Z",lx:68,ly:280},
-  {id:"right_quad",     name:"Right Quad",     lbl:"R.Quad",  s:"p",d:"M 142,248 L 144,312 L 116,312 L 118,248 Z",lx:132,ly:280},
-  {id:"left_knee",      name:"Left Knee",      lbl:"L.Knee",  s:"e",cx:68, cy:326,rx:16,ry:14},
-  {id:"right_knee",     name:"Right Knee",     lbl:"R.Knee",  s:"e",cx:132,cy:326,rx:16,ry:14},
-  {id:"left_shin",      name:"Left Shin",      lbl:"L.Shin",  s:"p",d:"M 56,340 L 56,388 L 82,388 L 82,340 Z",lx:68,ly:364},
-  {id:"right_shin",     name:"Right Shin",     lbl:"R.Shin",  s:"p",d:"M 144,340 L 144,388 L 118,388 L 118,340 Z",lx:132,ly:364},
-  {id:"left_ankle",     name:"Left Ankle",     lbl:"L.Ankle", s:"e",cx:68, cy:396,rx:14,ry:11},
-  {id:"right_ankle",    name:"Right Ankle",    lbl:"R.Ankle", s:"e",cx:132,cy:396,rx:14,ry:11},
+  {id:"head",           name:"Head",           lbl:"Head",    s:"e",cx:100,cy:28,rx:20,ry:23},
+  {id:"neck",           name:"Neck",           lbl:"Neck",    s:"p",d:"M 88,50 Q100,54 112,50 L114,66 Q100,70 86,66 Z",lx:100,ly:59},
+  {id:"left_shoulder",  name:"Left Shoulder",  lbl:"L.Shldr", s:"p",d:"M 86,66 Q 64,68 46,80 Q 36,88 34,106 L 60,110 Q 60,94 72,84 Q 82,74 88,66 Z",lx:52,ly:90},
+  {id:"right_shoulder", name:"Right Shoulder", lbl:"R.Shldr", s:"p",d:"M 114,66 Q 136,68 154,80 Q 164,88 166,106 L 140,110 Q 140,94 128,84 Q 118,74 112,66 Z",lx:148,ly:90},
+  {id:"chest",          name:"Chest",          lbl:"Chest",   s:"p",d:"M 60,110 L 58,166 L 142,166 L 140,110 Q 118,118 100,118 Q 82,118 60,110 Z",lx:100,ly:138},
+  {id:"left_upper_arm", name:"Left Upper Arm", lbl:"L.Arm",   s:"p",d:"M 34,106 C 28,126 24,156 24,178 L 52,180 C 52,158 56,128 60,110 Z",lx:38,ly:142},
+  {id:"right_upper_arm",name:"Right Upper Arm",lbl:"R.Arm",   s:"p",d:"M 166,106 C 172,126 176,156 176,178 L 148,180 C 148,158 144,128 140,110 Z",lx:162,ly:142},
+  {id:"left_elbow",     name:"Left Elbow",     lbl:"Elbow",   s:"p",d:"M 24,178 L 22,200 L 52,200 L 52,180 Z",lx:38,ly:190},
+  {id:"right_elbow",    name:"Right Elbow",    lbl:"Elbow",   s:"p",d:"M 176,178 L 178,200 L 148,200 L 148,180 Z",lx:162,ly:190},
+  {id:"left_forearm",   name:"Left Forearm",   lbl:"L.Fore",  s:"p",d:"M 22,200 C 20,222 22,240 24,254 L 52,250 C 52,236 52,218 52,200 Z",lx:36,ly:226},
+  {id:"right_forearm",  name:"Right Forearm",  lbl:"R.Fore",  s:"p",d:"M 178,200 C 180,222 178,240 176,254 L 148,250 C 148,236 148,218 148,200 Z",lx:164,ly:226},
+  {id:"core",           name:"Core / Abs",     lbl:"Core",    s:"p",d:"M 58,166 L 56,212 Q 76,228 100,230 Q 124,228 144,212 L 142,166 Z",lx:100,ly:192},
+  {id:"left_wrist",     name:"Left Wrist",     lbl:"L.Wrist", s:"p",d:"M 24,254 Q 22,272 34,278 Q 46,276 52,264 L 52,250 Z",lx:38,ly:264},
+  {id:"right_wrist",    name:"Right Wrist",    lbl:"R.Wrist", s:"p",d:"M 176,254 Q 178,272 166,278 Q 154,276 148,264 L 148,250 Z",lx:162,ly:264},
+  {id:"left_hip",       name:"Left Hip",       lbl:"L.Hip",   s:"p",d:"M 56,212 Q 54,230 58,246 L 82,248 L 84,232 Q 70,226 56,212 Z",lx:64,ly:232},
+  {id:"right_hip",      name:"Right Hip",      lbl:"R.Hip",   s:"p",d:"M 144,212 Q 146,230 142,246 L 118,248 L 116,232 Q 130,226 144,212 Z",lx:136,ly:232},
+  {id:"left_quad",      name:"Left Quad",      lbl:"L.Quad",  s:"p",d:"M 58,248 L 56,316 L 84,316 L 82,248 Z",lx:68,ly:282},
+  {id:"right_quad",     name:"Right Quad",     lbl:"R.Quad",  s:"p",d:"M 142,248 L 144,316 L 116,316 L 118,248 Z",lx:132,ly:282},
+  {id:"left_knee",      name:"Left Knee",      lbl:"L.Knee",  s:"p",d:"M 56,316 L 56,340 L 84,340 L 84,316 Z",lx:68,ly:328},
+  {id:"right_knee",     name:"Right Knee",     lbl:"R.Knee",  s:"p",d:"M 144,316 L 144,340 L 116,340 L 116,316 Z",lx:132,ly:328},
+  {id:"left_shin",      name:"Left Shin",      lbl:"L.Shin",  s:"p",d:"M 56,340 L 56,390 L 84,390 L 84,340 Z",lx:68,ly:366},
+  {id:"right_shin",     name:"Right Shin",     lbl:"R.Shin",  s:"p",d:"M 144,340 L 144,390 L 116,390 L 116,340 Z",lx:132,ly:366},
+  {id:"left_ankle",     name:"Left Ankle",     lbl:"L.Ankle", s:"p",d:"M 56,390 Q 54,408 66,414 L 82,414 Q 90,406 84,390 Z",lx:70,ly:404},
+  {id:"right_ankle",    name:"Right Ankle",    lbl:"R.Ankle", s:"p",d:"M 144,390 Q 146,408 134,414 L 118,414 Q 110,406 116,390 Z",lx:130,ly:404},
 ];
 
 const BACK=[
-  {id:"head",            name:"Head",            lbl:"Head",    s:"e",cx:100,cy:38, rx:22,ry:26},
-  {id:"neck",            name:"Neck",            lbl:"Neck",    s:"p",d:"M 91,62 Q 100,66 109,62 L 109,83 Q 100,86 91,83 Z",lx:100,ly:73},
-  {id:"left_shoulder",   name:"Left Shoulder",   lbl:"L.Shldr", s:"p",d:"M 55,83 Q 34,92 30,120 L 56,120 Q 58,102 68,92 L 90,86 Q 73,88 55,83 Z",lx:47,ly:104},
-  {id:"right_shoulder",  name:"Right Shoulder",  lbl:"R.Shldr", s:"p",d:"M 145,83 Q 166,92 170,120 L 144,120 Q 142,102 132,92 L 110,86 Q 127,88 145,83 Z",lx:153,ly:104},
-  {id:"upper_back",      name:"Upper Back",      lbl:"Up.Back", s:"p",d:"M 56,120 L 56,162 L 144,162 L 144,120 Q 122,128 100,128 Q 78,128 56,120 Z",lx:100,ly:140},
-  {id:"left_upper_arm",  name:"Left Upper Arm",  lbl:"L.Arm",   s:"p",d:"M 30,120 Q 20,138 18,168 L 34,172 Q 38,148 46,132 L 56,120 Z",lx:26,ly:146},
-  {id:"right_upper_arm", name:"Right Upper Arm", lbl:"R.Arm",   s:"p",d:"M 170,120 Q 180,138 182,168 L 166,172 Q 162,148 154,132 L 144,120 Z",lx:174,ly:146},
-  {id:"left_elbow",      name:"Left Elbow",      lbl:"L.Elbow", s:"e",cx:24, cy:186,rx:11,ry:10},
-  {id:"right_elbow",     name:"Right Elbow",     lbl:"R.Elbow", s:"e",cx:176,cy:186,rx:11,ry:10},
-  {id:"left_forearm",    name:"Left Forearm",    lbl:"L.Fore",  s:"p",d:"M 18,172 Q 16,206 20,228 L 34,228 L 34,206 L 34,172 Z",lx:24,ly:202},
-  {id:"right_forearm",   name:"Right Forearm",   lbl:"R.Fore",  s:"p",d:"M 182,172 Q 184,206 180,228 L 166,228 L 166,206 L 166,172 Z",lx:176,ly:202},
-  {id:"lower_back",      name:"Lower Back",      lbl:"Lo.Back", s:"p",d:"M 56,162 L 56,208 Q 78,230 100,232 Q 122,230 144,208 L 144,162 Z",lx:100,ly:188},
-  {id:"left_wrist",      name:"Left Wrist",      lbl:"L.Wrist", s:"e",cx:26, cy:238,rx:12,ry:12},
-  {id:"right_wrist",     name:"Right Wrist",     lbl:"R.Wrist", s:"e",cx:174,cy:238,rx:12,ry:12},
-  {id:"left_glute",      name:"Left Glute",      lbl:"L.Glute", s:"p",d:"M 56,208 Q 55,230 58,248 L 80,248 L 80,232 Q 68,230 56,208 Z",lx:63,ly:232},
-  {id:"right_glute",     name:"Right Glute",     lbl:"R.Glute", s:"p",d:"M 144,208 Q 145,230 142,248 L 120,248 L 120,232 Q 132,230 144,208 Z",lx:137,ly:232},
-  {id:"left_hamstring",  name:"Left Hamstring",  lbl:"L.Ham",   s:"p",d:"M 58,248 L 56,312 L 84,312 L 82,248 Z",lx:68,ly:280},
-  {id:"right_hamstring", name:"Right Hamstring", lbl:"R.Ham",   s:"p",d:"M 142,248 L 144,312 L 116,312 L 118,248 Z",lx:132,ly:280},
-  {id:"left_knee",       name:"Left Knee",       lbl:"L.Knee",  s:"e",cx:68, cy:326,rx:16,ry:14},
-  {id:"right_knee",      name:"Right Knee",      lbl:"R.Knee",  s:"e",cx:132,cy:326,rx:16,ry:14},
-  {id:"left_calf",       name:"Left Calf",       lbl:"L.Calf",  s:"p",d:"M 56,340 L 56,388 L 82,388 L 82,340 Z",lx:68,ly:364},
-  {id:"right_calf",      name:"Right Calf",      lbl:"R.Calf",  s:"p",d:"M 144,340 L 144,388 L 118,388 L 118,340 Z",lx:132,ly:364},
-  {id:"left_ankle",      name:"Left Ankle",      lbl:"L.Ankle", s:"e",cx:68, cy:396,rx:14,ry:11},
-  {id:"right_ankle",     name:"Right Ankle",     lbl:"R.Ankle", s:"e",cx:132,cy:396,rx:14,ry:11},
+  {id:"head",            name:"Head",            lbl:"Head",    s:"e",cx:100,cy:28,rx:20,ry:23},
+  {id:"neck",            name:"Neck",            lbl:"Neck",    s:"p",d:"M 88,50 Q100,54 112,50 L114,66 Q100,70 86,66 Z",lx:100,ly:59},
+  {id:"left_shoulder",   name:"Left Shoulder",   lbl:"L.Shldr", s:"p",d:"M 86,66 Q 64,68 46,80 Q 36,88 34,106 L 60,110 Q 60,94 72,84 Q 82,74 88,66 Z",lx:52,ly:90},
+  {id:"right_shoulder",  name:"Right Shoulder",  lbl:"R.Shldr", s:"p",d:"M 114,66 Q 136,68 154,80 Q 164,88 166,106 L 140,110 Q 140,94 128,84 Q 118,74 112,66 Z",lx:148,ly:90},
+  {id:"upper_back",      name:"Upper Back",      lbl:"Up.Back", s:"p",d:"M 60,110 L 58,166 L 142,166 L 140,110 Q 118,118 100,118 Q 82,118 60,110 Z",lx:100,ly:138},
+  {id:"left_upper_arm",  name:"Left Upper Arm",  lbl:"L.Arm",   s:"p",d:"M 34,106 C 28,126 24,156 24,178 L 52,180 C 52,158 56,128 60,110 Z",lx:38,ly:142},
+  {id:"right_upper_arm", name:"Right Upper Arm", lbl:"R.Arm",   s:"p",d:"M 166,106 C 172,126 176,156 176,178 L 148,180 C 148,158 144,128 140,110 Z",lx:162,ly:142},
+  {id:"left_elbow",      name:"Left Elbow",      lbl:"Elbow",   s:"p",d:"M 24,178 L 22,200 L 52,200 L 52,180 Z",lx:38,ly:190},
+  {id:"right_elbow",     name:"Right Elbow",     lbl:"Elbow",   s:"p",d:"M 176,178 L 178,200 L 148,200 L 148,180 Z",lx:162,ly:190},
+  {id:"left_forearm",    name:"Left Forearm",    lbl:"L.Fore",  s:"p",d:"M 22,200 C 20,222 22,240 24,254 L 52,250 C 52,236 52,218 52,200 Z",lx:36,ly:226},
+  {id:"right_forearm",   name:"Right Forearm",   lbl:"R.Fore",  s:"p",d:"M 178,200 C 180,222 178,240 176,254 L 148,250 C 148,236 148,218 148,200 Z",lx:164,ly:226},
+  {id:"lower_back",      name:"Lower Back",      lbl:"Lo.Back", s:"p",d:"M 58,166 L 56,212 Q 76,228 100,230 Q 124,228 144,212 L 142,166 Z",lx:100,ly:192},
+  {id:"left_wrist",      name:"Left Wrist",      lbl:"L.Wrist", s:"p",d:"M 24,254 Q 22,272 34,278 Q 46,276 52,264 L 52,250 Z",lx:38,ly:264},
+  {id:"right_wrist",     name:"Right Wrist",     lbl:"R.Wrist", s:"p",d:"M 176,254 Q 178,272 166,278 Q 154,276 148,264 L 148,250 Z",lx:162,ly:264},
+  {id:"left_glute",      name:"Left Glute",      lbl:"L.Glute", s:"p",d:"M 56,212 Q 54,230 58,246 L 82,248 L 84,232 Q 70,226 56,212 Z",lx:64,ly:232},
+  {id:"right_glute",     name:"Right Glute",     lbl:"R.Glute", s:"p",d:"M 144,212 Q 146,230 142,246 L 118,248 L 116,232 Q 130,226 144,212 Z",lx:136,ly:232},
+  {id:"left_hamstring",  name:"Left Hamstring",  lbl:"L.Ham",   s:"p",d:"M 58,248 L 56,316 L 84,316 L 82,248 Z",lx:68,ly:282},
+  {id:"right_hamstring", name:"Right Hamstring", lbl:"R.Ham",   s:"p",d:"M 142,248 L 144,316 L 116,316 L 118,248 Z",lx:132,ly:282},
+  {id:"left_knee",       name:"Left Knee",       lbl:"L.Knee",  s:"p",d:"M 56,316 L 56,340 L 84,340 L 84,316 Z",lx:68,ly:328},
+  {id:"right_knee",      name:"Right Knee",      lbl:"R.Knee",  s:"p",d:"M 144,316 L 144,340 L 116,340 L 116,316 Z",lx:132,ly:328},
+  {id:"left_calf",       name:"Left Calf",       lbl:"L.Calf",  s:"p",d:"M 56,340 L 56,390 L 84,390 L 84,340 Z",lx:68,ly:366},
+  {id:"right_calf",      name:"Right Calf",      lbl:"R.Calf",  s:"p",d:"M 144,340 L 144,390 L 116,390 L 116,340 Z",lx:132,ly:366},
+  {id:"left_ankle",      name:"Left Ankle",      lbl:"L.Ankle", s:"p",d:"M 56,390 Q 54,408 66,414 L 82,414 Q 90,406 84,390 Z",lx:70,ly:404},
+  {id:"right_ankle",     name:"Right Ankle",     lbl:"R.Ankle", s:"p",d:"M 144,390 Q 146,408 134,414 L 118,414 Q 110,406 116,390 Z",lx:130,ly:404},
 ];
 
-// Human body silhouette background (non-interactive)
+// Silhouette — single smooth unified body with natural arm hang and feet
 const Silhouette=()=>(
-  <g fill="#1c1c1c" stroke="#2e2e2e" strokeWidth="1.5" strokeLinejoin="round" style={{pointerEvents:"none"}}>
+  <g fill="#202020" stroke="#303030" strokeWidth="1" strokeLinejoin="round" style={{pointerEvents:"none"}}>
     {/* Head */}
-    <ellipse cx="100" cy="38" rx="22" ry="26"/>
+    <ellipse cx="100" cy="28" rx="20" ry="23"/>
     {/* Neck */}
-    <path d="M 91,62 Q 100,66 109,62 L 109,83 Q 100,86 91,83 Z"/>
-    {/* Torso */}
-    <path d="M 55,83 Q 34,92 30,120 L 28,204 Q 40,224 80,230 Q 88,232 100,232 Q 112,232 120,230 Q 160,224 172,204 L 170,120 Q 166,92 145,83 Q 123,90 100,90 Q 77,90 55,83 Z"/>
-    {/* Left arm — pulled in, tapered */}
-    <path d="M 30,120 Q 20,138 18,168 L 16,205 Q 16,220 22,232 L 36,232 L 36,208 L 34,172 Q 36,148 48,132 Z"/>
+    <path d="M 88,50 Q100,54 112,50 L114,66 Q100,70 86,66 Z"/>
+    {/* Torso — tapers at waist, flares at hip */}
+    <path d="M 86,66 Q 62,68 44,80 Q 32,90 32,110 L 60,110 Q 58,158 56,212 Q 64,230 82,240 L100,242 L118,240 Q 136,230 144,212 Q 142,158 140,110 L 168,110 Q 168,90 156,80 Q 138,68 114,66 Q 108,70 100,70 Q 92,70 86,66 Z"/>
+    {/* Left arm — smooth taper, natural hang */}
+    <path d="M 32,110 C 26,130 22,158 22,180 C 20,202 22,234 24,256 Q 26,274 34,280 Q 44,278 52,266 L 52,250 C 52,228 52,200 52,180 C 52,156 56,128 60,110 Z"/>
     {/* Right arm */}
-    <path d="M 170,120 Q 180,138 182,168 L 184,205 Q 184,220 178,232 L 164,232 L 164,208 L 166,172 Q 164,148 152,132 Z"/>
-    {/* Left hand */}
-    <ellipse cx="26" cy="244" rx="12" ry="13"/>
-    {/* Right hand */}
-    <ellipse cx="174" cy="244" rx="12" ry="13"/>
-    {/* Left leg with foot */}
-    <path d="M 80,230 Q 60,236 56,256 L 54,312 Q 52,325 54,340 L 54,390 Q 52,406 60,412 L 80,414 Q 90,410 90,400 L 90,390 Q 90,325 90,312 L 90,232 Q 86,230 80,230 Z"/>
-    {/* Right leg with foot */}
-    <path d="M 120,230 Q 140,236 144,256 L 146,312 Q 148,325 146,340 L 146,390 Q 148,406 140,412 L 120,414 Q 110,410 110,400 L 110,390 Q 110,325 110,312 L 110,232 Q 114,230 120,230 Z"/>
+    <path d="M 168,110 C 174,130 178,158 178,180 C 180,202 178,234 176,256 Q 174,274 166,280 Q 156,278 148,266 L 148,250 C 148,228 148,200 148,180 C 148,156 144,128 140,110 Z"/>
+    {/* Left leg — tapered, with foot */}
+    <path d="M 82,242 Q 62,244 58,258 L 56,316 Q 54,330 56,342 L 56,392 Q 54,410 66,416 L 82,416 Q 92,408 84,394 L 84,342 Q 86,330 84,316 L 84,244 Z"/>
+    {/* Right leg */}
+    <path d="M 118,242 Q 138,244 142,258 L 144,316 Q 146,330 144,342 L 144,392 Q 146,410 134,416 L 118,416 Q 108,408 116,394 L 116,342 Q 114,330 116,316 L 116,244 Z"/>
   </g>
 );
 
@@ -373,7 +371,7 @@ export default function InjuryBodyMap({athleteId}){
 
       {/* SVG Body Map */}
       <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
-        <svg viewBox="-5 0 210 422" style={{width:"100%",maxWidth:240,height:"auto"}}>
+        <svg viewBox="12 4 176 418" style={{width:"100%",maxWidth:220,height:"auto"}}>
           <Silhouette/>
           {/* Interactive zones */}
           {zones.map(z=>{
@@ -389,12 +387,10 @@ export default function InjuryBodyMap({athleteId}){
                   style={{pointerEvents:"none",userSelect:"none",fontFamily:"sans-serif"}}>
                   {z.lbl}
                 </text>
-                {/* Status dot for flagged parts */}
-                {partData[z.id]?.status&&partData[z.id].status!=="good"&&(()=>{
-                  const dotX=z.s==="e"?z.cx+z.rx*0.55:lx+8;
-                  const dotY=z.s==="e"?z.cy-z.ry*0.55:ly-8;
-                  return <circle cx={dotX} cy={dotY} r={4} fill={STATUS[partData[z.id].status]?.color} stroke="#111" strokeWidth="1" style={{pointerEvents:"none"}}/>;
-                })()}
+                {/* Status dot */}
+                {partData[z.id]?.status&&partData[z.id].status!=="good"&&(
+                  <circle cx={lx+7} cy={ly-8} r={4} fill={STATUS[partData[z.id].status]?.color} stroke="#111" strokeWidth="1" style={{pointerEvents:"none"}}/>
+                )}
               </g>
             );
           })}
