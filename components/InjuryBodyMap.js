@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { GREEN, RED, GOLD } from "../lib/constants";
+import { useState, useEffect, useMemo } from "react";
+import Model from "react-body-highlighter";
+import { GREEN, RED } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 
 const SORE = "#C8941F";
@@ -9,121 +10,31 @@ const STATUS = {
   pain:{ color:RED,   label:"In Pain",       emoji:"🔴" },
 };
 
-// All zones are simple rectangles — SVG clipPath clips them to the body silhouette shape
-const FRONT=[
-  {id:"head",           name:"Head",           lbl:"Head",    s:"e",cx:100,cy:28,rx:20,ry:23},
-  {id:"neck",           name:"Neck",           lbl:"Neck",    s:"p",d:"M 86,50 L114,50 L114,68 L86,68 Z",lx:100,ly:60},
-  {id:"left_shoulder",  name:"Left Shoulder",  lbl:"L.Shldr", s:"p",d:"M 28,72 L62,72 L62,112 L28,112 Z",lx:45,ly:92},
-  {id:"right_shoulder", name:"Right Shoulder", lbl:"R.Shldr", s:"p",d:"M 138,72 L172,72 L172,112 L138,112 Z",lx:155,ly:92},
-  {id:"chest",          name:"Chest",          lbl:"Chest",   s:"p",d:"M 60,110 L140,110 L140,168 L60,168 Z",lx:100,ly:140},
-  {id:"left_upper_arm", name:"Left Upper Arm", lbl:"L.Arm",   s:"p",d:"M 18,110 L62,110 L62,180 L18,180 Z",lx:38,ly:145},
-  {id:"right_upper_arm",name:"Right Upper Arm",lbl:"R.Arm",   s:"p",d:"M 138,110 L182,110 L182,180 L138,180 Z",lx:162,ly:145},
-  {id:"left_elbow",     name:"Left Elbow",     lbl:"L.Elbow", s:"p",d:"M 18,180 L62,180 L62,204 L18,204 Z",lx:38,ly:193},
-  {id:"right_elbow",    name:"Right Elbow",    lbl:"R.Elbow", s:"p",d:"M 138,180 L182,180 L182,204 L138,204 Z",lx:162,ly:193},
-  {id:"left_forearm",   name:"Left Forearm",   lbl:"L.Fore",  s:"p",d:"M 16,204 L60,204 L60,256 L16,256 Z",lx:36,ly:230},
-  {id:"right_forearm",  name:"Right Forearm",  lbl:"R.Fore",  s:"p",d:"M 140,204 L184,204 L184,256 L140,256 Z",lx:164,ly:230},
-  {id:"core",           name:"Core / Abs",     lbl:"Core",    s:"p",d:"M 60,168 L140,168 L140,222 L60,222 Z",lx:100,ly:196},
-  {id:"left_wrist",     name:"Left Wrist",     lbl:"L.Wrist", s:"p",d:"M 16,256 L58,256 L58,284 L16,284 Z",lx:36,ly:270},
-  {id:"right_wrist",    name:"Right Wrist",    lbl:"R.Wrist", s:"p",d:"M 142,256 L184,256 L184,284 L142,284 Z",lx:164,ly:270},
-  {id:"left_hip",       name:"Left Hip",       lbl:"L.Hip",   s:"p",d:"M 58,220 L86,220 L86,250 L56,250 Z",lx:68,ly:236},
-  {id:"right_hip",      name:"Right Hip",      lbl:"R.Hip",   s:"p",d:"M 114,220 L142,220 L144,250 L114,250 Z",lx:132,ly:236},
-  {id:"left_quad",      name:"Left Quad",      lbl:"L.Quad",  s:"p",d:"M 54,250 L86,250 L86,318 L54,318 Z",lx:68,ly:284},
-  {id:"right_quad",     name:"Right Quad",     lbl:"R.Quad",  s:"p",d:"M 114,250 L146,250 L146,318 L114,318 Z",lx:132,ly:284},
-  {id:"left_knee",      name:"Left Knee",      lbl:"L.Knee",  s:"p",d:"M 54,318 L86,318 L86,342 L54,342 Z",lx:68,ly:330},
-  {id:"right_knee",     name:"Right Knee",     lbl:"R.Knee",  s:"p",d:"M 114,318 L146,318 L146,342 L114,342 Z",lx:132,ly:330},
-  {id:"left_shin",      name:"Left Shin",      lbl:"L.Shin",  s:"p",d:"M 54,342 L86,342 L86,392 L54,392 Z",lx:68,ly:367},
-  {id:"right_shin",     name:"Right Shin",     lbl:"R.Shin",  s:"p",d:"M 114,342 L146,342 L146,392 L114,392 Z",lx:132,ly:367},
-  {id:"left_ankle",     name:"Left Ankle",     lbl:"L.Ankle", s:"p",d:"M 52,392 L88,392 L88,422 L52,422 Z",lx:70,ly:408},
-  {id:"right_ankle",    name:"Right Ankle",    lbl:"R.Ankle", s:"p",d:"M 112,392 L148,392 L148,422 L112,422 Z",lx:130,ly:408},
-];
+const MUSCLE_NAMES = {
+  head:"Head", neck:"Neck",
+  "front-deltoids":"Front Deltoids", "back-deltoids":"Rear Deltoids",
+  trapezius:"Trapezius", chest:"Chest",
+  biceps:"Biceps", triceps:"Triceps", forearm:"Forearm",
+  abs:"Abs", obliques:"Obliques",
+  "upper-back":"Upper Back", "lower-back":"Lower Back",
+  gluteal:"Glutes", hamstring:"Hamstrings", quadriceps:"Quads",
+  adductor:"Inner Thigh", abductors:"Outer Thigh",
+  calves:"Calves", knees:"Knees",
+  "left-soleus":"Left Shin", "right-soleus":"Right Shin",
+};
 
-const BACK=[
-  {id:"head",            name:"Head",            lbl:"Head",    s:"e",cx:100,cy:28,rx:20,ry:23},
-  {id:"neck",            name:"Neck",            lbl:"Neck",    s:"p",d:"M 86,50 L114,50 L114,68 L86,68 Z",lx:100,ly:60},
-  {id:"left_shoulder",   name:"Left Shoulder",   lbl:"L.Shldr", s:"p",d:"M 28,72 L62,72 L62,112 L28,112 Z",lx:45,ly:92},
-  {id:"right_shoulder",  name:"Right Shoulder",  lbl:"R.Shldr", s:"p",d:"M 138,72 L172,72 L172,112 L138,112 Z",lx:155,ly:92},
-  {id:"upper_back",      name:"Upper Back",      lbl:"Up.Back", s:"p",d:"M 60,110 L140,110 L140,168 L60,168 Z",lx:100,ly:140},
-  {id:"left_upper_arm",  name:"Left Upper Arm",  lbl:"L.Arm",   s:"p",d:"M 18,110 L62,110 L62,180 L18,180 Z",lx:38,ly:145},
-  {id:"right_upper_arm", name:"Right Upper Arm", lbl:"R.Arm",   s:"p",d:"M 138,110 L182,110 L182,180 L138,180 Z",lx:162,ly:145},
-  {id:"left_elbow",      name:"Left Elbow",      lbl:"L.Elbow", s:"p",d:"M 18,180 L62,180 L62,204 L18,204 Z",lx:38,ly:193},
-  {id:"right_elbow",     name:"Right Elbow",     lbl:"R.Elbow", s:"p",d:"M 138,180 L182,180 L182,204 L138,204 Z",lx:162,ly:193},
-  {id:"left_forearm",    name:"Left Forearm",    lbl:"L.Fore",  s:"p",d:"M 16,204 L60,204 L60,256 L16,256 Z",lx:36,ly:230},
-  {id:"right_forearm",   name:"Right Forearm",   lbl:"R.Fore",  s:"p",d:"M 140,204 L184,204 L184,256 L140,256 Z",lx:164,ly:230},
-  {id:"lower_back",      name:"Lower Back",      lbl:"Lo.Back", s:"p",d:"M 60,168 L140,168 L140,222 L60,222 Z",lx:100,ly:196},
-  {id:"left_wrist",      name:"Left Wrist",      lbl:"L.Wrist", s:"p",d:"M 16,256 L58,256 L58,284 L16,284 Z",lx:36,ly:270},
-  {id:"right_wrist",     name:"Right Wrist",     lbl:"R.Wrist", s:"p",d:"M 142,256 L184,256 L184,284 L142,284 Z",lx:164,ly:270},
-  {id:"left_glute",      name:"Left Glute",      lbl:"L.Glute", s:"p",d:"M 58,220 L86,220 L86,250 L56,250 Z",lx:68,ly:236},
-  {id:"right_glute",     name:"Right Glute",     lbl:"R.Glute", s:"p",d:"M 114,220 L142,220 L144,250 L114,250 Z",lx:132,ly:236},
-  {id:"left_hamstring",  name:"Left Hamstring",  lbl:"L.Ham",   s:"p",d:"M 54,250 L86,250 L86,318 L54,318 Z",lx:68,ly:284},
-  {id:"right_hamstring", name:"Right Hamstring", lbl:"R.Ham",   s:"p",d:"M 114,250 L146,250 L146,318 L114,318 Z",lx:132,ly:284},
-  {id:"left_knee",       name:"Left Knee",       lbl:"L.Knee",  s:"p",d:"M 54,318 L86,318 L86,342 L54,342 Z",lx:68,ly:330},
-  {id:"right_knee",      name:"Right Knee",      lbl:"R.Knee",  s:"p",d:"M 114,318 L146,318 L146,342 L114,342 Z",lx:132,ly:330},
-  {id:"left_calf",       name:"Left Calf",       lbl:"L.Calf",  s:"p",d:"M 54,342 L86,342 L86,392 L54,392 Z",lx:68,ly:367},
-  {id:"right_calf",      name:"Right Calf",      lbl:"R.Calf",  s:"p",d:"M 114,342 L146,342 L146,392 L114,392 Z",lx:132,ly:367},
-  {id:"left_ankle",      name:"Left Ankle",      lbl:"L.Ankle", s:"p",d:"M 52,392 L88,392 L88,422 L52,422 Z",lx:70,ly:408},
-  {id:"right_ankle",     name:"Right Ankle",     lbl:"R.Ankle", s:"p",d:"M 112,392 L148,392 L148,422 L112,422 Z",lx:130,ly:408},
-];
-
-// Silhouette shape — also used as clipPath for zone overlays
-// Torso has proper hourglass: wide shoulder → narrow waist → flare at hip
-// Silhouette built from overlapping ellipses — each body segment is one ellipse.
-// Adjacent segments overlap slightly, same fill = seamless merge → smooth human shape.
-// Shoulder caps use path to create the sloped deltoid look.
-const BODY_PATHS = [
-  {type:"e", cx:100, cy:27,  rx:21, ry:24},   // Head
-  {type:"e", cx:100, cy:61,  rx:12, ry:16},   // Neck
-  {type:"e", cx:100, cy:106, rx:44, ry:28},   // Upper chest (wide shoulder-level)
-  {type:"e", cx:100, cy:145, rx:38, ry:30},   // Chest
-  {type:"e", cx:100, cy:184, rx:27, ry:22},   // Waist (narrowest point)
-  {type:"e", cx:100, cy:218, rx:33, ry:22},   // Lower abdomen
-  {type:"e", cx:100, cy:245, rx:37, ry:21},   // Hip/pelvis
-  {type:"e", cx:78,  cy:263, rx:22, ry:16},   // Left groin connector
-  {type:"e", cx:122, cy:263, rx:22, ry:16},   // Right groin connector
-  // Left deltoid: teardrop oval tilted along the shoulder slope
-  {type:"p", d:"M 36,70 C 54,60 74,66 78,84 C 82,102 70,118 54,120 C 38,120 24,108 26,90 C 28,76 36,70 36,70 Z"},
-  // Right deltoid (mirror)
-  {type:"p", d:"M 164,70 C 146,60 126,66 122,84 C 118,102 130,118 146,120 C 162,120 176,108 174,90 C 172,76 164,70 164,70 Z"},
-  {type:"e", cx:44,  cy:158, rx:15, ry:46},   // Left upper arm
-  {type:"e", cx:156, cy:158, rx:15, ry:46},   // Right upper arm
-  {type:"e", cx:40,  cy:206, rx:13, ry:13},   // Left elbow
-  {type:"e", cx:160, cy:206, rx:13, ry:13},   // Right elbow
-  {type:"e", cx:35,  cy:251, rx:11, ry:40},   // Left forearm
-  {type:"e", cx:165, cy:251, rx:11, ry:40},   // Right forearm
-  {type:"e", cx:30,  cy:288, rx:10, ry:9 },   // Left wrist
-  {type:"e", cx:170, cy:288, rx:10, ry:9 },   // Right wrist
-  {type:"e", cx:28,  cy:306, rx:13, ry:16},   // Left hand
-  {type:"e", cx:172, cy:306, rx:13, ry:16},   // Right hand
-  {type:"e", cx:72,  cy:297, rx:16, ry:58},   // Left thigh
-  {type:"e", cx:128, cy:297, rx:16, ry:58},   // Right thigh
-  {type:"e", cx:70,  cy:352, rx:15, ry:13},   // Left knee
-  {type:"e", cx:130, cy:352, rx:15, ry:13},   // Right knee
-  {type:"e", cx:67,  cy:396, rx:13, ry:42},   // Left calf/shin
-  {type:"e", cx:133, cy:396, rx:13, ry:42},   // Right calf/shin
-  {type:"e", cx:64,  cy:426, rx:10, ry:9 },   // Left ankle
-  {type:"e", cx:136, cy:426, rx:10, ry:9 },   // Right ankle
-  {type:"e", cx:57,  cy:435, rx:20, ry:8 },   // Left foot
-  {type:"e", cx:143, cy:435, rx:20, ry:8 },   // Right foot
-];
-
-function BodyPaths({fill, stroke, strokeWidth, style}){
-  return(
-    <g fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeLinejoin="round" style={style}>
-      {BODY_PATHS.map((p,i)=>
-        p.type==="e"
-          ? <ellipse key={i} cx={p.cx} cy={p.cy} rx={p.rx} ry={p.ry}/>
-          : <path key={i} d={p.d}/>
-      )}
-    </g>
-  );
-}
-
-function ZoneEl({z,fill,stroke,sw}){
-  const p={fill,stroke,strokeWidth:sw};
-  if(z.s==="e") return <ellipse cx={z.cx} cy={z.cy} rx={z.rx} ry={z.ry} {...p}/>;
-  return <path d={z.d} {...p}/>;
-}
-
-function sk(id){return id.replace(/^(left_|right_)/,"");}
+const MUSCLE_STRETCH = {
+  head:"head", neck:"neck",
+  "front-deltoids":"shoulder", "back-deltoids":"shoulder",
+  trapezius:"upper_back", chest:"chest",
+  biceps:"upper_arm", triceps:"upper_arm", forearm:"forearm",
+  abs:"core", obliques:"core",
+  "upper-back":"upper_back", "lower-back":"lower_back",
+  gluteal:"glute", hamstring:"hamstring", quadriceps:"quad",
+  adductor:"hip", abductors:"hip",
+  calves:"calf", knees:"knee",
+  "left-soleus":"shin", "right-soleus":"shin",
+};
 
 function ytUrl(name){
   return "https://www.youtube.com/results?search_query="+encodeURIComponent(name+" how to stretch");
@@ -170,14 +81,6 @@ const STRETCHES={
     {name:"Overhead Bicep Reach",desc:"Raise arm overhead, keep elbow straight, flex wrist back slightly.",duration:"30 sec each"},
     {name:"Shoulder Circles",desc:"Relaxed arm, large slow circles. Promotes blood flow and mobility.",duration:"10 each direction"},
   ],
-  elbow:[
-    {name:"Wrist Flexor Stretch",desc:"Extend arm, palm up. Use other hand to pull fingers back toward you gently.",duration:"30 sec each"},
-    {name:"Wrist Extensor Stretch",desc:"Extend arm, palm down. Use other hand to pull fingers downward toward you.",duration:"30 sec each"},
-    {name:"Forearm Supination/Pronation",desc:"Elbow at 90°, slowly rotate palm up then down through full range.",duration:"15 slow reps each"},
-    {name:"Elbow Flexion/Extension",desc:"Slowly bend then straighten elbow through pain-free range ONLY.",duration:"10 very slow reps"},
-    {name:"Wall Bicep Stretch",desc:"Palm on wall behind you, rotate body away to stretch bicep and elbow flexors.",duration:"30 sec each"},
-    {name:"Prayer Stretch",desc:"Press palms together at chest. Slowly lower hands while keeping palms pressed.",duration:"30 sec"},
-  ],
   forearm:[
     {name:"Wrist Flexor Stretch",desc:"Arm extended, palm up — pull fingers back toward elbow. Feel stretch in forearm underside.",duration:"30 sec each"},
     {name:"Wrist Extensor Stretch",desc:"Arm extended, palm down — pull fingers toward you downward. Feel topside of forearm.",duration:"30 sec each"},
@@ -185,14 +88,6 @@ const STRETCHES={
     {name:"Prayer Stretch",desc:"Press palms together at chest, slowly lower while keeping pressure.",duration:"30 sec"},
     {name:"Reverse Prayer",desc:"Backs of hands together behind back and gently press.",duration:"20 sec"},
     {name:"Forearm Self-Massage",desc:"Use thumb to press and slide slowly along forearm muscle belly from wrist to elbow.",duration:"60 sec each arm"},
-  ],
-  wrist:[
-    {name:"Wrist Circles",desc:"Lace fingers, make slow controlled circles in both directions.",duration:"10 each direction"},
-    {name:"Wrist Flexor Stretch",desc:"Arm extended, pull fingers back toward you.",duration:"30 sec each"},
-    {name:"Wrist Extensor Stretch",desc:"Arm extended, palm down, pull fingers downward.",duration:"30 sec each"},
-    {name:"Prayer Stretch",desc:"Press palms flat together, slowly lower hands toward waist while maintaining contact.",duration:"30 sec"},
-    {name:"Reverse Prayer",desc:"Backs of hands pressed together behind back.",duration:"20 sec"},
-    {name:"Tendon Glides",desc:"Move fingers through 5 positions slowly: straight → hook → fist → tabletop → straight.",duration:"10 full cycles each"},
   ],
   chest:[
     {name:"Doorway Stretch (Low)",desc:"Arm at 90° on doorframe, elbow at shoulder height. Lean forward until chest stretch.",duration:"30 sec each"},
@@ -282,14 +177,6 @@ const STRETCHES={
     {name:"Slow Eccentric Calf Raises",desc:"Rise on toes, then lower over 4–5 counts. Builds tendon tolerance.",duration:"3 × 15 reps"},
     {name:"Ankle Circles",desc:"Slow controlled circles — promotes blood flow and calf recovery.",duration:"10 each direction"},
   ],
-  ankle:[
-    {name:"Ankle Circles",desc:"Seated or balancing on one leg, trace large slow circles. Both directions.",duration:"10 each direction"},
-    {name:"Straight-Leg Calf Stretch",desc:"Ball of foot against wall, heel down, leg straight.",duration:"30 sec each"},
-    {name:"Achilles / Bent-Knee Stretch",desc:"Same as above but slightly bend the knee. Targets the Achilles and soleus.",duration:"30 sec each"},
-    {name:"Alphabet Spelling",desc:"Spell A–Z with your big toe, keeping leg still. Full ankle mobility drill.",duration:"Once per foot"},
-    {name:"Single-Leg Balance",desc:"Balance on one foot. Progress to eyes closed. Rebuilds proprioception after ankle issues.",duration:"30 sec each (3 rounds)"},
-    {name:"Band Inversion/Eversion",desc:"Wrap resistance band around foot. Push inward (inversion) then outward (eversion).",duration:"15 reps each direction"},
-  ],
 };
 
 export default function InjuryBodyMap({athleteId, readOnly=false}){
@@ -318,10 +205,10 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
     })();
   },[athleteId]);
 
-  const selectPart=(id)=>{
+  const selectPart=(muscle)=>{
     if(readOnly)return;
-    setSelected(id);
-    const ex=partData[id];
+    setSelected(muscle);
+    const ex=partData[muscle];
     setPStatus(ex?.status||"good");
     setPPain(ex?.pain||0);
     setPDesc(ex?.description||"");
@@ -345,7 +232,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       setPartData(prev=>({...prev,[selected]:{status:pStatus,pain:pPain,description:pDesc.trim(),updatedAt:now}}));
 
       if(notifyCoach&&pStatus!=="good"){
-        const zoneName=([...FRONT,...BACK].find(z=>z.id===selected)||{}).name||selected;
+        const zoneName=MUSCLE_NAMES[selected]||selected;
         const inboxMsg=`Body Map — ${zoneName}: ${STATUS[pStatus].label}${pPain>0?" (pain "+pPain+"/10)":""}. ${pDesc.trim()}`;
         try{
           await supabase.from("inbox").insert({athlete_id:athleteId,type:"injury",message:inboxMsg});
@@ -374,27 +261,18 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
     setClearing(false);
   };
 
-  const zones=view==="front"?FRONT:BACK;
-  const selZone=zones.find(z=>z.id===selected);
-  const strKey=sk(selected||"");
-  const stretches=STRETCHES[strKey]||[];
+  const bodyData=useMemo(()=>
+    Object.entries(partData)
+      .filter(([,d])=>d.status==="sore"||d.status==="pain")
+      .map(([id,d])=>({name:id,muscles:[id],frequency:d.status==="pain"?2:1}))
+  ,[partData]);
+
+  const selName=selected?MUSCLE_NAMES[selected]||selected:null;
+  const strKey=selected?MUSCLE_STRETCH[selected]||"":null;
+  const stretches=strKey?STRETCHES[strKey]||[]:[];
   const descEnough=pDesc.trim().length>=10;
   const showStretches=selected&&pStatus!=="good"&&stretches.length>0;
   const injCount=Object.values(partData).filter(d=>d.status==="sore"||d.status==="pain").length;
-  const clipId=`bc-${athleteId}`;
-
-  const zoneFill=(id)=>{
-    const d=partData[id];
-    if(!d?.status||d.status==="good")return "transparent";
-    return (STATUS[d.status]?.color||"")+"55";
-  };
-  const zoneStroke=(id,isSel)=>{
-    if(isSel)return "rgba(255,255,255,0.7)";
-    const d=partData[id];
-    if(!d?.status||d.status==="good")return "transparent";
-    return (STATUS[d.status]?.color||"")+"cc";
-  };
-
   const selEx=selected?partData[selected]:null;
 
   return(
@@ -440,60 +318,31 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
         ))}
       </div>
 
-      {/* SVG Body Map */}
-      <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
-        <svg viewBox="10 2 180 444" style={{width:"100%",maxWidth:220,height:"auto"}}>
-          <defs>
-            <clipPath id={clipId}>
-              {BODY_PATHS.map((p,i)=>
-                p.type==="e"
-                  ? <ellipse key={i} cx={p.cx} cy={p.cy} rx={p.rx} ry={p.ry}/>
-                  : <path key={i} d={p.d}/>
-              )}
-            </clipPath>
-          </defs>
-
-          {/* Silhouette base */}
-          <BodyPaths fill="#202020" stroke="#2e2e2e" strokeWidth="1" style={{pointerEvents:"none"}}/>
-
-          {/* Interactive zone overlays — clipped to body shape */}
-          <g clipPath={`url(#${clipId})`}>
-            {zones.map(z=>{
-              const isSel=selected===z.id;
-              const lx=z.s==="e"?z.cx:z.lx;
-              const ly=z.s==="e"?z.cy+2.5:z.ly+2.5;
-              const hasStatus=partData[z.id]?.status&&partData[z.id].status!=="good";
-              return(
-                <g key={z.id} onClick={()=>selectPart(z.id)} style={{cursor:readOnly?"default":"pointer"}}>
-                  <ZoneEl z={z} fill={zoneFill(z.id)} stroke={zoneStroke(z.id,isSel)} sw={isSel?1.5:hasStatus?1:0}/>
-                  {isSel&&<ZoneEl z={z} fill="rgba(255,255,255,0.08)" stroke="none" sw={0}/>}
-                  {(hasStatus||isSel)&&(
-                    <text x={lx} y={ly} textAnchor="middle" fontSize={5.5} fill="#fff" fontWeight="700"
-                      style={{pointerEvents:"none",userSelect:"none",fontFamily:"sans-serif"}}>
-                      {z.lbl}
-                    </text>
-                  )}
-                  {hasStatus&&(
-                    <circle cx={lx+8} cy={ly-9} r={3.5} fill={STATUS[partData[z.id].status]?.color} stroke="#111" strokeWidth="0.8" style={{pointerEvents:"none"}}/>
-                  )}
-                </g>
-              );
-            })}
-          </g>
-        </svg>
+      {/* Body Map */}
+      <div style={{display:"flex",justifyContent:"center",marginBottom:16,pointerEvents:readOnly?"none":"auto"}}>
+        <div style={{width:"100%",maxWidth:200}}>
+          <Model
+            type={view==="front"?"anterior":"posterior"}
+            data={bodyData}
+            bodyColor="#2a2a2a"
+            highlightedColors={[SORE+"dd",RED+"dd"]}
+            onClick={readOnly?undefined:({muscle})=>selectPart(muscle)}
+            svgStyle={{display:"block",cursor:"pointer"}}
+          />
+        </div>
       </div>
 
       {!selected&&(
         <div style={{textAlign:"center",fontSize:11,color:"#444",marginBottom:16,fontStyle:"italic"}}>
-          Tap any body part to check in
+          Tap any muscle to check in
         </div>
       )}
 
       {/* Detail panel */}
-      {selected&&selZone&&!readOnly&&(
+      {selected&&selName&&!readOnly&&(
         <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid #222",borderLeft:"3px solid "+RED}}>
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:14,gap:8}}>
-            <div style={{fontSize:16,fontWeight:900,color:"#fff"}}>{selZone.name}</div>
+            <div style={{fontSize:16,fontWeight:900,color:"#fff"}}>{selName}</div>
             {selEx?.updatedAt&&(
               <div style={{fontSize:10,color:"#555",flexShrink:0}}>Updated {fmtDate(selEx.updatedAt)}</div>
             )}
@@ -578,7 +427,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
 
       {showStretches&&(descEnough||readOnly)&&(
         <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid "+SORE+"33",borderLeft:"3px solid "+SORE}}>
-          <div style={{fontSize:14,fontWeight:900,color:"#fff",marginBottom:4}}>Stretches — {selZone.name}</div>
+          <div style={{fontSize:14,fontWeight:900,color:"#fff",marginBottom:4}}>Stretches — {selName}</div>
           <div style={{fontSize:11,color:SORE,marginBottom:14,lineHeight:1.6,background:SORE+"11",padding:"10px 12px",borderRadius:8,border:"1px solid "+SORE+"22"}}>
             ⚠️ <strong>Stop any stretch that increases your pain.</strong> These are general mobility exercises — not medical treatment. Check with Coach Ant before training on an injury.
           </div>
