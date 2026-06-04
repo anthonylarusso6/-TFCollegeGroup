@@ -66,25 +66,43 @@ const BACK=[
 
 // Silhouette shape — also used as clipPath for zone overlays
 // Torso has proper hourglass: wide shoulder → narrow waist → flare at hip
-// Silhouette drawn as separate overlapping shapes filled the same colour.
-// Key proportions: sloped shoulders (~20°), hourglass waist, tapered arms,
-// knee/calf/ankle definition, natural hip-to-crotch spread.
+// Silhouette built from overlapping ellipses — each body segment is one ellipse.
+// Adjacent segments overlap slightly, same fill = seamless merge → smooth human shape.
+// Shoulder caps use path to create the sloped deltoid look.
 const BODY_PATHS = [
-  // Head
-  {type:"e", cx:100, cy:27, rx:21, ry:24},
-  // Neck
-  {type:"p", d:"M 90,50 Q100,55 110,50 L112,70 Q100,74 88,70 Z"},
-  // Torso — sloped shoulder, true hourglass (wide chest→narrow waist→hip flare)
-  // Shoulders slope ~20° from horizontal, deltoid curves to armpit, waist narrows
-  {type:"p", d:"M 88,70 C 68,72 50,76 36,88 C 26,96 26,108 30,118 L 62,118 C 59,142 67,164 70,184 C 66,200 64,214 66,224 Q 68,238 82,250 L 100,252 L 118,250 Q 132,238 134,224 C 136,214 134,200 130,184 C 133,164 141,142 138,118 L 170,118 Q 174,108 174,96 C 170,82 152,74 112,70 Q 106,74 100,74 Q 94,74 88,70 Z"},
-  // Left arm — deltoid start, tapers shoulder→bicep→forearm→wrist, slight outward bow
-  {type:"p", d:"M 30,118 C 24,138 20,166 19,188 C 17,212 19,248 21,268 Q 22,282 26,292 C 30,300 38,302 44,296 C 48,290 50,278 50,268 C 51,244 53,212 55,188 C 57,166 60,140 62,118 Z"},
-  // Right arm (mirror)
-  {type:"p", d:"M 170,118 C 176,138 180,166 181,188 C 183,212 181,248 179,268 Q 178,282 174,292 C 170,300 162,302 156,296 C 152,290 150,278 150,268 C 149,244 147,212 145,188 C 143,166 140,140 138,118 Z"},
-  // Left leg — outer thigh flare, knee knob, calf bulge, ankle narrows, foot
-  {type:"p", d:"M 82,250 C 74,250 64,256 60,266 L 58,320 Q 56,334 54,342 C 54,358 56,374 56,388 C 56,402 58,414 62,420 L 72,426 L 82,426 Q 90,418 86,404 C 84,390 84,370 84,342 Q 84,334 84,320 L 84,250 Z"},
-  // Right leg (mirror)
-  {type:"p", d:"M 118,250 C 126,250 136,256 140,266 L 142,320 Q 144,334 146,342 C 146,358 144,374 144,388 C 144,402 142,414 138,420 L 128,426 L 118,426 Q 110,418 114,404 C 116,390 116,370 116,342 Q 116,334 116,320 L 116,250 Z"},
+  {type:"e", cx:100, cy:27,  rx:21, ry:24},   // Head
+  {type:"e", cx:100, cy:61,  rx:12, ry:16},   // Neck
+  {type:"e", cx:100, cy:106, rx:44, ry:28},   // Upper chest (wide shoulder-level)
+  {type:"e", cx:100, cy:145, rx:38, ry:30},   // Chest
+  {type:"e", cx:100, cy:184, rx:27, ry:22},   // Waist (narrowest point)
+  {type:"e", cx:100, cy:218, rx:33, ry:22},   // Lower abdomen
+  {type:"e", cx:100, cy:245, rx:37, ry:21},   // Hip/pelvis
+  {type:"e", cx:78,  cy:263, rx:22, ry:16},   // Left groin connector
+  {type:"e", cx:122, cy:263, rx:22, ry:16},   // Right groin connector
+  // Left deltoid: teardrop oval tilted along the shoulder slope
+  {type:"p", d:"M 36,70 C 54,60 74,66 78,84 C 82,102 70,118 54,120 C 38,120 24,108 26,90 C 28,76 36,70 36,70 Z"},
+  // Right deltoid (mirror)
+  {type:"p", d:"M 164,70 C 146,60 126,66 122,84 C 118,102 130,118 146,120 C 162,120 176,108 174,90 C 172,76 164,70 164,70 Z"},
+  {type:"e", cx:44,  cy:158, rx:15, ry:46},   // Left upper arm
+  {type:"e", cx:156, cy:158, rx:15, ry:46},   // Right upper arm
+  {type:"e", cx:40,  cy:206, rx:13, ry:13},   // Left elbow
+  {type:"e", cx:160, cy:206, rx:13, ry:13},   // Right elbow
+  {type:"e", cx:35,  cy:251, rx:11, ry:40},   // Left forearm
+  {type:"e", cx:165, cy:251, rx:11, ry:40},   // Right forearm
+  {type:"e", cx:30,  cy:288, rx:10, ry:9 },   // Left wrist
+  {type:"e", cx:170, cy:288, rx:10, ry:9 },   // Right wrist
+  {type:"e", cx:28,  cy:306, rx:13, ry:16},   // Left hand
+  {type:"e", cx:172, cy:306, rx:13, ry:16},   // Right hand
+  {type:"e", cx:72,  cy:297, rx:16, ry:58},   // Left thigh
+  {type:"e", cx:128, cy:297, rx:16, ry:58},   // Right thigh
+  {type:"e", cx:70,  cy:352, rx:15, ry:13},   // Left knee
+  {type:"e", cx:130, cy:352, rx:15, ry:13},   // Right knee
+  {type:"e", cx:67,  cy:396, rx:13, ry:42},   // Left calf/shin
+  {type:"e", cx:133, cy:396, rx:13, ry:42},   // Right calf/shin
+  {type:"e", cx:64,  cy:426, rx:10, ry:9 },   // Left ankle
+  {type:"e", cx:136, cy:426, rx:10, ry:9 },   // Right ankle
+  {type:"e", cx:57,  cy:435, rx:20, ry:8 },   // Left foot
+  {type:"e", cx:143, cy:435, rx:20, ry:8 },   // Right foot
 ];
 
 function BodyPaths({fill, stroke, strokeWidth, style}){
@@ -367,13 +385,14 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
 
   const zoneFill=(id)=>{
     const d=partData[id];
-    if(!d?.status||d.status==="good")return "rgba(255,255,255,0.03)";
+    if(!d?.status||d.status==="good")return "transparent";
     return (STATUS[d.status]?.color||"")+"55";
   };
-  const zoneStroke=(id)=>{
+  const zoneStroke=(id,isSel)=>{
+    if(isSel)return "rgba(255,255,255,0.7)";
     const d=partData[id];
-    if(!d?.status||d.status==="good")return "rgba(255,255,255,0.07)";
-    return (STATUS[d.status]?.color||"")+"99";
+    if(!d?.status||d.status==="good")return "transparent";
+    return (STATUS[d.status]?.color||"")+"cc";
   };
 
   const selEx=selected?partData[selected]:null;
@@ -423,7 +442,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
 
       {/* SVG Body Map */}
       <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
-        <svg viewBox="12 4 176 430" style={{width:"100%",maxWidth:220,height:"auto"}}>
+        <svg viewBox="10 2 180 444" style={{width:"100%",maxWidth:220,height:"auto"}}>
           <defs>
             <clipPath id={clipId}>
               {BODY_PATHS.map((p,i)=>
@@ -446,12 +465,14 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
               const hasStatus=partData[z.id]?.status&&partData[z.id].status!=="good";
               return(
                 <g key={z.id} onClick={()=>selectPart(z.id)} style={{cursor:readOnly?"default":"pointer"}}>
-                  <ZoneEl z={z} fill={zoneFill(z.id)} stroke={isSel?"rgba(255,255,255,0.6)":zoneStroke(z.id)} sw={isSel?1.5:0.6}/>
-                  {isSel&&<ZoneEl z={z} fill="rgba(255,255,255,0.06)" stroke="none" sw={0}/>}
-                  <text x={lx} y={ly} textAnchor="middle" fontSize={5.5} fill={hasStatus?"#fff":"#3a3a3a"} fontWeight={hasStatus?"700":"400"}
-                    style={{pointerEvents:"none",userSelect:"none",fontFamily:"sans-serif"}}>
-                    {z.lbl}
-                  </text>
+                  <ZoneEl z={z} fill={zoneFill(z.id)} stroke={zoneStroke(z.id,isSel)} sw={isSel?1.5:hasStatus?1:0}/>
+                  {isSel&&<ZoneEl z={z} fill="rgba(255,255,255,0.08)" stroke="none" sw={0}/>}
+                  {(hasStatus||isSel)&&(
+                    <text x={lx} y={ly} textAnchor="middle" fontSize={5.5} fill="#fff" fontWeight="700"
+                      style={{pointerEvents:"none",userSelect:"none",fontFamily:"sans-serif"}}>
+                      {z.lbl}
+                    </text>
+                  )}
                   {hasStatus&&(
                     <circle cx={lx+8} cy={ly-9} r={3.5} fill={STATUS[partData[z.id].status]?.color} stroke="#111" strokeWidth="0.8" style={{pointerEvents:"none"}}/>
                   )}
