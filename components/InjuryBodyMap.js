@@ -9,82 +9,91 @@ const STATUS = {
   pain:{ color:RED,   label:"In Pain",       emoji:"🔴" },
 };
 
-// All zones use s:"p" (path). Head uses s:"e" (ellipse).
-// Arms hang at natural ~10° angle. Elbows/wrists are path slices — no protruding circles.
-// Coordinates: center x=100, viewBox="12 4 176 420"
+// All zones are simple rectangles — SVG clipPath clips them to the body silhouette shape
 const FRONT=[
   {id:"head",           name:"Head",           lbl:"Head",    s:"e",cx:100,cy:28,rx:20,ry:23},
-  {id:"neck",           name:"Neck",           lbl:"Neck",    s:"p",d:"M 88,50 Q100,54 112,50 L114,66 Q100,70 86,66 Z",lx:100,ly:59},
-  {id:"left_shoulder",  name:"Left Shoulder",  lbl:"L.Shldr", s:"p",d:"M 86,66 Q 64,68 46,80 Q 36,88 34,106 L 60,110 Q 60,94 72,84 Q 82,74 88,66 Z",lx:52,ly:90},
-  {id:"right_shoulder", name:"Right Shoulder", lbl:"R.Shldr", s:"p",d:"M 114,66 Q 136,68 154,80 Q 164,88 166,106 L 140,110 Q 140,94 128,84 Q 118,74 112,66 Z",lx:148,ly:90},
-  {id:"chest",          name:"Chest",          lbl:"Chest",   s:"p",d:"M 60,110 L 58,166 L 142,166 L 140,110 Q 118,118 100,118 Q 82,118 60,110 Z",lx:100,ly:138},
-  {id:"left_upper_arm", name:"Left Upper Arm", lbl:"L.Arm",   s:"p",d:"M 34,106 C 28,126 24,156 24,178 L 52,180 C 52,158 56,128 60,110 Z",lx:38,ly:142},
-  {id:"right_upper_arm",name:"Right Upper Arm",lbl:"R.Arm",   s:"p",d:"M 166,106 C 172,126 176,156 176,178 L 148,180 C 148,158 144,128 140,110 Z",lx:162,ly:142},
-  {id:"left_elbow",     name:"Left Elbow",     lbl:"Elbow",   s:"p",d:"M 24,178 L 22,200 L 52,200 L 52,180 Z",lx:38,ly:190},
-  {id:"right_elbow",    name:"Right Elbow",    lbl:"Elbow",   s:"p",d:"M 176,178 L 178,200 L 148,200 L 148,180 Z",lx:162,ly:190},
-  {id:"left_forearm",   name:"Left Forearm",   lbl:"L.Fore",  s:"p",d:"M 22,200 C 20,222 22,240 24,254 L 52,250 C 52,236 52,218 52,200 Z",lx:36,ly:226},
-  {id:"right_forearm",  name:"Right Forearm",  lbl:"R.Fore",  s:"p",d:"M 178,200 C 180,222 178,240 176,254 L 148,250 C 148,236 148,218 148,200 Z",lx:164,ly:226},
-  {id:"core",           name:"Core / Abs",     lbl:"Core",    s:"p",d:"M 58,166 L 56,212 Q 76,228 100,230 Q 124,228 144,212 L 142,166 Z",lx:100,ly:192},
-  {id:"left_wrist",     name:"Left Wrist",     lbl:"L.Wrist", s:"p",d:"M 24,254 Q 22,272 34,278 Q 46,276 52,264 L 52,250 Z",lx:38,ly:264},
-  {id:"right_wrist",    name:"Right Wrist",    lbl:"R.Wrist", s:"p",d:"M 176,254 Q 178,272 166,278 Q 154,276 148,264 L 148,250 Z",lx:162,ly:264},
-  {id:"left_hip",       name:"Left Hip",       lbl:"L.Hip",   s:"p",d:"M 56,212 Q 54,230 58,246 L 82,248 L 84,232 Q 70,226 56,212 Z",lx:64,ly:232},
-  {id:"right_hip",      name:"Right Hip",      lbl:"R.Hip",   s:"p",d:"M 144,212 Q 146,230 142,246 L 118,248 L 116,232 Q 130,226 144,212 Z",lx:136,ly:232},
-  {id:"left_quad",      name:"Left Quad",      lbl:"L.Quad",  s:"p",d:"M 58,248 L 56,316 L 84,316 L 82,248 Z",lx:68,ly:282},
-  {id:"right_quad",     name:"Right Quad",     lbl:"R.Quad",  s:"p",d:"M 142,248 L 144,316 L 116,316 L 118,248 Z",lx:132,ly:282},
-  {id:"left_knee",      name:"Left Knee",      lbl:"L.Knee",  s:"p",d:"M 56,316 L 56,340 L 84,340 L 84,316 Z",lx:68,ly:328},
-  {id:"right_knee",     name:"Right Knee",     lbl:"R.Knee",  s:"p",d:"M 144,316 L 144,340 L 116,340 L 116,316 Z",lx:132,ly:328},
-  {id:"left_shin",      name:"Left Shin",      lbl:"L.Shin",  s:"p",d:"M 56,340 L 56,390 L 84,390 L 84,340 Z",lx:68,ly:366},
-  {id:"right_shin",     name:"Right Shin",     lbl:"R.Shin",  s:"p",d:"M 144,340 L 144,390 L 116,390 L 116,340 Z",lx:132,ly:366},
-  {id:"left_ankle",     name:"Left Ankle",     lbl:"L.Ankle", s:"p",d:"M 56,390 Q 54,408 66,414 L 82,414 Q 90,406 84,390 Z",lx:70,ly:404},
-  {id:"right_ankle",    name:"Right Ankle",    lbl:"R.Ankle", s:"p",d:"M 144,390 Q 146,408 134,414 L 118,414 Q 110,406 116,390 Z",lx:130,ly:404},
+  {id:"neck",           name:"Neck",           lbl:"Neck",    s:"p",d:"M 86,50 L114,50 L114,68 L86,68 Z",lx:100,ly:60},
+  {id:"left_shoulder",  name:"Left Shoulder",  lbl:"L.Shldr", s:"p",d:"M 28,72 L62,72 L62,112 L28,112 Z",lx:45,ly:92},
+  {id:"right_shoulder", name:"Right Shoulder", lbl:"R.Shldr", s:"p",d:"M 138,72 L172,72 L172,112 L138,112 Z",lx:155,ly:92},
+  {id:"chest",          name:"Chest",          lbl:"Chest",   s:"p",d:"M 60,110 L140,110 L140,168 L60,168 Z",lx:100,ly:140},
+  {id:"left_upper_arm", name:"Left Upper Arm", lbl:"L.Arm",   s:"p",d:"M 18,110 L62,110 L62,180 L18,180 Z",lx:38,ly:145},
+  {id:"right_upper_arm",name:"Right Upper Arm",lbl:"R.Arm",   s:"p",d:"M 138,110 L182,110 L182,180 L138,180 Z",lx:162,ly:145},
+  {id:"left_elbow",     name:"Left Elbow",     lbl:"L.Elbow", s:"p",d:"M 18,180 L62,180 L62,204 L18,204 Z",lx:38,ly:193},
+  {id:"right_elbow",    name:"Right Elbow",    lbl:"R.Elbow", s:"p",d:"M 138,180 L182,180 L182,204 L138,204 Z",lx:162,ly:193},
+  {id:"left_forearm",   name:"Left Forearm",   lbl:"L.Fore",  s:"p",d:"M 16,204 L60,204 L60,256 L16,256 Z",lx:36,ly:230},
+  {id:"right_forearm",  name:"Right Forearm",  lbl:"R.Fore",  s:"p",d:"M 140,204 L184,204 L184,256 L140,256 Z",lx:164,ly:230},
+  {id:"core",           name:"Core / Abs",     lbl:"Core",    s:"p",d:"M 60,168 L140,168 L140,222 L60,222 Z",lx:100,ly:196},
+  {id:"left_wrist",     name:"Left Wrist",     lbl:"L.Wrist", s:"p",d:"M 16,256 L58,256 L58,284 L16,284 Z",lx:36,ly:270},
+  {id:"right_wrist",    name:"Right Wrist",    lbl:"R.Wrist", s:"p",d:"M 142,256 L184,256 L184,284 L142,284 Z",lx:164,ly:270},
+  {id:"left_hip",       name:"Left Hip",       lbl:"L.Hip",   s:"p",d:"M 58,220 L86,220 L86,250 L56,250 Z",lx:68,ly:236},
+  {id:"right_hip",      name:"Right Hip",      lbl:"R.Hip",   s:"p",d:"M 114,220 L142,220 L144,250 L114,250 Z",lx:132,ly:236},
+  {id:"left_quad",      name:"Left Quad",      lbl:"L.Quad",  s:"p",d:"M 54,250 L86,250 L86,318 L54,318 Z",lx:68,ly:284},
+  {id:"right_quad",     name:"Right Quad",     lbl:"R.Quad",  s:"p",d:"M 114,250 L146,250 L146,318 L114,318 Z",lx:132,ly:284},
+  {id:"left_knee",      name:"Left Knee",      lbl:"L.Knee",  s:"p",d:"M 54,318 L86,318 L86,342 L54,342 Z",lx:68,ly:330},
+  {id:"right_knee",     name:"Right Knee",     lbl:"R.Knee",  s:"p",d:"M 114,318 L146,318 L146,342 L114,342 Z",lx:132,ly:330},
+  {id:"left_shin",      name:"Left Shin",      lbl:"L.Shin",  s:"p",d:"M 54,342 L86,342 L86,392 L54,392 Z",lx:68,ly:367},
+  {id:"right_shin",     name:"Right Shin",     lbl:"R.Shin",  s:"p",d:"M 114,342 L146,342 L146,392 L114,392 Z",lx:132,ly:367},
+  {id:"left_ankle",     name:"Left Ankle",     lbl:"L.Ankle", s:"p",d:"M 52,392 L88,392 L88,422 L52,422 Z",lx:70,ly:408},
+  {id:"right_ankle",    name:"Right Ankle",    lbl:"R.Ankle", s:"p",d:"M 112,392 L148,392 L148,422 L112,422 Z",lx:130,ly:408},
 ];
 
 const BACK=[
   {id:"head",            name:"Head",            lbl:"Head",    s:"e",cx:100,cy:28,rx:20,ry:23},
-  {id:"neck",            name:"Neck",            lbl:"Neck",    s:"p",d:"M 88,50 Q100,54 112,50 L114,66 Q100,70 86,66 Z",lx:100,ly:59},
-  {id:"left_shoulder",   name:"Left Shoulder",   lbl:"L.Shldr", s:"p",d:"M 86,66 Q 64,68 46,80 Q 36,88 34,106 L 60,110 Q 60,94 72,84 Q 82,74 88,66 Z",lx:52,ly:90},
-  {id:"right_shoulder",  name:"Right Shoulder",  lbl:"R.Shldr", s:"p",d:"M 114,66 Q 136,68 154,80 Q 164,88 166,106 L 140,110 Q 140,94 128,84 Q 118,74 112,66 Z",lx:148,ly:90},
-  {id:"upper_back",      name:"Upper Back",      lbl:"Up.Back", s:"p",d:"M 60,110 L 58,166 L 142,166 L 140,110 Q 118,118 100,118 Q 82,118 60,110 Z",lx:100,ly:138},
-  {id:"left_upper_arm",  name:"Left Upper Arm",  lbl:"L.Arm",   s:"p",d:"M 34,106 C 28,126 24,156 24,178 L 52,180 C 52,158 56,128 60,110 Z",lx:38,ly:142},
-  {id:"right_upper_arm", name:"Right Upper Arm", lbl:"R.Arm",   s:"p",d:"M 166,106 C 172,126 176,156 176,178 L 148,180 C 148,158 144,128 140,110 Z",lx:162,ly:142},
-  {id:"left_elbow",      name:"Left Elbow",      lbl:"Elbow",   s:"p",d:"M 24,178 L 22,200 L 52,200 L 52,180 Z",lx:38,ly:190},
-  {id:"right_elbow",     name:"Right Elbow",     lbl:"Elbow",   s:"p",d:"M 176,178 L 178,200 L 148,200 L 148,180 Z",lx:162,ly:190},
-  {id:"left_forearm",    name:"Left Forearm",    lbl:"L.Fore",  s:"p",d:"M 22,200 C 20,222 22,240 24,254 L 52,250 C 52,236 52,218 52,200 Z",lx:36,ly:226},
-  {id:"right_forearm",   name:"Right Forearm",   lbl:"R.Fore",  s:"p",d:"M 178,200 C 180,222 178,240 176,254 L 148,250 C 148,236 148,218 148,200 Z",lx:164,ly:226},
-  {id:"lower_back",      name:"Lower Back",      lbl:"Lo.Back", s:"p",d:"M 58,166 L 56,212 Q 76,228 100,230 Q 124,228 144,212 L 142,166 Z",lx:100,ly:192},
-  {id:"left_wrist",      name:"Left Wrist",      lbl:"L.Wrist", s:"p",d:"M 24,254 Q 22,272 34,278 Q 46,276 52,264 L 52,250 Z",lx:38,ly:264},
-  {id:"right_wrist",     name:"Right Wrist",     lbl:"R.Wrist", s:"p",d:"M 176,254 Q 178,272 166,278 Q 154,276 148,264 L 148,250 Z",lx:162,ly:264},
-  {id:"left_glute",      name:"Left Glute",      lbl:"L.Glute", s:"p",d:"M 56,212 Q 54,230 58,246 L 82,248 L 84,232 Q 70,226 56,212 Z",lx:64,ly:232},
-  {id:"right_glute",     name:"Right Glute",     lbl:"R.Glute", s:"p",d:"M 144,212 Q 146,230 142,246 L 118,248 L 116,232 Q 130,226 144,212 Z",lx:136,ly:232},
-  {id:"left_hamstring",  name:"Left Hamstring",  lbl:"L.Ham",   s:"p",d:"M 58,248 L 56,316 L 84,316 L 82,248 Z",lx:68,ly:282},
-  {id:"right_hamstring", name:"Right Hamstring", lbl:"R.Ham",   s:"p",d:"M 142,248 L 144,316 L 116,316 L 118,248 Z",lx:132,ly:282},
-  {id:"left_knee",       name:"Left Knee",       lbl:"L.Knee",  s:"p",d:"M 56,316 L 56,340 L 84,340 L 84,316 Z",lx:68,ly:328},
-  {id:"right_knee",      name:"Right Knee",      lbl:"R.Knee",  s:"p",d:"M 144,316 L 144,340 L 116,340 L 116,316 Z",lx:132,ly:328},
-  {id:"left_calf",       name:"Left Calf",       lbl:"L.Calf",  s:"p",d:"M 56,340 L 56,390 L 84,390 L 84,340 Z",lx:68,ly:366},
-  {id:"right_calf",      name:"Right Calf",      lbl:"R.Calf",  s:"p",d:"M 144,340 L 144,390 L 116,390 L 116,340 Z",lx:132,ly:366},
-  {id:"left_ankle",      name:"Left Ankle",      lbl:"L.Ankle", s:"p",d:"M 56,390 Q 54,408 66,414 L 82,414 Q 90,406 84,390 Z",lx:70,ly:404},
-  {id:"right_ankle",     name:"Right Ankle",     lbl:"R.Ankle", s:"p",d:"M 144,390 Q 146,408 134,414 L 118,414 Q 110,406 116,390 Z",lx:130,ly:404},
+  {id:"neck",            name:"Neck",            lbl:"Neck",    s:"p",d:"M 86,50 L114,50 L114,68 L86,68 Z",lx:100,ly:60},
+  {id:"left_shoulder",   name:"Left Shoulder",   lbl:"L.Shldr", s:"p",d:"M 28,72 L62,72 L62,112 L28,112 Z",lx:45,ly:92},
+  {id:"right_shoulder",  name:"Right Shoulder",  lbl:"R.Shldr", s:"p",d:"M 138,72 L172,72 L172,112 L138,112 Z",lx:155,ly:92},
+  {id:"upper_back",      name:"Upper Back",      lbl:"Up.Back", s:"p",d:"M 60,110 L140,110 L140,168 L60,168 Z",lx:100,ly:140},
+  {id:"left_upper_arm",  name:"Left Upper Arm",  lbl:"L.Arm",   s:"p",d:"M 18,110 L62,110 L62,180 L18,180 Z",lx:38,ly:145},
+  {id:"right_upper_arm", name:"Right Upper Arm", lbl:"R.Arm",   s:"p",d:"M 138,110 L182,110 L182,180 L138,180 Z",lx:162,ly:145},
+  {id:"left_elbow",      name:"Left Elbow",      lbl:"L.Elbow", s:"p",d:"M 18,180 L62,180 L62,204 L18,204 Z",lx:38,ly:193},
+  {id:"right_elbow",     name:"Right Elbow",     lbl:"R.Elbow", s:"p",d:"M 138,180 L182,180 L182,204 L138,204 Z",lx:162,ly:193},
+  {id:"left_forearm",    name:"Left Forearm",    lbl:"L.Fore",  s:"p",d:"M 16,204 L60,204 L60,256 L16,256 Z",lx:36,ly:230},
+  {id:"right_forearm",   name:"Right Forearm",   lbl:"R.Fore",  s:"p",d:"M 140,204 L184,204 L184,256 L140,256 Z",lx:164,ly:230},
+  {id:"lower_back",      name:"Lower Back",      lbl:"Lo.Back", s:"p",d:"M 60,168 L140,168 L140,222 L60,222 Z",lx:100,ly:196},
+  {id:"left_wrist",      name:"Left Wrist",      lbl:"L.Wrist", s:"p",d:"M 16,256 L58,256 L58,284 L16,284 Z",lx:36,ly:270},
+  {id:"right_wrist",     name:"Right Wrist",     lbl:"R.Wrist", s:"p",d:"M 142,256 L184,256 L184,284 L142,284 Z",lx:164,ly:270},
+  {id:"left_glute",      name:"Left Glute",      lbl:"L.Glute", s:"p",d:"M 58,220 L86,220 L86,250 L56,250 Z",lx:68,ly:236},
+  {id:"right_glute",     name:"Right Glute",     lbl:"R.Glute", s:"p",d:"M 114,220 L142,220 L144,250 L114,250 Z",lx:132,ly:236},
+  {id:"left_hamstring",  name:"Left Hamstring",  lbl:"L.Ham",   s:"p",d:"M 54,250 L86,250 L86,318 L54,318 Z",lx:68,ly:284},
+  {id:"right_hamstring", name:"Right Hamstring", lbl:"R.Ham",   s:"p",d:"M 114,250 L146,250 L146,318 L114,318 Z",lx:132,ly:284},
+  {id:"left_knee",       name:"Left Knee",       lbl:"L.Knee",  s:"p",d:"M 54,318 L86,318 L86,342 L54,342 Z",lx:68,ly:330},
+  {id:"right_knee",      name:"Right Knee",      lbl:"R.Knee",  s:"p",d:"M 114,318 L146,318 L146,342 L114,342 Z",lx:132,ly:330},
+  {id:"left_calf",       name:"Left Calf",       lbl:"L.Calf",  s:"p",d:"M 54,342 L86,342 L86,392 L54,392 Z",lx:68,ly:367},
+  {id:"right_calf",      name:"Right Calf",      lbl:"R.Calf",  s:"p",d:"M 114,342 L146,342 L146,392 L114,392 Z",lx:132,ly:367},
+  {id:"left_ankle",      name:"Left Ankle",      lbl:"L.Ankle", s:"p",d:"M 52,392 L88,392 L88,422 L52,422 Z",lx:70,ly:408},
+  {id:"right_ankle",     name:"Right Ankle",     lbl:"R.Ankle", s:"p",d:"M 112,392 L148,392 L148,422 L112,422 Z",lx:130,ly:408},
 ];
 
-// Silhouette — single smooth unified body with natural arm hang and feet
-const Silhouette=()=>(
-  <g fill="#202020" stroke="#303030" strokeWidth="1" strokeLinejoin="round" style={{pointerEvents:"none"}}>
-    {/* Head */}
-    <ellipse cx="100" cy="28" rx="20" ry="23"/>
-    {/* Neck */}
-    <path d="M 88,50 Q100,54 112,50 L114,66 Q100,70 86,66 Z"/>
-    {/* Torso — tapers at waist, flares at hip */}
-    <path d="M 86,66 Q 62,68 44,80 Q 32,90 32,110 L 60,110 Q 58,158 56,212 Q 64,230 82,240 L100,242 L118,240 Q 136,230 144,212 Q 142,158 140,110 L 168,110 Q 168,90 156,80 Q 138,68 114,66 Q 108,70 100,70 Q 92,70 86,66 Z"/>
-    {/* Left arm — smooth taper, natural hang */}
-    <path d="M 32,110 C 26,130 22,158 22,180 C 20,202 22,234 24,256 Q 26,274 34,280 Q 44,278 52,266 L 52,250 C 52,228 52,200 52,180 C 52,156 56,128 60,110 Z"/>
-    {/* Right arm */}
-    <path d="M 168,110 C 174,130 178,158 178,180 C 180,202 178,234 176,256 Q 174,274 166,280 Q 156,278 148,266 L 148,250 C 148,228 148,200 148,180 C 148,156 144,128 140,110 Z"/>
-    {/* Left leg — tapered, with foot */}
-    <path d="M 82,242 Q 62,244 58,258 L 56,316 Q 54,330 56,342 L 56,392 Q 54,410 66,416 L 82,416 Q 92,408 84,394 L 84,342 Q 86,330 84,316 L 84,244 Z"/>
-    {/* Right leg */}
-    <path d="M 118,242 Q 138,244 142,258 L 144,316 Q 146,330 144,342 L 144,392 Q 146,410 134,416 L 118,416 Q 108,408 116,394 L 116,342 Q 114,330 116,316 L 116,244 Z"/>
-  </g>
-);
+// Silhouette shape — also used as clipPath for zone overlays
+// Torso has proper hourglass: wide shoulder → narrow waist → flare at hip
+const BODY_PATHS = [
+  // Head
+  {type:"e", cx:100, cy:28, rx:20, ry:23},
+  // Neck
+  {type:"p", d:"M 88,50 Q100,55 112,50 L113,68 Q100,72 87,68 Z"},
+  // Torso: shoulder→waist→hip, both sides
+  {type:"p", d:"M 87,68 Q 60,70 42,82 Q 28,92 28,112 L 60,112 C 57,138 67,162 70,180 C 65,198 62,212 64,220 Q 68,234 84,246 L100,248 L116,246 Q 132,234 136,220 C 138,212 135,198 130,180 C 133,162 143,138 140,112 L 172,112 Q 172,92 158,82 Q 140,70 113,68 Q 107,72 100,72 Q 93,72 87,68 Z"},
+  // Left arm
+  {type:"p", d:"M 28,112 C 22,132 18,162 18,184 C 16,208 18,240 20,260 Q 22,278 32,284 Q 44,282 52,268 L 52,256 C 52,232 52,206 52,184 C 52,160 58,130 60,112 Z"},
+  // Right arm
+  {type:"p", d:"M 172,112 C 178,132 182,162 182,184 C 184,208 182,240 180,260 Q 178,278 168,284 Q 156,282 148,268 L 148,256 C 148,232 148,206 148,184 C 148,160 142,130 140,112 Z"},
+  // Left leg
+  {type:"p", d:"M 84,246 Q 64,248 58,262 L 56,318 Q 54,332 56,344 L 56,392 Q 54,412 68,418 L 84,418 Q 92,410 86,396 L 86,344 Q 88,332 86,318 L 84,248 Z"},
+  // Right leg
+  {type:"p", d:"M 116,246 Q 136,248 142,262 L 144,318 Q 146,332 144,344 L 144,392 Q 146,412 132,418 L 116,418 Q 108,410 114,396 L 114,344 Q 112,332 114,318 L 116,248 Z"},
+];
+
+function BodyPaths({fill, stroke, strokeWidth, style}){
+  return(
+    <g fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeLinejoin="round" style={style}>
+      {BODY_PATHS.map((p,i)=>
+        p.type==="e"
+          ? <ellipse key={i} cx={p.cx} cy={p.cy} rx={p.rx} ry={p.ry}/>
+          : <path key={i} d={p.d}/>
+      )}
+    </g>
+  );
+}
 
 function ZoneEl({z,fill,stroke,sw}){
   const p={fill,stroke,strokeWidth:sw};
@@ -93,6 +102,18 @@ function ZoneEl({z,fill,stroke,sw}){
 }
 
 function sk(id){return id.replace(/^(left_|right_)/,"");}
+
+function ytUrl(name){
+  return "https://www.youtube.com/results?search_query="+encodeURIComponent(name+" how to stretch");
+}
+
+function fmtDate(iso){
+  if(!iso)return null;
+  try{
+    const d=new Date(iso);
+    return d.toLocaleDateString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+  }catch(e){return null;}
+}
 
 const STRETCHES={
   head:[
@@ -249,16 +270,18 @@ const STRETCHES={
   ],
 };
 
-export default function InjuryBodyMap({athleteId}){
+export default function InjuryBodyMap({athleteId, readOnly=false}){
   const[view,setView]=useState("front");
   const[partData,setPartData]=useState({});
   const[selected,setSelected]=useState(null);
   const[pStatus,setPStatus]=useState("good");
   const[pPain,setPPain]=useState(0);
   const[pDesc,setPDesc]=useState("");
+  const[notifyCoach,setNotifyCoach]=useState(true);
   const[saving,setSaving]=useState(false);
   const[saved,setSaved]=useState(false);
   const[saveErr,setSaveErr]=useState(false);
+  const[clearing,setClearing]=useState(false);
 
   useEffect(()=>{
     if(!athleteId)return;
@@ -274,18 +297,21 @@ export default function InjuryBodyMap({athleteId}){
   },[athleteId]);
 
   const selectPart=(id)=>{
+    if(readOnly)return;
     setSelected(id);
     const ex=partData[id];
     setPStatus(ex?.status||"good");
     setPPain(ex?.pain||0);
     setPDesc(ex?.description||"");
+    setNotifyCoach(true);
     setSaved(false);setSaveErr(false);
   };
 
   const savePart=async()=>{
     if(!selected)return;
     setSaving(true);setSaved(false);setSaveErr(false);
-    const msg=JSON.stringify({status:pStatus,pain:pPain,description:pDesc.trim(),updatedAt:new Date().toISOString()});
+    const now=new Date().toISOString();
+    const msg=JSON.stringify({status:pStatus,pain:pPain,description:pDesc.trim(),updatedAt:now});
     try{
       const{error:de}=await supabase.from("announcements").delete()
         .eq("type","body_injury").eq("day",String(athleteId)).eq("week_label",selected);
@@ -294,7 +320,16 @@ export default function InjuryBodyMap({athleteId}){
         type:"body_injury",day:String(athleteId),week_label:selected,message:msg,active:true,
       });
       if(ie)throw ie;
-      setPartData(prev=>({...prev,[selected]:{status:pStatus,pain:pPain,description:pDesc.trim()}}));
+      setPartData(prev=>({...prev,[selected]:{status:pStatus,pain:pPain,description:pDesc.trim(),updatedAt:now}}));
+
+      if(notifyCoach&&pStatus!=="good"){
+        const zoneName=([...FRONT,...BACK].find(z=>z.id===selected)||{}).name||selected;
+        const inboxMsg=`Body Map — ${zoneName}: ${STATUS[pStatus].label}${pPain>0?" (pain "+pPain+"/10)":""}. ${pDesc.trim()}`;
+        try{
+          await supabase.from("inbox").insert({athlete_id:athleteId,type:"injury",message:inboxMsg});
+        }catch(e2){}
+      }
+
       setSaved(true);
       setTimeout(()=>setSaved(false),3000);
     }catch(e){
@@ -305,6 +340,18 @@ export default function InjuryBodyMap({athleteId}){
     setSaving(false);
   };
 
+  const clearAll=async()=>{
+    setClearing(true);
+    try{
+      const{error}=await supabase.from("announcements").delete()
+        .eq("type","body_injury").eq("day",String(athleteId));
+      if(error)throw error;
+      setPartData({});
+      setSelected(null);
+    }catch(e){console.error("Clear all error",e);}
+    setClearing(false);
+  };
+
   const zones=view==="front"?FRONT:BACK;
   const selZone=zones.find(z=>z.id===selected);
   const strKey=sk(selected||"");
@@ -312,37 +359,42 @@ export default function InjuryBodyMap({athleteId}){
   const descEnough=pDesc.trim().length>=10;
   const showStretches=selected&&pStatus!=="good"&&stretches.length>0;
   const injCount=Object.values(partData).filter(d=>d.status==="sore"||d.status==="pain").length;
+  const clipId=`bc-${athleteId}`;
 
   const zoneFill=(id)=>{
     const d=partData[id];
-    if(!d?.status||d.status==="good")return "rgba(255,255,255,0.04)";
+    if(!d?.status||d.status==="good")return "rgba(255,255,255,0.03)";
     return (STATUS[d.status]?.color||"")+"55";
   };
   const zoneStroke=(id)=>{
     const d=partData[id];
-    if(!d?.status||d.status==="good")return "rgba(255,255,255,0.08)";
+    if(!d?.status||d.status==="good")return "rgba(255,255,255,0.07)";
     return (STATUS[d.status]?.color||"")+"99";
   };
-  const labelColor=(id)=>{
-    const d=partData[id];
-    if(!d?.status||d.status==="good")return "#3a3a3a";
-    return "#fff";
-  };
+
+  const selEx=selected?partData[selected]:null;
 
   return(
     <div>
       {/* Header */}
       <div style={{background:"#111",borderRadius:12,padding:"14px 16px",marginBottom:12,border:"1px solid "+RED+"33",borderLeft:"3px solid "+RED}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
           <div>
             <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:2}}>Body Check-In</div>
-            <div style={{fontSize:11,color:"#555"}}>Tap any body part — coach can see your status</div>
+            <div style={{fontSize:11,color:"#555"}}>{readOnly?"Athlete's injury status":"Tap any body part — coach can see your status"}</div>
           </div>
-          {injCount>0&&(
-            <div style={{fontSize:10,color:RED,fontWeight:800,background:RED+"18",padding:"4px 10px",borderRadius:20,border:"1px solid "+RED+"44",whiteSpace:"nowrap"}}>
-              {injCount} area{injCount>1?"s":""} flagged
-            </div>
-          )}
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {injCount>0&&!readOnly&&(
+              <button onClick={clearAll} disabled={clearing} style={{fontSize:10,color:"#888",background:"transparent",border:"1px solid #333",padding:"3px 10px",borderRadius:10,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                {clearing?"...":"Clear All"}
+              </button>
+            )}
+            {injCount>0&&(
+              <div style={{fontSize:10,color:RED,fontWeight:800,background:RED+"18",padding:"4px 10px",borderRadius:20,border:"1px solid "+RED+"44",whiteSpace:"nowrap"}}>
+                {injCount} area{injCount>1?"s":""} flagged
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -363,37 +415,46 @@ export default function InjuryBodyMap({athleteId}){
             {v.label}
           </div>
         ))}
-        <div style={{display:"flex",alignItems:"center",gap:5,fontSize:10,color:"#888"}}>
-          <div style={{width:10,height:10,borderRadius:"50%",background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)"}}/>
-          Not set
-        </div>
       </div>
 
       {/* SVG Body Map */}
       <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
-        <svg viewBox="12 4 176 418" style={{width:"100%",maxWidth:220,height:"auto"}}>
-          <Silhouette/>
-          {/* Interactive zones */}
-          {zones.map(z=>{
-            const isSel=selected===z.id;
-            const lc=labelColor(z.id);
-            const lx=z.s==="e"?z.cx:z.lx;
-            const ly=z.s==="e"?z.cy+2.5:z.ly+2.5;
-            return(
-              <g key={z.id} onClick={()=>selectPart(z.id)} style={{cursor:"pointer"}}>
-                <ZoneEl z={z} fill={zoneFill(z.id)} stroke={isSel?"#fff":zoneStroke(z.id)} sw={isSel?2:0.8}/>
-                {isSel&&<ZoneEl z={z} fill="none" stroke="rgba(255,255,255,0.25)" sw={3.5}/>}
-                <text x={lx} y={ly} textAnchor="middle" fontSize={6} fill={lc} fontWeight="600"
-                  style={{pointerEvents:"none",userSelect:"none",fontFamily:"sans-serif"}}>
-                  {z.lbl}
-                </text>
-                {/* Status dot */}
-                {partData[z.id]?.status&&partData[z.id].status!=="good"&&(
-                  <circle cx={lx+7} cy={ly-8} r={4} fill={STATUS[partData[z.id].status]?.color} stroke="#111" strokeWidth="1" style={{pointerEvents:"none"}}/>
-                )}
-              </g>
-            );
-          })}
+        <svg viewBox="12 4 176 426" style={{width:"100%",maxWidth:220,height:"auto"}}>
+          <defs>
+            <clipPath id={clipId}>
+              {BODY_PATHS.map((p,i)=>
+                p.type==="e"
+                  ? <ellipse key={i} cx={p.cx} cy={p.cy} rx={p.rx} ry={p.ry}/>
+                  : <path key={i} d={p.d}/>
+              )}
+            </clipPath>
+          </defs>
+
+          {/* Silhouette base */}
+          <BodyPaths fill="#202020" stroke="#2e2e2e" strokeWidth="1" style={{pointerEvents:"none"}}/>
+
+          {/* Interactive zone overlays — clipped to body shape */}
+          <g clipPath={`url(#${clipId})`}>
+            {zones.map(z=>{
+              const isSel=selected===z.id;
+              const lx=z.s==="e"?z.cx:z.lx;
+              const ly=z.s==="e"?z.cy+2.5:z.ly+2.5;
+              const hasStatus=partData[z.id]?.status&&partData[z.id].status!=="good";
+              return(
+                <g key={z.id} onClick={()=>selectPart(z.id)} style={{cursor:readOnly?"default":"pointer"}}>
+                  <ZoneEl z={z} fill={zoneFill(z.id)} stroke={isSel?"rgba(255,255,255,0.6)":zoneStroke(z.id)} sw={isSel?1.5:0.6}/>
+                  {isSel&&<ZoneEl z={z} fill="rgba(255,255,255,0.06)" stroke="none" sw={0}/>}
+                  <text x={lx} y={ly} textAnchor="middle" fontSize={5.5} fill={hasStatus?"#fff":"#3a3a3a"} fontWeight={hasStatus?"700":"400"}
+                    style={{pointerEvents:"none",userSelect:"none",fontFamily:"sans-serif"}}>
+                    {z.lbl}
+                  </text>
+                  {hasStatus&&(
+                    <circle cx={lx+8} cy={ly-9} r={3.5} fill={STATUS[partData[z.id].status]?.color} stroke="#111" strokeWidth="0.8" style={{pointerEvents:"none"}}/>
+                  )}
+                </g>
+              );
+            })}
+          </g>
         </svg>
       </div>
 
@@ -404,9 +465,14 @@ export default function InjuryBodyMap({athleteId}){
       )}
 
       {/* Detail panel */}
-      {selected&&selZone&&(
+      {selected&&selZone&&!readOnly&&(
         <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid #222",borderLeft:"3px solid "+RED}}>
-          <div style={{fontSize:16,fontWeight:900,color:"#fff",marginBottom:14}}>{selZone.name}</div>
+          <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:14,gap:8}}>
+            <div style={{fontSize:16,fontWeight:900,color:"#fff"}}>{selZone.name}</div>
+            {selEx?.updatedAt&&(
+              <div style={{fontSize:10,color:"#555",flexShrink:0}}>Updated {fmtDate(selEx.updatedAt)}</div>
+            )}
+          </div>
 
           {/* Status buttons */}
           <div style={{marginBottom:14}}>
@@ -455,9 +521,19 @@ export default function InjuryBodyMap({athleteId}){
             />
           </div>
 
+          {/* Notify coach toggle */}
+          {pStatus!=="good"&&(
+            <div style={{marginBottom:14,display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>setNotifyCoach(v=>!v)}>
+              <div style={{width:32,height:18,borderRadius:9,background:notifyCoach?RED+"cc":"#2a2a2a",border:"1px solid "+(notifyCoach?RED+"66":"#333"),position:"relative",transition:"background 0.2s",flexShrink:0}}>
+                <div style={{position:"absolute",top:2,left:notifyCoach?15:2,width:12,height:12,borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
+              </div>
+              <div style={{fontSize:11,color:notifyCoach?"#ddd":"#555"}}>Notify coach when saved</div>
+            </div>
+          )}
+
           {/* Save row */}
           <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",gap:10}}>
-            {saved&&<div style={{fontSize:11,color:GREEN,fontWeight:700}}>✓ Saved</div>}
+            {saved&&<div style={{fontSize:11,color:GREEN,fontWeight:700}}>✓ Saved{notifyCoach&&pStatus!=="good"?" · Coach notified":""}</div>}
             {saveErr&&<div style={{fontSize:11,color:RED,fontWeight:700}}>Save failed — try again</div>}
             <button onClick={savePart} disabled={saving} style={{padding:"10px 24px",borderRadius:8,border:"none",background:saving?"#1a1a1a":"linear-gradient(135deg,"+RED+","+RED+"cc)",color:saving?"#444":"#fff",fontSize:12,fontWeight:700,cursor:saving?"default":"pointer",fontFamily:"Georgia,serif"}}>
               {saving?"Saving...":"Save"}
@@ -467,7 +543,7 @@ export default function InjuryBodyMap({athleteId}){
       )}
 
       {/* Stretches — locked until description */}
-      {showStretches&&!descEnough&&(
+      {showStretches&&!descEnough&&!readOnly&&(
         <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid "+SORE+"33",textAlign:"center"}}>
           <div style={{fontSize:20,marginBottom:8}}>🔒</div>
           <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:4}}>Describe your injury first</div>
@@ -475,7 +551,7 @@ export default function InjuryBodyMap({athleteId}){
         </div>
       )}
 
-      {showStretches&&descEnough&&(
+      {showStretches&&(descEnough||readOnly)&&(
         <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid "+SORE+"33",borderLeft:"3px solid "+SORE}}>
           <div style={{fontSize:14,fontWeight:900,color:"#fff",marginBottom:4}}>Stretches — {selZone.name}</div>
           <div style={{fontSize:11,color:SORE,marginBottom:14,lineHeight:1.6,background:SORE+"11",padding:"10px 12px",borderRadius:8,border:"1px solid "+SORE+"22"}}>
@@ -487,7 +563,11 @@ export default function InjuryBodyMap({athleteId}){
                 <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{s.name}</div>
                 <div style={{fontSize:9,color:SORE,fontWeight:700,background:SORE+"18",padding:"3px 8px",borderRadius:10,whiteSpace:"nowrap",flexShrink:0}}>{s.duration}</div>
               </div>
-              <div style={{fontSize:12,color:"#888",lineHeight:1.65}}>{s.desc}</div>
+              <div style={{fontSize:12,color:"#888",lineHeight:1.65,marginBottom:8}}>{s.desc}</div>
+              <a href={ytUrl(s.name)} target="_blank" rel="noopener noreferrer"
+                style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:11,color:"#ff4444",textDecoration:"none",background:"#ff000014",padding:"4px 10px",borderRadius:8,border:"1px solid #ff333322"}}>
+                ▶ Watch on YouTube
+              </a>
             </div>
           ))}
         </div>

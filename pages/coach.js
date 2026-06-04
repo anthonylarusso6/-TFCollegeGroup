@@ -11,6 +11,7 @@ import Accountability from "../components/Accountability";
 import FellowshipFriday from "../components/FellowshipFriday";
 import MindsetMonday from "../components/MindsetMonday";
 import CultureEvents from "../components/CultureEvents";
+import InjuryBodyMap from "../components/InjuryBodyMap";
 
 const COACH_PIN="1803";
 
@@ -144,6 +145,8 @@ export default function Coach(){
   const[groupmeLinkInput,setGroupmeLinkInput]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
   const[groupmeLinkSaving,setGroupmeLinkSaving]=useState(false);
   const[groupmeLinkSaved,setGroupmeLinkSaved]=useState(false);
+  const[bodyInjuries,setBodyInjuries]=useState({});
+  const[injExpanded,setInjExpanded]=useState(null);
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
@@ -157,6 +160,10 @@ export default function Coach(){
 
   useEffect(()=>{
     if(tab==="mcastles-post")loadMcPhoto();
+  },[tab]);
+
+  useEffect(()=>{
+    if(tab==="injuries")loadBodyInjuries();
   },[tab]);
 
   const loadAll=async()=>{
@@ -212,6 +219,20 @@ export default function Coach(){
     try{
       const{data}=await supabase.from("announcements").select("day").eq("type","groupme_link").order("created_at",{ascending:false}).limit(1).maybeSingle();
       if(data?.day){setGroupmeLink(data.day);setGroupmeLinkInput(data.day);}
+    }catch(e){}
+  };
+
+  const loadBodyInjuries=async()=>{
+    try{
+      const{data}=await supabase.from("announcements")
+        .select("day,week_label,message")
+        .eq("type","body_injury").eq("active",true);
+      const result={};
+      (data||[]).forEach(r=>{
+        if(!result[r.day])result[r.day]={};
+        try{result[r.day][r.week_label]=JSON.parse(r.message);}catch(e){}
+      });
+      setBodyInjuries(result);
     }catch(e){}
   };
 
@@ -487,6 +508,7 @@ export default function Coach(){
     {id:"engagement",label:"Engagement",icon:"📢"},
     {id:"qr",label:"QR Code",icon:"📱"},
     {id:"mcastles-post",label:"MCastles 🍑",icon:"🍑"},
+    {id:"injuries",label:"Injuries",icon:"🩺"},
   ];
   // Kevin only sees roster, mindset and attendance
   const KEVIN_TABS=["roster","mindset","attendance"];
@@ -2366,6 +2388,103 @@ export default function Coach(){
               </div>
             </div>
           )}
+          {tab==="injuries"&&(()=>{
+            const SORE="#C8941F";
+            const activeAthletes=athletes.filter(a=>a.status==="active");
+            const flagged=activeAthletes.filter(a=>{
+              const parts=bodyInjuries[String(a.id)]||{};
+              return Object.values(parts).some(p=>p.status==="sore"||p.status==="pain");
+            });
+            const clear=activeAthletes.filter(a=>{
+              const parts=bodyInjuries[String(a.id)]||{};
+              return !Object.values(parts).some(p=>p.status==="sore"||p.status==="pain");
+            });
+            return(
+              <div>
+                <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+RED+"33"}}>
+                  <div style={{background:"linear-gradient(140deg,"+RED+"30,"+RED+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+RED+"44,transparent)"}}/>
+                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none"}}>🩺</div>
+                    <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+RED+"44,"+RED+"22)",border:"1px solid "+RED+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🩺</div>
+                      <div>
+                        <div style={{fontSize:8,color:RED,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Athletes</div>
+                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Injury Check-In</div>
+                        <div style={{fontSize:11,color:"#666",marginTop:1}}>{flagged.length} flagged · {clear.length} all good
+                          <button onClick={loadBodyInjuries} style={{marginLeft:10,fontSize:10,color:"#555",background:"transparent",border:"1px solid #333",padding:"2px 8px",borderRadius:8,cursor:"pointer",fontFamily:"Georgia,serif"}}>↻ Refresh</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{background:"#111",padding:"16px 18px"}}>
+                    {flagged.length===0&&(
+                      <div style={{textAlign:"center",padding:"24px",color:"#555",fontSize:13,fontStyle:"italic"}}>No athletes have flagged any body parts 💚</div>
+                    )}
+                    {flagged.map(a=>{
+                      const parts=bodyInjuries[String(a.id)]||{};
+                      const painParts=Object.entries(parts).filter(([,v])=>v.status==="pain");
+                      const soreParts=Object.entries(parts).filter(([,v])=>v.status==="sore");
+                      const isOpen=injExpanded===a.id;
+                      return(
+                        <div key={a.id} style={{borderBottom:"0.5px solid #1e1e1e",paddingBottom:12,marginBottom:12}}>
+                          <div style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>setInjExpanded(isOpen?null:a.id)}>
+                            <div style={{width:38,height:38,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:600,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                              {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
+                            </div>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:4}}>{a.name}</div>
+                              <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                                {painParts.map(([id])=>(
+                                  <span key={id} style={{fontSize:9,background:RED+"22",color:RED,padding:"2px 8px",borderRadius:10,border:"1px solid "+RED+"44",fontWeight:700}}>🔴 {id.replace(/_/g," ")}</span>
+                                ))}
+                                {soreParts.map(([id])=>(
+                                  <span key={id} style={{fontSize:9,background:SORE+"22",color:SORE,padding:"2px 8px",borderRadius:10,border:"1px solid "+SORE+"44",fontWeight:600}}>🟡 {id.replace(/_/g," ")}</span>
+                                ))}
+                              </div>
+                            </div>
+                            <div style={{fontSize:12,color:"#555"}}>{isOpen?"▲":"▼"}</div>
+                          </div>
+                          {isOpen&&(
+                            <div style={{marginTop:12,paddingLeft:48}}>
+                              {[...painParts,...soreParts].map(([id,v])=>(
+                                <div key={id} style={{marginBottom:8,padding:"10px 12px",borderRadius:10,background:"#0e0e0e",border:"1px solid "+(v.status==="pain"?RED+"33":SORE+"33"),borderLeft:"3px solid "+(v.status==="pain"?RED:SORE)}}>
+                                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:v.description?6:0}}>
+                                    <span style={{fontSize:12,fontWeight:700,color:"#ddd",textTransform:"capitalize"}}>{id.replace(/_/g," ")}</span>
+                                    <span style={{fontSize:10,color:v.status==="pain"?RED:SORE,fontWeight:700,background:(v.status==="pain"?RED:SORE)+"18",padding:"2px 8px",borderRadius:8}}>
+                                      {v.status==="pain"?"In Pain":"A Little Sore"}{v.pain>0?" · "+v.pain+"/10":""}
+                                    </span>
+                                  </div>
+                                  {v.description&&<div style={{fontSize:12,color:"#777",lineHeight:1.55,fontStyle:"italic"}}>"{v.description}"</div>}
+                                  {v.updatedAt&&<div style={{fontSize:9,color:"#444",marginTop:4}}>{new Date(v.updatedAt).toLocaleDateString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</div>}
+                                </div>
+                              ))}
+                              <div style={{marginTop:10}}>
+                                <InjuryBodyMap athleteId={a.id} readOnly={true}/>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {clear.length>0&&flagged.length>0&&(
+                      <div style={{paddingTop:8,borderTop:"0.5px solid #1a1a1a"}}>
+                        <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>All Good</div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                          {clear.map(a=>(
+                            <div key={a.id} style={{display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:20,background:"#141414",border:"0.5px solid #1e1e1e"}}>
+                              <div style={{width:20,height:20,borderRadius:"50%",background:GREEN+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9}}>✓</div>
+                              <span style={{fontSize:11,color:"#666"}}>{a.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           </ErrorBoundary>
         </div>
       </div>
