@@ -66,21 +66,25 @@ const BACK=[
 
 // Silhouette shape — also used as clipPath for zone overlays
 // Torso has proper hourglass: wide shoulder → narrow waist → flare at hip
+// Silhouette drawn as separate overlapping shapes filled the same colour.
+// Key proportions: sloped shoulders (~20°), hourglass waist, tapered arms,
+// knee/calf/ankle definition, natural hip-to-crotch spread.
 const BODY_PATHS = [
   // Head
-  {type:"e", cx:100, cy:28, rx:20, ry:23},
+  {type:"e", cx:100, cy:27, rx:21, ry:24},
   // Neck
-  {type:"p", d:"M 88,50 Q100,55 112,50 L113,68 Q100,72 87,68 Z"},
-  // Torso: shoulder→waist→hip, both sides
-  {type:"p", d:"M 87,68 Q 60,70 42,82 Q 28,92 28,112 L 60,112 C 57,138 67,162 70,180 C 65,198 62,212 64,220 Q 68,234 84,246 L100,248 L116,246 Q 132,234 136,220 C 138,212 135,198 130,180 C 133,162 143,138 140,112 L 172,112 Q 172,92 158,82 Q 140,70 113,68 Q 107,72 100,72 Q 93,72 87,68 Z"},
-  // Left arm
-  {type:"p", d:"M 28,112 C 22,132 18,162 18,184 C 16,208 18,240 20,260 Q 22,278 32,284 Q 44,282 52,268 L 52,256 C 52,232 52,206 52,184 C 52,160 58,130 60,112 Z"},
-  // Right arm
-  {type:"p", d:"M 172,112 C 178,132 182,162 182,184 C 184,208 182,240 180,260 Q 178,278 168,284 Q 156,282 148,268 L 148,256 C 148,232 148,206 148,184 C 148,160 142,130 140,112 Z"},
-  // Left leg
-  {type:"p", d:"M 84,246 Q 64,248 58,262 L 56,318 Q 54,332 56,344 L 56,392 Q 54,412 68,418 L 84,418 Q 92,410 86,396 L 86,344 Q 88,332 86,318 L 84,248 Z"},
-  // Right leg
-  {type:"p", d:"M 116,246 Q 136,248 142,262 L 144,318 Q 146,332 144,344 L 144,392 Q 146,412 132,418 L 116,418 Q 108,410 114,396 L 114,344 Q 112,332 114,318 L 116,248 Z"},
+  {type:"p", d:"M 90,50 Q100,55 110,50 L112,70 Q100,74 88,70 Z"},
+  // Torso — sloped shoulder, true hourglass (wide chest→narrow waist→hip flare)
+  // Shoulders slope ~20° from horizontal, deltoid curves to armpit, waist narrows
+  {type:"p", d:"M 88,70 C 68,72 50,76 36,88 C 26,96 26,108 30,118 L 62,118 C 59,142 67,164 70,184 C 66,200 64,214 66,224 Q 68,238 82,250 L 100,252 L 118,250 Q 132,238 134,224 C 136,214 134,200 130,184 C 133,164 141,142 138,118 L 170,118 Q 174,108 174,96 C 170,82 152,74 112,70 Q 106,74 100,74 Q 94,74 88,70 Z"},
+  // Left arm — deltoid start, tapers shoulder→bicep→forearm→wrist, slight outward bow
+  {type:"p", d:"M 30,118 C 24,138 20,166 19,188 C 17,212 19,248 21,268 Q 22,282 26,292 C 30,300 38,302 44,296 C 48,290 50,278 50,268 C 51,244 53,212 55,188 C 57,166 60,140 62,118 Z"},
+  // Right arm (mirror)
+  {type:"p", d:"M 170,118 C 176,138 180,166 181,188 C 183,212 181,248 179,268 Q 178,282 174,292 C 170,300 162,302 156,296 C 152,290 150,278 150,268 C 149,244 147,212 145,188 C 143,166 140,140 138,118 Z"},
+  // Left leg — outer thigh flare, knee knob, calf bulge, ankle narrows, foot
+  {type:"p", d:"M 82,250 C 74,250 64,256 60,266 L 58,320 Q 56,334 54,342 C 54,358 56,374 56,388 C 56,402 58,414 62,420 L 72,426 L 82,426 Q 90,418 86,404 C 84,390 84,370 84,342 Q 84,334 84,320 L 84,250 Z"},
+  // Right leg (mirror)
+  {type:"p", d:"M 118,250 C 126,250 136,256 140,266 L 142,320 Q 144,334 146,342 C 146,358 144,374 144,388 C 144,402 142,414 138,420 L 128,426 L 118,426 Q 110,418 114,404 C 116,390 116,370 116,342 Q 116,334 116,320 L 116,250 Z"},
 ];
 
 function BodyPaths({fill, stroke, strokeWidth, style}){
@@ -419,7 +423,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
 
       {/* SVG Body Map */}
       <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
-        <svg viewBox="12 4 176 426" style={{width:"100%",maxWidth:220,height:"auto"}}>
+        <svg viewBox="12 4 176 430" style={{width:"100%",maxWidth:220,height:"auto"}}>
           <defs>
             <clipPath id={clipId}>
               {BODY_PATHS.map((p,i)=>
