@@ -12,8 +12,8 @@ const STATUS = {
 
 const MUSCLE_NAMES = {
   head:"Head", neck:"Neck",
-  "front-deltoids":"Front Deltoids", "back-deltoids":"Rear Deltoids",
-  trapezius:"Trapezius", chest:"Chest",
+  "front-deltoids":"Shoulders", "back-deltoids":"Rear Delts",
+  trapezius:"Traps", chest:"Chest",
   biceps:"Biceps", triceps:"Triceps", forearm:"Forearm",
   abs:"Abs", obliques:"Obliques",
   "upper-back":"Upper Back", "lower-back":"Lower Back",
@@ -22,6 +22,16 @@ const MUSCLE_NAMES = {
   calves:"Calves", knees:"Knees",
   "left-soleus":"Left Shin", "right-soleus":"Right Shin",
 };
+
+// chips shown for each view — ordered head→toe
+const FRONT_CHIPS = [
+  "head","neck","chest","front-deltoids","biceps","forearm",
+  "abs","obliques","adductor","quadriceps","knees","left-soleus","right-soleus",
+];
+const BACK_CHIPS = [
+  "head","neck","trapezius","upper-back","lower-back",
+  "back-deltoids","triceps","forearm","gluteal","hamstring","abductors","calves",
+];
 
 const MUSCLE_STRETCH = {
   head:"head", neck:"neck",
@@ -242,7 +252,6 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       setSaved(true);
       setTimeout(()=>setSaved(false),3000);
     }catch(e){
-      console.error("Body map save error",e);
       setSaveErr(true);
       setTimeout(()=>setSaveErr(false),4000);
     }
@@ -257,7 +266,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       if(error)throw error;
       setPartData({});
       setSelected(null);
-    }catch(e){console.error("Clear all error",e);}
+    }catch(e){}
     setClearing(false);
   };
 
@@ -267,6 +276,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       .map(([id,d])=>({name:id,muscles:[id],frequency:d.status==="pain"?2:1}))
   ,[partData]);
 
+  const chips=view==="front"?FRONT_CHIPS:BACK_CHIPS;
   const selName=selected?MUSCLE_NAMES[selected]||selected:null;
   const strKey=selected?MUSCLE_STRETCH[selected]||"":null;
   const stretches=strKey?STRETCHES[strKey]||[]:[];
@@ -275,14 +285,26 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
   const injCount=Object.values(partData).filter(d=>d.status==="sore"||d.status==="pain").length;
   const selEx=selected?partData[selected]:null;
 
+  const chipColor=(id)=>{
+    const d=partData[id];
+    if(!d?.status||d.status==="good")return null;
+    return STATUS[d.status]?.color||null;
+  };
+
   return(
     <div>
+      {/* CSS for polygon hover glow */}
+      <style>{`
+        .rbh polygon{transition:opacity 0.12s,filter 0.12s;}
+        .rbh polygon:hover{opacity:0.6!important;filter:brightness(1.8) saturate(1.4);cursor:pointer;}
+      `}</style>
+
       {/* Header */}
       <div style={{background:"#111",borderRadius:12,padding:"14px 16px",marginBottom:12,border:"1px solid "+RED+"33",borderLeft:"3px solid "+RED}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
           <div>
             <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:2}}>Body Check-In</div>
-            <div style={{fontSize:11,color:"#555"}}>{readOnly?"Athlete's injury status":"Tap any body part — coach can see your status"}</div>
+            <div style={{fontSize:11,color:"#555"}}>{readOnly?"Athlete's injury status":"Tap the body or a chip below to check in"}</div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             {injCount>0&&!readOnly&&(
@@ -292,7 +314,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
             )}
             {injCount>0&&(
               <div style={{fontSize:10,color:RED,fontWeight:800,background:RED+"18",padding:"4px 10px",borderRadius:20,border:"1px solid "+RED+"44",whiteSpace:"nowrap"}}>
-                {injCount} area{injCount>1?"s":""} flagged
+                {injCount} flagged
               </div>
             )}
           </div>
@@ -300,41 +322,65 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       </div>
 
       {/* Front/Back toggle */}
-      <div style={{display:"flex",gap:8,marginBottom:10,background:"#111",borderRadius:12,padding:4}}>
+      <div style={{display:"flex",gap:6,marginBottom:12,background:"#0e0e0e",borderRadius:12,padding:4,border:"1px solid #1e1e1e"}}>
         {["front","back"].map(v=>(
-          <button key={v} onClick={()=>setView(v)} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:view===v?"linear-gradient(135deg,"+RED+"cc,"+RED+"88)":"transparent",color:view===v?"#fff":"#555",fontSize:12,fontWeight:view===v?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-            {v==="front"?"Front View":"Back View"}
+          <button key={v} onClick={()=>{setView(v);setSelected(null);}} style={{flex:1,padding:"11px",borderRadius:9,border:"none",background:view===v?"linear-gradient(135deg,"+RED+"dd,"+RED+"88)":"transparent",color:view===v?"#fff":"#555",fontSize:13,fontWeight:view===v?800:400,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:view===v?"0.04em":"0"}}>
+            {v==="front"?"▲ Front":"▽ Back"}
           </button>
         ))}
       </div>
 
       {/* Legend */}
-      <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:10,flexWrap:"wrap"}}>
+      <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:12}}>
         {Object.entries(STATUS).map(([k,v])=>(
-          <div key={k} style={{display:"flex",alignItems:"center",gap:5,fontSize:10,color:"#888"}}>
-            <div style={{width:10,height:10,borderRadius:"50%",background:v.color+"55",border:"1px solid "+v.color}}/>
+          <div key={k} style={{display:"flex",alignItems:"center",gap:5,fontSize:10,color:"#777"}}>
+            <div style={{width:10,height:10,borderRadius:"50%",background:v.color,boxShadow:"0 0 6px "+v.color+"88"}}/>
             {v.label}
           </div>
         ))}
       </div>
 
-      {/* Body Map */}
-      <div style={{display:"flex",justifyContent:"center",marginBottom:16,pointerEvents:readOnly?"none":"auto"}}>
-        <div style={{width:"100%",maxWidth:200}}>
+      {/* Body Map — large, high contrast */}
+      <div style={{background:"#080f18",borderRadius:20,padding:"20px 8px 16px",marginBottom:14,border:"1px solid #1a2e44",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+RED+"55,transparent,"+RED+"55)"}}/>
+        <div style={{maxWidth:340,margin:"0 auto",pointerEvents:readOnly?"none":"auto"}}>
           <Model
             type={view==="front"?"anterior":"posterior"}
             data={bodyData}
-            bodyColor="#2a2a2a"
-            highlightedColors={[SORE+"dd",RED+"dd"]}
+            bodyColor="#3a5068"
+            highlightedColors={[SORE+"ff",RED+"ff"]}
             onClick={readOnly?undefined:({muscle})=>selectPart(muscle)}
-            svgStyle={{display:"block",cursor:"pointer"}}
+            svgStyle={{display:"block",stroke:"#1a2e44",strokeWidth:"0.6"}}
           />
         </div>
+        {!selected&&!readOnly&&(
+          <div style={{textAlign:"center",fontSize:11,color:"#3a5068",marginTop:4,letterSpacing:"0.04em"}}>
+            ↑ tap a muscle above or a chip below
+          </div>
+        )}
+        {selected&&(
+          <div style={{textAlign:"center",marginTop:6}}>
+            <span style={{fontSize:12,fontWeight:700,color:STATUS[pStatus]?.color||"#fff",background:(STATUS[pStatus]?.color||"#fff")+"18",padding:"4px 14px",borderRadius:20,border:"1px solid "+(STATUS[pStatus]?.color||"#fff")+"44"}}>
+              {selName} · {STATUS[pStatus]?.label}
+            </span>
+          </div>
+        )}
       </div>
 
-      {!selected&&(
-        <div style={{textAlign:"center",fontSize:11,color:"#444",marginBottom:16,fontStyle:"italic"}}>
-          Tap any muscle to check in
+      {/* Muscle quick-tap chips */}
+      {!readOnly&&(
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16,padding:"2px 0"}}>
+          {chips.map(id=>{
+            const c=chipColor(id);
+            const isSel=selected===id;
+            return(
+              <button key={id} onClick={()=>selectPart(id)}
+                style={{padding:"7px 12px",borderRadius:20,border:"1px solid "+(isSel?"#fff"+(c?"":""): c?c+"66":"#2a2a2a"),background:isSel?(c||"#3a5068")+"33":c?c+"22":"#111",color:isSel?"#fff":c?c:"#666",fontSize:11,fontWeight:isSel?800:c?700:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",transition:"all 0.12s",boxShadow:isSel?"0 0 10px "+(c||"#3a5068")+"44":"none"}}>
+                {c&&<span style={{marginRight:4,fontSize:9}}>{STATUS[Object.values(partData).length&&partData[id]?.status==="pain"?"pain":"sore"]?.emoji||"●"}</span>}
+                {MUSCLE_NAMES[id]}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -390,8 +436,8 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
             <textarea
               value={pDesc}
               onChange={e=>setPDesc(e.target.value)}
-              placeholder="Where exactly does it hurt, what does it feel like, how it happened, when it started..."
-              style={{width:"100%",minHeight:80,padding:"10px",borderRadius:8,border:"1px solid "+(pDesc.length>5?"#333":"#1e1e1e"),fontSize:13,fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",background:"#0e0e0e",color:"#ddd",lineHeight:1.6,transition:"border-color 0.2s"}}
+              placeholder="Where exactly does it hurt, what does it feel like, how it happened..."
+              style={{width:"100%",minHeight:80,padding:"10px",borderRadius:8,border:"1px solid "+(pDesc.length>5?"#333":"#1e1e1e"),fontSize:13,fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",background:"#0e0e0e",color:"#ddd",lineHeight:1.6}}
             />
           </div>
 
@@ -416,15 +462,16 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
         </div>
       )}
 
-      {/* Stretches — locked until description */}
+      {/* Stretches locked */}
       {showStretches&&!descEnough&&!readOnly&&(
         <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid "+SORE+"33",textAlign:"center"}}>
           <div style={{fontSize:20,marginBottom:8}}>🔒</div>
           <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:4}}>Describe your injury first</div>
-          <div style={{fontSize:12,color:"#666",lineHeight:1.6}}>Stretches unlock once you've described the injury. This prevents recommending something that could make it worse.</div>
+          <div style={{fontSize:12,color:"#666",lineHeight:1.6}}>Stretches unlock once you've described the injury.</div>
         </div>
       )}
 
+      {/* Stretches */}
       {showStretches&&(descEnough||readOnly)&&(
         <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid "+SORE+"33",borderLeft:"3px solid "+SORE}}>
           <div style={{fontSize:14,fontWeight:900,color:"#fff",marginBottom:4}}>Stretches — {selName}</div>

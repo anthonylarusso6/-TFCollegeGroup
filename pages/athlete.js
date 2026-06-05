@@ -1201,24 +1201,6 @@ export default function Athlete(){
                   </div>
                 ))}
 
-                {/* ── INJURY CALLOUT ── */}
-                <button onClick={()=>setTab("body")} style={{width:"100%",padding:0,background:"none",border:"none",cursor:"pointer",fontFamily:"Georgia,serif",display:"block",marginBottom:12}}>
-                  <div style={{borderRadius:20,overflow:"hidden",border:"1px solid "+RED+"33",boxShadow:"0 8px 32px #00000060"}}>
-                    <div style={{background:"linear-gradient(140deg,#1a0606,#0d0404,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+RED+"55,transparent)"}}/>
-                      <div style={{position:"absolute",bottom:-10,right:-4,fontSize:64,opacity:0.07,lineHeight:1,userSelect:"none"}}>🩺</div>
-                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                        <div style={{width:52,height:52,borderRadius:14,background:"linear-gradient(145deg,"+RED+"44,"+RED+"22)",border:"1px solid "+RED+"55",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,boxShadow:"0 0 20px "+RED+"33",flexShrink:0}}>🩺</div>
-                        <div style={{flex:1,textAlign:"left"}}>
-                          <div style={{fontSize:8,color:RED,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Body status</div>
-                          <div style={{fontSize:19,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>Injury Report</div>
-                          <div style={{fontSize:11,color:"#cc5555",marginTop:3,lineHeight:1.4}}>Tap to open body map — mark soreness or pain</div>
-                        </div>
-                        <div style={{fontSize:18,color:RED+"66"}}>→</div>
-                      </div>
-                    </div>
-                  </div>
-                </button>
                 <a href={groupmeLink} target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",marginBottom:12}}>
                   <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid #00aff033"}}>
                     <div style={{background:"linear-gradient(140deg,#001828,#000d18,#0d0d0d)",padding:"16px 18px",position:"relative",overflow:"hidden"}}>
