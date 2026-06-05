@@ -242,6 +242,7 @@ export default function Athlete(){
   const[myVote,setMyVote]=useState(null);
   const[groupmeLink,setGroupmeLink]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
   const[draft,setDraft]=useState(null);
+  const[weightLoggedToday,setWeightLoggedToday]=useState(null);
   const pollRef=useRef(null);
   const athleteIdRef=useRef(null);
   const isPickingRef=useRef(false);
@@ -277,6 +278,21 @@ export default function Athlete(){
 
   // Keep ref in sync with state
   useEffect(()=>{athleteIdRef.current=selectedAthlete?.id;},[selectedAthlete]);
+
+  // Check if athlete already logged weight today (only matters on Mon/Fri weigh-in days)
+  useEffect(()=>{
+    if(!selectedAthlete)return;
+    const est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const dow=est.getDay();
+    if(dow!==1&&dow!==5){setWeightLoggedToday(true);return;}
+    const today=est.getFullYear()+"-"+String(est.getMonth()+1).padStart(2,"0")+"-"+String(est.getDate()).padStart(2,"0");
+    (async()=>{
+      try{
+        const{data}=await supabase.from("weight_log").select("id").eq("athlete_id",selectedAthlete.id).eq("date",today).maybeSingle();
+        setWeightLoggedToday(!!data);
+      }catch(e){setWeightLoggedToday(true);}
+    })();
+  },[selectedAthlete]);
 
   const loadDraft=async()=>{
     try{
@@ -852,6 +868,15 @@ export default function Athlete(){
             {tab==="profile"&&(
               <div>
                 {(()=>{const _est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><div style={{fontSize:24}}>🔥</div></div>);})()}
+                {weightLoggedToday===false&&(
+                  <div onClick={()=>setTab("weight")} style={{background:"linear-gradient(135deg,#1a3a1a,#0e240e)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚖️ Weigh-in day!</div>
+                      <div style={{fontSize:11,color:GREEN}}>Tap to log your weight → stay on track</div>
+                    </div>
+                    <div style={{fontSize:24}}>📊</div>
+                  </div>
+                )}
                 <DailyWord announcement={announcement}/>
                 <ClassCountdown/>
                 {(()=>{
@@ -1549,7 +1574,7 @@ export default function Athlete(){
             {tab==="notes"&&<NotesTab athleteId={selectedAthlete.id} athlete={selectedAthlete}/>}
 
 
-            {tab==="weight"&&<WeightTracker athleteId={selectedAthlete.id}/>}
+            {tab==="weight"&&<WeightTracker athleteId={selectedAthlete.id} onWeighed={()=>setWeightLoggedToday(true)}/>}
 
             {tab==="body"&&<InjuryBodyMap athleteId={selectedAthlete.id}/>}
 

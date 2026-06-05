@@ -47,7 +47,7 @@ const predictGoalDate = (entries, goalWeight, goalMode) => {
   return targetDate;
 };
 
-export default function WeightTracker({ athleteId }) {
+export default function WeightTracker({ athleteId, onWeighed }) {
   const[entries, setEntries] = useState([]);
   const[weight, setWeight] = useState("");
   const[goalWeight, setGoalWeight] = useState("");
@@ -110,8 +110,8 @@ export default function WeightTracker({ athleteId }) {
     if (perm === "denied") { setNotifState("denied"); return; }
     if (perm === "granted") {
       try {
-        const reg = await navigator.serviceWorker.getRegistration("/sw.js");
-        if (reg) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg?.active) {
           const sub = await reg.pushManager.getSubscription();
           if (sub) { setNotifState("enabled"); return; }
         }
@@ -143,6 +143,7 @@ export default function WeightTracker({ athleteId }) {
       }
       await loadEntries();
       setWeight(""); setSaved(true); setTimeout(() => setSaved(false), 3000);
+      if (onWeighed) onWeighed();
     } catch (e) { setError("Save failed. Please try again."); }
     finally { setSaving(false); }
   };
@@ -178,18 +179,19 @@ export default function WeightTracker({ athleteId }) {
     try {
       const perm = await Notification.requestPermission();
       if (perm !== "granted") { setNotifState("denied"); setNotifLoading(false); return; }
-      let reg = await navigator.serviceWorker.getRegistration("/sw.js");
+      let reg = await navigator.serviceWorker.getRegistration();
       if (!reg) reg = await navigator.serviceWorker.register("/sw.js");
-      await navigator.serviceWorker.ready;
+      reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_KEY),
       });
-      await fetch("/api/subscribe", {
+      const resp = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ athleteId, subscription: sub }),
       });
+      if (!resp.ok) throw new Error("Subscription save failed");
       setNotifState("enabled");
     } catch (e) { setNotifState("denied"); }
     setNotifLoading(false);
@@ -198,7 +200,7 @@ export default function WeightTracker({ athleteId }) {
   const disableNotifications = async () => {
     setNotifLoading(true);
     try {
-      const reg = await navigator.serviceWorker.getRegistration("/sw.js");
+      const reg = await navigator.serviceWorker.getRegistration();
       if (reg) { const sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); }
       await fetch("/api/subscribe", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ athleteId }) });
       setNotifState("idle");
