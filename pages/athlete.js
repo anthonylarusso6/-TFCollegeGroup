@@ -243,6 +243,8 @@ export default function Athlete(){
   const[groupmeLink,setGroupmeLink]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
   const[draft,setDraft]=useState(null);
   const[weightLoggedToday,setWeightLoggedToday]=useState(null);
+  const[notifCard,setNotifCard]=useState("unknown"); // unknown | idle | enabled | denied | unsupported | ios-browser
+  const[notifLoading,setNotifLoading]=useState(false);
   const pollRef=useRef(null);
   const athleteIdRef=useRef(null);
   const isPickingRef=useRef(false);
@@ -293,6 +295,45 @@ export default function Athlete(){
       }catch(e){setWeightLoggedToday(true);}
     })();
   },[selectedAthlete]);
+
+  // Check push notification status when athlete profile loads
+  useEffect(()=>{
+    if(!selectedAthlete||typeof window==="undefined")return;
+    (async()=>{
+      if(!("Notification" in window)||!("serviceWorker" in navigator)){setNotifCard("unsupported");return;}
+      // Detect iOS browser (not installed as PWA)
+      const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent||"");
+      const isStandalone=("standalone" in navigator&&navigator.standalone)||window.matchMedia("(display-mode: standalone)").matches;
+      if(isIOS&&!isStandalone){setNotifCard("ios-browser");return;}
+      const perm=Notification.permission;
+      if(perm==="denied"){setNotifCard("denied");return;}
+      if(perm==="granted"){
+        try{
+          const reg=await navigator.serviceWorker.getRegistration();
+          if(reg?.active){const sub=await reg.pushManager.getSubscription();if(sub){setNotifCard("enabled");return;}}
+        }catch(e){}
+      }
+      setNotifCard("idle");
+    })();
+  },[selectedAthlete]);
+
+  const VAPID_KEY="BObWJUwxM9tPxbrXUhj4JW15F1ngheVLKhqlSiQklDc0LtlPMITMNB1D-jx8ywwEnZfPsYKGCI5EmgCMqfRt2IU";
+  function urlB64ToUint8(b){const p="=".repeat((4-(b.length%4))%4);const s=(b+p).replace(/-/g,"+").replace(/_/g,"/");const r=atob(s);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));}
+
+  const enableProfileNotif=async()=>{
+    if(!selectedAthlete)return;
+    setNotifLoading(true);
+    try{
+      const perm=await Notification.requestPermission();
+      if(perm!=="granted"){setNotifCard("denied");setNotifLoading(false);return;}
+      const reg=await navigator.serviceWorker.ready;
+      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8(VAPID_KEY)});
+      const resp=await fetch("/api/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({athleteId:selectedAthlete.id,subscription:sub})});
+      if(!resp.ok)throw new Error("save failed");
+      setNotifCard("enabled");
+    }catch(e){setNotifCard("denied");}
+    setNotifLoading(false);
+  };
 
   const loadDraft=async()=>{
     try{
@@ -875,6 +916,37 @@ export default function Athlete(){
                       <div style={{fontSize:11,color:GREEN}}>Tap to log your weight → stay on track</div>
                     </div>
                     <div style={{fontSize:24}}>📊</div>
+                  </div>
+                )}
+                {/* Push notification setup card — shown until enabled */}
+                {notifCard==="idle"&&(
+                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a1e",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                    <div>
+                      <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>🔔 Lock screen reminders</div>
+                      <div style={{fontSize:10,color:"#555"}}>Get notified to log weight on class days</div>
+                    </div>
+                    <button onClick={enableProfileNotif} disabled={notifLoading} style={{padding:"8px 14px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+GREEN+","+GREEN+"aa)",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",flexShrink:0,whiteSpace:"nowrap"}}>
+                      {notifLoading?"...":"Enable →"}
+                    </button>
+                  </div>
+                )}
+                {notifCard==="ios-browser"&&(
+                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a1e"}}>
+                    <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:6}}>🔔 Get lock screen reminders</div>
+                    <div style={{fontSize:11,color:"#888",lineHeight:1.6,marginBottom:8}}>
+                      On iPhone, add this app to your Home Screen first:<br/>
+                      <span style={{color:"#aaa"}}>Tap <strong style={{color:"#fff"}}>Share</strong> → <strong style={{color:"#fff"}}>Add to Home Screen</strong> → open from there</span>
+                    </div>
+                    <div style={{fontSize:10,color:"#555"}}>Then tap Enable inside the app to get notifications</div>
+                  </div>
+                )}
+                {notifCard==="denied"&&(
+                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #2a1e1e",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                    <div>
+                      <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>🔔 Notifications blocked</div>
+                      <div style={{fontSize:10,color:"#555"}}>Enable in your browser or phone settings</div>
+                    </div>
+                    <div style={{fontSize:10,color:"#555",flexShrink:0}}>Settings → Safari/Chrome</div>
                   </div>
                 )}
                 <DailyWord announcement={announcement}/>

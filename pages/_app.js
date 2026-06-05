@@ -7,9 +7,15 @@ export default function App({ Component, pageProps }) {
     // Catch unhandled promise rejections from Supabase calls
     const handler=(event)=>{
       console.warn("Unhandled error caught:",event.reason);
-      event.preventDefault(); // prevent app crash
+      event.preventDefault();
     };
     window.addEventListener("unhandledrejection", handler);
+
+    // Silently register service worker so push notifications are ready to activate
+    if("serviceWorker" in navigator){
+      navigator.serviceWorker.register("/sw.js").catch(()=>{});
+    }
+
     return()=>window.removeEventListener("unhandledrejection", handler);
   },[]);
 
