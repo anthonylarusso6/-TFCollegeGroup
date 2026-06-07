@@ -8,53 +8,57 @@ const TIER_COLORS={
   1:{bg:"#EEEDFE",border:PUR,color:PUR,label:"Tier 1 — Primary"},
   2:{bg:"#E1F5EE",border:GREEN,color:GREEN,label:"Tier 2 — Secondary"},
   3:{bg:"#FFF4E0",border:ORANGE,color:ORANGE,label:"Tier 3 — Accessory"},
+  circuit:{bg:"#FFF0F0",border:RED,color:RED,label:"Circuit · 3 Rounds · 30s on / 15s off"},
+  guns_and_glory:{bg:"#FFFBE0",border:GOLD,color:GOLD,label:"Guns & Glory"},
 };
 
 const DEFAULT_PROGRAM={
   Mon:[
-    {name:"Chain Bench Press",tier:1,sets:"3 x 5",reps:"12, 8"},
-    {name:"DB Front to Lat Raise",tier:1,sets:"4 x 8e"},
-    {name:"KB Bent Over Rows",tier:1,sets:"4 x 12"},
-    {name:"DB Reserve Lunge to Step Up",tier:2,sets:"7,7,6,5"},
-    {name:"ISOphit Hamstring Holds",tier:2,sets:"3 x 20s ea"},
-    {name:"Partner Leg Throws",tier:2,sets:"3 x 12"},
-    {name:"Mini Band Walks",tier:3,sets:"3 x 20yds ea"},
-    {name:"Banded KB Swings",tier:3,sets:"3 x 10"},
-    {name:"DB Prone W Press",tier:3,sets:"3 x 10"},
+    {name:"BB Front Squat / Pitshark",tier:1,sets:"8 (4x5)"},
+    {name:"Seated Cable Rows",tier:1,sets:"12, 8, 8 (2:2:0)"},
+    {name:"DB Curl to Press",tier:1,sets:"3x8"},
+    {name:"DB Incline Bench Press",tier:2,sets:"12, 10, 10, 8"},
+    {name:"ISOphit Copenhagen Holds",tier:2,sets:"3x20s ea"},
+    {name:"KB Swing Switches",tier:2,sets:"3x7e"},
+    {name:"KB SA Situp",tier:3,sets:"3x6e"},
+    {name:"KB Banded Deadbug",tier:3,sets:"3x9e"},
+    {name:"DB Birddog Row on Bench",tier:3,sets:"3x10e"},
   ],
   Tue:[
-    {name:"BB Back Squat",tier:1,sets:"8,6,6,5,4"},
-    {name:"PVC Max Vert",tier:1,sets:"4 x 4"},
-    {name:"Standing SA DB Shoulder Press",tier:2,sets:"4 x 7e"},
-    {name:"Cable Underhand Row",tier:2,sets:"4 x 10"},
-    {name:"KB Lateral Lunge",tier:2,sets:"3 x 7e"},
-    {name:"AB Rollout",tier:3,sets:"3 x 10"},
-    {name:"KB Seated Twist",tier:3,sets:"3 x 15e"},
-    {name:"DB Hinge",tier:3,sets:"3 x 9"},
+    {name:"BB Hang Cleans",tier:1,sets:"4x6"},
+    {name:"LM Banded Push Press",tier:1,sets:"4x10"},
+    {name:"TRX T,Y,I",tier:1,sets:"3x6e"},
+    {name:"SL/Pistol Squat",tier:2,sets:"3x7e"},
+    {name:"DB/KB Kickstand Hinge",tier:2,sets:"3x8e"},
+    {name:"DB Chest Supported Row",tier:2,sets:"3x10e"},
+    {name:"Cable Rope Trunk Rotation",tier:3,sets:"3x10e"},
+    {name:"Dragon Flag",tier:3,sets:"3x9"},
+    {name:"KB Farmer & Waiter Carry",tier:3,sets:"3x20yds"},
   ],
   Thu:[
-    {name:"Pull Ups",tier:1,sets:"8,7,6,5,4"},
-    {name:"DB Lat High Step Ups",tier:1,sets:"3 x 6e"},
-    {name:"MB OH Sit Up Throw",tier:1,sets:"3 x 12"},
-    {name:"Trap Bar Deadlift",tier:2,sets:"9,8,7,6"},
-    {name:"DB Squat Jump",tier:2,sets:"4 x 6"},
-    {name:"Cable SS Rot Punch",tier:2,sets:"3 x 14e"},
-    {name:"LM Grappler Twist",tier:3,sets:"30s on 15s off"},
-    {name:"PUP KB Drag Through",tier:3,sets:"30s on 15s off"},
-    {name:"Dead Hangs",tier:3,sets:"30s on 15s off"},
-    {name:"Box Jumps",tier:3,sets:"30s on 15s off"},
+    {name:"SA Banded Rot. Jammer Press",tier:1,sets:"4x5e"},
+    {name:"SA Lat Pull Down",tier:1,sets:"4x14e"},
+    {name:"DB Pronated Trap Raise",tier:1,sets:"3x15"},
+    {name:"Heavy Prowler Sprint",tier:2,sets:"4x20yds"},
+    {name:"Weighted Plank Holds",tier:2,sets:"3x30s"},
+    {name:"KB Shrugs",tier:2,sets:"3x15"},
+    {name:"Battle Rope Waves",tier:"circuit",sets:"30s"},
+    {name:"Wall Sit w/ Band Pull Apart",tier:"circuit",sets:"30s"},
+    {name:"Dead Hangs",tier:"circuit",sets:"30s"},
+    {name:"TRX Bicep Curl",tier:"circuit",sets:"30s"},
+    {name:"SL Box Jumps",tier:"circuit",sets:"30s"},
+    {name:"DB Lat Box Step Ups",tier:"circuit",sets:"30s"},
   ],
   Fri:[
-    {name:"SSB Split Squat",tier:1,sets:"5 x 6e"},
-    {name:"DB Split Squat Jump",tier:1,sets:"3 x 7e"},
-    {name:"MB Slam to Shotput",tier:1,sets:"3 x 8e"},
-    {name:"LM SA Split Jerk",tier:2,sets:"4 x 7e"},
-    {name:"Lateral Sled Drag",tier:2,sets:"3 x 20yds ea"},
-    {name:"DB Floor Press",tier:2,sets:"4 x 12"},
-    {name:"Plate Curl to Press",tier:3,sets:"16,14,12"},
-    {name:"SA Cable Pushdown",tier:3,sets:"16,14,12"},
-    {name:"DB Spider Curl w/Twist",tier:3,sets:"16,14,12"},
-    {name:"Weighted Box Dips",tier:3,sets:"16,14,12"},
+    {name:"BB Deadlifts",tier:1,sets:"8,4,4,3"},
+    {name:"DB RFESS (3:0:0)",tier:1,sets:"4x6e"},
+    {name:"MB Rot Wall Toss",tier:1,sets:"3x8e"},
+    {name:"BB Push Press",tier:2,sets:"4x7e"},
+    {name:"SA DB Bent Over Row",tier:2,sets:"15e,13e,11e,9e"},
+    {name:"Banded Cable Pallof Press",tier:2,sets:"3x12e"},
+    {name:"DB ISO Hammer Curl",tier:"guns_and_glory",sets:"3x12e"},
+    {name:"DB Bench Skull Crusher",tier:"guns_and_glory",sets:"15,13,12"},
+    {name:"DB Crazy 8's",tier:"guns_and_glory",sets:"3x8e",note:"Front · Upright · Lat · Rear Delt"},
   ],
 };
 
@@ -137,8 +141,8 @@ export default function PRLog({athleteId,gender}){
           else if(p.lifts){
             const spread={Mon:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Tue:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Thu:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Fri:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3}))};
             setProgram(spread);setPhase(p.phase||"");
-          }else{setProgram(DEFAULT_PROGRAM);setPhase("College Group Summer");}
-        }else{setProgram(DEFAULT_PROGRAM);setPhase("College Group Summer");}
+          }else{setProgram(DEFAULT_PROGRAM);setPhase("Summer Block");}
+        }else{setProgram(DEFAULT_PROGRAM);setPhase("Summer Block");}
       }catch(e){setProgram(DEFAULT_PROGRAM);}
     })();
   },[]);
@@ -431,6 +435,8 @@ export default function PRLog({athleteId,gender}){
                     <div>
                       <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{lift.name}</div>
                       <div style={{fontSize:10,fontWeight:600,color:tc.color,marginTop:2}}>{tc.label}</div>
+                      {lift.sets&&<div style={{fontSize:11,color:"#888",marginTop:2}}>📋 {lift.sets}</div>}
+                      {lift.note&&<div style={{fontSize:10,color:"#aaa",marginTop:1,fontStyle:"italic"}}>{lift.note}</div>}
                     </div>
                     <div style={{textAlign:"right"}}>
                       {pr&&<div style={{fontSize:12,fontWeight:700,color:GOLD}}>PR: {pr} {isVert(lift.name)?"in":"lbs"}</div>}
