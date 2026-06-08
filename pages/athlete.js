@@ -579,19 +579,23 @@ export default function Athlete(){
           )}
 
           {/* Active / Sleeping tabs */}
-          <div style={{display:"flex",gap:6,marginBottom:14,background:"#0e0e0e",borderRadius:12,padding:4,border:"0.5px solid #1e1e1e"}}>
-            {[{id:"active",label:"⚡ Active"},{id:"sleeping",label:"😴 Sleeping"}].map(t=>(
-              <button key={t.id} onClick={()=>setRosterTab(t.id)} style={{flex:1,padding:"9px",borderRadius:8,border:"none",background:rosterTab===t.id?"linear-gradient(135deg,#E8720C,#C0392B)":"transparent",color:rosterTab===t.id?"#fff":"#555",fontSize:12,fontWeight:rosterTab===t.id?800:400,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:rosterTab===t.id?"0.02em":"0",textTransform:rosterTab===t.id?"uppercase":"none",boxShadow:rosterTab===t.id?"0 2px 12px #E8720C44":"none",transition:"all 0.15s"}}>
-                {t.label}
-              </button>
-            ))}
+          <div style={{display:"flex",gap:6,marginBottom:10,background:"#0a0a0a",borderRadius:12,padding:4,border:"0.5px solid #1e1e1e"}}>
+            {[{id:"active",label:"⚡ Active"},{id:"sleeping",label:"😴 Sleeping"}].map(t=>{
+              const count=athletes.filter(a=>t.id==="active"?a.status==="active":a.status==="sleeping").length;
+              return(
+                <button key={t.id} onClick={()=>setRosterTab(t.id)} style={{flex:1,padding:"10px 8px",borderRadius:9,border:"none",background:rosterTab===t.id?"linear-gradient(135deg,#E8720C,#C0392B)":"transparent",color:rosterTab===t.id?"#fff":"#555",fontSize:12,fontWeight:rosterTab===t.id?800:400,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:rosterTab===t.id?"0.02em":"0",textTransform:rosterTab===t.id?"uppercase":"none",boxShadow:rosterTab===t.id?"0 2px 14px #E8720C44":"none",transition:"all 0.15s",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                  {t.label}
+                  <span style={{fontSize:10,fontWeight:700,opacity:rosterTab===t.id?0.75:0.4,background:"rgba(255,255,255,0.12)",borderRadius:6,padding:"1px 6px"}}>{count}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Search */}
-          <div style={{marginBottom:16,position:"relative"}}>
-            <input type="text" placeholder="Search your name..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"14px 16px 14px 46px",borderRadius:14,border:"1px solid #1e1e1e",background:"#0e0e0e",color:"#fff",fontSize:14,fontFamily:"Georgia, serif",boxSizing:"border-box",outline:"none"}} autoComplete="off"/>
-            <div style={{position:"absolute",left:15,top:"50%",transform:"translateY(-50%)",fontSize:15,color:"#333"}}>🔍</div>
-            {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"transparent",border:"none",color:"#444",fontSize:16,cursor:"pointer"}}>✕</button>}
+          <div style={{marginBottom:14,position:"relative"}}>
+            <input type="text" placeholder="Search your name..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"13px 42px 13px 44px",borderRadius:12,border:"1px solid #252525",background:"#0a0a0a",color:"#fff",fontSize:14,fontFamily:"Georgia, serif",boxSizing:"border-box",outline:"none",letterSpacing:"-0.01em"}} autoComplete="off"/>
+            <div style={{position:"absolute",left:15,top:"50%",transform:"translateY(-50%)",fontSize:14,color:"#333"}}>🔍</div>
+            {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"#1a1a1a",border:"none",color:"#666",fontSize:12,cursor:"pointer",width:22,height:22,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>}
           </div>
 
           {/* Athlete list */}

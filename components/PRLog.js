@@ -436,12 +436,10 @@ export default function PRLog({athleteId,gender}){
       {view==="log"&&(
         <div>
           {phase&&(
-            <div style={{background:"linear-gradient(135deg,#1a1400,#221b00)",borderRadius:12,padding:"10px 14px",marginBottom:10,border:"1px solid "+GOLD+"33",display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:18}}>⚡</span>
-              <div>
-                <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.08em"}}>Current phase</div>
-                <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{phase}</div>
-              </div>
+            <div style={{background:"linear-gradient(135deg,#1a1200,#1c1500,#0e0e0e)",borderRadius:14,padding:"16px 18px",marginBottom:14,border:"1px solid "+GOLD+"33",borderLeft:"3px solid "+GOLD,position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:-18,right:-12,fontSize:80,opacity:0.05,lineHeight:1,userSelect:"none",pointerEvents:"none"}}>⚡</div>
+              <div style={{fontSize:9,color:GOLD+"99",textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700,marginBottom:5}}>Current Phase</div>
+              <div style={{fontSize:19,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.2}}>{phase}</div>
             </div>
           )}
           {loadError&&<div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>Error: {loadError}</div>}
@@ -519,23 +517,21 @@ export default function PRLog({athleteId,gender}){
                     );
                     const bandPicker=(label)=>(
                       <div style={{marginBottom:12}}>
-                        <div style={{fontSize:9,color:"#555",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>🎯 {label||"Band Resistance"}</div>
-                        <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                        <div style={{fontSize:9,color:"#555",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>🎯 {label||"Band Resistance"}</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:4}}>
                           {BAND_COLORS.map(b=>{
                             const sel=inp.bandColor===b.id;
                             return(
                               <button key={b.id} onClick={()=>setInput(lift.name,"bandColor",b.id)}
-                                style={{display:"flex",alignItems:"center",gap:6,padding:"7px 11px",borderRadius:9,
-                                  border:"1.5px solid "+(sel?b.hex:"#252525"),
-                                  background:sel?b.hex+"22":"#0f0f0f",
-                                  color:sel?b.hex:"#555",fontSize:11,fontWeight:sel?700:400,
-                                  cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",
-                                  boxShadow:sel?"0 0 0 1px "+b.hex+"44":"none",transition:"all 0.15s"}}>
-                                <div style={{width:10,height:10,borderRadius:"50%",flexShrink:0,
-                                  background:"radial-gradient(circle at 35% 35%,"+b.hex+"ff,"+b.hex+"88)",
-                                  boxShadow:"0 1px 3px "+b.hex+"66"}}/>
-                                {b.label}
-                                <span style={{fontSize:9,color:sel?b.hex+"99":"#333"}}>{b.resistance}</span>
+                                style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:9,
+                                  border:"1px solid "+(sel?b.hex+"66":"#1e1e1e"),
+                                  borderLeft:"3px solid "+(sel?b.hex:"#1e1e1e"),
+                                  background:sel?"#111":"#0a0a0a",
+                                  cursor:"pointer",transition:"all 0.12s",textAlign:"left"}}>
+                                <div style={{width:14,height:14,borderRadius:3,flexShrink:0,background:b.hex}}/>
+                                <span style={{flex:1,fontSize:13,fontWeight:sel?700:500,color:sel?b.hex:"#888"}}>{b.label}</span>
+                                <span style={{fontSize:11,color:sel?"#888":"#333"}}>{b.resistance}</span>
+                                {sel&&<span style={{fontSize:12,color:b.hex,fontWeight:700}}>✓</span>}
                               </button>
                             );
                           })}
@@ -892,25 +888,25 @@ export default function PRLog({athleteId,gender}){
                     const delta=allOrms.length>1?pr.orm-allOrms[1]:null;
                     return(
                       <div key={name} onClick={()=>setSelLift(isSel?null:name)}
-                        style={{padding:"12px",background:isSel?BG:"#fff",borderRadius:12,
-                          border:"1px solid "+(isSel?(vert?PUR+"66":GOLD+"66"):"#e8e8e8"),cursor:"pointer",
+                        style={{padding:"12px",background:isSel?"#1a1914":"#111",borderRadius:12,
+                          border:"1px solid "+(isSel?(vert?PUR+"55":GOLD+"44"):"#1e1e1e"),cursor:"pointer",
                           boxShadow:isSel?"0 0 16px "+(vert?PUR:GOLD)+"22":"none",position:"relative",overflow:"hidden"}}>
                         {isSel&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+(vert?PUR:GOLD)+",transparent)"}}/>}
-                        <div style={{fontSize:9,color:isSel?"#555":"#aaa",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        <div style={{fontSize:9,color:"#444",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                           {vert?"⬆️":catObj?.emoji||"🏋️"} {name}
                         </div>
                         <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:2}}>
-                          <div style={{fontSize:24,fontWeight:900,color:isSel?"#fff":"#1a1a1a",lineHeight:1}}>{vert?pr.weight:pr.orm}</div>
-                          {rel&&<div style={{fontSize:10,color:isSel?piCol:GOLD,fontWeight:600}}>{rel}×BW</div>}
+                          <div style={{fontSize:24,fontWeight:900,color:isSel?GOLD:"#ddd",lineHeight:1}}>{vert?pr.weight:pr.orm}</div>
+                          {rel&&<div style={{fontSize:10,color:GOLD,fontWeight:600}}>{rel}×BW</div>}
                         </div>
-                        <div style={{fontSize:9,color:isSel?"#555":"#aaa"}}>
+                        <div style={{fontSize:9,color:"#555"}}>
                           {vert?`${pr.weight} in · personal best`:excl?"logged · not in Power Index":`${pr.weight}×${pr.reps||1} · est. 1RM`}
                         </div>
                         {/* Tier / vert / excl badge */}
                         {vert?(
-                          <div style={{display:"inline-block",marginTop:5,padding:"2px 8px",borderRadius:6,background:isSel?PUR+"44":PUR+"22",color:isSel?"#cbb6ff":PUR,fontSize:9,fontWeight:700}}>⬆️ Vertical</div>
+                          <div style={{display:"inline-block",marginTop:5,padding:"2px 8px",borderRadius:6,background:PUR+"22",color:isSel?"#cbb6ff":PUR,fontSize:9,fontWeight:700}}>⬆️ Vertical</div>
                         ):excl?(
-                          <div style={{display:"inline-block",marginTop:5,padding:"2px 8px",borderRadius:6,background:"#f5f5f5",color:"#999",fontSize:9,fontWeight:500}}>Core / Power</div>
+                          <div style={{display:"inline-block",marginTop:5,padding:"2px 8px",borderRadius:6,background:"#1a1a1a",color:"#555",fontSize:9,fontWeight:500}}>Core / Power</div>
                         ):catObj&&catPRs[catId]&&(()=>{
                           const catPct=Math.round(catPRs[catId]/getRef(catId)*100);
                           const t=strTier(catPct);
