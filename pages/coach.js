@@ -184,7 +184,7 @@ export default function Coach(){
       supabase.from("inbox").select("*,athletes(name)").eq("done",false).order("created_at",{ascending:false}),
       supabase.from("anvil").select("*").order("created_at",{ascending:false}),
       supabase.from("leaderboard").select("*,athletes(name)").order("early_count",{ascending:false}),
-      supabase.from("announcements").select("*").eq("active",true).order("created_at",{ascending:false}).limit(1),
+      supabase.from("announcements").select("*").eq("active",true).eq("type","general").order("created_at",{ascending:false}).limit(1),
     ]);
     if(aths)setAthletes(prev=>aths.map(a=>({...a,photo_url:a.photo_url||prev.find(p=>p.id===a.id)?.photo_url||null})));
     if(att)setAttendance(att);
@@ -463,7 +463,7 @@ export default function Coach(){
     if(currentAnnouncement){
       await supabase.from("announcements").update({message:announcement}).eq("id",currentAnnouncement.id);
     } else {
-      await supabase.from("announcements").insert({message:announcement,week_label:"This week",active:true});
+      await supabase.from("announcements").insert({type:"general",message:announcement,week_label:"This week",active:true});
     }
     await loadAll();
   };
