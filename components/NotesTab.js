@@ -45,14 +45,16 @@ export default function NotesTab({athleteId}){
     (async()=>{
       try{
         const{data}=await supabase.from("announcements")
-          .select("week_label,message,type")
+          .select("week_label,message,type,created_at")
           .eq("day",String(athleteId))
           .in("type",["mm_note","ff_note"])
-          .eq("active",true);
+          .eq("active",true)
+          .order("created_at",{ascending:false});
         const loaded={};
         (data||[]).forEach(r=>{
           const prefix=r.type==="mm_note"?"mm_":"ff_";
-          loaded[prefix+r.week_label]=r.message;
+          const k=prefix+r.week_label;
+          if(!loaded[k])loaded[k]=r.message;
         });
         setNotes(loaded);
       }catch(e){}
@@ -67,9 +69,6 @@ export default function NotesTab({athleteId}){
     const type=isFF?"ff_note":"mm_note";
     const trimmed=val.trim();
     try{
-      const{error:delErr}=await supabase.from("announcements").delete()
-        .eq("type",type).eq("day",String(athleteId)).eq("week_label",weekNum);
-      if(delErr)throw delErr;
       const{error:insErr}=await supabase.from("announcements").insert({
         type,
         day:String(athleteId),

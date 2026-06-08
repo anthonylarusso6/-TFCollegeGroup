@@ -12,53 +12,65 @@ const TIER_COLORS={
   guns_and_glory:{bg:"#FFFBE0",border:GOLD,color:GOLD,label:"Guns & Glory"},
 };
 
+// Band resistance colors — orange (lightest) → red → black → green → blue (max)
+const BAND_COLORS=[
+  {id:"orange",label:"Orange",hex:"#E8720C",resistance:"Lightest"},
+  {id:"red",   label:"Red",   hex:"#C0392B",resistance:"Light"},
+  {id:"black", label:"Black", hex:"#222",   resistance:"Medium"},
+  {id:"green", label:"Green", hex:"#1E6B3A",resistance:"Heavy"},
+  {id:"blue",  label:"Blue",  hex:"#1A4F8A",resistance:"Max"},
+];
+
+// Medicine ball preset weights (lbs)
+const MB_WEIGHTS=[6,8,10,12,14,16,20];
+
 const DEFAULT_PROGRAM={
   Mon:[
-    {name:"BB Front Squat / Pitshark",tier:1,sets:"8 (4x5)"},
-    {name:"Seated Cable Rows",tier:1,sets:"12, 8, 8 (2:2:0)"},
-    {name:"DB Curl to Press",tier:1,sets:"3x8"},
-    {name:"DB Incline Bench Press",tier:2,sets:"12, 10, 10, 8"},
-    {name:"ISOphit Copenhagen Holds",tier:2,sets:"3x20s ea"},
-    {name:"KB Swing Switches",tier:2,sets:"3x7e"},
-    {name:"KB SA Situp",tier:3,sets:"3x6e"},
-    {name:"KB Banded Deadbug",tier:3,sets:"3x9e"},
-    {name:"DB Birddog Row on Bench",tier:3,sets:"3x10e"},
+    {name:"BB Front Squat / Pitshark",    tier:1,sets:"8 (4x5)",                inputType:"weight"},
+    {name:"Seated Cable Rows",             tier:1,sets:"12, 8, 8 (2:2:0)",       inputType:"weight"},
+    {name:"DB Curl to Press",              tier:1,sets:"3x8",                    inputType:"weight"},
+    {name:"DB Incline Bench Press",        tier:2,sets:"12, 10, 10, 8",          inputType:"weight"},
+    {name:"ISOphit Copenhagen Holds",      tier:2,sets:"3x20s ea",               inputType:"bodyweight"},
+    {name:"KB Swing Switches",             tier:2,sets:"3x7e",                   inputType:"kb"},
+    {name:"KB SA Situp",                   tier:3,sets:"3x6e",                   inputType:"kb"},
+    {name:"KB Banded Deadbug",             tier:3,sets:"3x9e",                   inputType:"band_kb"},
+    {name:"DB Birddog Row on Bench",       tier:3,sets:"3x10e",                  inputType:"weight"},
   ],
   Tue:[
-    {name:"BB Hang Cleans",tier:1,sets:"4x6"},
-    {name:"LM Banded Push Press",tier:1,sets:"4x10"},
-    {name:"TRX T,Y,I",tier:1,sets:"3x6e"},
-    {name:"SL/Pistol Squat",tier:2,sets:"3x7e"},
-    {name:"DB/KB Kickstand Hinge",tier:2,sets:"3x8e"},
-    {name:"DB Chest Supported Row",tier:2,sets:"3x10e"},
-    {name:"Cable Rope Trunk Rotation",tier:3,sets:"3x10e"},
-    {name:"Dragon Flag",tier:3,sets:"3x9"},
-    {name:"KB Farmer & Waiter Carry",tier:3,sets:"3x20yds"},
+    {name:"BB Hang Cleans",                tier:1,sets:"4x6",                    inputType:"weight"},
+    {name:"LM Banded Push Press",          tier:1,sets:"4x10",                   inputType:"band_weight"},
+    {name:"TRX T,Y,I",                     tier:1,sets:"3x6e",                   inputType:"bodyweight"},
+    {name:"SL/Pistol Squat",               tier:2,sets:"3x7e",                   inputType:"weight"},
+    {name:"DB/KB Kickstand Hinge",         tier:2,sets:"3x8e",                   inputType:"kb"},
+    {name:"DB Chest Supported Row",        tier:2,sets:"3x10e",                  inputType:"weight"},
+    {name:"Cable Rope Trunk Rotation",     tier:3,sets:"3x10e",                  inputType:"weight"},
+    {name:"Dragon Flag",                   tier:3,sets:"3x9",                    inputType:"bodyweight"},
+    {name:"KB Farmer & Waiter Carry",      tier:3,sets:"3x20yds",               inputType:"kb"},
   ],
   Thu:[
-    {name:"SA Banded Rot. Jammer Press",tier:1,sets:"4x5e"},
-    {name:"SA Lat Pull Down",tier:1,sets:"4x14e"},
-    {name:"DB Pronated Trap Raise",tier:1,sets:"3x15"},
-    {name:"Heavy Prowler Sprint",tier:2,sets:"4x20yds"},
-    {name:"Weighted Plank Holds",tier:2,sets:"3x30s"},
-    {name:"KB Shrugs",tier:2,sets:"3x15"},
-    {name:"Battle Rope Waves",tier:"circuit",sets:"30s"},
-    {name:"Wall Sit w/ Band Pull Apart",tier:"circuit",sets:"30s"},
-    {name:"Dead Hangs",tier:"circuit",sets:"30s"},
-    {name:"TRX Bicep Curl",tier:"circuit",sets:"30s"},
-    {name:"SL Box Jumps",tier:"circuit",sets:"30s"},
-    {name:"DB Lat Box Step Ups",tier:"circuit",sets:"30s"},
+    {name:"SA Banded Rot. Jammer Press",   tier:1,sets:"4x5e",                   inputType:"band_weight"},
+    {name:"SA Lat Pull Down",              tier:1,sets:"4x14e",                  inputType:"weight"},
+    {name:"DB Pronated Trap Raise",        tier:1,sets:"3x15",                   inputType:"weight"},
+    {name:"Heavy Prowler Sprint",          tier:2,sets:"4x20yds",               inputType:"weight"},
+    {name:"Weighted Plank Holds",          tier:2,sets:"3x30s",                  inputType:"weight"},
+    {name:"KB Shrugs",                     tier:2,sets:"3x15",                   inputType:"kb"},
+    {name:"Battle Rope Waves",             tier:"circuit",sets:"30s",            inputType:"bodyweight"},
+    {name:"Wall Sit w/ Band Pull Apart",   tier:"circuit",sets:"30s",            inputType:"bodyweight"},
+    {name:"Dead Hangs",                    tier:"circuit",sets:"30s",            inputType:"bodyweight"},
+    {name:"TRX Bicep Curl",                tier:"circuit",sets:"30s",            inputType:"bodyweight"},
+    {name:"SL Box Jumps",                  tier:"circuit",sets:"30s",            inputType:"bodyweight"},
+    {name:"DB Lat Box Step Ups",           tier:"circuit",sets:"30s",            inputType:"weight"},
   ],
   Fri:[
-    {name:"BB Deadlifts",tier:1,sets:"8,4,4,3"},
-    {name:"DB RFESS (3:0:0)",tier:1,sets:"4x6e"},
-    {name:"MB Rot Wall Toss",tier:1,sets:"3x8e"},
-    {name:"BB Push Press",tier:2,sets:"4x7e"},
-    {name:"SA DB Bent Over Row",tier:2,sets:"15e,13e,11e,9e"},
-    {name:"Banded Cable Pallof Press",tier:2,sets:"3x12e"},
-    {name:"DB ISO Hammer Curl",tier:"guns_and_glory",sets:"3x12e"},
-    {name:"DB Bench Skull Crusher",tier:"guns_and_glory",sets:"15,13,12"},
-    {name:"DB Crazy 8's",tier:"guns_and_glory",sets:"3x8e",note:"Front · Upright · Lat · Rear Delt"},
+    {name:"BB Deadlifts",                  tier:1,sets:"8,4,4,3",               inputType:"weight"},
+    {name:"DB RFESS (3:0:0)",              tier:1,sets:"4x6e",                   inputType:"weight"},
+    {name:"MB Rot Wall Toss",              tier:1,sets:"3x8e",                   inputType:"mb"},
+    {name:"BB Push Press",                 tier:2,sets:"4x7e",                   inputType:"weight"},
+    {name:"SA DB Bent Over Row",           tier:2,sets:"15e,13e,11e,9e",         inputType:"weight"},
+    {name:"Banded Cable Pallof Press",     tier:2,sets:"3x12e",                  inputType:"band_pallof"},
+    {name:"DB ISO Hammer Curl",            tier:"guns_and_glory",sets:"3x12e",   inputType:"weight"},
+    {name:"DB Bench Skull Crusher",        tier:"guns_and_glory",sets:"15,13,12",inputType:"weight"},
+    {name:"DB Crazy 8's",                  tier:"guns_and_glory",sets:"3x8e",    inputType:"weight",note:"Front · Upright · Lat · Rear Delt"},
   ],
 };
 
@@ -129,6 +141,7 @@ export default function PRLog({athleteId,gender}){
   const[teamAthletes,setTeamAthletes]=useState([]);
   const[latestBW,setLatestBW]=useState(null);
   const[teamLoaded,setTeamLoaded]=useState(false);
+  const[bwDone,setBwDone]=useState({});
 
   useEffect(()=>{
     (async()=>{
@@ -137,12 +150,21 @@ export default function PRLog({athleteId,gender}){
           .order("created_at",{ascending:false}).limit(1);
         if(data&&data[0]){
           const p=JSON.parse(data[0].message||"{}");
-          if(p.days){setProgram(p.days);setPhase(p.phase||"");}
-          else if(p.lifts){
+          if(p.days){
+            // Merge inputType from DEFAULT_PROGRAM by name so DB-loaded programs get the right input UI
+            const merged={};
+            Object.keys(p.days).forEach(day=>{
+              merged[day]=(p.days[day]||[]).map(lift=>{
+                const def=(DEFAULT_PROGRAM[day]||[]).find(d=>d.name===lift.name);
+                return{...lift,inputType:lift.inputType||def?.inputType||"weight"};
+              });
+            });
+            setProgram(merged);setPhase(p.phase||"");
+          } else if(p.lifts){
             const spread={Mon:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Tue:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Thu:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Fri:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3}))};
             setProgram(spread);setPhase(p.phase||"");
-          }else{setProgram(DEFAULT_PROGRAM);setPhase("Summer Block");}
-        }else{setProgram(DEFAULT_PROGRAM);setPhase("Summer Block");}
+          }else{setProgram(DEFAULT_PROGRAM);setPhase("Summer Phase 2 Workouts");}
+        }else{setProgram(DEFAULT_PROGRAM);setPhase("Summer Phase 2 Workouts");}
       }catch(e){setProgram(DEFAULT_PROGRAM);}
     })();
   },[]);
@@ -439,106 +461,252 @@ export default function PRLog({athleteId,gender}){
                       {lift.note&&<div style={{fontSize:10,color:"#aaa",marginTop:1,fontStyle:"italic"}}>{lift.note}</div>}
                     </div>
                     <div style={{textAlign:"right"}}>
-                      {pr&&<div style={{fontSize:12,fontWeight:700,color:GOLD}}>PR: {pr} {isVert(lift.name)?"in":"lbs"}</div>}
-                      {last&&<div style={{fontSize:11,color:"#aaa"}}>Last: {last} {isVert(lift.name)?"in":"lbs"}</div>}
+                      {lift.inputType!=="bodyweight"&&pr&&<div style={{fontSize:12,fontWeight:700,color:GOLD}}>PR: {pr} {isVert(lift.name)?"in":"lbs"}</div>}
+                      {lift.inputType!=="bodyweight"&&last&&<div style={{fontSize:11,color:"#aaa"}}>Last: {last} {isVert(lift.name)?"in":"lbs"}</div>}
                     </div>
                   </div>
-                  {isVert(lift.name)?(
-                    <div>
-                      <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:10,color:PUR,fontWeight:600,marginBottom:3}}>⬆️ Height (inches)</div>
-                          <input type="number" inputMode="decimal" value={inp.weight}
-                            onChange={e=>setInput(lift.name,"weight",e.target.value)}
-                            placeholder={last?`Last: ${last}`:"e.g. 28"}
-                            style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid "+PUR+"44",
-                              fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",
-                              background:"#faf8ff",boxSizing:"border-box",fontWeight:600}}/>
+                  {(()=>{
+                    const itype=lift.inputType||"weight";
+                    const selBand=inp.bandColor?BAND_COLORS.find(b=>b.id===inp.bandColor):null;
+                    const logBtn=(disabled)=>(
+                      <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={disabled||isSaving}
+                        style={{padding:"10px 14px",borderRadius:8,border:"none",
+                          background:!disabled?(isSaved?GREEN:tc.border):"#e0e0e0",
+                          color:!disabled?"#fff":"#aaa",fontSize:13,fontWeight:700,
+                          cursor:!disabled?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:52}}>
+                        {isSaved?"✓":isSaving?"...":"Log"}
+                      </button>
+                    );
+                    const repsInput=(
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Reps</div>
+                        <input type="number" inputMode="numeric" value={inp.reps||""}
+                          onChange={e=>setInput(lift.name,"reps",e.target.value)}
+                          placeholder="0"
+                          style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
+                      </div>
+                    );
+                    const bandPicker=(label)=>(
+                      <div style={{marginBottom:10}}>
+                        <div style={{fontSize:10,color:"#aaa",marginBottom:6}}>{label||"Band Resistance"}</div>
+                        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                          {BAND_COLORS.map(b=>{
+                            const sel=inp.bandColor===b.id;
+                            return(
+                              <button key={b.id} onClick={()=>setInput(lift.name,"bandColor",b.id)}
+                                style={{display:"flex",alignItems:"center",gap:5,padding:"6px 10px",borderRadius:8,
+                                  border:"1.5px solid "+(sel?b.hex:"#e0e0e0"),
+                                  background:sel?b.hex+"18":"#fafafa",
+                                  color:sel?b.hex:"#888",fontSize:11,fontWeight:sel?700:400,
+                                  cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
+                                <div style={{width:9,height:9,borderRadius:"50%",background:b.hex,flexShrink:0,border:"1px solid "+b.hex+"88"}}/>
+                                {b.label}
+                                <span style={{fontSize:9,color:sel?b.hex+"aa":"#ccc"}}>{b.resistance}</span>
+                              </button>
+                            );
+                          })}
                         </div>
-                        <div>
-                          <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
-                            style={{padding:"10px 14px",borderRadius:8,border:"none",
-                              background:inp.weight?(isSaved?GREEN:PUR):"#e0e0e0",
-                              color:inp.weight?"#fff":"#aaa",fontSize:13,fontWeight:700,
-                              cursor:inp.weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:52}}>
-                            {isSaved?"✓":isSaving?"...":"Log"}
+                      </div>
+                    );
+
+                    // ── BODYWEIGHT ──────────────────────────────────
+                    if(itype==="bodyweight"){
+                      const done=bwDone[lift.name];
+                      return(
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <div style={{flex:1,padding:"10px 14px",borderRadius:8,background:"#f5f5f5",border:"0.5px solid #e8e8e8",fontSize:12,color:"#aaa",fontStyle:"italic"}}>
+                            Body Weight — isometrics / endurance
+                          </div>
+                          <button onClick={()=>setBwDone(p=>({...p,[lift.name]:!p[lift.name]}))}
+                            style={{padding:"10px 16px",borderRadius:8,border:"none",
+                              background:done?GREEN:"#e0e0e0",color:done?"#fff":"#888",
+                              fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
+                            {done?"✓ Done":"Mark Done"}
                           </button>
                         </div>
-                      </div>
-                      <div style={{marginTop:8}}>
-                        <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Contact time (ms) <span style={{color:"#555",fontSize:9}}>— optional · for RSI</span></div>
-                        <input type="number" inputMode="numeric" value={inp.ctTime||""}
-                          onChange={e=>setInput(lift.name,"ctTime",e.target.value)}
-                          placeholder="e.g. 250"
-                          style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid #e8e8e8",
-                            fontSize:13,fontFamily:"Georgia,serif",textAlign:"center",
-                            background:"#fafafa",boxSizing:"border-box",color:"#888"}}/>
-                      </div>
-                      {inp.weight&&(
-                        <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6,display:"flex",gap:12,justifyContent:"center",alignItems:"center",flexWrap:"wrap"}}>
-                          <span>Jump: <span style={{color:PUR,fontWeight:700}}>{inp.weight} in</span></span>
-                          {inp.ctTime&&parseFloat(inp.ctTime)>0&&(
-                            <span>RSI: <span style={{color:GOLD,fontWeight:700}}>{parseFloat(((parseFloat(inp.weight)*0.0254)/(parseFloat(inp.ctTime)/1000)).toFixed(2))}</span></span>
-                          )}
-                          {pr&&parseFloat(inp.weight)>pr&&(
-                            <span style={{background:PUR,color:"#fff",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
+                      );
+                    }
+
+                    // ── MEDICINE BALL ────────────────────────────────
+                    if(itype==="mb"){
+                      return(
+                        <div>
+                          <div style={{fontSize:10,color:"#aaa",marginBottom:6}}>Medicine Ball Weight</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}}>
+                            {MB_WEIGHTS.map(w=>{
+                              const sel=inp.weight===String(w);
+                              return(
+                                <button key={w} onClick={()=>setInput(lift.name,"weight",String(w))}
+                                  style={{padding:"8px 12px",borderRadius:8,
+                                    border:"1.5px solid "+(sel?tc.border:"#e0e0e0"),
+                                    background:sel?tc.bg:"#fafafa",
+                                    color:sel?tc.color:"#888",
+                                    fontSize:12,fontWeight:sel?700:400,
+                                    cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                                  {w} lbs
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+                            {repsInput}
+                            <div style={{paddingBottom:0}}>{logBtn(!inp.weight)}</div>
+                          </div>
+                          {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6}}>{inp.weight} lbs × {inp.reps} reps</div>}
+                        </div>
+                      );
+                    }
+
+                    // ── BAND + WEIGHT (incl. Pallof = two labeled slots) ──
+                    if(itype==="band_weight"||itype==="band_pallof"){
+                      return(
+                        <div>
+                          {bandPicker("Band Resistance")}
+                          <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>{itype==="band_pallof"?"Cable Weight (lbs)":"Weight (lbs)"}</div>
+                              <input type="number" inputMode="decimal" value={inp.weight||""}
+                                onChange={e=>setInput(lift.name,"weight",e.target.value)}
+                                placeholder={last?`Last: ${last}`:"0"}
+                                style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
+                            </div>
+                            {repsInput}
+                            <div>{logBtn(!inp.weight)}</div>
+                          </div>
+                          {selBand&&<div style={{fontSize:10,color:selBand.hex,marginTop:6,fontWeight:600}}>● {selBand.label} · {selBand.resistance}</div>}
+                        </div>
+                      );
+                    }
+
+                    // ── BAND + KETTLEBELL ────────────────────────────
+                    if(itype==="band_kb"){
+                      return(
+                        <div>
+                          {bandPicker("Band Resistance")}
+                          <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>KB Weight (lbs)</div>
+                              <input type="number" inputMode="decimal" value={inp.weight||""}
+                                onChange={e=>setInput(lift.name,"weight",e.target.value)}
+                                placeholder={last?`Last: ${last}`:"0"}
+                                style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
+                            </div>
+                            {repsInput}
+                            <div>{logBtn(!inp.weight)}</div>
+                          </div>
+                          {selBand&&<div style={{fontSize:10,color:selBand.hex,marginTop:6,fontWeight:600}}>● {selBand.label} · {selBand.resistance}</div>}
+                          {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:4}}>est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span></div>}
+                        </div>
+                      );
+                    }
+
+                    // ── KETTLEBELL ───────────────────────────────────
+                    if(itype==="kb"){
+                      return(
+                        <div>
+                          <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>KB Weight (lbs)</div>
+                              <input type="number" inputMode="decimal" value={inp.weight||""}
+                                onChange={e=>setInput(lift.name,"weight",e.target.value)}
+                                placeholder={last?`Last: ${last}`:"0"}
+                                style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
+                            </div>
+                            {repsInput}
+                            <div>{logBtn(!inp.weight)}</div>
+                          </div>
+                          {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6}}>est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>{pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&<span style={{marginLeft:8,background:GOLD,color:"#000",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>}</div>}
+                        </div>
+                      );
+                    }
+
+                    // ── VERTICAL JUMP ────────────────────────────────
+                    if(isVert(lift.name)){
+                      return(
+                        <div>
+                          <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:10,color:PUR,fontWeight:600,marginBottom:3}}>⬆️ Height (inches)</div>
+                              <input type="number" inputMode="decimal" value={inp.weight||""}
+                                onChange={e=>setInput(lift.name,"weight",e.target.value)}
+                                placeholder={last?`Last: ${last}`:"e.g. 28"}
+                                style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid "+PUR+"44",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#faf8ff",boxSizing:"border-box",fontWeight:600}}/>
+                            </div>
+                            <div>{logBtn(!inp.weight)}</div>
+                          </div>
+                          <div style={{marginTop:8}}>
+                            <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Contact time (ms) <span style={{color:"#555",fontSize:9}}>— optional · for RSI</span></div>
+                            <input type="number" inputMode="numeric" value={inp.ctTime||""}
+                              onChange={e=>setInput(lift.name,"ctTime",e.target.value)}
+                              placeholder="e.g. 250"
+                              style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid #e8e8e8",fontSize:13,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",color:"#888"}}/>
+                          </div>
+                          {inp.weight&&(
+                            <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6,display:"flex",gap:12,justifyContent:"center",alignItems:"center",flexWrap:"wrap"}}>
+                              <span>Jump: <span style={{color:PUR,fontWeight:700}}>{inp.weight} in</span></span>
+                              {inp.ctTime&&parseFloat(inp.ctTime)>0&&<span>RSI: <span style={{color:GOLD,fontWeight:700}}>{parseFloat(((parseFloat(inp.weight)*0.0254)/(parseFloat(inp.ctTime)/1000)).toFixed(2))}</span></span>}
+                              {pr&&parseFloat(inp.weight)>pr&&<span style={{background:PUR,color:"#fff",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>}
+                            </div>
                           )}
                         </div>
-                      )}
-                    </div>
-                  ):(
-                    <div>
-                      <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                        <div style={{flex:1}}>
-                          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-                            <div style={{fontSize:10,color:"#aaa"}}>Weight (lbs)</div>
-                            <button onClick={()=>toggleBW(lift.name)}
-                              style={{fontSize:9,padding:"2px 7px",borderRadius:5,
-                                border:"1px solid "+(inp.bw?GREEN:"#ddd"),
-                                background:inp.bw?GREEN+"22":"#f5f5f5",
-                                color:inp.bw?GREEN:"#999",cursor:"pointer",
-                                fontFamily:"Georgia,serif",fontWeight:inp.bw?700:400}}>
-                              ⚖️ BW{latestBW?" ("+latestBW+")":""}
+                      );
+                    }
+
+                    // ── STANDARD WEIGHT + REPS (default) ────────────
+                    return(
+                      <div>
+                        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                          <div style={{flex:1}}>
+                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
+                              <div style={{fontSize:10,color:"#aaa"}}>Weight (lbs)</div>
+                              <button onClick={()=>toggleBW(lift.name)}
+                                style={{fontSize:9,padding:"2px 7px",borderRadius:5,
+                                  border:"1px solid "+(inp.bw?GREEN:"#ddd"),
+                                  background:inp.bw?GREEN+"22":"#f5f5f5",
+                                  color:inp.bw?GREEN:"#999",cursor:"pointer",
+                                  fontFamily:"Georgia,serif",fontWeight:inp.bw?700:400}}>
+                                ⚖️ BW{latestBW?" ("+latestBW+")":""}
+                              </button>
+                            </div>
+                            <input type="number" inputMode="decimal"
+                              value={inp.weight||""}
+                              readOnly={!!inp.bw}
+                              onChange={e=>!inp.bw&&setInput(lift.name,"weight",e.target.value)}
+                              placeholder={inp.bw&&!latestBW?"Log weight first":last?`Last: ${last}`:"0"}
+                              style={{width:"100%",padding:"10px",borderRadius:8,
+                                border:"1px solid "+(inp.bw?GREEN+"55":"#e0e0e0"),
+                                fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",
+                                background:inp.bw?"#f0fff4":"#fafafa",
+                                color:inp.bw?GREEN:"#1a1a1a",
+                                boxSizing:"border-box",fontWeight:600}}/>
+                          </div>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Reps</div>
+                            <input type="number" inputMode="numeric" value={inp.reps||""}
+                              onChange={e=>setInput(lift.name,"reps",e.target.value)}
+                              placeholder="0"
+                              style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
+                          </div>
+                          <div style={{paddingTop:18}}>
+                            <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
+                              style={{padding:"10px 14px",borderRadius:8,border:"none",background:inp.weight?(isSaved?GREEN:tc.border):"#e0e0e0",color:inp.weight?"#fff":"#aaa",fontSize:13,fontWeight:700,cursor:inp.weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:52}}>
+                              {isSaved?"✓":isSaving?"...":"Log"}
                             </button>
                           </div>
-                          <input type="number" inputMode="decimal"
-                            value={inp.weight}
-                            readOnly={!!inp.bw}
-                            onChange={e=>!inp.bw&&setInput(lift.name,"weight",e.target.value)}
-                            placeholder={inp.bw&&!latestBW?"Log weight first":last?`Last: ${last}`:"0"}
-                            style={{width:"100%",padding:"10px",borderRadius:8,
-                              border:"1px solid "+(inp.bw?GREEN+"55":"#e0e0e0"),
-                              fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",
-                              background:inp.bw?"#f0fff4":"#fafafa",
-                              color:inp.bw?GREEN:"#1a1a1a",
-                              boxSizing:"border-box",fontWeight:600}}/>
                         </div>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Reps</div>
-                          <input type="number" inputMode="numeric" value={inp.reps}
-                            onChange={e=>setInput(lift.name,"reps",e.target.value)}
-                            placeholder="0"
-                            style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
-                        </div>
-                        <div style={{paddingTop:18}}>
-                          <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
-                            style={{padding:"10px 14px",borderRadius:8,border:"none",background:inp.weight?(isSaved?GREEN:tc.border):"#e0e0e0",color:inp.weight?"#fff":"#aaa",fontSize:13,fontWeight:700,cursor:inp.weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:52}}>
-                            {isSaved?"✓":isSaving?"...":"Log"}
-                          </button>
-                        </div>
+                        {inp.weight&&inp.reps&&(
+                          <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6}}>
+                            est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>
+                            {pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&
+                              <span style={{marginLeft:8,background:GOLD,color:"#000",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
+                            }
+                          </div>
+                        )}
                       </div>
-                      {inp.weight&&inp.reps&&(
-                        <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6}}>
-                          est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>
-                          {pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&
-                            <span style={{marginLeft:8,background:GOLD,color:"#000",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
-                          }
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
-                {liftHistory.length>0&&(
+                {liftHistory.length>0&&lift.inputType!=="bodyweight"&&(
                   <div>
                     <button onClick={()=>setExpanded(isExpanded?null:lift.name)} style={{width:"100%",padding:"8px 14px",background:"#fafafa",border:"none",borderTop:"0.5px solid #f0f0f0",fontSize:11,color:"#888",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",display:"flex",justifyContent:"space-between"}}>
                       <span>History ({liftHistory.length} sessions)</span><span>{isExpanded?"▲":"▼"}</span>
