@@ -228,8 +228,8 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
   },[athleteId]);
 
   const selectPart=(muscle)=>{
+    setSelected(prev=>prev===muscle?null:muscle);
     if(readOnly)return;
-    setSelected(muscle);
     const ex=partData[muscle];
     setPStatus(ex?.status||"good");
     setPPain(ex?.pain||0);
@@ -355,7 +355,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       {/* Body Map — large, high contrast */}
       <div style={{background:"#080f18",borderRadius:20,padding:"20px 8px 16px",marginBottom:14,border:"1px solid #1a2e44",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+RED+"55,transparent,"+RED+"55)"}}/>
-        <div style={{maxWidth:340,margin:"0 auto",pointerEvents:readOnly?"none":"auto"}}>
+        <div style={{maxWidth:340,margin:"0 auto"}}>
           <Model
             type={view==="front"?"anterior":"posterior"}
             data={bodyData}
@@ -386,7 +386,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
           const isSel=selected===id;
           if(readOnly&&!c)return null;
           return(
-            <button key={id} onClick={()=>!readOnly&&selectPart(id)}
+            <button key={id} onClick={()=>selectPart(id)}
               style={{padding:"7px 12px",borderRadius:20,
                 border:"1px solid "+(isSel?"#fff":c?c+"66":"#2a2a2a"),
                 background:isSel?(c||"#3a5068")+"33":c?c+"22":"#111",
@@ -412,7 +412,50 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
         })}
       </div>
 
-      {/* Detail panel */}
+      {/* Read-only detail panel (coach view) */}
+      {selected&&selName&&readOnly&&(()=>{
+        const d=partData[selected];
+        if(!d||d.status==="good")return(
+          <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e1e1e",fontSize:12,color:"#555",fontStyle:"italic"}}>
+            No issues reported for {selName}.
+          </div>
+        );
+        const st=STATUS[d.status]||STATUS.good;
+        const sk=MUSCLE_STRETCH[selected]||"";
+        const slist=STRETCHES[sk]||[];
+        return(
+          <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid #222",borderLeft:"3px solid "+st.color}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8,flexWrap:"wrap"}}>
+              <div style={{fontSize:15,fontWeight:900,color:"#fff"}}>{selName}</div>
+              <span style={{fontSize:11,background:st.color+"22",color:st.color,padding:"4px 12px",borderRadius:20,border:"1px solid "+st.color+"44",fontWeight:700,whiteSpace:"nowrap"}}>
+                {st.emoji} {st.label}{d.pain>0?" · "+d.pain+"/10":""}
+              </span>
+            </div>
+            {d.description?(
+              <div style={{fontSize:13,color:"#aaa",lineHeight:1.65,fontStyle:"italic",marginBottom:8}}>"{d.description}"</div>
+            ):(
+              <div style={{fontSize:12,color:"#555",fontStyle:"italic",marginBottom:8}}>No description provided.</div>
+            )}
+            {d.updatedAt&&<div style={{fontSize:9,color:"#444",marginBottom:slist.length?12:0}}>{fmtDate(d.updatedAt)}</div>}
+            {slist.length>0&&(
+              <div>
+                <div style={{fontSize:9,color:SORE,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:800,marginBottom:8}}>Recommended Stretches</div>
+                {slist.map((s,i)=>(
+                  <div key={i} style={{marginBottom:7,padding:"10px 12px",borderRadius:8,background:"#0e0e0e",border:"1px solid #1e1e1e"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:4}}>
+                      <div style={{fontSize:12,fontWeight:700,color:"#ddd"}}>{s.name}</div>
+                      <div style={{fontSize:9,color:SORE,background:SORE+"18",padding:"2px 8px",borderRadius:8,whiteSpace:"nowrap",flexShrink:0}}>{s.duration}</div>
+                    </div>
+                    <div style={{fontSize:11,color:"#666",lineHeight:1.55}}>{s.desc}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Editable detail panel (athlete view) */}
       {selected&&selName&&!readOnly&&(
         <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid #222",borderLeft:"3px solid "+RED}}>
           <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:14,gap:8}}>

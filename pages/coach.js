@@ -583,7 +583,7 @@ export default function Coach(){
   const KEVIN_TABS=["roster","mindset","attendance"];
   // Malkmus (Luke) sees overview, attendance, leaderboard, culture, anvil, weights, engagement
   const LUKE_TABS=["overview","attendance","leaderboard","culture","anvil","weights","engagement"];
-  const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):(coachRole==="malkmus"||coachRole==="adoriyan")?ALL_TABS.filter(t=>LUKE_TABS.includes(t.id)):ALL_TABS;
+  const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):coachRole==="malkmus"?ALL_TABS.filter(t=>LUKE_TABS.includes(t.id)):ALL_TABS;
 
   // Kevin PIN stored in localStorage
   const getKevinPin=()=>typeof window!=="undefined"?localStorage.getItem("kevin_coach_pin_v2"):null;
@@ -591,9 +591,6 @@ export default function Coach(){
   // Malkmus PIN stored in localStorage
   const getMalkmusPin=()=>typeof window!=="undefined"?localStorage.getItem("malkmus_coach_pin"):null;
   const saveMalkmusPin=(p)=>localStorage.setItem("malkmus_coach_pin",p);
-  // Adoriyan PIN stored in localStorage
-  const getAdoriyanPin=()=>typeof window!=="undefined"?localStorage.getItem("adoriyan_coach_pin"):null;
-  const saveAdoriyanPin=(p)=>localStorage.setItem("adoriyan_coach_pin",p);
   // MCastles PIN stored in localStorage
   const getMCastlesPin=()=>typeof window!=="undefined"?localStorage.getItem("mcastles_coach_pin"):null;
   const saveMCastlesPin=(p)=>localStorage.setItem("mcastles_coach_pin",p);
@@ -617,10 +614,6 @@ export default function Coach(){
           const mp=getMalkmusPin();
           if(mp&&newPin===mp){setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
           else{setPinError("Wrong PIN. Try again.");setPin("");}
-        }else if(selectedCoach==="adoriyan"){
-          const ap=getAdoriyanPin();
-          if(ap&&newPin===ap){setAuthed(true);setCoachRole("adoriyan");setTab("overview");setPin("");}
-          else{setPinError("Wrong PIN. Try again.");setPin("");}
         }else if(selectedCoach==="mcastles"){
           const mcp=getMCastlesPin();
           if(mcp&&newPin===mcp){setAuthed(true);setCoachRole("mcastles");setTab("overview");setPin("");}
@@ -629,10 +622,7 @@ export default function Coach(){
       }else if(pinStep==="create"){
         setPinConfirm(newPin);setPin("");setPinStep("confirm");setPinError("");
       }else if(pinStep==="confirm"){
-        if(selectedCoach==="adoriyan"){
-          if(newPin===pinConfirm){saveAdoriyanPin(newPin);setAuthed(true);setCoachRole("adoriyan");setTab("overview");setPin("");}
-          else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
-        }else if(selectedCoach==="malkmus"){
+        if(selectedCoach==="malkmus"){
           if(newPin===pinConfirm){saveMalkmusPin(newPin);setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
           else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
         }else if(selectedCoach==="mcastles"){
@@ -650,7 +640,6 @@ export default function Coach(){
     {id:"ant",name:"Coach Ant",sub:"Head Coach",color:GOLD,emoji:"⚒"},
     {id:"kevin",name:"Coach Kevin",sub:"Guest Speaker",color:PUR,emoji:"📖"},
     {id:"malkmus",name:"Luke",sub:"Assistant Coach",color:"#1A4F8A",emoji:"📋"},
-    {id:"adoriyan",name:"Adoriyan Daniels",sub:"Assistant Coach",color:"#0F6E56",emoji:"💪"},
     {id:"mcastles",name:"MCastles",sub:"Motivator · Full Access",color:ORANGE,emoji:"🍑🚀"},
   ];
 
@@ -673,7 +662,7 @@ export default function Coach(){
                   <button key={c.id} onClick={()=>{
                     setSelectedCoach(c.id);
                     setPin("");setPinError("");
-                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin())||(c.id==="adoriyan"&&getAdoriyanPin())||(c.id==="mcastles"&&getMCastlesPin());
+                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin())||(c.id==="mcastles"&&getMCastlesPin());
                     setPinStep(hasPin?"enter":"create");
                   }} style={{width:"100%",padding:0,borderRadius:14,border:"1px solid #1e1e1e",background:"linear-gradient(135deg,#0e0e0e,#131313)",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"stretch",textAlign:"left",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)"}}>
                     <div style={{width:4,background:"linear-gradient(180deg,"+c.color+","+c.color+"88)",flexShrink:0}}/>
@@ -732,10 +721,6 @@ export default function Coach(){
                         const kp=getKevinPin();
                         if(kp&&val===kp){setAuthed(true);setCoachRole("kevin");setTab("roster");setPin("");}
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
-                      }else if(selectedCoach==="adoriyan"){
-                        const ap=getAdoriyanPin();
-                        if(ap&&val===ap){setAuthed(true);setCoachRole("adoriyan");setTab("overview");setPin("");}
-                        else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }else if(selectedCoach==="malkmus"){
                         const mp=getMalkmusPin();
                         if(mp&&val===mp){setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
@@ -748,10 +733,7 @@ export default function Coach(){
                     }else if(pinStep==="create"){
                       setPinConfirm(val);setPinStep("confirm");setPin("");
                     }else if(pinStep==="confirm"){
-                      if(selectedCoach==="adoriyan"){
-                        if(val===pinConfirm){saveAdoriyanPin(val);setAuthed(true);setCoachRole("adoriyan");setTab("overview");setPin("");}
-                        else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
-                      }else if(selectedCoach==="malkmus"){
+                      if(selectedCoach==="malkmus"){
                         if(val===pinConfirm){saveMalkmusPin(val);setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }else if(selectedCoach==="mcastles"){
@@ -803,7 +785,7 @@ export default function Coach(){
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
             <div>
               <div style={{fontSize:18,fontWeight:900,color:"#fff",letterSpacing:"-0.01em",textTransform:"uppercase"}}>TF College Group</div>
-              <div style={{fontSize:11,color:"#555",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="adoriyan"?"Adoriyan":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"#444"}}>{isClassDay?"Class day":"No class"}</span></div>
+              <div style={{fontSize:11,color:"#555",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"#444"}}>{isClassDay?"Class day":"No class"}</span></div>
             </div>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:11,color:"#555",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
