@@ -832,10 +832,7 @@ export default function PRLog({athleteId,gender}){
                   <div style={{flex:1}}>
                     <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:4}}>TF Power Index</div>
                     <div style={{fontSize:20,fontWeight:900,color:"#fff",lineHeight:1.1,marginBottom:6}}>
-                      {powerIndex>=90?"Above team average":""}
-                      {powerIndex>=70&&powerIndex<90?"Near team average":""}
-                      {powerIndex>=50&&powerIndex<70?"Building strength":""}
-                      {powerIndex<50?"Just getting started":""}
+                      {powerIndex>=90?"Above team average":powerIndex>=70?"Near team average":powerIndex>=50?"Building strength":"Just getting started"}
                     </div>
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                       {CATS.map(c=>{
@@ -1029,25 +1026,25 @@ export default function PRLog({athleteId,gender}){
                 </div>
               )}
               {!selLift&&(
-                <div style={{textAlign:"center",fontSize:11,color:"#aaa",marginBottom:14,padding:"10px",background:"#f9f9f9",borderRadius:8,border:"0.5px solid #eee"}}>
+                <div style={{textAlign:"center",fontSize:11,color:"#444",marginBottom:14,padding:"10px",background:"#0a0a0a",borderRadius:8,border:"0.5px solid #1a1a1a"}}>
                   Tap any lift card to see its trend chart
                 </div>
               )}
 
               {/* ── Radar chart ── */}
               {activeCats.length>=3&&(
-                <div style={{background:"#fff",borderRadius:14,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"#1a1a1a",marginBottom:2}}>📡 Strength Profile</div>
-                  <div style={{fontSize:11,color:"#aaa",marginBottom:14}}>Movement pattern balance across all logged lifts</div>
+                <div style={{background:"#111",borderRadius:14,padding:"1.25rem",border:"0.5px solid #1e1e1e"}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:2}}>📡 Strength Profile</div>
+                  <div style={{fontSize:11,color:"#555",marginBottom:14}}>Movement pattern balance across all logged lifts</div>
                   <svg viewBox="0 0 200 200" style={{width:"100%",maxWidth:260,display:"block",margin:"0 auto"}}>
                     {[0.25,0.5,0.75,1.0].map((r,ri)=>(
                       <polygon key={ri}
                         points={activeCats.map((_,i)=>{const[x,y]=rPt(i,r*RR);return`${x},${y}`;}).join(" ")}
-                        fill="none" stroke={ri===3?"#e8e8e8":"#f0f0f0"} strokeWidth="1"/>
+                        fill="none" stroke={ri===3?"#252525":"#1e1e1e"} strokeWidth="1"/>
                     ))}
                     {activeCats.map((_,i)=>{
                       const[x,y]=rPt(i,RR);
-                      return<line key={i} x1={RCX} y1={RCY} x2={x} y2={y} stroke="#ebebeb" strokeWidth="1"/>;
+                      return<line key={i} x1={RCX} y1={RCY} x2={x} y2={y} stroke="#1e1e1e" strokeWidth="1"/>;
                     })}
                     <polygon points={rFillPts} fill={piCol+"28"} stroke={piCol} strokeWidth="2.5" strokeLinejoin="round"/>
                     {activeCats.map((_,i)=>{
@@ -1062,7 +1059,7 @@ export default function PRLog({athleteId,gender}){
                     {activeCats.map((c,i)=>{
                       const[x,y]=rPt(i,RR+18);
                       return(
-                        <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize="9.5" fill="#555" fontFamily="Georgia">
+                        <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize="9.5" fill="#888" fontFamily="Georgia">
                           {c.emoji} {c.label}
                         </text>
                       );
@@ -1084,19 +1081,19 @@ export default function PRLog({athleteId,gender}){
                       const rel=latestBW?parseFloat((catPRs[c.id]/latestBW).toFixed(2)):null;
                       const t=strTier(pct);
                       return(
-                        <div key={i} style={{padding:"10px 12px",background:"#f9f9f9",borderRadius:10,border:"1px solid "+t.color+"33"}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-                            <div style={{fontSize:11,fontWeight:600,color:"#1a1a1a"}}>{c.emoji} {c.label}</div>
+                        <div key={i} style={{padding:"10px 12px",background:"#0f0f0f",borderRadius:10,border:"1px solid "+t.color+"22",borderLeft:"3px solid "+t.color}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                            <div style={{fontSize:11,fontWeight:600,color:"#ccc"}}>{c.emoji} {c.label}</div>
                             <div style={{padding:"2px 8px",borderRadius:6,background:t.bg,color:t.color,fontSize:9,fontWeight:700}}>{t.label}</div>
                           </div>
-                          <div style={{fontSize:18,fontWeight:900,color:"#1a1a1a",lineHeight:1,marginBottom:2}}>{catPRs[c.id]} <span style={{fontSize:10,color:"#aaa",fontWeight:400}}>lbs</span></div>
+                          <div style={{fontSize:20,fontWeight:900,color:"#fff",lineHeight:1,marginBottom:2}}>{catPRs[c.id]} <span style={{fontSize:10,color:"#555",fontWeight:400}}>lbs</span></div>
                           {rel&&<div style={{fontSize:9,color:GOLD,fontWeight:600,marginBottom:4}}>{rel}× bodyweight</div>}
-                          <div style={{height:4,background:"#ebebeb",borderRadius:2,overflow:"hidden",marginBottom:6}}>
+                          <div style={{height:3,background:"#1a1a1a",borderRadius:2,overflow:"hidden",marginBottom:6}}>
                             <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,"+t.color+","+t.color+"88)",borderRadius:2}}/>
                           </div>
-                          <div style={{fontSize:9,color:"#aaa",marginBottom:rank&&teamLoaded?4:0}}>{pct}% of {genderLabel.toLowerCase()} team avg{teamAvgRefs[c.id]?` (${teamAvgRefs[c.id]} lbs)`:""}</div>
+                          <div style={{fontSize:9,color:"#444",marginBottom:rank&&teamLoaded?4:0}}>{pct}% of {genderLabel.toLowerCase()} team avg{teamAvgRefs[c.id]?` (${teamAvgRefs[c.id]} lbs)`:""}</div>
                           {rank&&teamLoaded&&(
-                            <div style={{fontSize:9,fontWeight:rank.rank<=3?700:400,color:rank.rank<=3?GOLD:"#888"}}>
+                            <div style={{fontSize:9,fontWeight:rank.rank<=3?700:400,color:rank.rank<=3?GOLD:"#555"}}>
                               {rankMedal(rank.rank)&&rankMedal(rank.rank)+" "}{rank.rank}{rankSuffix(rank.rank)} on your team{rank.pct!=null?" · top "+(rank.pct<5?5:rank.pct<10?10:Math.round(rank.pct/10)*10+1)+"% of "+genderLabel.toLowerCase():""}
                             </div>
                           )}
@@ -1104,13 +1101,13 @@ export default function PRLog({athleteId,gender}){
                       );
                     })}
                   </div>
-                  <div style={{fontSize:9,color:"#ccc",textAlign:"center",marginTop:10}}>{genderLabel} team averages · {teamLoaded?`${Object.keys(teamAvgRefs).length} categories computed from group data`:"loading team data..."}</div>
+                  <div style={{fontSize:9,color:"#444",textAlign:"center",marginTop:10}}>{genderLabel} team averages · {teamLoaded?`${Object.keys(teamAvgRefs).length} categories computed from group data`:"loading team data..."}</div>
                 </div>
               )}
               {activeCats.length<3&&activeCats.length>0&&(
-                <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px 14px",border:"0.5px solid #eee",textAlign:"center"}}>
-                  <div style={{fontSize:11,color:"#aaa"}}>Log lifts in at least 3 movement categories to unlock the strength profile chart.</div>
-                  <div style={{fontSize:10,color:"#bbb",marginTop:4}}>Categories: Lower Body, Push, Pull, Hinge</div>
+                <div style={{background:"#0a0a0a",borderRadius:10,padding:"14px 16px",border:"0.5px solid #1a1a1a",textAlign:"center"}}>
+                  <div style={{fontSize:11,color:"#555"}}>Log lifts in at least 3 movement categories to unlock the strength profile chart.</div>
+                  <div style={{fontSize:10,color:"#333",marginTop:4}}>Categories: Lower Body, Push, Pull, Hinge</div>
                 </div>
               )}
             </>
