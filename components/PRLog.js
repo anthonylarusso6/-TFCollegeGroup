@@ -155,6 +155,7 @@ export default function PRLog({athleteId,gender}){
   const[latestBW,setLatestBW]=useState(null);
   const[teamLoaded,setTeamLoaded]=useState(false);
   const[bwDone,setBwDone]=useState({});
+  const[showPriorPhase,setShowPriorPhase]=useState(false);
 
   useEffect(()=>{
     (async()=>{
@@ -289,6 +290,13 @@ export default function PRLog({athleteId,gender}){
   const genderLabel=isFemale?"Women's":"Men's";
 
   const allLiftNames=Object.keys(logs).filter(k=>logs[k].length>0);
+
+  // Split lifts into current phase vs prior phases
+  const currentPhaseLiftSet=new Set(
+    Object.values(program||{}).flat().map(l=>l.name)
+  );
+  const currentLiftNames=allLiftNames.filter(n=>currentPhaseLiftSet.has(n));
+  const priorLiftNames=allLiftNames.filter(n=>!currentPhaseLiftSet.has(n));
 
   const liftPRs={};
   allLiftNames.forEach(name=>{
@@ -481,6 +489,7 @@ export default function PRLog({athleteId,gender}){
                   {(()=>{
                     const itype=lift.inputType||"weight";
                     const selBand=inp.bandColor?BAND_COLORS.find(b=>b.id===inp.bandColor):null;
+                    const selKB=inp.kbColor?KB_COLORS.find(k=>k.id===inp.kbColor):null;
                     const logBtn=(disabled)=>(
                       <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={disabled||isSaving}
                         style={{padding:"10px 14px",borderRadius:8,border:"none",
@@ -521,6 +530,63 @@ export default function PRLog({athleteId,gender}){
                         </div>
                       </div>
                     );
+                    const kbPicker=()=>{
+                      const isWhiteKB=selKB?.id==="white";
+                      return(
+                        <div style={{marginBottom:8}}>
+                          <div style={{fontSize:10,color:"#888",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>🏋️ Kettlebell</div>
+                          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:7}}>
+                            {KB_COLORS.map(k=>{
+                              const isSel=inp.kbColor===k.id;
+                              const isW=k.id==="white";
+                              return(
+                                <button key={k.id}
+                                  onClick={()=>{setInput(lift.name,"kbColor",k.id);setInput(lift.name,"weight",String(k.weight));}}
+                                  style={{display:"flex",flexDirection:"column",alignItems:"center",
+                                    padding:"10px 4px 8px",borderRadius:12,
+                                    border:isSel?"2px solid "+k.hex:"1.5px solid "+(isW?"#ddd":"#f0f0f0"),
+                                    background:isSel?(isW?"#f5f5f5":"#111"):"#fff",
+                                    cursor:"pointer",transition:"all 0.15s",
+                                    boxShadow:isSel?"0 0 0 2px "+k.hex+"55, 0 4px 14px "+k.hex+"33":"0 1px 3px rgba(0,0,0,0.06)"}}>
+                                  {/* 3-D color sphere */}
+                                  <div style={{position:"relative",width:46,height:46,borderRadius:"50%",
+                                    background:"radial-gradient(circle at 36% 32%, "+k.hex+"ff 0%, "+k.hex+"cc 45%, "+k.hex+"88 100%)",
+                                    border:isW?"1.5px solid #ccc":"none",
+                                    marginBottom:7,
+                                    boxShadow:isSel?"0 3px 10px "+k.hex+"88":"0 2px 6px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.15)"}}>
+                                    {/* shine */}
+                                    <div style={{position:"absolute",top:7,left:9,width:13,height:7,borderRadius:"50%",
+                                      background:"rgba(255,255,255,0.42)",transform:"rotate(-30deg)"}}/>
+                                    {/* selected check */}
+                                    {isSel&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",
+                                      fontSize:18,fontWeight:900,
+                                      color:k.textColor==="white"||k.textColor==="#fff"?"rgba(255,255,255,0.95)":"rgba(0,0,0,0.55)"}}>✓</div>}
+                                  </div>
+                                  <div style={{fontSize:11,fontWeight:isSel?700:500,
+                                    color:isSel?(isW?"#111":k.hex):"#444",lineHeight:1.1,textAlign:"center"}}>{k.label}</div>
+                                  <div style={{fontSize:10,color:isSel?(isW?"#555":k.hex+"cc"):"#bbb",
+                                    marginTop:3,fontWeight:isSel?600:400}}>{k.weight}</div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {selKB&&(
+                            <div style={{marginTop:8,padding:"8px 12px",borderRadius:10,
+                              background:isWhiteKB?"#f5f5f5":selKB.hex+"14",
+                              border:"1px solid "+(isWhiteKB?"#ddd":selKB.hex+"44"),
+                              display:"flex",alignItems:"center",gap:8}}>
+                              <div style={{width:14,height:14,borderRadius:"50%",flexShrink:0,
+                                background:"radial-gradient(circle at 35% 35%, "+selKB.hex+"ff, "+selKB.hex+"99)",
+                                border:isWhiteKB?"1px solid #ccc":"none",
+                                boxShadow:"0 1px 4px "+selKB.hex+"66"}}/>
+                              <span style={{fontSize:12,fontWeight:700,color:isWhiteKB?"#333":selKB.hex}}>{selKB.label} KB</span>
+                              <span style={{fontSize:11,color:"#888"}}>·</span>
+                              <span style={{fontSize:12,fontWeight:600,color:"#555"}}>{selKB.weight} lbs</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    };
 
                     // ── BODYWEIGHT ──────────────────────────────────
                     if(itype==="bodyweight"){
@@ -593,28 +659,15 @@ export default function PRLog({athleteId,gender}){
 
                     // ── BAND + KETTLEBELL ────────────────────────────
                     if(itype==="band_kb"){
-                      const selKB=inp.kbColor?KB_COLORS.find(k=>k.id===inp.kbColor):null;
                       return(
                         <div>
                           {bandPicker("Band Resistance")}
-                          <div style={{fontSize:10,color:"#aaa",marginBottom:4,marginTop:4}}>Kettlebell Color</div>
-                          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
-                            {KB_COLORS.map(k=>{
-                              const isSel=inp.kbColor===k.id;
-                              return(
-                                <button key={k.id} onClick={()=>{setInput(lift.name,"kbColor",k.id);setInput(lift.name,"weight",String(k.weight));}}
-                                  style={{padding:"6px 10px",borderRadius:8,border:isSel?"2px solid #fff":"1.5px solid "+k.hex+"88",background:isSel?k.hex:k.hex+"33",color:isSel?k.textColor:k.hex,fontSize:11,fontWeight:isSel?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
-                                  {k.label}<br/><span style={{fontSize:9,opacity:0.85}}>{k.weight} lbs</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+                          {kbPicker()}
+                          <div style={{display:"flex",gap:8,alignItems:"flex-end",marginTop:4}}>
                             {repsInput}
                             <div>{logBtn(!inp.weight)}</div>
                           </div>
-                          {selKB&&<div style={{fontSize:10,color:selKB.hex,marginTop:6,fontWeight:600}}>● {selKB.label} KB · {selKB.weight} lbs</div>}
-                          {selBand&&<div style={{fontSize:10,color:selBand.hex,marginTop:2,fontWeight:600}}>● {selBand.label} Band · {selBand.resistance}</div>}
+                          {selBand&&<div style={{fontSize:10,color:selBand.hex,marginTop:6,fontWeight:600}}>● {selBand.label} Band · {selBand.resistance}</div>}
                           {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:4}}>est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span></div>}
                         </div>
                       );
@@ -622,26 +675,13 @@ export default function PRLog({athleteId,gender}){
 
                     // ── KETTLEBELL ───────────────────────────────────
                     if(itype==="kb"){
-                      const selKB=inp.kbColor?KB_COLORS.find(k=>k.id===inp.kbColor):null;
                       return(
                         <div>
-                          <div style={{fontSize:10,color:"#aaa",marginBottom:4}}>Kettlebell Color</div>
-                          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
-                            {KB_COLORS.map(k=>{
-                              const isSel=inp.kbColor===k.id;
-                              return(
-                                <button key={k.id} onClick={()=>{setInput(lift.name,"kbColor",k.id);setInput(lift.name,"weight",String(k.weight));}}
-                                  style={{padding:"6px 10px",borderRadius:8,border:isSel?"2px solid #fff":"1.5px solid "+k.hex+"88",background:isSel?k.hex:k.hex+"33",color:isSel?k.textColor:k.hex,fontSize:11,fontWeight:isSel?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
-                                  {k.label}<br/><span style={{fontSize:9,opacity:0.85}}>{k.weight} lbs</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+                          {kbPicker()}
+                          <div style={{display:"flex",gap:8,alignItems:"flex-end",marginTop:4}}>
                             {repsInput}
                             <div>{logBtn(!inp.weight)}</div>
                           </div>
-                          {selKB&&<div style={{fontSize:10,color:selKB.hex,marginTop:6,fontWeight:600}}>● {selKB.label} KB · {selKB.weight} lbs</div>}
                           {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6}}>est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>{pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&<span style={{marginLeft:8,background:GOLD,color:"#000",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>}</div>}
                         </div>
                       );
@@ -850,7 +890,7 @@ export default function PRLog({athleteId,gender}){
               <div style={{marginBottom:14}}>
                 <div style={{fontSize:11,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>🏆 Personal Records · Est. 1RM</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                  {allLiftNames.map(name=>{
+                  {(currentLiftNames.length>0?currentLiftNames:allLiftNames).map(name=>{
                     const pr=liftPRs[name];
                     const catId=getCat(name);
                     const catObj=CATS.find(c=>c.id===catId);
@@ -910,7 +950,44 @@ export default function PRLog({athleteId,gender}){
                 </div>
               </div>
 
-              {/* ── 1RM Trend ── */}
+              {/* ── Prior phase collapsible ── */}
+              {priorLiftNames.length>0&&(
+                <div style={{marginBottom:14}}>
+                  <button onClick={()=>setShowPriorPhase(p=>!p)}
+                    style={{width:"100%",padding:"10px 14px",borderRadius:10,
+                      border:"1px solid #1e1e1e",background:"#111",
+                      color:"#555",fontSize:12,fontWeight:600,cursor:"pointer",
+                      fontFamily:"Georgia,serif",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                    <span>📦 Phase History <span style={{fontWeight:400,color:"#444"}}>· {priorLiftNames.length} lift{priorLiftNames.length!==1?"s":""} from prior programs</span></span>
+                    <span style={{color:"#444",fontSize:10}}>{showPriorPhase?"▲ hide":"▼ show"}</span>
+                  </button>
+                  {showPriorPhase&&(
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
+                      {priorLiftNames.map(name=>{
+                        const pr=liftPRs[name];
+                        const catId=getCat(name);
+                        const catObj=CATS.find(c=>c.id===catId);
+                        const excl=EXCLUDED_CATS.has(name.toLowerCase());
+                        return(
+                          <div key={name} style={{padding:"10px 12px",background:"#111",borderRadius:10,
+                            border:"0.5px solid #1e1e1e"}}>
+                            <div style={{fontSize:9,color:"#444",marginBottom:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                              {catObj?.emoji||"🏋️"} {name}
+                            </div>
+                            <div style={{fontSize:20,fontWeight:900,color:"#666",lineHeight:1}}>
+                              {excl?pr?.weight:pr?.orm}
+                            </div>
+                            <div style={{fontSize:9,color:"#333",marginTop:2}}>
+                              {excl?"logged · prior phase":"est. 1RM · prior phase"}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {selLift&&(
                 <div style={{background:BG,borderRadius:14,padding:"1rem 1.25rem",marginBottom:14,border:"1px solid #222",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+ORANGE+")"}}/>
