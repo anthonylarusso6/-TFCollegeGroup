@@ -91,16 +91,16 @@ const epley=(w,r)=>r===1?w:Math.round(w*(1+r/30));
 
 // Gender-specific T&F reference standards
 const CATS_M=[
-  {id:"lower", label:"Lower Body", emoji:"🦵", ref:225, w:0.30},
-  {id:"push",  label:"Push",       emoji:"💪", ref:175, w:0.20},
-  {id:"pull",  label:"Pull",       emoji:"🤜", ref:155, w:0.15},
-  {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:255, w:0.35},
+  {id:"lower", label:"Lower Body", emoji:"🦵", ref:315, w:0.30},
+  {id:"push",  label:"Push",       emoji:"💪", ref:225, w:0.20},
+  {id:"pull",  label:"Pull",       emoji:"🤜", ref:185, w:0.15},
+  {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:365, w:0.35},
 ];
 const CATS_F=[
-  {id:"lower", label:"Lower Body", emoji:"🦵", ref:145, w:0.30},
-  {id:"push",  label:"Push",       emoji:"💪", ref:95,  w:0.20},
-  {id:"pull",  label:"Pull",       emoji:"🤜", ref:85,  w:0.15},
-  {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:165, w:0.35},
+  {id:"lower", label:"Lower Body", emoji:"🦵", ref:185, w:0.30},
+  {id:"push",  label:"Push",       emoji:"💪", ref:115, w:0.20},
+  {id:"pull",  label:"Pull",       emoji:"🤜", ref:100, w:0.15},
+  {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:225, w:0.35},
 ];
 
 const VERT_LIFTS=new Set(["pvc max vert"]);
@@ -405,13 +405,15 @@ export default function PRLog({athleteId,gender}){
     return`${x},${y}`;
   }).join(" ");
 
-  // Radar
+  // Radar — outer ring = ELITE (1.4× team avg), team avg ring shown at 71% of RR
+  const RADAR_SCALE=1.4;
   const N=activeCats.length;
   const RCX=100,RCY=100,RR=70;
   const rAngle=(i)=>(2*Math.PI*i/Math.max(N,1))-Math.PI/2;
   const rPt=(i,r)=>[RCX+r*Math.cos(rAngle(i)),RCY+r*Math.sin(rAngle(i))];
-  const rScores=activeCats.map(c=>Math.min(1,catPRs[c.id]/getRef(c.id)));
+  const rScores=activeCats.map(c=>Math.min(1,catPRs[c.id]/(getRef(c.id)*RADAR_SCALE)));
   const rFillPts=activeCats.map((_,i)=>{const[x,y]=rPt(i,rScores[i]*RR);return`${x},${y}`;}).join(" ");
+  const rAvgPts=activeCats.map((_,i)=>{const[x,y]=rPt(i,(1/RADAR_SCALE)*RR);return`${x},${y}`;}).join(" ");
 
   if(!program)return(
     <div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading program...</div>
@@ -832,7 +834,7 @@ export default function PRLog({athleteId,gender}){
                   <div style={{flex:1}}>
                     <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.15em",marginBottom:4}}>TF Power Index</div>
                     <div style={{fontSize:20,fontWeight:900,color:"#fff",lineHeight:1.1,marginBottom:6}}>
-                      {powerIndex>=90?"Above team average":powerIndex>=70?"Near team average":powerIndex>=50?"Building strength":"Just getting started"}
+                      {powerIndex>=90?"Elite level":powerIndex>=70?"Above average":powerIndex>=50?"Building strength":"Getting started"}
                     </div>
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                       {CATS.map(c=>{
@@ -1035,13 +1037,17 @@ export default function PRLog({athleteId,gender}){
               {activeCats.length>=3&&(
                 <div style={{background:"#111",borderRadius:14,padding:"1.25rem",border:"0.5px solid #1e1e1e"}}>
                   <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:2}}>📡 Strength Profile</div>
-                  <div style={{fontSize:11,color:"#555",marginBottom:14}}>Movement pattern balance across all logged lifts</div>
+                  <div style={{fontSize:11,color:"#555",marginBottom:14}}>
+                    Outer ring = elite (40% above avg) · <span style={{color:piCol+"99"}}>dashed = team avg</span>
+                  </div>
                   <svg viewBox="0 0 200 200" style={{width:"100%",maxWidth:260,display:"block",margin:"0 auto"}}>
                     {[0.25,0.5,0.75,1.0].map((r,ri)=>(
                       <polygon key={ri}
                         points={activeCats.map((_,i)=>{const[x,y]=rPt(i,r*RR);return`${x},${y}`;}).join(" ")}
                         fill="none" stroke={ri===3?"#252525":"#1e1e1e"} strokeWidth="1"/>
                     ))}
+                    {/* Team average ring */}
+                    <polygon points={rAvgPts} fill={piCol+"08"} stroke={piCol+"55"} strokeWidth="1.5" strokeDasharray="4,3"/>
                     {activeCats.map((_,i)=>{
                       const[x,y]=rPt(i,RR);
                       return<line key={i} x1={RCX} y1={RCY} x2={x} y2={y} stroke="#1e1e1e" strokeWidth="1"/>;
@@ -1076,7 +1082,7 @@ export default function PRLog({athleteId,gender}){
                   {/* Category breakdown with team ranks */}
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:14}}>
                     {activeCats.map((c,i)=>{
-                      const pct=Math.round(rScores[i]*100);
+                      const pct=Math.round(catPRs[c.id]/getRef(c.id)*100);
                       const rank=catRanks[c.id];
                       const rel=latestBW?parseFloat((catPRs[c.id]/latestBW).toFixed(2)):null;
                       const t=strTier(pct);
