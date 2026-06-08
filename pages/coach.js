@@ -237,7 +237,8 @@ export default function Coach(){
         const img=new Image();
         img.onerror=()=>reject(new Error("Could not decode image"));
         img.onload=()=>{
-          const MAX=1400;
+          // Keep full resolution up to 4000px — high quality for download
+          const MAX=4000;
           const scale=Math.min(1,MAX/Math.max(img.width,img.height));
           const canvas=document.createElement("canvas");
           canvas.width=Math.round(img.width*scale);
@@ -251,7 +252,7 @@ export default function Coach(){
               const{data:{publicUrl}}=supabase.storage.from("athlete-photos").getPublicUrl(fileName);
               resolve(publicUrl);
             }catch(e){reject(e);}
-          },"image/jpeg",0.88);
+          },"image/jpeg",0.96);
         };
         img.src=ev.target.result;
       };

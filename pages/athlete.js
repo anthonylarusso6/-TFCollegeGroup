@@ -499,8 +499,11 @@ export default function Athlete(){
 
   const sendPrayer=async()=>{
     if(!prayerText.trim())return;
-    try{await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"prayer",message:prayerText});}catch(e){console.error("Prayer send:",e);}
-    setPrayerSent(true);
+    try{
+      const{error}=await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"prayer",message:prayerText});
+      if(error)throw error;
+      setPrayerSent(true);
+    }catch(e){console.error("Prayer send:",e);}
   };
 
   const sendInjury=async()=>{
