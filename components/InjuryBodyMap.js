@@ -22,17 +22,19 @@ const MUSCLE_NAMES = {
   calves:"Calves", knees:"Knees",
   "left-soleus":"Left Shin", "right-soleus":"Right Shin",
   "left-ankle":"Left Ankle/Foot", "right-ankle":"Right Ankle/Foot",
+  "left-hand":"Left Hand", "right-hand":"Right Hand",
 };
 
 // chips shown for each view — ordered head→toe
 const FRONT_CHIPS = [
-  "head","neck","chest","front-deltoids","biceps","forearm",
+  "head","neck","chest","front-deltoids","biceps","forearm","left-hand","right-hand",
   "abs","obliques","adductor","quadriceps","knees","left-soleus","right-soleus",
   "left-ankle","right-ankle",
 ];
 const BACK_CHIPS = [
   "head","neck","trapezius","upper-back","lower-back",
-  "back-deltoids","triceps","forearm","gluteal","hamstring","abductors","calves",
+  "back-deltoids","triceps","forearm","left-hand","right-hand",
+  "gluteal","hamstring","abductors","calves",
   "left-ankle","right-ankle",
 ];
 
@@ -48,6 +50,7 @@ const MUSCLE_STRETCH = {
   calves:"calf", knees:"knee",
   "left-soleus":"shin", "right-soleus":"shin",
   "left-ankle":"ankle", "right-ankle":"ankle",
+  "left-hand":"hand", "right-hand":"hand",
 };
 
 function ytUrl(name){
@@ -198,6 +201,14 @@ const STRETCHES={
     {name:"Banded Dorsiflexion Stretch",desc:"Loop band around rack at ankle height. Step forward so band pulls the ankle back. Squat slightly — feel front of ankle open.",duration:"30 sec each"},
     {name:"Towel Foot Stretch",desc:"Sit with legs extended, loop towel around ball of foot, pull gently toward you keeping knee straight.",duration:"30 sec each"},
     {name:"Single-Leg Balance",desc:"Stand on one foot, keep ankle stable. Progress to eyes closed or unstable surface. Rebuilds proprioception after sprains.",duration:"30 sec each × 3"},
+  ],
+  hand:[
+    {name:"Wrist Flexor Stretch",desc:"Arm extended, palm up. Use other hand to gently pull fingers back toward elbow. Feel the stretch along the forearm and wrist.",duration:"30 sec each"},
+    {name:"Wrist Extensor Stretch",desc:"Arm extended, palm down. Gently pull fingers downward toward you. Targets top of wrist and forearm.",duration:"30 sec each"},
+    {name:"Finger Extension Stretch",desc:"Press all four fingers back gently with opposite hand. Hold, then spread fingers wide and hold again.",duration:"10 reps each hand"},
+    {name:"Fist-to-Fan",desc:"Make a tight fist, hold 3 sec. Release and spread fingers as wide as possible, hold 3 sec. Repeat.",duration:"10 reps each hand"},
+    {name:"Wrist Circles",desc:"Extend arm, make large slow circles at the wrist in both directions. Full pain-free range only.",duration:"10 each direction"},
+    {name:"Prayer Stretch",desc:"Press palms flat together at chest. Slowly lower both hands while keeping palms pressed together until wrist stretch is felt.",duration:"30 sec"},
   ],
 };
 
@@ -355,7 +366,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       {/* Body Map — large, high contrast */}
       <div style={{background:"#080f18",borderRadius:20,padding:"20px 8px 16px",marginBottom:14,border:"1px solid #1a2e44",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+RED+"55,transparent,"+RED+"55)"}}/>
-        <div style={{maxWidth:340,margin:"0 auto"}}>
+        <div style={{maxWidth:340,margin:"0 auto",position:"relative"}}>
           <Model
             type={view==="front"?"anterior":"posterior"}
             data={bodyData}
@@ -364,6 +375,39 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
             onClick={({muscle})=>selectPart(muscle)}
             svgStyle={{display:"block",stroke:"#1a2e44",strokeWidth:"0.6"}}
           />
+          {/* Custom overlays: hands + feet (not in library SVG) */}
+          {(["left-hand","right-hand","left-ankle","right-ankle"]).map(id=>{
+            const d=partData[id];
+            const isFlag=d?.status==="sore"||d?.status==="pain";
+            const c=isFlag?(d.status==="pain"?RED:SORE):"#3a5068";
+            const isSel=selected===id;
+            if(readOnly&&!isFlag)return null;
+            const isHand=id.includes("hand");
+            const isLeft=id.includes("left");
+            const pos=isHand
+              ? (isLeft
+                  ?{left:"3%",top:"51%",width:38,height:34,borderRadius:"30% 35% 40% 35%"}
+                  :{right:"3%",top:"51%",width:38,height:34,borderRadius:"35% 30% 35% 40%"})
+              : (isLeft
+                  ?{left:"27%",bottom:"1%",width:52,height:20,borderRadius:"40% 40% 45% 45% / 55% 55% 45% 45%"}
+                  :{right:"27%",bottom:"1%",width:52,height:20,borderRadius:"40% 40% 45% 45% / 55% 55% 45% 45%"});
+            return(
+              <div key={id} onClick={()=>selectPart(id)} style={{
+                position:"absolute",
+                background:isFlag?c+"ee":"#3a5068aa",
+                border:isSel?"2px solid #fff":isFlag?`1px solid ${c}88`:"1px solid #1a2e4488",
+                cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                transition:"all 0.12s",
+                boxShadow:isSel?`0 0 10px ${c}88`:isFlag?`0 0 6px ${c}55`:"none",
+                ...pos
+              }}>
+                <span style={{fontSize:7,color:"#ffffffaa",fontWeight:700,letterSpacing:"0.04em",lineHeight:1,pointerEvents:"none"}}>
+                  {isHand?(isLeft?"L\nHAND":"R\nHAND"):(isLeft?"L":"R")}
+                </span>
+              </div>
+            );
+          })}
         </div>
         {!selected&&!readOnly&&(
           <div style={{textAlign:"center",fontSize:11,color:"#3a5068",marginTop:4,letterSpacing:"0.04em"}}>
