@@ -1097,7 +1097,9 @@ export default function PRLog({athleteId,gender}){
                           <div style={{height:3,background:"#1a1a1a",borderRadius:2,overflow:"hidden",marginBottom:6}}>
                             <div style={{width:pct+"%",height:"100%",background:"linear-gradient(90deg,"+t.color+","+t.color+"88)",borderRadius:2}}/>
                           </div>
-                          <div style={{fontSize:9,color:"#444",marginBottom:rank&&teamLoaded?4:0}}>{pct}% of {genderLabel.toLowerCase()} team avg{teamAvgRefs[c.id]?` (${teamAvgRefs[c.id]} lbs)`:""}</div>
+                          <div style={{fontSize:9,color:"#444",marginBottom:rank&&teamLoaded?4:0}}>
+                            {pct}% of {teamAvgRefs[c.id]?`team avg (${teamAvgRefs[c.id]} lbs)`:`baseline (${getRef(c.id)} lbs — team data pending)`}
+                          </div>
                           {rank&&teamLoaded&&(
                             <div style={{fontSize:9,fontWeight:rank.rank<=3?700:400,color:rank.rank<=3?GOLD:"#555"}}>
                               {rankMedal(rank.rank)&&rankMedal(rank.rank)+" "}{rank.rank}{rankSuffix(rank.rank)} on your team{rank.pct!=null?" · top "+(rank.pct<5?5:rank.pct<10?10:Math.round(rank.pct/10)*10+1)+"% of "+genderLabel.toLowerCase():""}
