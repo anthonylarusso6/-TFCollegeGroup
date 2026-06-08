@@ -423,7 +423,7 @@ export default function PRLog({athleteId,gender}){
     <div>
       {/* View toggle */}
       <div style={{display:"flex",gap:4,marginBottom:14,background:"#0a0a0a",borderRadius:12,padding:4}}>
-        {[{id:"log",label:"🏋️ Log"},{id:"dashboard",label:"📊 Dashboard"}].map(v=>(
+        {[{id:"log",label:"🏋️ Log"},{id:"dashboard",label:"📊 Dashboard"},{id:"week",label:"📅 Week"}].map(v=>(
           <button key={v.id} onClick={()=>setView(v.id)}
             style={{flex:1,padding:"11px",borderRadius:9,border:"none",
               background:view===v.id?"linear-gradient(135deg,"+GOLD+"cc,"+GOLD+"88)":"transparent",
@@ -798,6 +798,72 @@ export default function PRLog({athleteId,gender}){
               <div style={{fontSize:12,color:"#333",marginTop:4}}>Coach Ant will update the program soon.</div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── WEEK VIEW ───────────────────────────────────────── */}
+      {view==="week"&&(
+        <div>
+          {phase&&(
+            <div style={{background:"linear-gradient(135deg,#1a1200,#1c1500,#0e0e0e)",borderRadius:14,padding:"16px 18px",marginBottom:14,border:"1px solid "+GOLD+"33",borderLeft:"3px solid "+GOLD,position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:-18,right:-12,fontSize:80,opacity:0.05,lineHeight:1,userSelect:"none",pointerEvents:"none"}}>⚡</div>
+              <div style={{fontSize:9,color:GOLD+"99",textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700,marginBottom:5}}>Current Phase</div>
+              <div style={{fontSize:19,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.2}}>{phase}</div>
+            </div>
+          )}
+          {DAYS.map(day=>{
+            const dayLifts=(program&&program[day])||[];
+            const isToday=day===defaultDay;
+            return(
+              <div key={day} style={{background:"#111",borderRadius:14,marginBottom:12,border:"1px solid #1e1e1e",borderLeft:"3px solid "+(isToday?GOLD:"#333"),overflow:"hidden"}}>
+                {/* Day header */}
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px 10px",borderBottom:"0.5px solid #1a1a1a"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{fontSize:15,fontWeight:800,color:"#fff"}}>{DAY_LABELS[day]||day}</div>
+                    {isToday&&(
+                      <div style={{fontSize:9,fontWeight:700,color:"#000",background:GOLD,padding:"2px 7px",borderRadius:10,letterSpacing:"0.06em"}}>Today</div>
+                    )}
+                  </div>
+                  <button onClick={()=>{setActiveDay(day);setView("log");}}
+                    style={{fontSize:12,fontWeight:700,color:GOLD,background:"transparent",border:"1px solid "+GOLD+"55",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>
+                    Log →
+                  </button>
+                </div>
+                {/* Lift list */}
+                <div style={{padding:"8px 0"}}>
+                  {dayLifts.length===0?(
+                    <div style={{padding:"10px 14px",fontSize:12,color:"#444",fontStyle:"italic"}}>No lifts programmed yet.</div>
+                  ):dayLifts.map((lift,li)=>{
+                    const tc=TIER_COLORS[lift.tier]||TIER_COLORS[1];
+                    const tierKey=lift.tier;
+                    const badgeLabel=
+                      tierKey===1?"T1":
+                      tierKey===2?"T2":
+                      tierKey===3?"T3":
+                      tierKey==="circuit"?"CIRC":
+                      tierKey==="guns_and_glory"?"G&G":"—";
+                    return(
+                      <div key={li} style={{display:"flex",alignItems:"center",gap:0,borderBottom:li<dayLifts.length-1?"0.5px solid #161616":"none"}}>
+                        {/* Left tier color bar */}
+                        <div style={{width:3,alignSelf:"stretch",background:tc.border,flexShrink:0,minHeight:38}}/>
+                        {/* Lift info */}
+                        <div style={{flex:1,padding:"9px 10px"}}>
+                          <div style={{fontSize:12,color:"#ccc",fontWeight:600,lineHeight:1.2}}>{lift.name}</div>
+                          {lift.sets&&<div style={{fontSize:10,color:"#444",marginTop:2}}>{lift.sets}</div>}
+                        </div>
+                        {/* Right tier badge */}
+                        <div style={{padding:"0 12px",flexShrink:0}}>
+                          <div style={{fontSize:9,fontWeight:700,color:tc.color,background:tc.bg,padding:"3px 7px",borderRadius:5,border:"0.5px solid "+tc.border+"55",letterSpacing:"0.05em"}}>
+                            {badgeLabel}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 

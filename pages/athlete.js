@@ -18,6 +18,7 @@ import GroupPhotos from "../components/GroupPhotos";
 import AchievementBadges from "../components/AchievementBadges";
 import MCastlesTab from "../components/MCastlesTab";
 import InjuryBodyMap from "../components/InjuryBodyMap";
+import HabitsTab from "../components/HabitsTab";
 
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
@@ -760,6 +761,7 @@ export default function Athlete(){
       {id:"bracelets",label:"Bracelets"},
       {id:"photos",label:"Photos"},
       {id:"notes",label:"Notes"},
+      {id:"habits",label:"Habits"},
       {id:"private",label:"Private"},
     ];
 
@@ -898,7 +900,7 @@ export default function Athlete(){
             {/* Tab bar */}
             <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414"}}>
               {TABS.map(t=>{
-                const icons={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","body":"🩺","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","private":"🔒","stretching":"🧘","journey":"🛤"};
+                const icons={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","body":"🩺","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","habits":"🌟","private":"🔒","stretching":"🧘","journey":"🛤"};
                 const isActive=tab===t.id;
                 const tabColor=isForge?"#E8720C":STEEL;
                 return(
@@ -1737,6 +1739,8 @@ export default function Athlete(){
                 ))}
               </div>
             )}
+
+            {tab==="habits"&&<HabitsTab athleteId={selectedAthlete.id}/>}
 
             {tab==="private"&&(
               <div>
