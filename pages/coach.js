@@ -1726,7 +1726,7 @@ export default function Coach(){
                         </div>
                       )}
                     </div>
-                    <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{
+                    <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
                       const file=e.target.files[0];
                       if(!file)return;
                       setGpFile(file);
