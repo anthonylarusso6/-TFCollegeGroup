@@ -12,10 +12,10 @@ const ANVIL_CATS=[
 const catInfo=(id)=>ANVIL_CATS.find(c=>c.id===id)||{id:id||"",emoji:"⚒",color:GOLD};
 
 const PRIZES=[
-  {id:"tee",     label:"Anvil Tee Shirt",      emoji:"🎽",sizes:["S","M","L","XL","XXL"],        optionLabel:"Size"},
-  {id:"shorts",  label:"Athletic Shorts",       emoji:"🩳",sizes:["S","M","L","XL","XXL"],        optionLabel:"Size"},
-  {id:"dicks",   label:"$25 Dick's Gift Card",  emoji:"🏪",sizes:null,                            optionLabel:null},
-  {id:"food_gc", label:"$25 Food Gift Card",    emoji:"🍽️",sizes:["Chipotle","Chick-fil-A","Domino's","Smoothie King","Raising Cane's"],optionLabel:"Restaurant"},
+  {id:"tee",     label:"Anvil Tee Shirt",          emoji:"🎽",sizes:["S","M","L","XL","XXL"],freeText:false,optionLabel:"Size"},
+  {id:"shorts",  label:"Athletic Shorts",           emoji:"🩳",sizes:["S","M","L","XL","XXL"],freeText:false,optionLabel:"Size"},
+  {id:"dicks",   label:"$25 Dick's Gift Card",      emoji:"🏪",sizes:null,                   freeText:false,optionLabel:null},
+  {id:"food_gc", label:"$25 Restaurant Gift Card",  emoji:"🍽️",sizes:null,                  freeText:true, optionLabel:"Restaurant"},
 ];
 
 export default function AnvilHistory({athleteId,athleteName}){
@@ -24,6 +24,7 @@ export default function AnvilHistory({athleteId,athleteName}){
   const[prizeSelection,setPrizeSelection]=useState(null);
   const[pendingPrize,setPendingPrize]=useState(null);
   const[pendingSize,setPendingSize]=useState(null);
+  const[pendingText,setPendingText]=useState("");
   const[savingPrize,setSavingPrize]=useState(false);
   const[prizeSaved,setPrizeSaved]=useState(false);
 
@@ -60,14 +61,16 @@ export default function AnvilHistory({athleteId,athleteName}){
     const prize=PRIZES.find(p=>p.id===pendingPrize);
     if(!prize||!latest)return;
     if(prize.sizes&&!pendingSize)return;
+    if(prize.freeText&&!pendingText.trim())return;
     setSavingPrize(true);
     try{
-      const selection={prize:pendingPrize,label:prize.label,size:pendingSize||null};
+      const sizeVal=prize.freeText?pendingText.trim():(pendingSize||null);
+      const selection={prize:pendingPrize,label:prize.label,size:sizeVal};
       try{await supabase.from("announcements").delete().eq("type","anvil_prize").eq("day",String(latest.id));}catch(e){}
       await supabase.from("announcements").insert({type:"anvil_prize",day:String(latest.id),message:JSON.stringify(selection),active:true});
       setPrizeSelection(selection);
       setPrizeSaved(true);
-      setPendingPrize(null);setPendingSize(null);
+      setPendingPrize(null);setPendingSize(null);setPendingText("");
       setTimeout(()=>setPrizeSaved(false),4000);
     }catch(e){}
     setSavingPrize(false);
@@ -78,7 +81,7 @@ export default function AnvilHistory({athleteId,athleteName}){
   const latestCat=latest?catInfo(latest.athlete_role):null;
   const isCurrentWinner=latest&&athleteName&&latest.athlete_name===athleteName;
   const pendingPrizeObj=PRIZES.find(p=>p.id===pendingPrize);
-  const canSave=pendingPrize&&(!pendingPrizeObj?.sizes||pendingSize);
+  const canSave=pendingPrize&&(!pendingPrizeObj?.sizes||pendingSize)&&(!pendingPrizeObj?.freeText||pendingText.trim());
 
   return(
     <div>
@@ -152,7 +155,12 @@ export default function AnvilHistory({athleteId,athleteName}){
                     {prizeSelection.size&&<div style={{fontSize:12,color:"#888",marginTop:2}}>{PRIZES.find(p=>p.id===prizeSelection.prize)?.optionLabel||"Size"}: <span style={{color:"#fff",fontWeight:600}}>{prizeSelection.size}</span></div>}
                     <div style={{fontSize:10,color:GREEN,marginTop:4,fontWeight:600}}>✓ Coach has been notified</div>
                   </div>
-                  <button onClick={()=>{setPendingPrize(prizeSelection.prize);setPendingSize(prizeSelection.size);}}
+                  <button onClick={()=>{
+                    const p=PRIZES.find(pr=>pr.id===prizeSelection.prize);
+                    setPendingPrize(prizeSelection.prize);
+                    if(p?.freeText){setPendingText(prizeSelection.size||"");setPendingSize(null);}
+                    else{setPendingSize(prizeSelection.size);setPendingText("");}
+                  }}
                     style={{fontSize:11,color:"#555",background:"none",border:"none",cursor:"pointer",padding:"4px 8px"}}>Change</button>
                 </div>
                 {prizeSaved&&(
@@ -172,7 +180,7 @@ export default function AnvilHistory({athleteId,athleteName}){
                   {PRIZES.map(p=>{
                     const isSelected=pendingPrize===p.id;
                     return(
-                      <button key={p.id} onClick={()=>{setPendingPrize(p.id);if(!p.sizes)setPendingSize(null);else setPendingSize(null);}}
+                      <button key={p.id} onClick={()=>{setPendingPrize(p.id);setPendingSize(null);setPendingText("");}}
                         style={{display:"flex",alignItems:"center",gap:14,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(isSelected?GOLD+"88":"#1e1e1e"),background:isSelected?"linear-gradient(135deg,#1f1700,#1a1200)":"#161616",cursor:"pointer",textAlign:"left",width:"100%",transition:"all 0.1s"}}>
                         <span style={{fontSize:28,filter:isSelected?"drop-shadow(0 0 8px "+GOLD+"66)":"none"}}>{p.emoji}</span>
                         <div style={{flex:1}}>
@@ -187,22 +195,34 @@ export default function AnvilHistory({athleteId,athleteName}){
                   })}
                 </div>
 
-                {/* Size / option picker — shown when prize has sub-options */}
+                {/* Size picker — for tee/shorts */}
                 {pendingPrizeObj?.sizes&&(
                   <div style={{marginBottom:14}}>
                     <div style={{fontSize:10,color:"#666",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.08em"}}>Select {pendingPrizeObj.optionLabel||"size"}</div>
                     <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                       {pendingPrizeObj.sizes.map(sz=>{
                         const isSz=pendingSize===sz;
-                        const isRestaurant=pendingPrizeObj.optionLabel==="Restaurant";
                         return(
                           <button key={sz} onClick={()=>setPendingSize(sz)}
-                            style={{padding:isRestaurant?"10px 14px":"10px 16px",borderRadius:10,border:"2px solid "+(isSz?GOLD:"#252525"),background:isSz?"linear-gradient(135deg,"+GOLD+"22,"+GOLD+"11)":"#1a1a1a",color:isSz?GOLD:"#666",fontSize:isRestaurant?12:13,fontWeight:isSz?800:400,cursor:"pointer",fontFamily:"Georgia,serif",minWidth:isRestaurant?0:52,transition:"all 0.1s",boxShadow:isSz?"0 0 12px "+GOLD+"33":"none"}}>
+                            style={{padding:"10px 16px",borderRadius:10,border:"2px solid "+(isSz?GOLD:"#252525"),background:isSz?"linear-gradient(135deg,"+GOLD+"22,"+GOLD+"11)":"#1a1a1a",color:isSz?GOLD:"#666",fontSize:13,fontWeight:isSz?800:400,cursor:"pointer",fontFamily:"Georgia,serif",minWidth:52,transition:"all 0.1s",boxShadow:isSz?"0 0 12px "+GOLD+"33":"none"}}>
                             {sz}
                           </button>
                         );
                       })}
                     </div>
+                  </div>
+                )}
+
+                {/* Free-text — for restaurant gift card */}
+                {pendingPrizeObj?.freeText&&(
+                  <div style={{marginBottom:14}}>
+                    <div style={{fontSize:10,color:"#666",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.08em"}}>Which restaurant?</div>
+                    <input
+                      value={pendingText}
+                      onChange={e=>setPendingText(e.target.value)}
+                      placeholder="Type the restaurant name..."
+                      style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"1.5px solid "+(pendingText.trim()?GOLD+"66":"#252525"),background:"#1a1a1a",color:"#fff",fontSize:13,fontFamily:"Georgia,serif",outline:"none",boxSizing:"border-box",transition:"border-color 0.15s"}}
+                    />
                   </div>
                 )}
 
