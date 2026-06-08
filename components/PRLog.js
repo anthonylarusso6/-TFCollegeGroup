@@ -24,6 +24,19 @@ const BAND_COLORS=[
 // Medicine ball preset weights (lbs)
 const MB_WEIGHTS=[6,8,10,12,14,16,20];
 
+// Kettlebell color → weight (lbs)
+const KB_COLORS=[
+  {id:"white",  label:"White",  hex:"#e8e8e8", textColor:"#222", weight:8.8},
+  {id:"pink",   label:"Pink",   hex:"#e91e8c", textColor:"#fff", weight:17.6},
+  {id:"blue",   label:"Blue",   hex:"#1A4F8A", textColor:"#fff", weight:26.4},
+  {id:"yellow", label:"Yellow", hex:"#f5c518", textColor:"#222", weight:35.2},
+  {id:"purple", label:"Purple", hex:"#7B2D8B", textColor:"#fff", weight:44.1},
+  {id:"green",  label:"Green",  hex:"#1E6B3A", textColor:"#fff", weight:52.9},
+  {id:"orange", label:"Orange", hex:"#E8720C", textColor:"#fff", weight:61.7},
+  {id:"red",    label:"Red",    hex:"#C0392B", textColor:"#fff", weight:70.5},
+  {id:"gray",   label:"Gray",   hex:"#708090", textColor:"#fff", weight:79.4},
+];
+
 const DEFAULT_PROGRAM={
   Mon:[
     {name:"BB Front Squat / Pitshark",    tier:1,sets:"8 (4x5)",                inputType:"weight"},
@@ -580,21 +593,28 @@ export default function PRLog({athleteId,gender}){
 
                     // ── BAND + KETTLEBELL ────────────────────────────
                     if(itype==="band_kb"){
+                      const selKB=inp.kbColor?KB_COLORS.find(k=>k.id===inp.kbColor):null;
                       return(
                         <div>
                           {bandPicker("Band Resistance")}
+                          <div style={{fontSize:10,color:"#aaa",marginBottom:4,marginTop:4}}>Kettlebell Color</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
+                            {KB_COLORS.map(k=>{
+                              const isSel=inp.kbColor===k.id;
+                              return(
+                                <button key={k.id} onClick={()=>{setInput(lift.name,"kbColor",k.id);setInput(lift.name,"weight",String(k.weight));}}
+                                  style={{padding:"6px 10px",borderRadius:8,border:isSel?"2px solid #fff":"1.5px solid "+k.hex+"88",background:isSel?k.hex:k.hex+"33",color:isSel?k.textColor:k.hex,fontSize:11,fontWeight:isSel?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+                                  {k.label}<br/><span style={{fontSize:9,opacity:0.85}}>{k.weight} lbs</span>
+                                </button>
+                              );
+                            })}
+                          </div>
                           <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
-                            <div style={{flex:1}}>
-                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>KB Weight (lbs)</div>
-                              <input type="number" inputMode="decimal" value={inp.weight||""}
-                                onChange={e=>setInput(lift.name,"weight",e.target.value)}
-                                placeholder={last?`Last: ${last}`:"0"}
-                                style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
-                            </div>
                             {repsInput}
                             <div>{logBtn(!inp.weight)}</div>
                           </div>
-                          {selBand&&<div style={{fontSize:10,color:selBand.hex,marginTop:6,fontWeight:600}}>● {selBand.label} · {selBand.resistance}</div>}
+                          {selKB&&<div style={{fontSize:10,color:selKB.hex,marginTop:6,fontWeight:600}}>● {selKB.label} KB · {selKB.weight} lbs</div>}
+                          {selBand&&<div style={{fontSize:10,color:selBand.hex,marginTop:2,fontWeight:600}}>● {selBand.label} Band · {selBand.resistance}</div>}
                           {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:4}}>est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span></div>}
                         </div>
                       );
@@ -602,19 +622,26 @@ export default function PRLog({athleteId,gender}){
 
                     // ── KETTLEBELL ───────────────────────────────────
                     if(itype==="kb"){
+                      const selKB=inp.kbColor?KB_COLORS.find(k=>k.id===inp.kbColor):null;
                       return(
                         <div>
+                          <div style={{fontSize:10,color:"#aaa",marginBottom:4}}>Kettlebell Color</div>
+                          <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:8}}>
+                            {KB_COLORS.map(k=>{
+                              const isSel=inp.kbColor===k.id;
+                              return(
+                                <button key={k.id} onClick={()=>{setInput(lift.name,"kbColor",k.id);setInput(lift.name,"weight",String(k.weight));}}
+                                  style={{padding:"6px 10px",borderRadius:8,border:isSel?"2px solid #fff":"1.5px solid "+k.hex+"88",background:isSel?k.hex:k.hex+"33",color:isSel?k.textColor:k.hex,fontSize:11,fontWeight:isSel?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+                                  {k.label}<br/><span style={{fontSize:9,opacity:0.85}}>{k.weight} lbs</span>
+                                </button>
+                              );
+                            })}
+                          </div>
                           <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
-                            <div style={{flex:1}}>
-                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>KB Weight (lbs)</div>
-                              <input type="number" inputMode="decimal" value={inp.weight||""}
-                                onChange={e=>setInput(lift.name,"weight",e.target.value)}
-                                placeholder={last?`Last: ${last}`:"0"}
-                                style={{width:"100%",padding:"10px",borderRadius:8,border:"1px solid #e0e0e0",fontSize:15,fontFamily:"Georgia,serif",textAlign:"center",background:"#fafafa",boxSizing:"border-box",fontWeight:600}}/>
-                            </div>
                             {repsInput}
                             <div>{logBtn(!inp.weight)}</div>
                           </div>
+                          {selKB&&<div style={{fontSize:10,color:selKB.hex,marginTop:6,fontWeight:600}}>● {selKB.label} KB · {selKB.weight} lbs</div>}
                           {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#aaa",marginTop:6}}>est. 1RM: <span style={{color:GOLD,fontWeight:700}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>{pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&<span style={{marginLeft:8,background:GOLD,color:"#000",padding:"1px 6px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>}</div>}
                         </div>
                       );
