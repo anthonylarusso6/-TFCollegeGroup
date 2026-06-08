@@ -154,6 +154,8 @@ export default function Coach(){
   const[groupmeLinkSaved,setGroupmeLinkSaved]=useState(false);
   const[bodyInjuries,setBodyInjuries]=useState({});
   const[injExpanded,setInjExpanded]=useState(null);
+  const[injLoading,setInjLoading]=useState(false);
+  const[injLoadErr,setInjLoadErr]=useState(false);
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
@@ -286,17 +288,20 @@ export default function Coach(){
   };
 
   const loadBodyInjuries=async()=>{
+    setInjLoading(true);setInjLoadErr(false);
     try{
-      const{data}=await supabase.from("announcements")
+      const{data,error}=await supabase.from("announcements")
         .select("day,week_label,message")
         .eq("type","body_injury").eq("active",true);
+      if(error)throw error;
       const result={};
       (data||[]).forEach(r=>{
         if(!result[r.day])result[r.day]={};
         try{result[r.day][r.week_label]=JSON.parse(r.message);}catch(e){}
       });
       setBodyInjuries(result);
-    }catch(e){}
+    }catch(e){setInjLoadErr(true);}
+    setInjLoading(false);
   };
 
   const saveGroupmeLink=async()=>{
@@ -2551,15 +2556,20 @@ export default function Coach(){
                       <div>
                         <div style={{fontSize:8,color:RED,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Athletes</div>
                         <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Injury Check-In</div>
-                        <div style={{fontSize:11,color:"#666",marginTop:1}}>{flagged.length} flagged · {clear.length} all good
-                          <button onClick={loadBodyInjuries} style={{marginLeft:10,fontSize:10,color:"#555",background:"transparent",border:"1px solid #333",padding:"2px 8px",borderRadius:8,cursor:"pointer",fontFamily:"Georgia,serif"}}>↻ Refresh</button>
+                        <div style={{fontSize:11,color:"#666",marginTop:1}}>
+                          {injLoading?"Loading injuries...":`${flagged.length} flagged · ${clear.length} all good`}
+                          <button onClick={loadBodyInjuries} style={{marginLeft:10,fontSize:10,color:"#555",background:"transparent",border:"1px solid #333",padding:"2px 8px",borderRadius:8,cursor:"pointer",fontFamily:"Georgia,serif"}}>{injLoading?"...":"↻ Refresh"}</button>
+                          {injLoadErr&&<span style={{marginLeft:8,fontSize:10,color:RED}}>Load failed — tap Refresh</span>}
                         </div>
                       </div>
                     </div>
                   </div>
                   <div style={{background:"#111",padding:"16px 18px"}}>
-                    {flagged.length===0&&(
-                      <div style={{textAlign:"center",padding:"24px",color:"#555",fontSize:13,fontStyle:"italic"}}>No athletes have flagged any body parts 💚</div>
+                    {injLoading&&(
+                      <div style={{textAlign:"center",padding:"24px",color:"#555",fontSize:13}}>Loading injury data...</div>
+                    )}
+                    {!injLoading&&flagged.length===0&&(
+                      <div style={{textAlign:"center",padding:"24px",color:"#555",fontSize:13,fontStyle:"italic"}}>{injLoadErr?"Failed to load — tap Refresh above":"No athletes have flagged any body parts 💚"}</div>
                     )}
                     {flagged.map(a=>{
                       const parts=bodyInjuries[String(a.id)]||{};

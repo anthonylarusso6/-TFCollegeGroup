@@ -21,16 +21,19 @@ const MUSCLE_NAMES = {
   adductor:"Inner Thigh", abductors:"Outer Thigh",
   calves:"Calves", knees:"Knees",
   "left-soleus":"Left Shin", "right-soleus":"Right Shin",
+  "left-ankle":"Left Ankle/Foot", "right-ankle":"Right Ankle/Foot",
 };
 
 // chips shown for each view — ordered head→toe
 const FRONT_CHIPS = [
   "head","neck","chest","front-deltoids","biceps","forearm",
   "abs","obliques","adductor","quadriceps","knees","left-soleus","right-soleus",
+  "left-ankle","right-ankle",
 ];
 const BACK_CHIPS = [
   "head","neck","trapezius","upper-back","lower-back",
   "back-deltoids","triceps","forearm","gluteal","hamstring","abductors","calves",
+  "left-ankle","right-ankle",
 ];
 
 const MUSCLE_STRETCH = {
@@ -44,6 +47,7 @@ const MUSCLE_STRETCH = {
   adductor:"hip", abductors:"hip",
   calves:"calf", knees:"knee",
   "left-soleus":"shin", "right-soleus":"shin",
+  "left-ankle":"ankle", "right-ankle":"ankle",
 };
 
 function ytUrl(name){
@@ -186,6 +190,14 @@ const STRETCHES={
     {name:"Downward Dog",desc:"Hips up and back. Alternate pressing one heel toward floor.",duration:"30 sec"},
     {name:"Slow Eccentric Calf Raises",desc:"Rise on toes, then lower over 4–5 counts. Builds tendon tolerance.",duration:"3 × 15 reps"},
     {name:"Ankle Circles",desc:"Slow controlled circles — promotes blood flow and calf recovery.",duration:"10 each direction"},
+  ],
+  ankle:[
+    {name:"Ankle Circles",desc:"Seated, foot off the floor. Trace large slow circles in both directions through full comfortable range.",duration:"10 each direction × 2 sets"},
+    {name:"Alphabet Tracing",desc:"Foot off the floor, use your big toe to slowly trace every letter A–Z. Mobilises the ankle in all planes.",duration:"Full alphabet × 2"},
+    {name:"Achilles/Calf Stretch (Bent Knee)",desc:"Stand facing wall, one foot back with knee slightly bent. Press heel down. Targets soleus and Achilles attachment.",duration:"30 sec each"},
+    {name:"Banded Dorsiflexion Stretch",desc:"Loop band around rack at ankle height. Step forward so band pulls the ankle back. Squat slightly — feel front of ankle open.",duration:"30 sec each"},
+    {name:"Towel Foot Stretch",desc:"Sit with legs extended, loop towel around ball of foot, pull gently toward you keeping knee straight.",duration:"30 sec each"},
+    {name:"Single-Leg Balance",desc:"Stand on one foot, keep ankle stable. Progress to eyes closed or unstable surface. Rebuilds proprioception after sprains.",duration:"30 sec each × 3"},
   ],
 };
 
@@ -349,7 +361,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
             data={bodyData}
             bodyColor="#3a5068"
             highlightedColors={[SORE+"ff",RED+"ff"]}
-            onClick={readOnly?undefined:({muscle})=>selectPart(muscle)}
+            onClick={({muscle})=>selectPart(muscle)}
             svgStyle={{display:"block",stroke:"#1a2e44",strokeWidth:"0.6"}}
           />
         </div>
@@ -367,22 +379,38 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
         )}
       </div>
 
-      {/* Muscle quick-tap chips */}
-      {!readOnly&&(
-        <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16,padding:"2px 0"}}>
-          {chips.map(id=>{
-            const c=chipColor(id);
-            const isSel=selected===id;
-            return(
-              <button key={id} onClick={()=>selectPart(id)}
-                style={{padding:"7px 12px",borderRadius:20,border:"1px solid "+(isSel?"#fff"+(c?"":""): c?c+"66":"#2a2a2a"),background:isSel?(c||"#3a5068")+"33":c?c+"22":"#111",color:isSel?"#fff":c?c:"#666",fontSize:11,fontWeight:isSel?800:c?700:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",transition:"all 0.12s",boxShadow:isSel?"0 0 10px "+(c||"#3a5068")+"44":"none"}}>
-                {c&&<span style={{marginRight:4,fontSize:9}}>{STATUS[Object.values(partData).length&&partData[id]?.status==="pain"?"pain":"sore"]?.emoji||"●"}</span>}
-                {MUSCLE_NAMES[id]}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {/* Muscle chips — tappable for athletes, read-only indicators for coach */}
+      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16,padding:"2px 0"}}>
+        {chips.map(id=>{
+          const c=chipColor(id);
+          const isSel=selected===id;
+          if(readOnly&&!c)return null;
+          return(
+            <button key={id} onClick={()=>!readOnly&&selectPart(id)}
+              style={{padding:"7px 12px",borderRadius:20,
+                border:"1px solid "+(isSel?"#fff":c?c+"66":"#2a2a2a"),
+                background:isSel?(c||"#3a5068")+"33":c?c+"22":"#111",
+                color:isSel?"#fff":c?c:"#666",
+                fontSize:11,fontWeight:isSel?800:c?700:400,
+                cursor:readOnly?"default":"pointer",
+                fontFamily:"Georgia,serif",whiteSpace:"nowrap",transition:"all 0.12s",
+                boxShadow:isSel?"0 0 10px "+(c||"#3a5068")+"44":"none"}}>
+              {c&&<span style={{marginRight:4,fontSize:9}}>{partData[id]?.status==="pain"?"🔴":"🟡"}</span>}
+              {MUSCLE_NAMES[id]}
+            </button>
+          );
+        })}
+        {readOnly&&Object.keys(partData).filter(id=>!chips.includes(id)&&(partData[id]?.status==="sore"||partData[id]?.status==="pain")).map(id=>{
+          const c=chipColor(id);
+          return(
+            <span key={id} style={{padding:"7px 12px",borderRadius:20,
+              border:"1px solid "+c+"66",background:c+"22",color:c,
+              fontSize:11,fontWeight:700,fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
+              {partData[id]?.status==="pain"?"🔴":"🟡"} {MUSCLE_NAMES[id]||id}
+            </span>
+          );
+        })}
+      </div>
 
       {/* Detail panel */}
       {selected&&selName&&!readOnly&&(

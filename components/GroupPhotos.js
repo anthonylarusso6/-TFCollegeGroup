@@ -96,13 +96,20 @@ export default function GroupPhotos(){
             display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
             gap:12,padding:"1.5rem"}}>
           <img src={selected.url}
-            style={{maxWidth:"95vw",maxHeight:"78vh",borderRadius:10,objectFit:"contain"}} alt=""/>
+            style={{maxWidth:"95vw",maxHeight:"72vh",borderRadius:10,objectFit:"contain"}} alt=""/>
           {selected.caption&&(
             <div style={{fontSize:13,color:"#fff",textAlign:"center",maxWidth:"80vw",
               lineHeight:1.5,fontWeight:500}}>{selected.caption}</div>
           )}
           <div style={{fontSize:11,color:"#555"}}>{selected.date}</div>
-          <div style={{fontSize:10,color:"#333",marginTop:4}}>Tap anywhere to close</div>
+          <a href={selected.url} download target="_blank" rel="noopener noreferrer"
+            onClick={e=>e.stopPropagation()}
+            style={{display:"inline-flex",alignItems:"center",gap:6,padding:"10px 20px",
+              borderRadius:20,background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.2)",
+              color:"#fff",fontSize:12,fontWeight:600,textDecoration:"none",cursor:"pointer"}}>
+            ⬇ Save Photo
+          </a>
+          <div style={{fontSize:10,color:"#333"}}>Tap anywhere else to close</div>
         </div>
       )}
     </div>
