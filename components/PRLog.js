@@ -542,63 +542,34 @@ export default function PRLog({athleteId,gender}){
                         </div>
                       </div>
                     );
-                    const kbPicker=()=>{
-                      const isWhiteKB=selKB?.id==="white";
-                      return(
-                        <div style={{marginBottom:8}}>
-                          <div style={{fontSize:10,color:"#888",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>🏋️ Kettlebell</div>
-                          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:7}}>
-                            {KB_COLORS.map(k=>{
-                              const isSel=inp.kbColor===k.id;
-                              const isW=k.id==="white";
-                              return(
-                                <button key={k.id}
-                                  onClick={()=>{setInput(lift.name,"kbColor",k.id);setInput(lift.name,"weight",String(k.weight));}}
-                                  style={{display:"flex",flexDirection:"column",alignItems:"center",
-                                    padding:"10px 4px 8px",borderRadius:12,
-                                    border:isSel?"2px solid "+k.hex:"1.5px solid "+(isW?"#ddd":"#f0f0f0"),
-                                    background:isSel?(isW?"#f5f5f5":"#111"):"#fff",
-                                    cursor:"pointer",transition:"all 0.15s",
-                                    boxShadow:isSel?"0 0 0 2px "+k.hex+"55, 0 4px 14px "+k.hex+"33":"0 1px 3px rgba(0,0,0,0.06)"}}>
-                                  {/* 3-D color sphere */}
-                                  <div style={{position:"relative",width:46,height:46,borderRadius:"50%",
-                                    background:"radial-gradient(circle at 36% 32%, "+k.hex+"ff 0%, "+k.hex+"cc 45%, "+k.hex+"88 100%)",
-                                    border:isW?"1.5px solid #ccc":"none",
-                                    marginBottom:7,
-                                    boxShadow:isSel?"0 3px 10px "+k.hex+"88":"0 2px 6px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.15)"}}>
-                                    {/* shine */}
-                                    <div style={{position:"absolute",top:7,left:9,width:13,height:7,borderRadius:"50%",
-                                      background:"rgba(255,255,255,0.42)",transform:"rotate(-30deg)"}}/>
-                                    {/* selected check */}
-                                    {isSel&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",
-                                      fontSize:18,fontWeight:900,
-                                      color:k.textColor==="white"||k.textColor==="#fff"?"rgba(255,255,255,0.95)":"rgba(0,0,0,0.55)"}}>✓</div>}
-                                  </div>
-                                  <div style={{fontSize:11,fontWeight:isSel?700:500,
-                                    color:isSel?(isW?"#111":k.hex):"#444",lineHeight:1.1,textAlign:"center"}}>{k.label}</div>
-                                  <div style={{fontSize:10,color:isSel?(isW?"#555":k.hex+"cc"):"#bbb",
-                                    marginTop:3,fontWeight:isSel?600:400}}>{k.weight}</div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {selKB&&(
-                            <div style={{marginTop:8,padding:"8px 12px",borderRadius:10,
-                              background:isWhiteKB?"#f5f5f5":selKB.hex+"14",
-                              border:"1px solid "+(isWhiteKB?"#ddd":selKB.hex+"44"),
-                              display:"flex",alignItems:"center",gap:8}}>
-                              <div style={{width:14,height:14,borderRadius:"50%",flexShrink:0,
-                                background:"radial-gradient(circle at 35% 35%, "+selKB.hex+"ff, "+selKB.hex+"99)",
-                                border:isWhiteKB?"1px solid #ccc":"none",
-                                boxShadow:"0 1px 4px "+selKB.hex+"66"}}/>
-                              <span style={{fontSize:12,fontWeight:700,color:isWhiteKB?"#333":selKB.hex}}>{selKB.label} KB</span>
-                              <span style={{fontSize:11,color:"#888"}}>·</span>
-                              <span style={{fontSize:12,fontWeight:600,color:"#555"}}>{selKB.weight} lbs</span>
-                            </div>
-                          )}
+                    const kbPicker=()=>(
+                      <div style={{marginBottom:8}}>
+                        <div style={{fontSize:10,color:"#555",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>🏋️ Kettlebell</div>
+                        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                          {KB_COLORS.map(k=>{
+                            const isSel=inp.kbColor===k.id;
+                            return(
+                              <button key={k.id}
+                                onClick={()=>{setInput(lift.name,"kbColor",k.id);setInput(lift.name,"weight",String(k.weight));}}
+                                style={{display:"flex",alignItems:"center",gap:12,
+                                  padding:"10px 12px",borderRadius:9,
+                                  border:"1px solid "+(isSel?k.hex+"66":"#1e1e1e"),
+                                  borderLeft:"3px solid "+(isSel?k.hex:"#1e1e1e"),
+                                  background:isSel?"#111":"#0a0a0a",
+                                  cursor:"pointer",transition:"all 0.12s",textAlign:"left"}}>
+                                <div style={{width:14,height:14,borderRadius:3,flexShrink:0,
+                                  background:k.hex,
+                                  border:k.id==="white"?"1px solid #555":"none"}}/>
+                                <span style={{flex:1,fontSize:13,fontWeight:isSel?700:500,
+                                  color:isSel?k.hex:"#888"}}>{k.label}</span>
+                                <span style={{fontSize:12,color:isSel?"#aaa":"#333",fontWeight:isSel?600:400}}>{k.weight} lbs</span>
+                                {isSel&&<span style={{fontSize:12,color:k.hex,fontWeight:700}}>✓</span>}
+                              </button>
+                            );
+                          })}
                         </div>
-                      );
-                    };
+                      </div>
+                    );
 
                     // ── BODYWEIGHT ──────────────────────────────────
                     if(itype==="bodyweight"){
