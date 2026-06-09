@@ -221,6 +221,10 @@ export default function Athlete(){
   const[pinStep,setPinStep]=useState("enter");
   const[pinConfirm,setPinConfirm]=useState("");
   const[pinError,setPinError]=useState("");
+  const[bioAvail,setBioAvail]=useState(false);
+  const[bioCredId,setBioCredId]=useState(null);
+  const[showBioOffer,setShowBioOffer]=useState(false);
+  const[pendingNav,setPendingNav]=useState(null);
   const[checkinInfo,setCheckinInfo]=useState(null);
   const[tab,setTab]=useState("profile");
   const[loading,setLoading]=useState(true);
@@ -281,6 +285,76 @@ export default function Athlete(){
 
   // Keep ref in sync with state
   useEffect(()=>{athleteIdRef.current=selectedAthlete?.id;},[selectedAthlete]);
+
+  // Check biometric availability and stored credential when athlete is selected
+  useEffect(()=>{
+    if(!selectedAthlete?.id)return;
+    setBioCredId(null);setShowBioOffer(false);
+    (async()=>{
+      try{
+        if(window.PublicKeyCredential){
+          const avail=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+          setBioAvail(avail);
+        }
+      }catch(e){}
+      try{
+        const raw=localStorage.getItem("tf_bio_"+selectedAthlete.id);
+        setBioCredId(raw?JSON.parse(raw).credId:null);
+      }catch(e){setBioCredId(null);}
+    })();
+  },[selectedAthlete?.id]);
+
+  const authenticateWithBiometric=async()=>{
+    try{
+      const raw=localStorage.getItem("tf_bio_"+selectedAthlete.id);
+      if(!raw)return;
+      const stored=JSON.parse(raw);
+      const challenge=crypto.getRandomValues(new Uint8Array(32));
+      const credIdBytes=Uint8Array.from(atob(stored.credId),c=>c.charCodeAt(0));
+      const assertion=await navigator.credentials.get({
+        publicKey:{
+          challenge,
+          rpId:stored.rpId||window.location.hostname,
+          allowCredentials:[{type:"public-key",id:credIdBytes,transports:["internal"]}],
+          userVerification:"required",
+          timeout:60000,
+        }
+      });
+      if(assertion){
+        const info=await doCheckin(selectedAthlete);
+        setCheckinInfo(info);setPin("");
+        if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
+        else setScreen("profile");
+      }
+    }catch(e){/* user cancelled — fall through to PIN */}
+  };
+
+  const registerBiometric=async()=>{
+    try{
+      const challenge=crypto.getRandomValues(new Uint8Array(32));
+      const credential=await navigator.credentials.create({
+        publicKey:{
+          challenge,
+          rp:{name:"TF College Group",id:window.location.hostname},
+          user:{
+            id:new TextEncoder().encode(String(selectedAthlete.id)),
+            name:selectedAthlete.name,
+            displayName:selectedAthlete.name,
+          },
+          pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+          authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"preferred"},
+          timeout:60000,
+        }
+      });
+      const credId=btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+      localStorage.setItem("tf_bio_"+selectedAthlete.id,JSON.stringify({credId,rpId:window.location.hostname}));
+      setBioCredId(credId);
+    }catch(e){}
+    // Proceed regardless of outcome
+    const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
+    if(nav?.screen==="checkin"){setScreen("checkin");if(nav.milestone)setMilestone(nav.milestone);}
+    else setScreen("profile");
+  };
 
   // Check if athlete already logged weight today (only matters on Mon/Fri weigh-in days)
   useEffect(()=>{
@@ -460,16 +534,26 @@ export default function Athlete(){
           setSelectedAthlete({...selectedAthlete,pin});
           const info=await doCheckin({...selectedAthlete,pin});
           setCheckinInfo(info);setPin("");
-          if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
-          else setScreen("profile");
+          if(bioAvail&&!bioCredId){
+            setPendingNav({screen:info?"checkin":"profile",milestone:info?.milestoneHit||null});
+            setShowBioOffer(true);
+          }else{
+            if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
+            else setScreen("profile");
+          }
         } else {setPinError("PINs don't match. Try again.");setPin("");setPinStep("enter");setPinConfirm("");}
       }
     } else {
       if(pin===saved){
         const info=await doCheckin(selectedAthlete);
         setCheckinInfo(info);setPin("");setPinError("");
-        if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
-        else setScreen("profile");
+        if(bioAvail&&!bioCredId){
+          setPendingNav({screen:info?"checkin":"profile",milestone:info?.milestoneHit||null});
+          setShowBioOffer(true);
+        }else{
+          if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
+          else setScreen("profile");
+        }
       } else {setPinError("Incorrect PIN. Try again.");setPin("");}
     }
   };
@@ -665,27 +749,68 @@ export default function Athlete(){
           {!selectedAthlete?.pin?"Create a 4-digit PIN":pinStep==="confirm"?"Enter the same 4 digits":"Enter your PIN to check in"}
         </div>
 
-        {/* PIN dots */}
-        <div style={{display:"flex",justifyContent:"center",gap:18,marginBottom:28}}>
-          {[0,1,2,3].map(i=>(
-            <div key={i} style={{width:18,height:18,borderRadius:"50%",border:"2px solid "+(isForge?RED:STEEL)+(i<pin.length?"":"33"),background:i<pin.length?(isForge?"linear-gradient(135deg,#E8720C,"+RED+")":"linear-gradient(135deg,#8a9aa4,"+STEEL+")"):"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 14px "+(isForge?RED:STEEL)+"99":"none"}}/>
-          ))}
-        </div>
+        {/* Face ID / biometric shortcut — shown when credential stored */}
+        {bioCredId&&!showBioOffer&&(
+          <button onClick={authenticateWithBiometric}
+            style={{marginBottom:22,display:"flex",alignItems:"center",gap:10,padding:"14px 28px",
+              borderRadius:16,border:"1px solid "+(isForge?RED:STEEL)+"44",
+              background:(isForge?RED:STEEL)+"12",color:"#fff",fontSize:15,fontWeight:700,
+              cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",
+              boxShadow:"0 0 24px "+(isForge?RED:STEEL)+"22"}}>
+            <span style={{fontSize:26}}>🔒</span>
+            <span>Use Face ID / Biometrics</span>
+          </button>
+        )}
 
-        {/* Keypad */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,width:"100%",maxWidth:300,margin:"0 auto"}}>
-          {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
-            <button key={i} onClick={()=>{
-              if(k===null)return;
-              if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
-              if(pin.length<4)setPin(p=>p+String(k));
-            }} style={{padding:"20px 8px",borderRadius:14,border:"0.5px solid "+(k===null?"transparent":"#222"),background:k===null?"transparent":k==="⌫"?"#161616":"#131313",fontSize:26,fontWeight:500,cursor:k===null?"default":"pointer",color:k==="⌫"?"#666":"#ebebeb",fontFamily:"sans-serif",transition:"background 0.1s",lineHeight:1}}>
-              {k===null?"":k}
+        {showBioOffer?(
+          /* Bio enroll offer — replaces keypad after first PIN success */
+          <div style={{width:"100%",maxWidth:320,textAlign:"center"}}>
+            <div style={{fontSize:44,marginBottom:12}}>🔒</div>
+            <div style={{fontSize:18,fontWeight:800,color:"#fff",marginBottom:8,letterSpacing:"-0.01em"}}>Enable Face ID?</div>
+            <div style={{fontSize:12,color:"#555",marginBottom:28,lineHeight:1.6}}>
+              Skip the PIN next time and sign in instantly with Face ID or Touch ID.
+            </div>
+            <button onClick={registerBiometric}
+              style={{width:"100%",padding:"14px",borderRadius:12,border:"none",
+                background:"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",
+                color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",
+                fontFamily:"Georgia,serif",letterSpacing:"0.04em",marginBottom:12,
+                boxShadow:"0 4px 24px "+(isForge?RED:STEEL)+"44"}}>
+              Enable Face ID
             </button>
-          ))}
-        </div>
-
-        {pinError&&<div style={{marginTop:16,fontSize:12,color:"#ff5555",padding:"9px 18px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
+            <button onClick={()=>{
+              const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
+              if(nav?.screen==="checkin"){setScreen("checkin");if(nav.milestone)setMilestone(nav.milestone);}
+              else setScreen("profile");
+            }} style={{width:"100%",padding:"12px",borderRadius:12,border:"0.5px solid #222",
+              background:"transparent",color:"#444",fontSize:13,fontWeight:500,
+              cursor:"pointer",fontFamily:"Georgia,serif"}}>
+              Not now
+            </button>
+          </div>
+        ):(
+          <>
+            {/* PIN dots */}
+            <div style={{display:"flex",justifyContent:"center",gap:18,marginBottom:28}}>
+              {[0,1,2,3].map(i=>(
+                <div key={i} style={{width:18,height:18,borderRadius:"50%",border:"2px solid "+(isForge?RED:STEEL)+(i<pin.length?"":"33"),background:i<pin.length?(isForge?"linear-gradient(135deg,#E8720C,"+RED+")":"linear-gradient(135deg,#8a9aa4,"+STEEL+")"):"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 14px "+(isForge?RED:STEEL)+"99":"none"}}/>
+              ))}
+            </div>
+            {/* Keypad */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,width:"100%",maxWidth:300,margin:"0 auto"}}>
+              {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
+                <button key={i} onClick={()=>{
+                  if(k===null)return;
+                  if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
+                  if(pin.length<4)setPin(p=>p+String(k));
+                }} style={{padding:"20px 8px",borderRadius:14,border:"0.5px solid "+(k===null?"transparent":"#222"),background:k===null?"transparent":k==="⌫"?"#161616":"#131313",fontSize:26,fontWeight:500,cursor:k===null?"default":"pointer",color:k==="⌫"?"#666":"#ebebeb",fontFamily:"sans-serif",transition:"background 0.1s",lineHeight:1}}>
+                  {k===null?"":k}
+                </button>
+              ))}
+            </div>
+            {pinError&&<div style={{marginTop:16,fontSize:12,color:"#ff5555",padding:"9px 18px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
+          </>
+        )}
       </div>
     </>
   );
