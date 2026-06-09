@@ -751,15 +751,24 @@ export default function Athlete(){
 
         {/* Biometric shortcut — shown when credential stored */}
         {bioCredId&&!showBioOffer&&(
-          <button onClick={authenticateWithBiometric}
-            style={{marginBottom:22,display:"flex",alignItems:"center",gap:10,padding:"14px 28px",
-              borderRadius:16,border:"1px solid "+(isForge?RED:STEEL)+"44",
-              background:(isForge?RED:STEEL)+"12",color:"#fff",fontSize:15,fontWeight:700,
-              cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",
-              boxShadow:"0 0 24px "+(isForge?RED:STEEL)+"22"}}>
-            <span style={{fontSize:26}}>👆</span>
-            <span>Use {(()=>{const ua=navigator.userAgent||"";return/iPhone|iPad|iPod/.test(ua)?"Face ID / Touch ID":/Mac/.test(ua)?"Touch ID":/Android/.test(ua)?"Fingerprint":"Biometrics";})()}</span>
-          </button>
+          <div style={{marginBottom:22,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+            <button onClick={authenticateWithBiometric}
+              style={{display:"flex",alignItems:"center",gap:10,padding:"14px 28px",
+                borderRadius:16,border:"1px solid "+(isForge?RED:STEEL)+"44",
+                background:(isForge?RED:STEEL)+"12",color:"#fff",fontSize:15,fontWeight:700,
+                cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",
+                boxShadow:"0 0 24px "+(isForge?RED:STEEL)+"22"}}>
+              <span style={{fontSize:26}}>👆</span>
+              <span>Use {(()=>{const ua=navigator.userAgent||"";return/iPhone|iPad|iPod/.test(ua)?"Face ID / Touch ID":/Mac/.test(ua)?"Touch ID":/Android/.test(ua)?"Fingerprint":"Biometrics";})()}</span>
+            </button>
+            <button onClick={()=>{
+              try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
+              setBioCredId(null);
+            }} style={{background:"transparent",border:"none",color:"#333",fontSize:11,
+              cursor:"pointer",fontFamily:"Georgia,serif",textDecoration:"underline",padding:"2px 8px"}}>
+              Remove saved login
+            </button>
+          </div>
         )}
 
         {showBioOffer?(
