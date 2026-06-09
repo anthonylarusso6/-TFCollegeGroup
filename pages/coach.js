@@ -86,6 +86,7 @@ export default function Coach(){
   const[pinConfirm,setPinConfirm]=useState("");
   const[pinError,setPinError]=useState("");
   const[tab,setTab]=useState(coachRole==="kevin"?"roster":"overview");
+  const[showTabPicker,setShowTabPicker]=useState(false);
   const[athletes,setAthletes]=useState([]);
   const[attendance,setAttendance]=useState([]);
   const[inbox,setInbox]=useState([]);
@@ -1013,9 +1014,9 @@ export default function Coach(){
               <button onClick={()=>setAuthed(false)} style={{fontSize:10,color:"#333",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.04em"}}>Sign out</button>
             </div>
           </div>
-          <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414"}}>
+          <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414",position:"relative"}}>
             {TABS.map(t=>{
-              const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱","mcastles-post":"🍑","ironroom":"🏋️","injuries":"🩺"};
+              const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱","mcastles-post":"🍑","ironroom":"🏋️","injuries":"🩺","habits":"💧","callouts":"⚠️","prroom":"🏅"};
               const isActive=tab===t.id;
               return(
               <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"10px 12px 8px",background:isActive?"#0e0e0e":"transparent",border:"none",borderBottom:"2px solid "+(isActive?"#E8720C":"transparent"),borderRight:"none",borderLeft:"none",borderTop:"none",color:isActive?"#fff":"#444",fontSize:10,fontWeight:isActive?800:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.12s",textTransform:isActive?"uppercase":"none",letterSpacing:isActive?"0.04em":"0"}}>
@@ -1024,7 +1025,39 @@ export default function Coach(){
               </button>
               );
             })}
+            <button onClick={()=>setShowTabPicker(true)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"10px 14px 8px",background:"transparent",border:"none",borderBottom:"2px solid transparent",color:"#444",fontSize:10,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0}}>
+              <span style={{fontSize:15}}>☰</span>
+              <span>All</span>
+            </button>
           </div>
+          {showTabPicker&&(
+            <div style={{position:"fixed",inset:0,background:"#000000ee",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
+              <div style={{flex:1}}/>
+              <div style={{background:"#0e0e0e",borderRadius:"20px 20px 0 0",padding:"20px 16px 32px",maxHeight:"80vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#fff",letterSpacing:"0.04em",textTransform:"uppercase"}}>All Tabs</div>
+                  <button onClick={()=>setShowTabPicker(false)} style={{background:"none",border:"none",color:"#666",fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                  {TABS.map(t=>{
+                    const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱","mcastles-post":"🍑","ironroom":"🏋️","injuries":"🩺","habits":"💧","callouts":"⚠️","prroom":"🏅"};
+                    const isActive=tab===t.id;
+                    return(
+                      <button key={t.id} onClick={()=>{setTab(t.id);setShowTabPicker(false);}}
+                        style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px",borderRadius:12,
+                          background:isActive?"#E8720C22":"#1a1a1a",
+                          border:"1px solid "+(isActive?"#E8720C66":"#252525"),
+                          color:isActive?"#fff":"#888",fontSize:10,fontWeight:isActive?700:400,
+                          cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
+                        <span style={{fontSize:20}}>{ICONS[t.id]||"•"}</span>
+                        <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div style={{padding:"1rem",maxWidth:900,margin:"0 auto"}}>

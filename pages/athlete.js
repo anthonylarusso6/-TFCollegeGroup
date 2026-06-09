@@ -228,6 +228,7 @@ export default function Athlete(){
   const[pendingNav,setPendingNav]=useState(null);
   const[bioRegistering,setBioRegistering]=useState(false);
   const[bioRegResult,setBioRegResult]=useState(null);
+  const[showTabPicker,setShowTabPicker]=useState(false);
   const[checkinInfo,setCheckinInfo]=useState(null);
   const[tab,setTab]=useState("profile");
   const[loading,setLoading]=useState(true);
@@ -1063,7 +1064,7 @@ export default function Athlete(){
               </div>
             </div>
             {/* Tab bar */}
-            <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414"}}>
+            <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414",position:"relative"}}>
               {TABS.map(t=>{
                 const icons={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","body":"🩺","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","habits":"🌟","private":"🔒","stretching":"🧘","journey":"🛤"};
                 const isActive=tab===t.id;
@@ -1075,7 +1076,40 @@ export default function Athlete(){
                 </button>
                 );
               })}
+              <button onClick={()=>setShowTabPicker(true)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"10px 14px 8px",background:"transparent",border:"none",borderBottom:"2px solid transparent",color:"#444",fontSize:10,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0}}>
+                <span style={{fontSize:15}}>☰</span>
+                <span>All</span>
+              </button>
             </div>
+            {showTabPicker&&(
+              <div style={{position:"fixed",inset:0,background:"#000000ee",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
+                <div style={{flex:1}}/>
+                <div style={{background:"#0e0e0e",borderRadius:"20px 20px 0 0",padding:"20px 16px 32px",maxHeight:"80vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#fff",letterSpacing:"0.04em",textTransform:"uppercase"}}>All Tabs</div>
+                    <button onClick={()=>setShowTabPicker(false)} style={{background:"none",border:"none",color:"#666",fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                    {TABS.map(t=>{
+                      const icons={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","body":"🩺","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","habits":"🌟","private":"🔒","stretching":"🧘","journey":"🛤"};
+                      const isActive=tab===t.id;
+                      const tabColor=isForge?"#E8720C":STEEL;
+                      return(
+                        <button key={t.id} onClick={()=>{setTab(t.id);setShowTabPicker(false);}}
+                          style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px",borderRadius:12,
+                            background:isActive?tabColor+"22":"#1a1a1a",
+                            border:"1px solid "+(isActive?tabColor+"66":"#252525"),
+                            color:isActive?"#fff":"#888",fontSize:10,fontWeight:isActive?700:400,
+                            cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
+                          <span style={{fontSize:20}}>{icons[t.id]||"•"}</span>
+                          <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{t.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div style={{padding:"1.25rem",background:"#080808",minHeight:"60vh"}}>
