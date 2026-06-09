@@ -333,7 +333,7 @@ export default function Athlete(){
     }catch(e){/* user cancelled — fall through to PIN */}
   };
 
-  const registerBiometric=async()=>{
+  const registerBiometric=async(fromProfile=false)=>{
     try{
       const challenge=crypto.getRandomValues(new Uint8Array(32));
       const credential=await navigator.credentials.create({
@@ -354,10 +354,11 @@ export default function Athlete(){
       localStorage.setItem("tf_bio_"+selectedAthlete.id,JSON.stringify({credId,rpId:window.location.hostname}));
       setBioCredId(credId);
     }catch(e){}
-    // Proceed regardless of outcome
-    const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
-    if(nav?.screen==="checkin"){setScreen("checkin");if(nav.milestone)setMilestone(nav.milestone);}
-    else setScreen("profile");
+    if(!fromProfile){
+      const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
+      if(nav?.screen==="checkin"){setScreen("checkin");if(nav.milestone)setMilestone(nav.milestone);}
+      else setScreen("profile");
+    }
   };
 
   // Check if athlete already logged weight today (only matters on Mon/Fri weigh-in days)
@@ -1098,19 +1099,19 @@ export default function Athlete(){
                     <div style={{fontSize:10,color:"#555",flexShrink:0}}>Settings → Safari/Chrome</div>
                   </div>
                 )}
-                {bioAvail&&(bioDeclined||(!bioCredId&&notifCard!=="unknown"))&&!showBioOffer&&(
+                {bioAvail&&!bioCredId&&(
                   <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a3a",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
                     <div>
-                      <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>👆 {bioCredId?"Face ID / Touch ID":"Enable Face ID"}</div>
-                      <div style={{fontSize:10,color:"#555"}}>{bioCredId?"Tap to reset your saved login":"Sign in instantly — skip the PIN"}</div>
+                      <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>👆 Enable Face ID / Touch ID</div>
+                      <div style={{fontSize:10,color:"#555"}}>Sign in instantly — skip the PIN next time</div>
                     </div>
                     <button onClick={async()=>{
                       try{localStorage.removeItem("tf_bio_declined_"+selectedAthlete.id);}catch(e){}
                       try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
                       setBioDeclined(false);setBioCredId(null);
-                      await registerBiometric();
+                      await registerBiometric(true);
                     }} style={{padding:"8px 14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
-                      {bioCredId?"Reset":"Enable"}
+                      Enable
                     </button>
                   </div>
                 )}
