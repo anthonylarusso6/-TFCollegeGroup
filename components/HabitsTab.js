@@ -14,7 +14,6 @@ function getEstDate() {
 }
 
 function formatDisplayDate(dateStr) {
-  // dateStr is YYYY-MM-DD, parse as local
   const [y, m, d] = dateStr.split("-").map(Number);
   const dt = new Date(y, m - 1, d);
   return dt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
@@ -48,12 +47,10 @@ function getLast14Days() {
   return days;
 }
 
-function computeStreak(logMap, todayStr) {
+function computeStreak(logMap) {
   let streak = 0;
   const est = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
   let cursor = new Date(est);
-
-  // Start from today and walk backwards
   while (true) {
     const y = cursor.getFullYear();
     const m = String(cursor.getMonth() + 1).padStart(2, "0");
@@ -66,6 +63,20 @@ function computeStreak(logMap, todayStr) {
     cursor.setDate(cursor.getDate() - 1);
   }
   return streak;
+}
+
+// Parse an announcements row into a normalized habit object
+function parseRow(row) {
+  try {
+    const d = JSON.parse(row.message || "{}");
+    return {
+      water: d.water === true,
+      nutrition: d.nutrition === true,
+      sleep: typeof d.sleep === "number" ? d.sleep : null,
+    };
+  } catch (e) {
+    return { water: false, nutrition: false, sleep: null };
+  }
 }
 
 export default function HabitsTab({ athleteId }) {
@@ -86,31 +97,27 @@ export default function HabitsTab({ athleteId }) {
   async function loadHabits() {
     setLoadError("");
     try {
-      const last14 = getLast14Days();
-      const oldest = last14[0];
+      const oldest = getLast14Days()[0];
       const { data, error: err } = await supabase
-        .from("habit_log")
-        .select("*")
-        .eq("athlete_id", athleteId)
-        .gte("date", oldest)
-        .order("date", { ascending: true });
+        .from("announcements")
+        .select("week_label,message")
+        .eq("type", "habit_log")
+        .eq("day", String(athleteId))
+        .gte("week_label", oldest)
+        .order("week_label", { ascending: true });
 
-      if (err) {
-        setLoadError("Could not load habits: " + err.message);
-        return;
-      }
+      if (err) { setLoadError("Could not load habits: " + err.message); return; }
 
       const map = {};
       (data || []).forEach(row => {
-        map[row.date] = row;
+        map[row.week_label] = parseRow(row);
       });
       setLogMap(map);
 
-      // Populate today's fields if record exists
       const todayRow = map[today];
       if (todayRow) {
-        setWater(todayRow.water === true ? true : todayRow.water === false ? false : null);
-        setNutrition(todayRow.nutrition === true ? true : todayRow.nutrition === false ? false : null);
+        setWater(todayRow.water === true ? true : null);
+        setNutrition(todayRow.nutrition === true ? true : null);
         setSleepHours(todayRow.sleep != null ? String(todayRow.sleep) : "");
       }
     } catch (e) {
@@ -124,22 +131,34 @@ export default function HabitsTab({ athleteId }) {
     setSavedMsg("");
     try {
       const payload = {
-        athlete_id: athleteId,
-        date: today,
         water: water === true,
         nutrition: nutrition === true,
         sleep: sleepHours !== "" ? parseFloat(sleepHours) : null,
       };
+
+      // Delete existing record for this athlete+date, then insert fresh
+      await supabase
+        .from("announcements")
+        .delete()
+        .eq("type", "habit_log")
+        .eq("day", String(athleteId))
+        .eq("week_label", today);
+
       const { error: err } = await supabase
-        .from("habit_log")
-        .upsert(payload, { onConflict: "athlete_id,date" });
+        .from("announcements")
+        .insert({
+          type: "habit_log",
+          day: String(athleteId),
+          week_label: today,
+          message: JSON.stringify(payload),
+          active: true,
+        });
 
       if (err) {
         setSavedMsg("Error saving: " + err.message);
       } else {
         setSavedMsg("Saved!");
-        // Refresh local map
-        setLogMap(prev => ({ ...prev, [today]: { ...prev[today], ...payload } }));
+        setLogMap(prev => ({ ...prev, [today]: payload }));
         setTimeout(() => setSavedMsg(""), 2500);
       }
     } catch (e) {
@@ -149,7 +168,7 @@ export default function HabitsTab({ athleteId }) {
     }
   }
 
-  const streak = computeStreak(logMap, today);
+  const streak = computeStreak(logMap);
   const last7 = getLast7Days();
 
   const toggleStyle = (active, color) => ({
@@ -168,7 +187,7 @@ export default function HabitsTab({ athleteId }) {
   return (
     <div style={{ background: BG, minHeight: "60vh", fontFamily: "Georgia,serif" }}>
 
-      {/* Header: today's date + streak */}
+      {/* Header */}
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
           <div>
@@ -350,7 +369,6 @@ export default function HabitsTab({ athleteId }) {
             );
           })}
         </div>
-        {/* Legend */}
         <div style={{ display: "flex", gap: 14, marginTop: 10, flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <span style={{ fontSize: 10, color: GREEN }}>✓</span>
