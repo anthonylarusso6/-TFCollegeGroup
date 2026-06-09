@@ -152,7 +152,7 @@ export default function Coach(){
   const[groupmeLinkInput,setGroupmeLinkInput]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
   const[groupmeLinkSaving,setGroupmeLinkSaving]=useState(false);
   const[groupmeLinkSaved,setGroupmeLinkSaved]=useState(false);
-  const[bodyInjuries,setBodyInjuries]=useState({});
+  const[bodyInjuries,setBodyInjuries]=useState(null);
   const[injExpanded,setInjExpanded]=useState(null);
   const[injLoading,setInjLoading]=useState(false);
   const[injLoadErr,setInjLoadErr]=useState(false);
@@ -383,7 +383,8 @@ export default function Coach(){
         .eq("week_label",partId)
         .eq("active",true);
       setBodyInjuries(prev=>{
-        const u={...prev,[String(athleteId)]:{...(prev[String(athleteId)]||{})}};
+        const base=prev||{};
+        const u={...base,[String(athleteId)]:{...(base[String(athleteId)]||{})}};
         delete u[String(athleteId)][partId];
         return u;
       });
@@ -2740,12 +2741,13 @@ export default function Coach(){
           {tab==="injuries"&&(()=>{
             const SORE="#C8941F";
             const activeAthletes=athletes.filter(a=>a.status==="active");
+            if(injLoading||!bodyInjuries){return(<div style={{textAlign:"center",padding:"40px",color:"#555",fontSize:13}}>Loading injuries...</div>);}
             const flagged=activeAthletes.filter(a=>{
-              const parts=bodyInjuries[String(a.id)]||{};
+              const parts=(bodyInjuries||{})[String(a.id)]||{};
               return Object.values(parts).some(p=>p.status==="sore"||p.status==="pain");
             });
             const clear=activeAthletes.filter(a=>{
-              const parts=bodyInjuries[String(a.id)]||{};
+              const parts=(bodyInjuries||{})[String(a.id)]||{};
               return !Object.values(parts).some(p=>p.status==="sore"||p.status==="pain");
             });
             return(
@@ -2815,9 +2817,6 @@ export default function Coach(){
                                   </div>
                                 </div>
                               ))}
-                              <div style={{marginTop:10}}>
-                                <InjuryBodyMap athleteId={a.id} readOnly={true}/>
-                              </div>
                             </div>
                           )}
                         </div>
