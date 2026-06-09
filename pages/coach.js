@@ -348,7 +348,7 @@ export default function Coach(){
         try{result[r.day][r.week_label]=JSON.parse(r.message);}catch(e){}
       });
       setBodyInjuries(result);
-    }catch(e){setInjLoadErr(true);}
+    }catch(e){setInjLoadErr(true);setBodyInjuries({});}
     setInjLoading(false);
   };
 
