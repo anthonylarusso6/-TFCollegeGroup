@@ -165,6 +165,10 @@ export default function Coach(){
   const[calloutLoading,setCalloutLoading]=useState(false);
   const[calloutAthFilter,setCalloutAthFilter]=useState("");
   const[habitExpanded,setHabitExpanded]=useState(null);
+  const[broadcastTitle,setBroadcastTitle]=useState("");
+  const[broadcastBody,setBroadcastBody]=useState("");
+  const[broadcastSending,setBroadcastSending]=useState(false);
+  const[broadcastResult,setBroadcastResult]=useState(null);
   const[bioAvail,setBioAvail]=useState(false);
   const[bioCredId,setBioCredId]=useState(null);
   const[showBioOffer,setShowBioOffer]=useState(false);
@@ -3117,6 +3121,18 @@ export default function Coach(){
           {tab==="callouts"&&(()=>{
             const logDate=(ts)=>{if(!ts)return"";const d=new Date(ts);const e=new Date(d.toLocaleString("en-US",{timeZone:"America/New_York"}));return e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0");};
             const estToday=(()=>{const n=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");})();
+            const sendBroadcast=async()=>{
+              if(broadcastSending||!broadcastTitle.trim())return;
+              setBroadcastSending(true);setBroadcastResult(null);
+              try{
+                const r=await fetch("/api/broadcast-notification",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:broadcastTitle.trim(),body:broadcastBody.trim(),url:"/athlete"})});
+                const d=await r.json();
+                setBroadcastResult(d.error?"Error: "+d.error:"Sent to "+d.sent+" athlete"+(d.sent!==1?"s":"")+(d.failed>0?" ("+d.failed+" failed)":""));
+                if(!d.error){setBroadcastTitle("");setBroadcastBody("");}
+              }catch(e){setBroadcastResult("Error: "+e.message);}
+              setBroadcastSending(false);
+              setTimeout(()=>setBroadcastResult(null),4000);
+            };
             if(calloutLoading||!calloutLogs){return(<div style={{textAlign:"center",padding:"40px",color:"#555",fontSize:13}}>Loading callout log...</div>);}
             const filtered=(calloutLogs||[]).filter(l=>!calloutAthFilter||l.athletes?.name?.toLowerCase().includes(calloutAthFilter.toLowerCase()));
             const todayLogs=filtered.filter(l=>logDate(l.logged_at)===estToday);
@@ -3126,6 +3142,18 @@ export default function Coach(){
             const sortedDates=Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
             return(
               <div>
+                {/* Broadcast push notification */}
+                <div style={{background:"#0e0e0e",borderRadius:14,padding:"14px 16px",marginBottom:14,border:"1px solid #1e2a3a"}}>
+                  <div style={{fontSize:9,color:GOLD,textTransform:"uppercase",letterSpacing:"0.18em",fontWeight:900,marginBottom:10}}>Send Push Notification</div>
+                  <input value={broadcastTitle} onChange={e=>setBroadcastTitle(e.target.value)} placeholder="Title (e.g. Practice Update)" maxLength={80} style={{width:"100%",padding:"9px 12px",borderRadius:9,border:"0.5px solid #2a2a2a",background:"#111",color:"#ddd",fontSize:13,fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:8,outline:"none"}}/>
+                  <input value={broadcastBody} onChange={e=>setBroadcastBody(e.target.value)} placeholder="Message (optional)" maxLength={150} style={{width:"100%",padding:"9px 12px",borderRadius:9,border:"0.5px solid #2a2a2a",background:"#111",color:"#ddd",fontSize:13,fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:8,outline:"none"}}/>
+                  <button onClick={sendBroadcast} disabled={broadcastSending||!broadcastTitle.trim()} style={{width:"100%",padding:"10px",borderRadius:9,border:"none",background:(!broadcastTitle.trim()||broadcastSending)?"#1a1a1a":GOLD,color:(!broadcastTitle.trim()||broadcastSending)?"#444":"#000",fontSize:13,fontWeight:900,cursor:(!broadcastTitle.trim()||broadcastSending)?"default":"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em",transition:"all 0.15s"}}>
+                    {broadcastSending?"Sending…":"Send to All Athletes"}
+                  </button>
+                  {broadcastResult&&(
+                    <div style={{marginTop:8,fontSize:12,color:broadcastResult.startsWith("Error")?RED:GREEN,fontWeight:700,textAlign:"center"}}>{broadcastResult}</div>
+                  )}
+                </div>
                 <div style={{borderRadius:20,marginBottom:16,overflow:"hidden",border:"1px solid "+RED+"33",boxShadow:"0 8px 32px #00000060"}}>
                   <div style={{background:"linear-gradient(140deg,"+RED+"30,"+RED+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+RED+"44,transparent)"}}/>

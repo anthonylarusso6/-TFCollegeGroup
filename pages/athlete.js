@@ -396,7 +396,7 @@ export default function Athlete(){
     })();
   },[selectedAthlete]);
 
-  const VAPID_KEY="BObWJUwxM9tPxbrXUhj4JW15F1ngheVLKhqlSiQklDc0LtlPMITMNB1D-jx8ywwEnZfPsYKGCI5EmgCMqfRt2IU";
+  const VAPID_KEY="BJH-bvrd9uoxQC76SpcJLkipflZHMbuN6ky8htrZ9Itd2-9o_2fqyEDb6WqglLStoE26XIT05CYI2KZ00eHL_XE";
   function urlB64ToUint8(b){const p="=".repeat((4-(b.length%4))%4);const s=(b+p).replace(/-/g,"+").replace(/_/g,"/");const r=atob(s);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));}
 
   const enableProfileNotif=async()=>{
