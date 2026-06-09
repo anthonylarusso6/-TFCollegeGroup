@@ -161,6 +161,10 @@ export default function Coach(){
   const[ironRoomGender,setIronRoomGender]=useState("M");
   const[habitLogs,setHabitLogs]=useState(null);
   const[habitLoading,setHabitLoading]=useState(false);
+  const[calloutLogs,setCalloutLogs]=useState(null);
+  const[calloutLoading,setCalloutLoading]=useState(false);
+  const[calloutAthFilter,setCalloutAthFilter]=useState("");
+  const[habitExpanded,setHabitExpanded]=useState(null);
   const[bioAvail,setBioAvail]=useState(false);
   const[bioCredId,setBioCredId]=useState(null);
   const[showBioOffer,setShowBioOffer]=useState(false);
@@ -209,6 +213,10 @@ export default function Coach(){
     if(tab==="habits"&&!habitLogs&&!habitLoading)loadHabitLogs();
   },[tab]);
 
+  useEffect(()=>{
+    if(tab==="callouts"&&!calloutLogs&&!calloutLoading)loadCalloutLogs();
+  },[tab]);
+
   const loadAll=async()=>{
     setLoading(true);
     try{
@@ -221,6 +229,7 @@ export default function Coach(){
       supabase.from("announcements").select("*").eq("active",true).eq("type","general").order("created_at",{ascending:false}).limit(1),
     ]);
     if(aths)setAthletes(prev=>aths.map(a=>({...a,photo_url:a.photo_url||prev.find(p=>p.id===a.id)?.photo_url||null})));
+    if(aths)setGoalReviews(Object.fromEntries(aths.map(a=>[a.id,a.goal_review_status||""])));
     if(att)setAttendance(att);
     if(inb)setInbox(inb);
     if(anv)setAnvil(anv);
@@ -346,6 +355,35 @@ export default function Coach(){
       setIronRoomData(data||[]);
     }catch(e){setIronRoomData([]);}
     setIronRoomLoading(false);
+  };
+
+  const loadCalloutLogs=async()=>{
+    setCalloutLoading(true);
+    try{
+      const{data,error}=await supabase.from("callouts")
+        .select("*,athletes(name,photo_url,role)")
+        .order("logged_at",{ascending:false})
+        .limit(200);
+      if(!error)setCalloutLogs(data||[]);
+      else setCalloutLogs([]);
+    }catch(e){setCalloutLogs([]);}
+    setCalloutLoading(false);
+  };
+
+  const clearInjuryPart=async(athleteId,partId)=>{
+    try{
+      await supabase.from("announcements")
+        .update({active:false})
+        .eq("type","body_injury")
+        .eq("day",String(athleteId))
+        .eq("week_label",partId)
+        .eq("active",true);
+      setBodyInjuries(prev=>{
+        const u={...prev,[String(athleteId)]:{...(prev[String(athleteId)]||{})}};
+        delete u[String(athleteId)][partId];
+        return u;
+      });
+    }catch(e){}
   };
 
   const loadHabitLogs=async()=>{
@@ -640,11 +678,12 @@ export default function Coach(){
     {id:"injuries",label:"Injuries",icon:"🩺"},
     {id:"ironroom",label:"Iron Room",icon:"🏋️"},
     {id:"habits",label:"Habits",icon:"💧"},
+    {id:"callouts",label:"Callouts",icon:"⚠️"},
   ];
   // Kevin only sees roster, mindset and attendance
   const KEVIN_TABS=["roster","mindset","attendance"];
   // Malkmus (Luke) sees overview, attendance, leaderboard, culture, anvil, weights, engagement
-  const LUKE_TABS=["overview","attendance","leaderboard","culture","anvil","weights","engagement","habits"];
+  const LUKE_TABS=["overview","attendance","leaderboard","culture","anvil","weights","engagement","habits","callouts"];
   const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):coachRole==="malkmus"?ALL_TABS.filter(t=>LUKE_TABS.includes(t.id)):ALL_TABS;
 
   // Kevin PIN stored in localStorage
@@ -2766,7 +2805,10 @@ export default function Coach(){
                                     </span>
                                   </div>
                                   {v.description&&<div style={{fontSize:12,color:"#777",lineHeight:1.55,fontStyle:"italic"}}>"{v.description}"</div>}
-                                  {v.updatedAt&&<div style={{fontSize:9,color:"#444",marginTop:4}}>{new Date(v.updatedAt).toLocaleDateString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</div>}
+                                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:4}}>
+                                    {v.updatedAt&&<div style={{fontSize:9,color:"#444"}}>{new Date(v.updatedAt).toLocaleDateString("en-US",{timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}</div>}
+                                    <button onClick={()=>clearInjuryPart(a.id,id)} style={{fontSize:10,padding:"3px 10px",borderRadius:6,border:"0.5px solid "+GREEN+"55",background:"#081a0d",color:GREEN,cursor:"pointer",fontFamily:"Georgia,serif",marginLeft:"auto"}}>✓ Mark cleared</button>
+                                  </div>
                                 </div>
                               ))}
                               <div style={{marginTop:10}}>
@@ -2980,7 +3022,7 @@ export default function Coach(){
                     <div key={a.id} style={{background:"#111",borderRadius:14,marginBottom:8,border:"1px solid "+(a.streak>0?GREEN+"22":"#1a1a1a"),overflow:"hidden"}}>
                       {a.streak>0&&<div style={{height:2,background:"linear-gradient(90deg,"+GREEN+","+GREEN+"22,transparent)"}}/>}
                       <div style={{padding:"12px 14px"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8,cursor:"pointer"}} onClick={()=>setHabitExpanded(habitExpanded===a.id?null:a.id)}>
                           <div style={{width:26,textAlign:"center",flexShrink:0}}>
                             {medal?<span style={{fontSize:16}}>{medal}</span>:<span style={{fontSize:12,color:"#444",fontWeight:700}}>{rank}</span>}
                           </div>
@@ -3032,6 +3074,35 @@ export default function Coach(){
                             <div style={{fontSize:8,color:"#444",textTransform:"uppercase",letterSpacing:"0.04em"}}>Streak</div>
                           </div>
                         </div>
+                        {habitExpanded===a.id&&(()=>{
+                          const allDays=(habitLogs||[]).filter(r=>r.day===String(a.id)).sort((x,y)=>y.week_label.localeCompare(x.week_label));
+                          return(
+                            <div style={{marginTop:10,borderTop:"0.5px solid #1e1e1e",paddingTop:10}}>
+                              <div style={{fontSize:9,color:GREEN,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>30-Day History</div>
+                              {allDays.length===0&&<div style={{fontSize:11,color:"#444",fontStyle:"italic"}}>No logs in last 30 days.</div>}
+                              {allDays.map(r=>{
+                                let d={};
+                                try{d=JSON.parse(r.message||"{}");}catch(e){}
+                                const wOk=d.water===true;
+                                const nOk=d.nutrition===true;
+                                const sVal=typeof d.sleep==="number"?d.sleep:null;
+                                const allOk=wOk&&nOk&&sVal!=null&&sVal>0;
+                                const[,mm,dd]=r.week_label.split("-");
+                                return(
+                                  <div key={r.week_label} style={{display:"flex",alignItems:"center",gap:8,padding:"5px 0",borderBottom:"0.5px solid #1a1a1a"}}>
+                                    <div style={{fontSize:10,color:"#555",minWidth:46}}>{mm}/{dd}</div>
+                                    <div style={{display:"flex",gap:6,flex:1}}>
+                                      <span style={{fontSize:10,color:wOk?GREEN:"#333",fontWeight:wOk?700:400}}>{wOk?"💧✓":"💧—"}</span>
+                                      <span style={{fontSize:10,color:nOk?GREEN:"#333",fontWeight:nOk?700:400}}>{nOk?"🥗✓":"🥗—"}</span>
+                                      <span style={{fontSize:10,color:sVal&&sVal>0?GOLD:"#333",fontWeight:sVal&&sVal>0?700:400}}>{sVal&&sVal>0?"😴"+sVal+"h":"😴—"}</span>
+                                    </div>
+                                    <div style={{fontSize:9,color:allOk?GREEN:"#333",fontWeight:700}}>{allOk?"✓ All":""}</div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   );
@@ -3039,6 +3110,79 @@ export default function Coach(){
                 {ranked.length===0&&(
                   <div style={{textAlign:"center",padding:"3rem",color:"#555",fontSize:12,fontStyle:"italic"}}>No active athletes found.</div>
                 )}
+              </div>
+            );
+          })()}
+
+          {tab==="callouts"&&(()=>{
+            const logDate=(ts)=>{if(!ts)return"";const d=new Date(ts);const e=new Date(d.toLocaleString("en-US",{timeZone:"America/New_York"}));return e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0");};
+            const estToday=(()=>{const n=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");})();
+            if(calloutLoading||!calloutLogs){return(<div style={{textAlign:"center",padding:"40px",color:"#555",fontSize:13}}>Loading callout log...</div>);}
+            const filtered=(calloutLogs||[]).filter(l=>!calloutAthFilter||l.athletes?.name?.toLowerCase().includes(calloutAthFilter.toLowerCase()));
+            const todayLogs=filtered.filter(l=>logDate(l.logged_at)===estToday);
+            const todayCrunches=todayLogs.reduce((s,l)=>s+(l.crunches||0),0);
+            const grouped={};
+            filtered.forEach(l=>{const d=logDate(l.logged_at);if(!grouped[d])grouped[d]=[];grouped[d].push(l);});
+            const sortedDates=Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
+            return(
+              <div>
+                <div style={{borderRadius:20,marginBottom:16,overflow:"hidden",border:"1px solid "+RED+"33",boxShadow:"0 8px 32px #00000060"}}>
+                  <div style={{background:"linear-gradient(140deg,"+RED+"30,"+RED+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+RED+"44,transparent)"}}/>
+                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚠️</div>
+                    <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+RED+"44,"+RED+"22)",border:"1px solid "+RED+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚠️</div>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:8,color:RED,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Weight Room</div>
+                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Callout Log</div>
+                        <div style={{fontSize:11,color:"#666",marginTop:1}}>Today: {todayLogs.length} violation{todayLogs.length!==1?"s":""} · {todayCrunches} crunches owed</div>
+                      </div>
+                      <button onClick={()=>{setCalloutLogs(null);loadCalloutLogs();}} style={{padding:"6px 10px",borderRadius:10,border:"1px solid #222",background:"transparent",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>{calloutLoading?"...":"↻"}</button>
+                    </div>
+                  </div>
+                </div>
+                <div style={{position:"relative",marginBottom:12}}>
+                  <input value={calloutAthFilter} onChange={e=>setCalloutAthFilter(e.target.value)} placeholder="Filter by athlete..." style={{width:"100%",padding:"10px 12px 10px 34px",borderRadius:10,border:"0.5px solid #2a2a2a",fontSize:13,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",boxSizing:"border-box"}}/>
+                  <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#555"}}>🔍</div>
+                  {calloutAthFilter&&<button onClick={()=>setCalloutAthFilter("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:14,color:"#aaa",cursor:"pointer"}}>✕</button>}
+                </div>
+                {filtered.length===0&&(
+                  <div style={{textAlign:"center",padding:"3rem",color:"#555",fontSize:12,fontStyle:"italic"}}>No callouts logged yet.</div>
+                )}
+                {sortedDates.map(dateStr=>{
+                  const dayLogs=grouped[dateStr];
+                  const isToday=dateStr===estToday;
+                  const dayCrunches=dayLogs.reduce((s,l)=>s+(l.crunches||0),0);
+                  const[y,m,d]=dateStr.split("-");
+                  const label=isToday?"Today":new Date(Number(y),Number(m)-1,Number(d)).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+                  return(
+                    <div key={dateStr} style={{marginBottom:14}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                        <div style={{fontSize:10,fontWeight:700,color:isToday?RED:"#555",textTransform:"uppercase",letterSpacing:"0.08em"}}>{label}</div>
+                        <div style={{flex:1,height:"0.5px",background:"#1e1e1e"}}/>
+                        <div style={{fontSize:10,color:RED,fontWeight:700}}>{dayCrunches} crunches</div>
+                      </div>
+                      {dayLogs.map((l,li)=>{
+                        const ath=l.athletes;
+                        return(
+                          <div key={li} style={{background:"#111",borderRadius:12,marginBottom:6,padding:"10px 14px",border:"1px solid "+(isToday?RED+"22":"#1a1a1a"),display:"flex",alignItems:"center",gap:10}}>
+                            <div style={{width:34,height:34,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                              {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(ath?.name||"?")[0]}
+                            </div>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:13,fontWeight:600,color:"#ddd"}}>{ath?.name||"Unknown"}</div>
+                              <div style={{fontSize:11,color:"#555",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.violation}{l.count>1?" · "+l.count+"x":""}</div>
+                            </div>
+                            <div style={{textAlign:"right",flexShrink:0}}>
+                              <div style={{fontSize:14,fontWeight:800,color:RED}}>{l.crunches}</div>
+                              <div style={{fontSize:9,color:l.type==="selfreport"?GREEN:"#555",fontWeight:l.type==="selfreport"?700:400}}>{l.type==="selfreport"?"self":"called out"}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
             );
           })()}
