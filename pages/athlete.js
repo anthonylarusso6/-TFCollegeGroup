@@ -525,9 +525,13 @@ export default function Athlete(){
     setInjuryText("");setInjurySent(false);setInjuryOpen(false);
     setGoalSaved({});setGoalText({});setMyVote(null);
     setTab("profile");
-    // Auto-trigger Face ID if credential exists for this athlete
+    // Auto-trigger Face ID if credential exists — check availability inline (don't rely on bioAvail state)
     const raw=localStorage.getItem("tf_bio_"+a.id);
-    if(raw&&bioAvail){
+    let canBio=false;
+    if(raw&&window.PublicKeyCredential){
+      try{canBio=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){}
+    }
+    if(raw&&canBio){
       const handled=await authenticateWithBiometric(a);
       if(handled){
         await loadAttendance(a.id);
