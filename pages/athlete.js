@@ -226,6 +226,8 @@ export default function Athlete(){
   const[bioDeclined,setBioDeclined]=useState(false);
   const[showBioOffer,setShowBioOffer]=useState(false);
   const[pendingNav,setPendingNav]=useState(null);
+  const[bioRegistering,setBioRegistering]=useState(false);
+  const[bioRegResult,setBioRegResult]=useState(null);
   const[checkinInfo,setCheckinInfo]=useState(null);
   const[tab,setTab]=useState("profile");
   const[loading,setLoading]=useState(true);
@@ -1100,19 +1102,27 @@ export default function Athlete(){
                   </div>
                 )}
                 {bioAvail&&!bioCredId&&(
-                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a3a",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-                    <div>
-                      <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>👆 Enable Face ID / Touch ID</div>
-                      <div style={{fontSize:10,color:"#555"}}>Sign in instantly — skip the PIN next time</div>
+                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a3a"}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>👆 Enable Face ID / Touch ID</div>
+                        <div style={{fontSize:10,color:"#555"}}>Sign in instantly — skip the PIN next time</div>
+                      </div>
+                      <button disabled={bioRegistering} onClick={async()=>{
+                        setBioRegistering(true);setBioRegResult(null);
+                        try{localStorage.removeItem("tf_bio_declined_"+selectedAthlete.id);}catch(e){}
+                        try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
+                        setBioDeclined(false);setBioCredId(null);
+                        await registerBiometric(true);
+                        const stored=localStorage.getItem("tf_bio_"+selectedAthlete.id);
+                        if(stored){setBioRegResult("success");}else{setBioRegResult("failed");}
+                        setBioRegistering(false);
+                      }} style={{padding:"8px 14px",borderRadius:10,border:"none",background:bioRegistering?"#222":"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",color:bioRegistering?"#555":"#fff",fontSize:12,fontWeight:700,cursor:bioRegistering?"default":"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0}}>
+                        {bioRegistering?"Setting up…":"Enable"}
+                      </button>
                     </div>
-                    <button onClick={async()=>{
-                      try{localStorage.removeItem("tf_bio_declined_"+selectedAthlete.id);}catch(e){}
-                      try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
-                      setBioDeclined(false);setBioCredId(null);
-                      await registerBiometric(true);
-                    }} style={{padding:"8px 14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
-                      Enable
-                    </button>
+                    {bioRegResult==="success"&&<div style={{fontSize:11,color:GREEN,fontWeight:700,marginTop:8}}>✓ Face ID enabled — use it next time you log in</div>}
+                    {bioRegResult==="failed"&&<div style={{fontSize:11,color:"#e05",marginTop:8}}>Setup failed — make sure Face ID is enabled in your phone settings and try again</div>}
                   </div>
                 )}
                 <DailyWord announcement={announcement}/>
