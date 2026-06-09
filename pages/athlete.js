@@ -1098,6 +1098,22 @@ export default function Athlete(){
                     <div style={{fontSize:10,color:"#555",flexShrink:0}}>Settings → Safari/Chrome</div>
                   </div>
                 )}
+                {bioAvail&&(bioDeclined||(!bioCredId&&notifCard!=="unknown"))&&!showBioOffer&&(
+                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a3a",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                    <div>
+                      <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>👆 {bioCredId?"Face ID / Touch ID":"Enable Face ID"}</div>
+                      <div style={{fontSize:10,color:"#555"}}>{bioCredId?"Tap to reset your saved login":"Sign in instantly — skip the PIN"}</div>
+                    </div>
+                    <button onClick={async()=>{
+                      try{localStorage.removeItem("tf_bio_declined_"+selectedAthlete.id);}catch(e){}
+                      try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
+                      setBioDeclined(false);setBioCredId(null);
+                      await registerBiometric();
+                    }} style={{padding:"8px 14px",borderRadius:10,border:"none",background:"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
+                      {bioCredId?"Reset":"Enable"}
+                    </button>
+                  </div>
+                )}
                 <DailyWord announcement={announcement}/>
                 <ClassCountdown/>
                 {(()=>{
