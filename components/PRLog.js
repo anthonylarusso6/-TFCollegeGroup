@@ -58,13 +58,13 @@ const DEFAULT_PROGRAM={
     {name:"DB Chest Supported Row",        tier:2,sets:"3x10e",                  inputType:"weight"},
     {name:"Cable Rope Trunk Rotation",     tier:3,sets:"3x10e",                  inputType:"weight"},
     {name:"Dragon Flag",                   tier:3,sets:"3x9",                    inputType:"bodyweight"},
-    {name:"KB Farmer & Waiter Carry",      tier:3,sets:"3x20yds",               inputType:"kb"},
+    {name:"KB Farmer & Waiter Carry",      tier:3,sets:"3x20 yards",               inputType:"kb2_yards"},
   ],
   Thu:[
     {name:"SA Banded Rot. Jammer Press",   tier:1,sets:"4x5e",                   inputType:"band_weight"},
     {name:"SA Lat Pull Down",              tier:1,sets:"4x14e",                  inputType:"weight"},
     {name:"DB Pronated Trap Raise",        tier:1,sets:"3x15",                   inputType:"weight"},
-    {name:"Heavy Prowler Sprint",          tier:2,sets:"4x20yds",               inputType:"weight"},
+    {name:"Heavy Prowler Sprint",          tier:2,sets:"4x20 yards",               inputType:"weight"},
     {name:"Weighted Plank Holds",          tier:2,sets:"3x30s",                  inputType:"weight"},
     {name:"KB Shrugs",                     tier:2,sets:"3x15",                   inputType:"kb"},
     {name:"Battle Rope Waves",             tier:"circuit",sets:"30s",            inputType:"bodyweight"},
@@ -658,6 +658,72 @@ export default function PRLog({athleteId,gender}){
                           </div>
                           {selBand&&<div style={{fontSize:10,color:selBand.hex,marginTop:6,fontWeight:600}}>● {selBand.label} Band · {selBand.resistance}</div>}
                           {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#444",marginTop:6,padding:"5px",background:"#0a0a0a",borderRadius:7,border:"0.5px solid #1a1a1a"}}>est. 1RM: <span style={{color:GOLD,fontWeight:800}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span></div>}
+                        </div>
+                      );
+                    }
+
+                    // ── DUAL KETTLEBELL + YARDS ─────────────────────
+                    if(itype==="kb2_yards"){
+                      const selKB1=inp.kbColor?KB_COLORS.find(k=>k.id===inp.kbColor):null;
+                      const selKB2=inp.kbColor2?KB_COLORS.find(k=>k.id===inp.kbColor2):null;
+                      const combined=(selKB1?selKB1.weight:0)+(selKB2?selKB2.weight:0);
+                      const kbRow=(label,colorKey,w2Key)=>(
+                        <div style={{marginBottom:12}}>
+                          <div style={{fontSize:10,color:"#555",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>🏋️ {label}</div>
+                          <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                            {KB_COLORS.map(k=>{
+                              const isSel=inp[colorKey]===k.id;
+                              return(
+                                <button key={k.id}
+                                  onClick={()=>{
+                                    setInputs(prev=>{
+                                      const cur=prev[lift.name]||{};
+                                      const otherW=colorKey==="kbColor"?(parseFloat(cur.weight2)||0):(parseFloat(cur.weight1)||0);
+                                      const newW=colorKey==="kbColor"
+                                        ?{weight1:String(k.weight),weight:String(k.weight+otherW)}
+                                        :{weight2:String(k.weight),weight:String((parseFloat(cur.weight1)||0)+k.weight)};
+                                      return{...prev,[lift.name]:{...cur,[colorKey]:k.id,...newW}};
+                                    });
+                                  }}
+                                  style={{display:"flex",alignItems:"center",gap:12,
+                                    padding:"10px 12px",borderRadius:9,
+                                    border:"1px solid "+(isSel?k.hex+"66":"#1e1e1e"),
+                                    borderLeft:"3px solid "+(isSel?k.hex:"#1e1e1e"),
+                                    background:isSel?"#111":"#0a0a0a",
+                                    cursor:"pointer",transition:"all 0.12s",textAlign:"left"}}>
+                                  <div style={{width:14,height:14,borderRadius:3,flexShrink:0,
+                                    background:k.hex,border:k.id==="white"?"1px solid #555":"none"}}/>
+                                  <span style={{flex:1,fontSize:13,fontWeight:isSel?700:500,
+                                    color:isSel?k.hex:"#888"}}>{k.label}</span>
+                                  <span style={{fontSize:12,color:isSel?"#aaa":"#333",fontWeight:isSel?600:400}}>{k.weight} lbs</span>
+                                  {isSel&&<span style={{fontSize:12,color:k.hex,fontWeight:700}}>✓</span>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                      return(
+                        <div>
+                          {kbRow("Farmer Hand (KB 1)","kbColor","weight1")}
+                          {kbRow("Waiter Hand (KB 2)","kbColor2","weight2")}
+                          <div style={{display:"flex",gap:8,alignItems:"flex-end",marginTop:4}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:9,color:"#555",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:600}}>Yards</div>
+                              <input type="number" inputMode="numeric" value={inp.reps||""}
+                                onChange={e=>setInput(lift.name,"reps",e.target.value)}
+                                placeholder="0"
+                                style={{width:"100%",padding:"11px",borderRadius:9,border:"1px solid #252525",fontSize:16,fontFamily:"Georgia,serif",textAlign:"center",background:"#0f0f0f",boxSizing:"border-box",fontWeight:700,color:"#fff"}}/>
+                            </div>
+                            <div>{logBtn(!inp.weight||!inp.reps)}</div>
+                          </div>
+                          {selKB1&&selKB2&&inp.reps&&(
+                            <div style={{textAlign:"center",fontSize:11,color:"#444",marginTop:6,padding:"6px",background:"#0a0a0a",borderRadius:8,border:"0.5px solid #1a1a1a"}}>
+                              <span style={{color:"#888"}}>{selKB1.label} + {selKB2.label} · </span>
+                              <span style={{color:GOLD,fontWeight:800}}>{combined} lbs total</span>
+                              <span style={{color:"#555",marginLeft:6}}>× {inp.reps} yards</span>
+                            </div>
+                          )}
                         </div>
                       );
                     }
