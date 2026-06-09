@@ -2938,7 +2938,7 @@ export default function Coach(){
               }
               return s;
             };
-            if(habitLoading){return(<div style={{textAlign:"center",padding:"40px",color:"#555",fontSize:13}}>Loading habit data...</div>);}
+            if(habitLoading||!habitLogs){return(<div style={{textAlign:"center",padding:"40px",color:"#555",fontSize:13}}>Loading habit data...</div>);}
             const athMaps={};
             (habitLogs||[]).forEach(r=>{
               const aid=r.day;
