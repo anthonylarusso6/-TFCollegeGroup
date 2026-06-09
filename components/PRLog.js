@@ -917,7 +917,7 @@ export default function PRLog({athleteId,gender}){
                         {liftHistory.slice(0,5).map((h,hi)=>(
                           <div key={hi} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:hi<Math.min(liftHistory.length,5)-1?"0.5px solid #1a1a1a":"none"}}>
                             <div style={{fontSize:11,color:"#444"}}>{new Date(h.date).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
-                            <div style={{fontSize:12,fontWeight:700,color:"#ccc"}}>{h.weight} lbs × {h.reps||1} reps</div>
+                            <div style={{fontSize:12,fontWeight:700,color:"#ccc"}}>{h.weight} lbs × {h.reps||1} {itype==="kb2_yards"?"yards":"reps"}</div>
                             {h.weight===pr&&<div style={{fontSize:10,color:GOLD,fontWeight:700}}>PR 🏆</div>}
                             {confirmDelete===h.id?(
                               <div style={{display:"flex",gap:4,marginLeft:4}}>

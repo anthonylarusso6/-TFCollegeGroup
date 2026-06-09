@@ -1378,7 +1378,7 @@ export default function Coach(){
                   return(
                     <div key={a.id} style={{borderBottom:"0.5px solid #1e1e1e"}}>
                       <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",cursor:"pointer"}} onClick={()=>setRosterExpanded(isExp?null:a.id)}>
-                        <label style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+                        <label style={{width:36,height:36,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",flexShrink:0,cursor:"pointer",overflow:"hidden",outline:hasInjury?"2.5px solid "+RED:"none",outlineOffset:"1px"}} onClick={e=>e.stopPropagation()}>
                           {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
                           <input type="file" accept="image/*" style={{display:"none"}} onChange={async e=>{
                             const file=e.target.files[0];if(!file)return;
