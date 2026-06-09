@@ -310,10 +310,11 @@ export default function Athlete(){
     })();
   },[selectedAthlete?.id]);
 
-  const authenticateWithBiometric=async()=>{
+  const authenticateWithBiometric=async(ath)=>{
+    const athlete=ath||selectedAthlete;
     try{
-      const raw=localStorage.getItem("tf_bio_"+selectedAthlete.id);
-      if(!raw)return;
+      const raw=localStorage.getItem("tf_bio_"+athlete.id);
+      if(!raw)return false;
       const stored=JSON.parse(raw);
       const challenge=crypto.getRandomValues(new Uint8Array(32));
       const credIdBytes=Uint8Array.from(atob(stored.credId),c=>c.charCodeAt(0));
@@ -327,12 +328,14 @@ export default function Athlete(){
         }
       });
       if(assertion){
-        const info=await doCheckin(selectedAthlete);
+        const info=await doCheckin(athlete);
         setCheckinInfo(info);setPin("");
         if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
         else setScreen("profile");
+        return true;
       }
     }catch(e){/* user cancelled — fall through to PIN */}
+    return false;
   };
 
   const registerBiometric=async(fromProfile=false)=>{
@@ -521,7 +524,22 @@ export default function Athlete(){
     setPrayerText("");setPrayerSent(false);
     setInjuryText("");setInjurySent(false);setInjuryOpen(false);
     setGoalSaved({});setGoalText({});setMyVote(null);
-    setTab("profile");setScreen("login");
+    setTab("profile");
+    // Auto-trigger Face ID if credential exists for this athlete
+    const raw=localStorage.getItem("tf_bio_"+a.id);
+    if(raw&&bioAvail){
+      const handled=await authenticateWithBiometric(a);
+      if(handled){
+        await loadAttendance(a.id);
+        await loadDraft();
+        try{
+          const{data}=await supabase.from("athletes").select("*").eq("id",a.id).single();
+          if(data)setSelectedAthlete(data);
+        }catch(e){}
+        return;
+      }
+    }
+    setScreen("login");
     await loadAttendance(a.id);
     await loadDraft();
     try{
