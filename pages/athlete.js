@@ -223,6 +223,7 @@ export default function Athlete(){
   const[pinError,setPinError]=useState("");
   const[bioAvail,setBioAvail]=useState(false);
   const[bioCredId,setBioCredId]=useState(null);
+  const[bioDeclined,setBioDeclined]=useState(false);
   const[showBioOffer,setShowBioOffer]=useState(false);
   const[pendingNav,setPendingNav]=useState(null);
   const[checkinInfo,setCheckinInfo]=useState(null);
@@ -289,7 +290,7 @@ export default function Athlete(){
   // Check biometric availability and stored credential when athlete is selected
   useEffect(()=>{
     if(!selectedAthlete?.id)return;
-    setBioCredId(null);setShowBioOffer(false);
+    setBioCredId(null);setBioDeclined(false);setShowBioOffer(false);
     (async()=>{
       try{
         if(window.PublicKeyCredential){
@@ -301,6 +302,9 @@ export default function Athlete(){
         const raw=localStorage.getItem("tf_bio_"+selectedAthlete.id);
         setBioCredId(raw?JSON.parse(raw).credId:null);
       }catch(e){setBioCredId(null);}
+      try{
+        setBioDeclined(!!localStorage.getItem("tf_bio_declined_"+selectedAthlete.id));
+      }catch(e){}
     })();
   },[selectedAthlete?.id]);
 
@@ -534,7 +538,7 @@ export default function Athlete(){
           setSelectedAthlete({...selectedAthlete,pin});
           const info=await doCheckin({...selectedAthlete,pin});
           setCheckinInfo(info);setPin("");
-          if(bioAvail&&!bioCredId){
+          if(bioAvail&&!bioCredId&&!bioDeclined){
             setPendingNav({screen:info?"checkin":"profile",milestone:info?.milestoneHit||null});
             setShowBioOffer(true);
           }else{
@@ -547,7 +551,7 @@ export default function Athlete(){
       if(pin===saved){
         const info=await doCheckin(selectedAthlete);
         setCheckinInfo(info);setPin("");setPinError("");
-        if(bioAvail&&!bioCredId){
+        if(bioAvail&&!bioCredId&&!bioDeclined){
           setPendingNav({screen:info?"checkin":"profile",milestone:info?.milestoneHit||null});
           setShowBioOffer(true);
         }else{
@@ -788,6 +792,8 @@ export default function Athlete(){
               Enable Biometrics
             </button>
             <button onClick={()=>{
+              try{localStorage.setItem("tf_bio_declined_"+selectedAthlete.id,"1");}catch(e){}
+              setBioDeclined(true);
               const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
               if(nav?.screen==="checkin"){setScreen("checkin");if(nav.milestone)setMilestone(nav.milestone);}
               else setScreen("profile");
