@@ -749,7 +749,7 @@ export default function Athlete(){
           {!selectedAthlete?.pin?"Create a 4-digit PIN":pinStep==="confirm"?"Enter the same 4 digits":"Enter your PIN to check in"}
         </div>
 
-        {/* Face ID / biometric shortcut — shown when credential stored */}
+        {/* Biometric shortcut — shown when credential stored */}
         {bioCredId&&!showBioOffer&&(
           <button onClick={authenticateWithBiometric}
             style={{marginBottom:22,display:"flex",alignItems:"center",gap:10,padding:"14px 28px",
@@ -757,18 +757,18 @@ export default function Athlete(){
               background:(isForge?RED:STEEL)+"12",color:"#fff",fontSize:15,fontWeight:700,
               cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",
               boxShadow:"0 0 24px "+(isForge?RED:STEEL)+"22"}}>
-            <span style={{fontSize:26}}>🔒</span>
-            <span>Use Face ID / Biometrics</span>
+            <span style={{fontSize:26}}>👆</span>
+            <span>Use {(()=>{const ua=navigator.userAgent||"";return/iPhone|iPad|iPod/.test(ua)?"Face ID / Touch ID":/Mac/.test(ua)?"Touch ID":/Android/.test(ua)?"Fingerprint":"Biometrics";})()}</span>
           </button>
         )}
 
         {showBioOffer?(
           /* Bio enroll offer — replaces keypad after first PIN success */
           <div style={{width:"100%",maxWidth:320,textAlign:"center"}}>
-            <div style={{fontSize:44,marginBottom:12}}>🔒</div>
-            <div style={{fontSize:18,fontWeight:800,color:"#fff",marginBottom:8,letterSpacing:"-0.01em"}}>Enable Face ID?</div>
+            <div style={{fontSize:44,marginBottom:12}}>👆</div>
+            <div style={{fontSize:18,fontWeight:800,color:"#fff",marginBottom:8,letterSpacing:"-0.01em"}}>Enable Biometrics?</div>
             <div style={{fontSize:12,color:"#555",marginBottom:28,lineHeight:1.6}}>
-              Skip the PIN next time and sign in instantly with Face ID or Touch ID.
+              Skip the PIN next time. Sign in instantly with your fingerprint or face.
             </div>
             <button onClick={registerBiometric}
               style={{width:"100%",padding:"14px",borderRadius:12,border:"none",
@@ -776,7 +776,7 @@ export default function Athlete(){
                 color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",
                 fontFamily:"Georgia,serif",letterSpacing:"0.04em",marginBottom:12,
                 boxShadow:"0 4px 24px "+(isForge?RED:STEEL)+"44"}}>
-              Enable Face ID
+              Enable Biometrics
             </button>
             <button onClick={()=>{
               const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);

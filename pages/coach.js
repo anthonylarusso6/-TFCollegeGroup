@@ -159,8 +159,29 @@ export default function Coach(){
   const[ironRoomData,setIronRoomData]=useState(null);
   const[ironRoomLoading,setIronRoomLoading]=useState(false);
   const[ironRoomGender,setIronRoomGender]=useState("M");
+  const[bioAvail,setBioAvail]=useState(false);
+  const[bioCredId,setBioCredId]=useState(null);
+  const[showBioOffer,setShowBioOffer]=useState(false);
+  const[pendingNav,setPendingNav]=useState(null);
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
+
+  useEffect(()=>{
+    if(!selectedCoach)return;
+    setBioCredId(null);setShowBioOffer(false);
+    (async()=>{
+      try{
+        if(window.PublicKeyCredential){
+          const avail=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+          setBioAvail(avail);
+        }
+      }catch(e){}
+      try{
+        const raw=localStorage.getItem("tf_bio_coach_"+selectedCoach);
+        setBioCredId(raw?JSON.parse(raw).credId:null);
+      }catch(e){setBioCredId(null);}
+    })();
+  },[selectedCoach]);
 
   useEffect(()=>{
     if(tab!=="qr")return;
@@ -612,6 +633,71 @@ export default function Coach(){
   const getMCastlesPin=()=>typeof window!=="undefined"?localStorage.getItem("mcastles_coach_pin"):null;
   const saveMCastlesPin=(p)=>localStorage.setItem("mcastles_coach_pin",p);
 
+  const getBioLabel=()=>{
+    if(typeof window==="undefined")return"Biometrics";
+    const ua=navigator.userAgent||"";
+    if(/iPhone|iPad|iPod/.test(ua))return"Face ID / Touch ID";
+    if(/Mac/.test(ua))return"Touch ID";
+    if(/Android/.test(ua))return"Fingerprint";
+    return"Biometrics";
+  };
+
+  const coachNavFor=(id)=>{
+    const roleMap={ant:"ant",kevin:"kevin",malkmus:"malkmus",mcastles:"mcastles"};
+    const tabMap={ant:"overview",kevin:"roster",malkmus:"overview",mcastles:"overview"};
+    return{role:roleMap[id]||"ant",tab:tabMap[id]||"overview"};
+  };
+
+  const completeCoachAuth=(role,tab)=>{
+    setAuthed(true);setCoachRole(role);if(tab)setTab(tab);setPin("");
+  };
+
+  const authenticateWithBiometric=async()=>{
+    try{
+      const raw=localStorage.getItem("tf_bio_coach_"+selectedCoach);
+      if(!raw)return;
+      const stored=JSON.parse(raw);
+      const challenge=crypto.getRandomValues(new Uint8Array(32));
+      const credIdBytes=Uint8Array.from(atob(stored.credId),c=>c.charCodeAt(0));
+      const assertion=await navigator.credentials.get({
+        publicKey:{
+          challenge,
+          rpId:stored.rpId||window.location.hostname,
+          allowCredentials:[{type:"public-key",id:credIdBytes,transports:["internal"]}],
+          userVerification:"required",
+          timeout:60000,
+        }
+      });
+      if(assertion){const nav=coachNavFor(selectedCoach);completeCoachAuth(nav.role,nav.tab);}
+    }catch(e){}
+  };
+
+  const registerBiometric=async()=>{
+    const c=coaches.find(x=>x.id===selectedCoach);
+    try{
+      const challenge=crypto.getRandomValues(new Uint8Array(32));
+      const credential=await navigator.credentials.create({
+        publicKey:{
+          challenge,
+          rp:{name:"TF College Group",id:window.location.hostname},
+          user:{
+            id:new TextEncoder().encode("coach_"+selectedCoach),
+            name:c?.name||selectedCoach,
+            displayName:c?.name||selectedCoach,
+          },
+          pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+          authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"preferred"},
+          timeout:60000,
+        }
+      });
+      const credId=btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+      localStorage.setItem("tf_bio_coach_"+selectedCoach,JSON.stringify({credId,rpId:window.location.hostname}));
+      setBioCredId(credId);
+    }catch(e){}
+    const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
+    completeCoachAuth(nav?.role||"ant",nav?.tab||"overview");
+  };
+
   function handlePinKey(k){
     if(k===null)return;
     if(k==="⌫"){setPin(p=>p.slice(0,-1));setPinError("");return;}
@@ -619,34 +705,38 @@ export default function Coach(){
     const newPin=pin+String(k);
     setPin(newPin);
     if(newPin.length===4){
+      const offerBio=(nav)=>{
+        if(bioAvail&&!bioCredId){setPendingNav(nav);setShowBioOffer(true);setPin("");}
+        else{setPin("");completeCoachAuth(nav.role,nav.tab);}
+      };
       if(pinStep==="enter"){
         if(selectedCoach==="ant"){
-          if(newPin===COACH_PIN){setAuthed(true);setCoachRole("ant");setPin("");}
+          if(newPin===COACH_PIN)offerBio({role:"ant",tab:"overview"});
           else{setPinError("Wrong PIN. Try again.");setPin("");}
         }else if(selectedCoach==="kevin"){
           const kp=getKevinPin();
-          if(kp&&newPin===kp){setAuthed(true);setCoachRole("kevin");setTab("roster");setPin("");}
+          if(kp&&newPin===kp)offerBio({role:"kevin",tab:"roster"});
           else{setPinError("Wrong PIN. Try again.");setPin("");}
         }else if(selectedCoach==="malkmus"){
           const mp=getMalkmusPin();
-          if(mp&&newPin===mp){setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
+          if(mp&&newPin===mp)offerBio({role:"malkmus",tab:"overview"});
           else{setPinError("Wrong PIN. Try again.");setPin("");}
         }else if(selectedCoach==="mcastles"){
           const mcp=getMCastlesPin();
-          if(mcp&&newPin===mcp){setAuthed(true);setCoachRole("mcastles");setTab("overview");setPin("");}
+          if(mcp&&newPin===mcp)offerBio({role:"mcastles",tab:"overview"});
           else{setPinError("Wrong PIN. Try again.");setPin("");}
         }
       }else if(pinStep==="create"){
         setPinConfirm(newPin);setPin("");setPinStep("confirm");setPinError("");
       }else if(pinStep==="confirm"){
         if(selectedCoach==="malkmus"){
-          if(newPin===pinConfirm){saveMalkmusPin(newPin);setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
+          if(newPin===pinConfirm){saveMalkmusPin(newPin);offerBio({role:"malkmus",tab:"overview"});}
           else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
         }else if(selectedCoach==="mcastles"){
-          if(newPin===pinConfirm){saveMCastlesPin(newPin);setAuthed(true);setCoachRole("mcastles");setTab("overview");setPin("");}
+          if(newPin===pinConfirm){saveMCastlesPin(newPin);offerBio({role:"mcastles",tab:"overview"});}
           else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
         }else{
-          if(newPin===pinConfirm){saveKevinPin(newPin);setAuthed(true);setCoachRole("kevin");setTab("roster");setPin("");}
+          if(newPin===pinConfirm){saveKevinPin(newPin);offerBio({role:"kevin",tab:"roster"});}
           else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
         }
       }
@@ -715,6 +805,46 @@ export default function Coach(){
               <div style={{fontSize:12,color:"#555",marginBottom:20,letterSpacing:"0.04em"}}>
                 {pinStep==="create"?"Create your 4-digit PIN":pinStep==="confirm"?"Confirm your PIN":"Enter your PIN"}
               </div>
+
+              {/* Bio shortcut button — above PIN dots when credential stored */}
+              {bioCredId&&pinStep==="enter"&&!showBioOffer&&(
+                <button onClick={authenticateWithBiometric}
+                  style={{marginBottom:20,display:"flex",alignItems:"center",gap:10,padding:"13px 24px",
+                    borderRadius:14,border:"1px solid "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"44",
+                    background:(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"12",
+                    color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",
+                    letterSpacing:"0.02em",margin:"0 auto 20px",boxShadow:"0 0 20px "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"22"}}>
+                  <span style={{fontSize:24}}>👆</span>
+                  <span>Use {getBioLabel()}</span>
+                </button>
+              )}
+
+              {showBioOffer?(
+                <div style={{width:"100%",maxWidth:300,textAlign:"center",margin:"0 auto"}}>
+                  <div style={{fontSize:44,marginBottom:12}}>👆</div>
+                  <div style={{fontSize:17,fontWeight:800,color:"#fff",marginBottom:8,letterSpacing:"-0.01em"}}>Enable {getBioLabel()}?</div>
+                  <div style={{fontSize:12,color:"#555",marginBottom:24,lineHeight:1.6}}>
+                    Skip the PIN next time and sign in instantly with your fingerprint or face.
+                  </div>
+                  <button onClick={registerBiometric}
+                    style={{width:"100%",padding:"14px",borderRadius:12,border:"none",
+                      background:"linear-gradient(135deg,"+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+","+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"aa)",
+                      color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",
+                      fontFamily:"Georgia,serif",letterSpacing:"0.04em",marginBottom:12,
+                      boxShadow:"0 4px 24px "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"44"}}>
+                    Enable {getBioLabel()}
+                  </button>
+                  <button onClick={()=>{
+                    const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
+                    completeCoachAuth(nav?.role||"ant",nav?.tab||"overview");
+                  }} style={{width:"100%",padding:"12px",borderRadius:12,border:"0.5px solid #222",
+                    background:"transparent",color:"#444",fontSize:13,fontWeight:500,
+                    cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                    Not now
+                  </button>
+                </div>
+              ):(
+              <>
               <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:16}}>
                 {[0,1,2,3].map(i=>{const cc=coaches.find(x=>x.id===selectedCoach)?.color||GOLD;return(<div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+cc+(i<pin.length?"":"44"),background:i<pin.length?cc:"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 10px "+cc+"88":"none"}}/>);})}
               </div>
@@ -729,35 +859,39 @@ export default function Coach(){
                 onChange={e=>{
                   const val=e.target.value.replace(/[^0-9]/g,"").slice(0,4);
                   setPin(val);
-                  if(val.length===4){
+                  if(val.length===4){handlePinKey(null);setPin(val);/* route through handlePinKey by rebuilding */
+                    const offerBio=(nav)=>{
+                      if(bioAvail&&!bioCredId){setPendingNav(nav);setShowBioOffer(true);setPin("");}
+                      else{setPin("");completeCoachAuth(nav.role,nav.tab);}
+                    };
                     if(pinStep==="enter"){
                       if(selectedCoach==="ant"){
-                        if(val===COACH_PIN){setAuthed(true);setCoachRole("ant");setPin("");}
+                        if(val===COACH_PIN)offerBio({role:"ant",tab:"overview"});
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }else if(selectedCoach==="kevin"){
                         const kp=getKevinPin();
-                        if(kp&&val===kp){setAuthed(true);setCoachRole("kevin");setTab("roster");setPin("");}
+                        if(kp&&val===kp)offerBio({role:"kevin",tab:"roster"});
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }else if(selectedCoach==="malkmus"){
                         const mp=getMalkmusPin();
-                        if(mp&&val===mp){setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
+                        if(mp&&val===mp)offerBio({role:"malkmus",tab:"overview"});
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }else if(selectedCoach==="mcastles"){
                         const mcp=getMCastlesPin();
-                        if(mcp&&val===mcp){setAuthed(true);setCoachRole("mcastles");setTab("overview");setPin("");}
+                        if(mcp&&val===mcp)offerBio({role:"mcastles",tab:"overview"});
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }
                     }else if(pinStep==="create"){
                       setPinConfirm(val);setPinStep("confirm");setPin("");
                     }else if(pinStep==="confirm"){
                       if(selectedCoach==="malkmus"){
-                        if(val===pinConfirm){saveMalkmusPin(val);setAuthed(true);setCoachRole("malkmus");setTab("overview");setPin("");}
+                        if(val===pinConfirm){saveMalkmusPin(val);offerBio({role:"malkmus",tab:"overview"});}
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }else if(selectedCoach==="mcastles"){
-                        if(val===pinConfirm){saveMCastlesPin(val);setAuthed(true);setCoachRole("mcastles");setTab("overview");setPin("");}
+                        if(val===pinConfirm){saveMCastlesPin(val);offerBio({role:"mcastles",tab:"overview"});}
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }else{
-                        if(val===pinConfirm){saveKevinPin(val);setAuthed(true);setCoachRole("kevin");setTab("roster");setPin("");}
+                        if(val===pinConfirm){saveKevinPin(val);offerBio({role:"kevin",tab:"roster"});}
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }
                     }
@@ -774,6 +908,8 @@ export default function Coach(){
               </div>
               <div style={{marginTop:10,fontSize:10,color:"#2a2a2a",textAlign:"center",letterSpacing:"0.04em"}}>Tap keypad or type on keyboard</div>
               {pinError&&<div style={{marginTop:12,fontSize:12,color:"#ff5555",padding:"8px 16px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
+            </>
+            )}
             </>
           )}
         </div>
