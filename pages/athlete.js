@@ -260,6 +260,8 @@ export default function Athlete(){
   const pollRef=useRef(null);
   const athleteIdRef=useRef(null);
   const isPickingRef=useRef(false);
+  const touchStartRef=useRef(null);
+  const contentRef=useRef(null);
 
   useEffect(()=>{loadData();},[]);
 
@@ -935,6 +937,22 @@ export default function Athlete(){
       {id:"private",label:"Private"},
     ];
 
+    // Swipe between bottom-nav tabs
+    const validPinnedForSwipe=pinnedTabs.filter(id=>TABS.find(t=>t.id===id));
+    const PRIMARY_NAV=["profile",...validPinnedForSwipe];
+    const handleTouchStart=(e)=>{touchStartRef.current={x:e.touches[0].clientX,y:e.touches[0].clientY};};
+    const handleTouchEnd=(e)=>{
+      if(!touchStartRef.current)return;
+      const dx=e.changedTouches[0].clientX-touchStartRef.current.x;
+      const dy=e.changedTouches[0].clientY-touchStartRef.current.y;
+      touchStartRef.current=null;
+      if(Math.abs(dx)<52||Math.abs(dx)<Math.abs(dy)*1.5)return;
+      const idx=PRIMARY_NAV.indexOf(tab);
+      const animate=(dir)=>{if(!contentRef.current)return;const el=contentRef.current;el.style.animation="none";void el.offsetWidth;el.style.animation=dir>0?"tfSlideFromRight 0.22s ease-out":"tfSlideFromLeft 0.22s ease-out";};
+      if(dx<0&&idx<PRIMARY_NAV.length-1){setTab(PRIMARY_NAV[idx+1]);animate(1);}
+      else if(dx>0&&idx>0){setTab(PRIMARY_NAV[idx-1]);animate(-1);}
+    };
+
     const myGroupIdx=selectedAthlete.group_idx;
     const draftLeaders=draft?.leaders||[];
     const draftGroups=draft?.groups||[];
@@ -1021,6 +1039,7 @@ export default function Athlete(){
 
     return(
       <>
+        <style>{`@keyframes tfSlideFromRight{from{transform:translateX(28px);opacity:0.8}to{transform:translateX(0);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-28px);opacity:0.8}to{transform:translateX(0);opacity:1}}`}</style>
         <Head><title>{selectedAthlete.name} — TF College Group</title></Head>
         {milestone&&(
           <div onClick={()=>setMilestone(null)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
@@ -1034,7 +1053,7 @@ export default function Athlete(){
             </div>
           </div>
         )}
-        <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
+        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
           {/* Profile header */}
           <div style={{background:"linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.02) 100%)",backdropFilter:"blur(20px) saturate(180%)",WebkitBackdropFilter:"blur(20px) saturate(180%)",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
             {/* Top accent */}
@@ -1069,7 +1088,7 @@ export default function Athlete(){
             </div>
           </div>
 
-          <div style={{padding:"1.25rem",background:"transparent",minHeight:"60vh",paddingBottom:"110px"}}>
+          <div ref={contentRef} style={{padding:"1.25rem",background:"transparent",minHeight:"60vh",paddingBottom:"110px"}}>
 
             {tab==="profile"&&(
               <div>

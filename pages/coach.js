@@ -177,6 +177,8 @@ export default function Coach(){
   const[bioCredId,setBioCredId]=useState(null);
   const[showBioOffer,setShowBioOffer]=useState(false);
   const[pendingNav,setPendingNav]=useState(null);
+  const touchStartRef=useRef(null);
+  const contentRef=useRef(null);
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
@@ -1000,10 +1002,27 @@ export default function Coach(){
     </div>
   );
 
+  const fixedTabForSwipe=coachRole==="kevin"?"roster":"overview";
+  const validPinnedForSwipe=pinnedTabs.filter(id=>TABS.find(t=>t.id===id)&&id!==fixedTabForSwipe);
+  const PRIMARY_NAV=[fixedTabForSwipe,...validPinnedForSwipe];
+  const handleTouchStart=(e)=>{touchStartRef.current={x:e.touches[0].clientX,y:e.touches[0].clientY};};
+  const handleTouchEnd=(e)=>{
+    if(!touchStartRef.current)return;
+    const dx=e.changedTouches[0].clientX-touchStartRef.current.x;
+    const dy=e.changedTouches[0].clientY-touchStartRef.current.y;
+    touchStartRef.current=null;
+    if(Math.abs(dx)<52||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    const idx=PRIMARY_NAV.indexOf(tab);
+    const animate=(dir)=>{if(!contentRef.current)return;const el=contentRef.current;el.style.animation="none";void el.offsetWidth;el.style.animation=dir>0?"tfSlideFromRight 0.22s ease-out":"tfSlideFromLeft 0.22s ease-out";};
+    if(dx<0&&idx<PRIMARY_NAV.length-1){setTab(PRIMARY_NAV[idx+1]);animate(1);}
+    else if(dx>0&&idx>0){setTab(PRIMARY_NAV[idx-1]);animate(-1);}
+  };
+
   return(
     <>
+      <style>{`@keyframes tfSlideFromRight{from{transform:translateX(28px);opacity:0.8}to{transform:translateX(0);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-28px);opacity:0.8}to{transform:translateX(0);opacity:1}}`}</style>
       <Head><title>Coach Dashboard — TF College Group</title></Head>
-      <div style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",minHeight:"100vh"}}>
+      <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",minHeight:"100vh"}}>
 
         <div style={{background:"linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.02) 100%)",backdropFilter:"blur(20px) saturate(180%)",WebkitBackdropFilter:"blur(20px) saturate(180%)",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(232,114,12,0.9),rgba(192,57,43,0.8),transparent)"}}/>
@@ -1020,7 +1039,7 @@ export default function Coach(){
           </div>
         </div>
 
-        <div style={{padding:"1rem",maxWidth:900,margin:"0 auto",paddingBottom:"110px"}}>
+        <div ref={contentRef} style={{padding:"1rem",maxWidth:900,margin:"0 auto",paddingBottom:"110px"}}>
           {/* ── LIQUID GLASS BOTTOM NAV ── */}
           {(()=>{
             const ICON_MAP={"overview":"barChart","draft":"target","teams":"users","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","prroom":"award","anvil":"anvil","mcastles-post":"crown"};
