@@ -949,8 +949,8 @@ export default function Athlete(){
       if(Math.abs(dx)<52||Math.abs(dx)<Math.abs(dy)*1.5)return;
       const idx=PRIMARY_NAV.indexOf(tab);
       const animate=(dir)=>{if(!contentRef.current)return;const el=contentRef.current;el.style.animation="none";void el.offsetWidth;el.style.animation=dir>0?"tfSlideFromRight 0.22s ease-out":"tfSlideFromLeft 0.22s ease-out";};
-      if(dx<0&&idx<PRIMARY_NAV.length-1){setTab(PRIMARY_NAV[idx+1]);animate(1);}
-      else if(dx>0&&idx>0){setTab(PRIMARY_NAV[idx-1]);animate(-1);}
+      if(dx>0&&idx<PRIMARY_NAV.length-1){setTab(PRIMARY_NAV[idx+1]);animate(1);}
+      else if(dx<0&&idx>0){setTab(PRIMARY_NAV[idx-1]);animate(-1);}
     };
 
     const myGroupIdx=selectedAthlete.group_idx;
