@@ -999,68 +999,88 @@ export default function Coach(){
   return(
     <>
       <Head><title>Coach Dashboard — TF College Group</title></Head>
-      <div style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"#080808",minHeight:"100vh"}}>
+      <div style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",minHeight:"100vh"}}>
 
-        <div style={{background:"linear-gradient(180deg,#0e0600 0%,#0a0505 50%,#080808 100%)",borderBottom:"1px solid #1a0800",position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#E8720C,#C0392B,transparent)"}}/>
-          <div style={{position:"absolute",top:-40,right:-40,width:200,height:200,borderRadius:"50%",background:"#E8720C08",filter:"blur(50px)",pointerEvents:"none"}}/>
+        <div style={{background:"linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.02) 100%)",backdropFilter:"blur(20px) saturate(180%)",WebkitBackdropFilter:"blur(20px) saturate(180%)",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(232,114,12,0.9),rgba(192,57,43,0.8),transparent)"}}/>
+          <div style={{position:"absolute",top:-40,right:-40,width:200,height:200,borderRadius:"50%",background:"rgba(232,114,12,0.05)",filter:"blur(50px)",pointerEvents:"none"}}/>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
             <div>
               <div style={{fontSize:18,fontWeight:900,color:"#fff",letterSpacing:"-0.01em",textTransform:"uppercase"}}>TF College Group</div>
-              <div style={{fontSize:11,color:"#555",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"#444"}}>{isClassDay?"Class day":"No class"}</span></div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"rgba(255,255,255,0.2)"}}>{isClassDay?"Class day":"No class"}</span></div>
             </div>
             <div style={{textAlign:"right"}}>
-              <div style={{fontSize:11,color:"#555",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
-              <button onClick={()=>setAuthed(false)} style={{fontSize:10,color:"#333",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.04em"}}>Sign out</button>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
+              <button onClick={()=>setAuthed(false)} style={{fontSize:10,color:"rgba(255,255,255,0.2)",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.04em"}}>Sign out</button>
             </div>
           </div>
-          <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414",position:"relative"}}>
-            {TABS.map(t=>{
-              const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱","mcastles-post":"🍑","ironroom":"🏋️","injuries":"🩺","habits":"💧","callouts":"⚠️","prroom":"🏅"};
-              const isActive=tab===t.id;
-              return(
-              <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"10px 12px 8px",background:isActive?"#0e0e0e":"transparent",border:"none",borderBottom:"2px solid "+(isActive?"#E8720C":"transparent"),borderRight:"none",borderLeft:"none",borderTop:"none",color:isActive?"#fff":"#444",fontSize:10,fontWeight:isActive?800:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.12s",textTransform:isActive?"uppercase":"none",letterSpacing:isActive?"0.04em":"0"}}>
-                <span style={{fontSize:15,filter:isActive?"drop-shadow(0 0 4px #E8720C88)":"none"}}>{ICONS[t.id]||"•"}</span>
-                <span>{t.label}</span>
-              </button>
-              );
-            })}
-            <button onClick={()=>setShowTabPicker(true)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"10px 14px 8px",background:"transparent",border:"none",borderBottom:"2px solid transparent",color:"#444",fontSize:10,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0}}>
-              <span style={{fontSize:15}}>☰</span>
-              <span>All</span>
-            </button>
-          </div>
-          {showTabPicker&&(
-            <div style={{position:"fixed",inset:0,background:"#000000ee",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
-              <div style={{flex:1}}/>
-              <div style={{background:"#0e0e0e",borderRadius:"20px 20px 0 0",padding:"20px 16px 32px",maxHeight:"80vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"#fff",letterSpacing:"0.04em",textTransform:"uppercase"}}>All Tabs</div>
-                  <button onClick={()=>setShowTabPicker(false)} style={{background:"none",border:"none",color:"#666",fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-                  {TABS.map(t=>{
-                    const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱","mcastles-post":"🍑","ironroom":"🏋️","injuries":"🩺","habits":"💧","callouts":"⚠️","prroom":"🏅"};
-                    const isActive=tab===t.id;
-                    return(
-                      <button key={t.id} onClick={()=>{setTab(t.id);setShowTabPicker(false);}}
-                        style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px",borderRadius:12,
-                          background:isActive?"#E8720C22":"#1a1a1a",
-                          border:"1px solid "+(isActive?"#E8720C66":"#252525"),
-                          color:isActive?"#fff":"#888",fontSize:10,fontWeight:isActive?700:400,
-                          cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
-                        <span style={{fontSize:20}}>{ICONS[t.id]||"•"}</span>
-                        <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{t.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
-        <div style={{padding:"1rem",maxWidth:900,margin:"0 auto"}}>
+        <div style={{padding:"1rem",maxWidth:900,margin:"0 auto",paddingBottom:"110px"}}>
+          {/* ── LIQUID GLASS BOTTOM NAV ── */}
+          {(()=>{
+            const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱","mcastles-post":"🍑","ironroom":"🏋️","injuries":"🩺","habits":"💧","callouts":"⚠️","prroom":"🏅"};
+            const PRIMARY=coachRole==="kevin"?["roster","mindset","attendance"]:["overview","roster","inbox","attendance"];
+            return(
+              <>
+                <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:680,zIndex:1000,fontFamily:"Georgia,serif"}}>
+                  <div style={{background:"rgba(10,10,16,0.82)",backdropFilter:"blur(40px) saturate(200%)",WebkitBackdropFilter:"blur(40px) saturate(200%)",border:"1px solid rgba(255,255,255,0.13)",borderRadius:28,boxShadow:"0 20px 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.1)",display:"flex",alignItems:"stretch",padding:"6px 4px 6px"}}>
+                    {PRIMARY.map(id=>{
+                      const t=TABS.find(x=>x.id===id);
+                      if(!t)return null;
+                      const isActive=tab===id;
+                      const cnt=id==="inbox"&&inboxCount>0?inboxCount:0;
+                      return(
+                        <button key={id} onClick={()=>setTab(id)}
+                          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:22,color:isActive?"#fff":"rgba(255,255,255,0.35)",fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",position:"relative"}}>
+                          <span style={{fontSize:18,filter:isActive?"drop-shadow(0 0 6px #E8720Caa)":"none",transition:"filter 0.15s"}}>{ICONS[id]||"•"}</span>
+                          <span style={{letterSpacing:"0.02em",color:isActive?"#E8720C":"rgba(255,255,255,0.35)"}}>{t.label}</span>
+                          {isActive&&<div style={{width:3,height:3,borderRadius:"50%",background:"#E8720C",marginTop:1,boxShadow:"0 0 6px #E8720C"}}/>}
+                          {cnt>0&&<div style={{position:"absolute",top:4,right:"50%",transform:"translateX(6px)",background:"#E8720C",color:"#fff",fontSize:7,fontWeight:900,minWidth:14,height:14,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px"}}>{cnt}</div>}
+                        </button>
+                      );
+                    })}
+                    <button onClick={()=>setShowTabPicker(true)}
+                      style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:"transparent",border:"none",borderRadius:22,color:"rgba(255,255,255,0.35)",fontSize:9,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+                      <span style={{fontSize:18}}>☰</span>
+                      <span>More</span>
+                    </button>
+                  </div>
+                </div>
+
+                {showTabPicker&&(
+                  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
+                    <div style={{flex:1}}/>
+                    <div style={{background:"rgba(12,12,18,0.92)",backdropFilter:"blur(40px) saturate(200%)",WebkitBackdropFilter:"blur(40px) saturate(200%)",borderRadius:"28px 28px 0 0",border:"1px solid rgba(255,255,255,0.1)",borderBottom:"none",boxShadow:"0 -20px 60px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1)",padding:"20px 16px 40px",maxHeight:"80vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+                      <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.2)",margin:"0 auto 20px"}}/>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+                        <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.6)",letterSpacing:"0.1em",textTransform:"uppercase"}}>All Tabs</div>
+                        <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer",lineHeight:1,width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                        {TABS.map(t=>{
+                          const isActive=tab===t.id;
+                          return(
+                            <button key={t.id} onClick={()=>{setTab(t.id);setShowTabPicker(false);}}
+                              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px",borderRadius:16,
+                                background:isActive?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.05)",
+                                border:"1px solid "+(isActive?"rgba(255,255,255,0.2)":"rgba(255,255,255,0.07)"),
+                                boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",
+                                color:isActive?"#fff":"rgba(255,255,255,0.45)",fontSize:10,fontWeight:isActive?700:400,
+                                cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
+                              <span style={{fontSize:20,filter:isActive?"drop-shadow(0 0 6px #E8720C99)":"none"}}>{ICONS[t.id]||"•"}</span>
+                              <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?"#E8720C":"rgba(255,255,255,0.45)"}}>{t.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+
           <ErrorBoundary>
 
           {tab==="overview"&&(

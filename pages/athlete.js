@@ -1030,21 +1030,21 @@ export default function Athlete(){
             </div>
           </div>
         )}
-        <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
+        <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
           {/* Profile header */}
-          <div style={{background:"linear-gradient(180deg,#0e0600 0%,#0a0505 50%,#080808 100%)",borderBottom:"1px solid #1a0800",position:"relative",overflow:"hidden"}}>
+          <div style={{background:"linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.02) 100%)",backdropFilter:"blur(20px) saturate(180%)",WebkitBackdropFilter:"blur(20px) saturate(180%)",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
             {/* Top accent */}
-            <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+(isForge?"#E8720C,#C0392B":"#606a75,#8a9aa4")+",transparent)"}}/>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+(isForge?"rgba(232,114,12,0.9),rgba(192,57,43,0.8)":"rgba(96,106,117,0.8),rgba(138,154,164,0.9)")+",transparent)"}}/>
             {/* Ambient glow */}
-            <div style={{position:"absolute",top:-40,right:-40,width:220,height:220,borderRadius:"50%",background:isForge?"#E8720C0a":"#8a9aa40a",filter:"blur(50px)",pointerEvents:"none"}}/>
+            <div style={{position:"absolute",top:-40,right:-40,width:220,height:220,borderRadius:"50%",background:isForge?"rgba(232,114,12,0.06)":"rgba(138,154,164,0.06)",filter:"blur(50px)",pointerEvents:"none"}}/>
             {/* Nav row */}
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
               <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                <button onClick={()=>setScreen("roster")} style={{background:"#111",border:"0.5px solid #1e1e1e",color:"#666",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 14px",borderRadius:8,letterSpacing:"0.02em"}}>← Switch</button>
-                <a href="/" style={{background:"#111",border:"0.5px solid #1e1e1e",borderRadius:8,color:"#666",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>🏠</a>
-                <a href="/coach" style={{background:"#111",border:"0.5px solid #1e1e1e",borderRadius:8,color:"#666",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>⚒</a>
+                <button onClick={()=>setScreen("roster")} style={{background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 14px",borderRadius:20,letterSpacing:"0.02em"}}>← Switch</button>
+                <a href="/" style={{background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>🏠</a>
+                <a href="/coach" style={{background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>⚒</a>
               </div>
-              <div style={{fontSize:9,color:"#2a2a2a",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:600}}>TF College Group</div>
+              <div style={{fontSize:9,color:"rgba(255,255,255,0.15)",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:600}}>TF College Group</div>
             </div>
             {/* Identity banner */}
             <div style={{display:"flex",alignItems:"center",gap:16,padding:"4px 16px 16px",position:"relative"}}>
@@ -1056,63 +1056,16 @@ export default function Athlete(){
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1,textTransform:"uppercase"}}>{selectedAthlete.name}</div>
-                <div style={{fontSize:11,color:"#444",marginTop:3,letterSpacing:"0.04em"}}>{selectedAthlete.sport}</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:3,letterSpacing:"0.04em"}}>{selectedAthlete.sport}</div>
               </div>
               <div style={{textAlign:"right",flexShrink:0}}>
                 <div style={{fontSize:9,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.12em",background:(isForge?RED:STEEL)+"18",padding:"4px 12px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"44",marginBottom:5,display:"inline-block",whiteSpace:"nowrap"}}>{isForge?"⚔ Forge":"⚒ Iron"}</div>
                 {streak>0&&<div style={{fontSize:11,color:GREEN,fontWeight:700}}>🔥 {streak}-day</div>}
               </div>
             </div>
-            {/* Tab bar */}
-            <div style={{display:"flex",overflowX:"auto",scrollbarWidth:"none",WebkitOverflowScrolling:"touch",borderTop:"1px solid #141414",position:"relative"}}>
-              {TABS.map(t=>{
-                const icons={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","body":"🩺","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","habits":"🌟","private":"🔒","stretching":"🧘","journey":"🛤"};
-                const isActive=tab===t.id;
-                const tabColor=isForge?"#E8720C":STEEL;
-                return(
-                <button key={t.id} onClick={()=>setTab(t.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"10px 12px 8px",background:isActive?"#0e0e0e":"transparent",border:"none",borderBottom:"2px solid "+(isActive?tabColor:"transparent"),borderRight:"none",borderLeft:"none",borderTop:"none",color:isActive?"#fff":"#444",fontSize:10,fontWeight:isActive?800:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,transition:"all 0.12s",textTransform:isActive?"uppercase":"none",letterSpacing:isActive?"0.04em":"0"}}>
-                  <span style={{fontSize:15,filter:isActive?"drop-shadow(0 0 4px "+tabColor+"88)":"none"}}>{icons[t.id]||"•"}</span>
-                  <span>{t.label}</span>
-                </button>
-                );
-              })}
-              <button onClick={()=>setShowTabPicker(true)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"10px 14px 8px",background:"transparent",border:"none",borderBottom:"2px solid transparent",color:"#444",fontSize:10,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0}}>
-                <span style={{fontSize:15}}>☰</span>
-                <span>All</span>
-              </button>
-            </div>
-            {showTabPicker&&(
-              <div style={{position:"fixed",inset:0,background:"#000000ee",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
-                <div style={{flex:1}}/>
-                <div style={{background:"#0e0e0e",borderRadius:"20px 20px 0 0",padding:"20px 16px 32px",maxHeight:"80vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-                    <div style={{fontSize:13,fontWeight:700,color:"#fff",letterSpacing:"0.04em",textTransform:"uppercase"}}>All Tabs</div>
-                    <button onClick={()=>setShowTabPicker(false)} style={{background:"none",border:"none",color:"#666",fontSize:20,cursor:"pointer",lineHeight:1}}>✕</button>
-                  </div>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-                    {TABS.map(t=>{
-                      const icons={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","body":"🩺","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","habits":"🌟","private":"🔒","stretching":"🧘","journey":"🛤"};
-                      const isActive=tab===t.id;
-                      const tabColor=isForge?"#E8720C":STEEL;
-                      return(
-                        <button key={t.id} onClick={()=>{setTab(t.id);setShowTabPicker(false);}}
-                          style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px",borderRadius:12,
-                            background:isActive?tabColor+"22":"#1a1a1a",
-                            border:"1px solid "+(isActive?tabColor+"66":"#252525"),
-                            color:isActive?"#fff":"#888",fontSize:10,fontWeight:isActive?700:400,
-                            cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
-                          <span style={{fontSize:20}}>{icons[t.id]||"•"}</span>
-                          <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word"}}>{t.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
-          <div style={{padding:"1.25rem",background:"#080808",minHeight:"60vh"}}>
+          <div style={{padding:"1.25rem",background:"transparent",minHeight:"60vh",paddingBottom:"110px"}}>
 
             {tab==="profile"&&(
               <div>
@@ -2016,6 +1969,69 @@ export default function Athlete(){
               </div>
             )}
           </div>
+
+          {/* ── LIQUID GLASS BOTTOM NAV ── */}
+          {(()=>{
+            const TAB_ICONS={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","body":"🩺","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","habits":"🌟","private":"🔒","stretching":"🧘","journey":"🛤"};
+            const PRIMARY=["profile","prs","attendance","weight"];
+            const tabColor=isForge?"#E8720C":STEEL;
+            return(
+              <>
+                <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:448,zIndex:1000,fontFamily:"Georgia,serif"}}>
+                  <div style={{background:"rgba(10,10,16,0.82)",backdropFilter:"blur(40px) saturate(200%)",WebkitBackdropFilter:"blur(40px) saturate(200%)",border:"1px solid rgba(255,255,255,0.13)",borderRadius:28,boxShadow:"0 20px 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.1)",display:"flex",alignItems:"stretch",padding:"6px 4px 6px"}}>
+                    {PRIMARY.map(id=>{
+                      const t=TABS.find(x=>x.id===id);
+                      if(!t)return null;
+                      const isActive=tab===id;
+                      return(
+                        <button key={id} onClick={()=>setTab(id)}
+                          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:22,color:isActive?"#fff":"rgba(255,255,255,0.35)",fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none"}}>
+                          <span style={{fontSize:18,filter:isActive?"drop-shadow(0 0 6px "+tabColor+"aa)":"none",transition:"filter 0.15s"}}>{TAB_ICONS[id]||"•"}</span>
+                          <span style={{letterSpacing:"0.02em",color:isActive?tabColor:"rgba(255,255,255,0.35)"}}>{t.label}</span>
+                          {isActive&&<div style={{width:3,height:3,borderRadius:"50%",background:tabColor,marginTop:1,boxShadow:"0 0 6px "+tabColor}}/>}
+                        </button>
+                      );
+                    })}
+                    <button onClick={()=>setShowTabPicker(true)}
+                      style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:"transparent",border:"none",borderRadius:22,color:"rgba(255,255,255,0.35)",fontSize:9,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+                      <span style={{fontSize:18}}>☰</span>
+                      <span>More</span>
+                    </button>
+                  </div>
+                </div>
+
+                {showTabPicker&&(
+                  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
+                    <div style={{flex:1}}/>
+                    <div style={{background:"rgba(12,12,18,0.92)",backdropFilter:"blur(40px) saturate(200%)",WebkitBackdropFilter:"blur(40px) saturate(200%)",borderRadius:"28px 28px 0 0",border:"1px solid rgba(255,255,255,0.1)",borderBottom:"none",boxShadow:"0 -20px 60px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1)",padding:"20px 16px 40px",maxHeight:"80vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+                      <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.2)",margin:"0 auto 20px"}}/>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+                        <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.6)",letterSpacing:"0.1em",textTransform:"uppercase"}}>All Tabs</div>
+                        <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer",lineHeight:1,width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                        {TABS.map(t=>{
+                          const isActive=tab===t.id;
+                          return(
+                            <button key={t.id} onClick={()=>{setTab(t.id);setShowTabPicker(false);}}
+                              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px",borderRadius:16,
+                                background:isActive?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.05)",
+                                border:"1px solid "+(isActive?"rgba(255,255,255,0.2)":"rgba(255,255,255,0.07)"),
+                                boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",
+                                color:isActive?"#fff":"rgba(255,255,255,0.45)",fontSize:10,fontWeight:isActive?700:400,
+                                cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
+                              <span style={{fontSize:20,filter:isActive?"drop-shadow(0 0 6px "+tabColor+"99)":"none"}}>{TAB_ICONS[t.id]||"•"}</span>
+                              <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?tabColor:"rgba(255,255,255,0.45)"}}>{t.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       </>
     );
