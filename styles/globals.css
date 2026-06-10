@@ -9,7 +9,8 @@ body {
   max-width: 100vw;
   overflow-x: hidden;
   font-family: Georgia, serif;
-  background: #0f0f0f;
+  background: linear-gradient(160deg, #06060f 0%, #0a0608 60%, #080808 100%) fixed !important;
+  min-height: 100vh;
   color: #ffffff;
 }
 
@@ -28,19 +29,91 @@ select {
   font-family: Georgia, serif;
 }
 
+/* ── LIQUID GLASS DESIGN SYSTEM ──────────────────────────────────
+   CSS attribute selectors override the app's inline dark neutrals
+   with glass-morphism equivalents. !important is required because
+   CSS cannot override inline styles without it.
+   ──────────────────────────────────────────────────────────────── */
+
+/* ── GLASS CARD SURFACES ──────────────────────────── */
+[style*="background:#111"]    { background: rgba(255,255,255,0.06)  !important; }
+[style*="background:#0a0a0a"] { background: rgba(255,255,255,0.04)  !important; }
+[style*="background:#0d0d0d"] { background: rgba(255,255,255,0.03)  !important; }
+[style*="background:#141414"] { background: rgba(255,255,255,0.03)  !important; }
+[style*="background:#1a1a1a"] { background: rgba(255,255,255,0.07)  !important; }
+[style*="background:#0f0f0f"] { background: rgba(255,255,255,0.045) !important; }
+[style*="background:#0e0e0e"] { background: rgba(255,255,255,0.05)  !important; }
+[style*="background:#0a0a0a"] { background: rgba(255,255,255,0.035) !important; }
+[style*="background:#080808"] { background: transparent             !important; }
+
+/* ── GLASS BORDERS ───────────────────────────────── */
+[style*="border:1px solid #252525"],
+[style*="border:0.5px solid #252525"]   { border-color: rgba(255,255,255,0.10) !important; }
+[style*="border:1px solid #1e1e1e"],
+[style*="border:0.5px solid #1e1e1e"]   { border-color: rgba(255,255,255,0.08) !important; }
+[style*="border:1px solid #2a2a2a"],
+[style*="border:0.5px solid #2a2a2a"]   { border-color: rgba(255,255,255,0.09) !important; }
+[style*="border:1px solid #141414"],
+[style*="border:0.5px solid #141414"]   { border-color: rgba(255,255,255,0.06) !important; }
+[style*="border:1px solid #333"],
+[style*="border:0.5px solid #333"]      { border-color: rgba(255,255,255,0.13) !important; }
+[style*="border:1px solid #1a1a1a"],
+[style*="border:0.5px solid #1a1a1a"]   { border-color: rgba(255,255,255,0.07) !important; }
+
+/* Side/directional borders */
+[style*="border-top:1px solid #141414"],
+[style*="border-top:0.5px solid #141414"]   { border-top-color:    rgba(255,255,255,0.06) !important; }
+[style*="border-top:1px solid #1a1a1a"],
+[style*="border-top:0.5px solid #1a1a1a"]   { border-top-color:    rgba(255,255,255,0.07) !important; }
+[style*="border-top:1px solid #1e1e1e"],
+[style*="border-top:0.5px solid #1e1e1e"]   { border-top-color:    rgba(255,255,255,0.08) !important; }
+[style*="border-bottom:0.5px solid #1a1a1a"],
+[style*="border-bottom:1px solid #1a1a1a"]   { border-bottom-color: rgba(255,255,255,0.07) !important; }
+[style*="border-bottom:0.5px solid #1e1e1e"],
+[style*="border-bottom:1px solid #1e1e1e"]   { border-bottom-color: rgba(255,255,255,0.08) !important; }
+
+/* ── FORM ELEMENTS ───────────────────────────────── */
+input:not([type="range"]):not([type="file"]):not([type="color"]):not([type="checkbox"]):not([type="radio"]) {
+  background: rgba(255,255,255,0.07) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: #fff !important;
+}
+textarea {
+  background: rgba(255,255,255,0.07) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: #fff !important;
+}
+select {
+  background: rgba(255,255,255,0.07) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: #ccc !important;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  background: rgba(255,255,255,0.10) !important;
+  border-color: rgba(255,255,255,0.24) !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.05) !important;
+  outline: none !important;
+}
+
+/* Select dropdown option text */
+select option {
+  background: #141820;
+  color: #ccc;
+}
+
+/* ── SCROLLBARS ──────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 4px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: rgba(255,255,255,0.02);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 2px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: rgba(255,255,255,0.22);
 }
