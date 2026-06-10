@@ -1038,7 +1038,7 @@ export default function Athlete(){
 
     return(
       <>
-        <style>{`@keyframes tfSlideFromRight{from{transform:translateX(44px);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-44px);opacity:0}to{transform:translateX(0);opacity:1}}`}</style>
+        <style>{`@keyframes tfSlideFromRight{from{transform:translateX(52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}`}</style>
         <Head><title>{selectedAthlete.name} — TF College Group</title></Head>
         {milestone&&(
           <div onClick={()=>setMilestone(null)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
@@ -1052,7 +1052,7 @@ export default function Athlete(){
             </div>
           </div>
         )}
-        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
+        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",overflowX:"hidden"}}>
           {/* Profile header */}
           <div style={{background:"linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.02) 100%)",backdropFilter:"blur(20px) saturate(180%)",WebkitBackdropFilter:"blur(20px) saturate(180%)",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
             {/* Top accent */}
@@ -1087,7 +1087,7 @@ export default function Athlete(){
             </div>
           </div>
 
-          <div key={tab} style={{padding:"1.25rem",background:"transparent",minHeight:"60vh",paddingBottom:"110px",animation:slideDirRef.current>0?"tfSlideFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both":slideDirRef.current<0?"tfSlideFromLeft 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both":"none",willChange:"transform"}}>
+          <div key={tab} style={{padding:"1.25rem",background:"transparent",minHeight:"60vh",paddingBottom:"110px",animation:slideDirRef.current>0?"tfSlideFromRight 0.32s cubic-bezier(0.22,1,0.36,1) both":slideDirRef.current<0?"tfSlideFromLeft 0.32s cubic-bezier(0.22,1,0.36,1) both":"none",willChange:"transform,opacity"}}>
 
             {tab==="profile"&&(
               <div>

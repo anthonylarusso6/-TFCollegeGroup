@@ -1019,9 +1019,9 @@ export default function Coach(){
 
   return(
     <>
-      <style>{`@keyframes tfSlideFromRight{from{transform:translateX(44px);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-44px);opacity:0}to{transform:translateX(0);opacity:1}}`}</style>
+      <style>{`@keyframes tfSlideFromRight{from{transform:translateX(52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}`}</style>
       <Head><title>Coach Dashboard — TF College Group</title></Head>
-      <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",minHeight:"100vh"}}>
+      <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",minHeight:"100vh",overflowX:"hidden"}}>
 
         <div style={{background:"linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.02) 100%)",backdropFilter:"blur(20px) saturate(180%)",WebkitBackdropFilter:"blur(20px) saturate(180%)",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(232,114,12,0.9),rgba(192,57,43,0.8),transparent)"}}/>
@@ -1038,7 +1038,7 @@ export default function Coach(){
           </div>
         </div>
 
-        <div key={tab} style={{padding:"1rem",maxWidth:900,margin:"0 auto",paddingBottom:"110px",animation:slideDirRef.current>0?"tfSlideFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both":slideDirRef.current<0?"tfSlideFromLeft 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both":"none",willChange:"transform"}}>
+        <div key={tab} style={{padding:"1rem",maxWidth:900,margin:"0 auto",paddingBottom:"110px",animation:slideDirRef.current>0?"tfSlideFromRight 0.32s cubic-bezier(0.22,1,0.36,1) both":slideDirRef.current<0?"tfSlideFromLeft 0.32s cubic-bezier(0.22,1,0.36,1) both":"none",willChange:"transform,opacity"}}>
           {/* ── LIQUID GLASS BOTTOM NAV ── */}
           {(()=>{
             const ICON_MAP={"overview":"barChart","draft":"target","teams":"users","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","prroom":"award","anvil":"anvil","mcastles-post":"crown"};
