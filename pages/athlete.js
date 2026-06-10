@@ -19,6 +19,7 @@ import AchievementBadges from "../components/AchievementBadges";
 import MCastlesTab from "../components/MCastlesTab";
 import InjuryBodyMap from "../components/InjuryBodyMap";
 import HabitsTab from "../components/HabitsTab";
+import Icon from "../components/Icon";
 
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
@@ -169,7 +170,7 @@ function AccountabilityPartner({athleteId, athletes}){
   const GOLD="#D4AF37",GREEN="#1E6B3A",RED="#C0392B",STEEL="#708090",BG="#0f0f0f";
   if(!partner) return(
     <div style={{background:"#141414",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #252525"}}>
-      <div style={{fontSize:32,marginBottom:12}}>🤝</div>
+      <div style={{marginBottom:12,display:"flex",justifyContent:"center"}}><Icon name="users" size={32} color="#444"/></div>
       <div style={{fontSize:15,fontWeight:500,color:"#ddd",marginBottom:8}}>No partner yet</div>
       <div style={{fontSize:13,color:"#666"}}>Coach Ant will assign your accountability partner. Check back soon!</div>
     </div>
@@ -192,7 +193,7 @@ function AccountabilityPartner({athleteId, athletes}){
         <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",border:"0.5px solid #252525"}}>
           <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:12}}>Their stats</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-            {[{label:"Early",val:lb.early_count||0,color:GREEN},{label:"Streak 🔥",val:lb.current_streak||0,color:GOLD},{label:"Anvils",val:lb.anvil_count||0,color:GOLD}].map(s=>(
+            {[{label:"Early",val:lb.early_count||0,color:GREEN},{label:"Streak",val:lb.current_streak||0,color:GOLD},{label:"Anvils",val:lb.anvil_count||0,color:GOLD}].map(s=>(
               <div key={s.label} style={{background:"#1e1e1e",borderRadius:10,padding:"12px",textAlign:"center",border:"0.5px solid #2a2a2a"}}>
                 <div style={{fontSize:20,fontWeight:600,color:s.color}}>{s.val}</div>
                 <div style={{fontSize:11,color:"#666",marginTop:2}}>{s.label}</div>
@@ -676,7 +677,7 @@ export default function Athlete(){
           {announcement&&(
             <div style={{background:"linear-gradient(135deg,#0e0900,#160e00)",border:"1px solid #E8720C33",borderRadius:14,padding:"14px 16px",marginBottom:12,position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#E8720C,transparent)"}}/>
-              <div style={{fontSize:10,color:"#E8720C",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:4,fontWeight:700}}>📢 This week</div>
+              <div style={{fontSize:10,color:"#E8720C",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:4,fontWeight:700}}>This week</div>
               <div style={{fontSize:13,color:"#ccc",lineHeight:1.6}}>{announcement.message}</div>
             </div>
           )}
@@ -695,7 +696,7 @@ export default function Athlete(){
 
           {/* Active / Sleeping tabs */}
           <div style={{display:"flex",gap:6,marginBottom:10,background:"#0a0a0a",borderRadius:12,padding:4,border:"0.5px solid #1e1e1e"}}>
-            {[{id:"active",label:"⚡ Active"},{id:"sleeping",label:"😴 Sleeping"}].map(t=>{
+            {[{id:"active",label:"Active"},{id:"sleeping",label:"Sleeping"}].map(t=>{
               const count=athletes.filter(a=>t.id==="active"?a.status==="active":a.status==="sleeping").length;
               return(
                 <button key={t.id} onClick={()=>setRosterTab(t.id)} style={{flex:1,padding:"10px 8px",borderRadius:9,border:"none",background:rosterTab===t.id?"linear-gradient(135deg,#E8720C,#C0392B)":"transparent",color:rosterTab===t.id?"#fff":"#555",fontSize:12,fontWeight:rosterTab===t.id?800:400,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:rosterTab===t.id?"0.02em":"0",textTransform:rosterTab===t.id?"uppercase":"none",boxShadow:rosterTab===t.id?"0 2px 14px #E8720C44":"none",transition:"all 0.15s",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
@@ -709,7 +710,7 @@ export default function Athlete(){
           {/* Search */}
           <div style={{marginBottom:14,position:"relative"}}>
             <input type="text" placeholder="Search your name..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"13px 42px 13px 44px",borderRadius:12,border:"1px solid #252525",background:"#0a0a0a",color:"#fff",fontSize:14,fontFamily:"Georgia, serif",boxSizing:"border-box",outline:"none",letterSpacing:"-0.01em"}} autoComplete="off"/>
-            <div style={{position:"absolute",left:15,top:"50%",transform:"translateY(-50%)",fontSize:14,color:"#333"}}>🔍</div>
+            <div style={{position:"absolute",left:15,top:"50%",transform:"translateY(-50%)",display:"flex",alignItems:"center"}}><Icon name="search" size={14} color="#333"/></div>
             {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"#1a1a1a",border:"none",color:"#666",fontSize:12,cursor:"pointer",width:22,height:22,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>}
           </div>
 
@@ -891,7 +892,7 @@ export default function Athlete(){
           {checkinInfo?.error&&<div style={{fontSize:12,color:"#ff5555",marginBottom:12,padding:"10px 16px",background:"#1a0505",borderRadius:12,border:"1px solid #3a0808"}}>Save failed: {checkinInfo.error}</div>}
           {streak>0&&!noClass&&(
             <div style={{padding:"12px 24px",borderRadius:12,background:"linear-gradient(135deg,#051a0a,#0a2010)",border:"1px solid "+GREEN+"33",marginBottom:20,display:"inline-flex",alignItems:"center",gap:10,boxShadow:"0 4px 20px "+GREEN+"22"}}>
-              <span style={{fontSize:22}}>🔥</span>
+              <span style={{display:"flex",alignItems:"center"}}><Icon name="flame" size={20} color={GREEN}/></span>
               <span style={{fontSize:15,color:GREEN,fontWeight:800}}>{streak}-day early streak</span>
             </div>
           )}
@@ -1060,7 +1061,7 @@ export default function Athlete(){
               </div>
               <div style={{textAlign:"right",flexShrink:0}}>
                 <div style={{fontSize:9,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.12em",background:(isForge?RED:STEEL)+"18",padding:"4px 12px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"44",marginBottom:5,display:"inline-block",whiteSpace:"nowrap"}}>{isForge?"⚔ Forge":"⚒ Iron"}</div>
-                {streak>0&&<div style={{fontSize:11,color:GREEN,fontWeight:700}}>🔥 {streak}-day</div>}
+                {streak>0&&<div style={{fontSize:11,color:GREEN,fontWeight:700,display:"flex",alignItems:"center",gap:3,justifyContent:"flex-end"}}><Icon name="flame" size={11} color={GREEN}/>{streak}-day</div>}
               </div>
             </div>
           </div>
@@ -1069,21 +1070,21 @@ export default function Athlete(){
 
             {tab==="profile"&&(
               <div>
-                {(()=>{const _est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><div style={{fontSize:24}}>🔥</div></div>);})()}
+                {(()=>{const _est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><Icon name="zap" size={22} color="rgba(255,255,255,0.6)"/></div>);})()}
                 {weightLoggedToday===false&&(
                   <div onClick={()=>setTab("weight")} style={{background:"linear-gradient(135deg,#1a3a1a,#0e240e)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
                     <div>
-                      <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚖️ Weigh-in day!</div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>Weigh-in day</div>
                       <div style={{fontSize:11,color:GREEN}}>Tap to log your weight → stay on track</div>
                     </div>
-                    <div style={{fontSize:24}}>📊</div>
+                    <Icon name="barChart" size={22} color={GREEN}/>
                   </div>
                 )}
                 {/* Push notification setup card — shown until enabled */}
                 {notifCard==="idle"&&(
                   <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a1e",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
                     <div>
-                      <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>🔔 Lock screen reminders</div>
+                      <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>Lock screen reminders</div>
                       <div style={{fontSize:10,color:"#555"}}>Get notified to log weight on class days</div>
                     </div>
                     <button onClick={enableProfileNotif} disabled={notifLoading} style={{padding:"8px 14px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+GREEN+","+GREEN+"aa)",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",flexShrink:0,whiteSpace:"nowrap"}}>
@@ -1972,7 +1973,9 @@ export default function Athlete(){
 
           {/* ── LIQUID GLASS BOTTOM NAV ── */}
           {(()=>{
-            const TAB_ICONS={"profile":"👤","mcastles":"🍑","verse":"📖","attendance":"📅","draft":"🎯","mygroup":"👥","anvil":"⚒","weight":"⚖️","body":"🩺","prs":"🏋️","leaderboard":"🏆","prayer":"🙏","bracelets":"📿","photos":"📸","notes":"📝","habits":"🌟","private":"🔒","stretching":"🧘","journey":"🛤"};
+            const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"activity","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"mapPin"};
+            const EMOJI_MAP={"anvil":"⚒","mcastles":"🍑"};
+            const renderTabIcon=(id,size,color)=>{const n=ICON_MAP[id];if(n)return <Icon name={n} size={size} color={color}/>;return <span style={{fontSize:size,lineHeight:1}}>{EMOJI_MAP[id]||"•"}</span>;};
             const PRIMARY=["profile","prs","attendance","weight"];
             const tabColor=isForge?"#E8720C":STEEL;
             return(
@@ -1986,7 +1989,7 @@ export default function Athlete(){
                       return(
                         <button key={id} onClick={()=>setTab(id)}
                           style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:22,color:isActive?"#fff":"rgba(255,255,255,0.35)",fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none"}}>
-                          <span style={{fontSize:18,filter:isActive?"drop-shadow(0 0 6px "+tabColor+"aa)":"none",transition:"filter 0.15s"}}>{TAB_ICONS[id]||"•"}</span>
+                          <span style={{filter:isActive?"drop-shadow(0 0 6px "+tabColor+"aa)":"none",transition:"filter 0.15s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,18,isActive?tabColor:"rgba(255,255,255,0.35)")}</span>
                           <span style={{letterSpacing:"0.02em",color:isActive?tabColor:"rgba(255,255,255,0.35)"}}>{t.label}</span>
                           {isActive&&<div style={{width:3,height:3,borderRadius:"50%",background:tabColor,marginTop:1,boxShadow:"0 0 6px "+tabColor}}/>}
                         </button>
@@ -1994,7 +1997,7 @@ export default function Athlete(){
                     })}
                     <button onClick={()=>setShowTabPicker(true)}
                       style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:"transparent",border:"none",borderRadius:22,color:"rgba(255,255,255,0.35)",fontSize:9,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
-                      <span style={{fontSize:18}}>☰</span>
+                      <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:20}}><Icon name="menu" size={18} color="rgba(255,255,255,0.35)"/></span>
                       <span>More</span>
                     </button>
                   </div>
@@ -2020,7 +2023,7 @@ export default function Athlete(){
                                 boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",
                                 color:isActive?"#fff":"rgba(255,255,255,0.45)",fontSize:10,fontWeight:isActive?700:400,
                                 cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
-                              <span style={{fontSize:20,filter:isActive?"drop-shadow(0 0 6px "+tabColor+"99)":"none"}}>{TAB_ICONS[t.id]||"•"}</span>
+                              <span style={{filter:isActive?"drop-shadow(0 0 6px "+tabColor+"99)":"none",display:"flex",alignItems:"center",justifyContent:"center",height:22}}>{renderTabIcon(t.id,20,isActive?tabColor:"rgba(255,255,255,0.45)")}</span>
                               <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?tabColor:"rgba(255,255,255,0.45)"}}>{t.label}</span>
                             </button>
                           );

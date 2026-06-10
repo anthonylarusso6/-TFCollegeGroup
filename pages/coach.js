@@ -12,6 +12,7 @@ import FellowshipFriday from "../components/FellowshipFriday";
 import MindsetMonday from "../components/MindsetMonday";
 import CultureEvents from "../components/CultureEvents";
 import InjuryBodyMap from "../components/InjuryBodyMap";
+import Icon from "../components/Icon";
 
 const COACH_PIN="1803";
 
@@ -1019,7 +1020,9 @@ export default function Coach(){
         <div style={{padding:"1rem",maxWidth:900,margin:"0 auto",paddingBottom:"110px"}}>
           {/* ── LIQUID GLASS BOTTOM NAV ── */}
           {(()=>{
-            const ICONS={"overview":"📊","draft":"🎯","teams":"👥","roster":"📋","attendance":"📅","accountability":"✊","anvil":"⚒","inbox":"📬","leaderboard":"🏆","goals":"🎯","fellowship":"🙏","mindset":"💡","culture":"🔥","prayers":"🙌","weights":"⚖️","photos":"📸","engagement":"📢","qr":"📱","mcastles-post":"🍑","ironroom":"🏋️","injuries":"🩺","habits":"💧","callouts":"⚠️","prroom":"🏅"};
+            const ICON_MAP={"overview":"barChart","draft":"target","teams":"users","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","prroom":"award"};
+            const EMOJI_MAP={"anvil":"⚒","mcastles-post":"🍑"};
+            const renderTabIcon=(id,size,color)=>{const n=ICON_MAP[id];if(n)return <Icon name={n} size={size} color={color}/>;return <span style={{fontSize:size,lineHeight:1}}>{EMOJI_MAP[id]||"•"}</span>;};
             const PRIMARY=coachRole==="kevin"?["roster","mindset","attendance"]:["overview","roster","inbox","attendance"];
             return(
               <>
@@ -1033,7 +1036,7 @@ export default function Coach(){
                       return(
                         <button key={id} onClick={()=>setTab(id)}
                           style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:22,color:isActive?"#fff":"rgba(255,255,255,0.35)",fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",position:"relative"}}>
-                          <span style={{fontSize:18,filter:isActive?"drop-shadow(0 0 6px #E8720Caa)":"none",transition:"filter 0.15s"}}>{ICONS[id]||"•"}</span>
+                          <span style={{filter:isActive?"drop-shadow(0 0 6px #E8720Caa)":"none",transition:"filter 0.15s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,18,isActive?"#E8720C":"rgba(255,255,255,0.35)")}</span>
                           <span style={{letterSpacing:"0.02em",color:isActive?"#E8720C":"rgba(255,255,255,0.35)"}}>{t.label}</span>
                           {isActive&&<div style={{width:3,height:3,borderRadius:"50%",background:"#E8720C",marginTop:1,boxShadow:"0 0 6px #E8720C"}}/>}
                           {cnt>0&&<div style={{position:"absolute",top:4,right:"50%",transform:"translateX(6px)",background:"#E8720C",color:"#fff",fontSize:7,fontWeight:900,minWidth:14,height:14,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px"}}>{cnt}</div>}
@@ -1042,7 +1045,7 @@ export default function Coach(){
                     })}
                     <button onClick={()=>setShowTabPicker(true)}
                       style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:"transparent",border:"none",borderRadius:22,color:"rgba(255,255,255,0.35)",fontSize:9,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
-                      <span style={{fontSize:18}}>☰</span>
+                      <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:20}}><Icon name="menu" size={18} color="rgba(255,255,255,0.35)"/></span>
                       <span>More</span>
                     </button>
                   </div>
@@ -1068,7 +1071,7 @@ export default function Coach(){
                                 boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",
                                 color:isActive?"#fff":"rgba(255,255,255,0.45)",fontSize:10,fontWeight:isActive?700:400,
                                 cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
-                              <span style={{fontSize:20,filter:isActive?"drop-shadow(0 0 6px #E8720C99)":"none"}}>{ICONS[t.id]||"•"}</span>
+                              <span style={{filter:isActive?"drop-shadow(0 0 6px #E8720C99)":"none",display:"flex",alignItems:"center",justifyContent:"center",height:22}}>{renderTabIcon(t.id,20,isActive?"#E8720C":"rgba(255,255,255,0.45)")}</span>
                               <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?"#E8720C":"rgba(255,255,255,0.45)"}}>{t.label}</span>
                             </button>
                           );

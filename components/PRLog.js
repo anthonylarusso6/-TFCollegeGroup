@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BG, RED, GREEN, GOLD, STEEL, ORANGE, PUR } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import Icon from "./Icon";
 
 const DAYS=["Mon","Tue","Thu","Fri"];
 const DAY_LABELS={Mon:"Monday",Tue:"Tuesday",Thu:"Thursday",Fri:"Friday"};
@@ -91,16 +92,16 @@ const epley=(w,r)=>r===1?w:Math.round(w*(1+r/30));
 
 // Gender-specific T&F reference standards
 const CATS_M=[
-  {id:"lower", label:"Lower Body", emoji:"🦵", ref:315, w:0.30},
-  {id:"push",  label:"Push",       emoji:"💪", ref:225, w:0.20},
-  {id:"pull",  label:"Pull",       emoji:"🤜", ref:185, w:0.15},
-  {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:365, w:0.35},
+  {id:"lower", label:"Lower Body", ref:315, w:0.30},
+  {id:"push",  label:"Push",       ref:225, w:0.20},
+  {id:"pull",  label:"Pull",       ref:185, w:0.15},
+  {id:"hinge", label:"Hinge",      ref:365, w:0.35},
 ];
 const CATS_F=[
-  {id:"lower", label:"Lower Body", emoji:"🦵", ref:185, w:0.30},
-  {id:"push",  label:"Push",       emoji:"💪", ref:115, w:0.20},
-  {id:"pull",  label:"Pull",       emoji:"🤜", ref:100, w:0.15},
-  {id:"hinge", label:"Hinge",      emoji:"⛓️", ref:225, w:0.35},
+  {id:"lower", label:"Lower Body", ref:185, w:0.30},
+  {id:"push",  label:"Push",       ref:115, w:0.20},
+  {id:"pull",  label:"Pull",       ref:100, w:0.15},
+  {id:"hinge", label:"Hinge",      ref:225, w:0.35},
 ];
 
 const VERT_LIFTS=new Set(["pvc max vert"]);
@@ -423,7 +424,7 @@ export default function PRLog({athleteId,gender}){
     <div>
       {/* View toggle */}
       <div style={{display:"flex",gap:4,marginBottom:14,background:"#0a0a0a",borderRadius:12,padding:4}}>
-        {[{id:"log",label:"🏋️ Log"},{id:"dashboard",label:"📊 Dashboard"},{id:"week",label:"📅 Week"}].map(v=>(
+        {[{id:"log",label:"Log"},{id:"dashboard",label:"Dashboard"},{id:"week",label:"Week"}].map(v=>(
           <button key={v.id} onClick={()=>setView(v.id)}
             style={{flex:1,padding:"11px",borderRadius:9,border:"none",
               background:view===v.id?"linear-gradient(135deg,"+GOLD+"cc,"+GOLD+"88)":"transparent",
@@ -519,7 +520,7 @@ export default function PRLog({athleteId,gender}){
                     );
                     const bandPicker=(label)=>(
                       <div style={{marginBottom:12}}>
-                        <div style={{fontSize:9,color:"#555",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>🎯 {label||"Band Resistance"}</div>
+                        <div style={{fontSize:9,color:"#555",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>{label||"Band Resistance"}</div>
                         <div style={{display:"flex",flexDirection:"column",gap:4}}>
                           {BAND_COLORS.map(b=>{
                             const sel=inp.bandColor===b.id;
@@ -542,7 +543,7 @@ export default function PRLog({athleteId,gender}){
                     );
                     const kbPicker=()=>(
                       <div style={{marginBottom:8}}>
-                        <div style={{fontSize:10,color:"#555",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>🏋️ Kettlebell</div>
+                        <div style={{fontSize:10,color:"#555",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>Kettlebell</div>
                         <div style={{display:"flex",flexDirection:"column",gap:4}}>
                           {KB_COLORS.map(k=>{
                             const isSel=inp.kbColor===k.id;
@@ -669,7 +670,7 @@ export default function PRLog({athleteId,gender}){
                       const combined=(selKB1?selKB1.weight:0)+(selKB2?selKB2.weight:0);
                       const kbRow=(label,colorKey,w2Key)=>(
                         <div style={{marginBottom:12}}>
-                          <div style={{fontSize:10,color:"#555",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>🏋️ {label}</div>
+                          <div style={{fontSize:10,color:"#555",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.07em",fontWeight:700}}>{label}</div>
                           <div style={{display:"flex",flexDirection:"column",gap:4}}>
                             {KB_COLORS.map(k=>{
                               const isSel=inp[colorKey]===k.id;
@@ -790,7 +791,7 @@ export default function PRLog({athleteId,gender}){
                               style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+(useKB?tc.border:"#252525"),
                                 background:useKB?tc.bg:"#0a0a0a",color:useKB?tc.color:"#555",
                                 fontSize:12,fontWeight:useKB?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                              🏋️ Kettlebell
+                              Kettlebell
                             </button>
                           </div>
                           {useKB?(
@@ -940,7 +941,7 @@ export default function PRLog({athleteId,gender}){
           })}
           {todayLifts.length===0&&(
             <div style={{background:"#111",borderRadius:14,padding:"2.5rem",textAlign:"center",border:"0.5px solid #1e1e1e"}}>
-              <div style={{fontSize:36,marginBottom:10}}>🏋️</div>
+              <div style={{marginBottom:10,display:"flex",justifyContent:"center"}}><Icon name="barbell" size={36} color="#555"/></div>
               <div style={{fontSize:14,color:"#555",fontWeight:500}}>No lifts programmed for {DAY_LABELS[activeDay]} yet.</div>
               <div style={{fontSize:12,color:"#333",marginTop:4}}>Coach Ant will update the program soon.</div>
             </div>
@@ -1055,7 +1056,7 @@ export default function PRLog({athleteId,gender}){
                         const pct=has?Math.round(Math.min(1,catPRs[c.id]/getRef(c.id))*100):0;
                         return(
                           <div key={c.id} style={{display:"flex",alignItems:"center",gap:3,padding:"3px 8px",borderRadius:6,background:has?"#1a1a1a":"#111",border:"0.5px solid "+(has?piCol+"44":"#1a1a1a")}}>
-                            <span style={{fontSize:10}}>{c.emoji}</span>
+                            <Icon name={c.id} size={10} color={has?piCol:"#444"}/>
                             <span style={{fontSize:10,color:has?piCol:"#333",fontWeight:has?600:400}}>{has?pct+"%":"—"}</span>
                           </div>
                         );
@@ -1076,7 +1077,7 @@ export default function PRLog({athleteId,gender}){
                         <div style={{height:3,background:"#1a1a1a",borderRadius:2,overflow:"hidden"}}>
                           <div style={{height:"100%",width:(pct*100)+"%",background:has?piCol:"#333",borderRadius:2,transition:"width 0.5s ease"}}/>
                         </div>
-                        <div style={{fontSize:8,color:has?"#555":"#333",marginTop:3,textAlign:"center"}}>{c.emoji}</div>
+                        <div style={{marginTop:3,display:"flex",justifyContent:"center"}}><Icon name={c.id} size={8} color={has?"#555":"#333"}/></div>
                       </div>
                     );
                   })}
@@ -1105,7 +1106,7 @@ export default function PRLog({athleteId,gender}){
                           boxShadow:isSel?"0 0 16px "+(vert?PUR:GOLD)+"22":"none",position:"relative",overflow:"hidden"}}>
                         {isSel&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+(vert?PUR:GOLD)+",transparent)"}}/>}
                         <div style={{fontSize:9,color:"#444",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                          {vert?"⬆️":catObj?.emoji||"🏋️"} {name}
+                          {name}
                         </div>
                         <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:2}}>
                           <div style={{fontSize:24,fontWeight:900,color:isSel?GOLD:"#ddd",lineHeight:1}}>{vert?pr.weight:pr.orm}</div>
@@ -1169,7 +1170,7 @@ export default function PRLog({athleteId,gender}){
                           <div key={name} style={{padding:"10px 12px",background:"#111",borderRadius:10,
                             border:"0.5px solid #1e1e1e"}}>
                             <div style={{fontSize:9,color:"#444",marginBottom:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                              {catObj?.emoji||"🏋️"} {name}
+                              {name}
                             </div>
                             <div style={{fontSize:20,fontWeight:900,color:"#666",lineHeight:1}}>
                               {excl?pr?.weight:pr?.orm}
@@ -1279,7 +1280,7 @@ export default function PRLog({athleteId,gender}){
                       const[x,y]=rPt(i,RR+18);
                       return(
                         <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize="9.5" fill="#888" fontFamily="Georgia">
-                          {c.emoji} {c.label}
+                          {c.label}
                         </text>
                       );
                     })}
@@ -1302,7 +1303,7 @@ export default function PRLog({athleteId,gender}){
                       return(
                         <div key={i} style={{padding:"10px 12px",background:"#0f0f0f",borderRadius:10,border:"1px solid "+t.color+"22",borderLeft:"3px solid "+t.color}}>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
-                            <div style={{fontSize:11,fontWeight:600,color:"#ccc"}}>{c.emoji} {c.label}</div>
+                            <div style={{fontSize:11,fontWeight:600,color:"#ccc",display:"flex",alignItems:"center",gap:5}}><Icon name={c.id} size={11} color="#888"/>{c.label}</div>
                             <div style={{padding:"2px 8px",borderRadius:6,background:t.bg,color:t.color,fontSize:9,fontWeight:700}}>{t.label}</div>
                           </div>
                           <div style={{fontSize:20,fontWeight:900,color:"#fff",lineHeight:1,marginBottom:2}}>{catPRs[c.id]} <span style={{fontSize:10,color:"#555",fontWeight:400}}>lbs</span></div>
