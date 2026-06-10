@@ -88,6 +88,8 @@ export default function Coach(){
   const[pinError,setPinError]=useState("");
   const[tab,setTab]=useState(coachRole==="kevin"?"roster":"overview");
   const[showTabPicker,setShowTabPicker]=useState(false);
+  const[pinnedTabs,setPinnedTabs]=useState(["roster","inbox","attendance"]);
+  const[editingPins,setEditingPins]=useState(false);
   const[athletes,setAthletes]=useState([]);
   const[attendance,setAttendance]=useState([]);
   const[inbox,setInbox]=useState([]);
@@ -719,7 +721,8 @@ export default function Coach(){
   };
 
   const completeCoachAuth=(role,tab)=>{
-    setAuthed(true);setCoachRole(role);if(tab)setTab(tab);setPin("");
+    setAuthed(true);setCoachRole(role);if(tab)setTab(tab);setPin("");setEditingPins(false);
+    try{const s=localStorage.getItem("tf_pinned_coach_"+role);setPinnedTabs(s?JSON.parse(s):(role==="kevin"?["mindset","attendance"]:["roster","inbox","attendance"]));}catch(e){}
   };
 
   const authenticateWithBiometric=async()=>{
@@ -1021,58 +1024,93 @@ export default function Coach(){
           {/* ── LIQUID GLASS BOTTOM NAV ── */}
           {(()=>{
             const ICON_MAP={"overview":"barChart","draft":"target","teams":"users","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","prroom":"award","anvil":"anvil","mcastles-post":"crown"};
-            const ICON_COLORS={"overview":"#E8720C","draft":"#E8720C","teams":"#708090","roster":"#8CB4D5","attendance":"#534AB7","accountability":"#1E6B3A","anvil":"#D4AF37","inbox":"#9B59B6","leaderboard":"#D4AF37","goals":"#E8720C","fellowship":"#9B59B6","mindset":"#5BBFEA","culture":"#E8720C","prayers":"#9B59B6","weights":"#D4AF37","photos":"#5BBFEA","engagement":"#E8720C","qr":"#708090","mcastles-post":"#E87AAC","ironroom":"#C0392B","injuries":"#C0392B","habits":"#1A9E8F","callouts":"#D4AF37","prroom":"#D4AF37"};
-            const renderTabIcon=(id,size,isActive,grid=false)=>{const n=ICON_MAP[id];const col=ICON_COLORS[id]||"#aaa";const op=isActive?1:grid?0.5:0.38;if(n)return <span style={{opacity:op,display:"flex",alignItems:"center"}}><Icon name={n} size={size} color={col}/></span>;return <span style={{fontSize:size,lineHeight:1,opacity:op}}>{col}</span>;};
-            const PRIMARY=coachRole==="kevin"?["roster","mindset","attendance"]:["overview","roster","inbox","attendance"];
+            const ICON_COLORS={"overview":"#FF7A2F","draft":"#FF7A2F","teams":"#90A8C0","roster":"#8CB4D5","attendance":"#7B6EE8","accountability":"#3A9E5A","anvil":"#F0C040","inbox":"#B56EE8","leaderboard":"#F0C040","goals":"#FF7A2F","fellowship":"#B56EE8","mindset":"#4DC8F5","culture":"#FF7A2F","prayers":"#B56EE8","weights":"#F0C040","photos":"#4DC8F5","engagement":"#FF7A2F","qr":"#90A8C0","mcastles-post":"#F080B0","ironroom":"#E05555","injuries":"#E05555","habits":"#20BEA8","callouts":"#F0C040","prroom":"#F0C040"};
+            const fixedTab=coachRole==="kevin"?"roster":"overview";
+            const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id)&&id!==fixedTab);
+            const PRIMARY=[fixedTab,...validPinned];
+            const togglePin=(id)=>{
+              if(id===fixedTab)return;
+              const next=validPinned.includes(id)?validPinned.filter(p=>p!==id):(validPinned.length<3?[...validPinned,id]:validPinned);
+              setPinnedTabs(next);
+              try{localStorage.setItem("tf_pinned_coach_"+coachRole,JSON.stringify(next));}catch(e){}
+            };
+            const renderTabIcon=(id,size,isActive,grid=false)=>{const n=ICON_MAP[id];const col=ICON_COLORS[id]||"#aaa";const op=isActive?1:grid?0.65:0.55;if(n)return <span style={{opacity:op,display:"flex",alignItems:"center"}}><Icon name={n} size={size} color={col}/></span>;return <span style={{fontSize:size,lineHeight:1,opacity:op}}>{col}</span>;};
             return(
               <>
                 <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:680,zIndex:1000,fontFamily:"Georgia,serif"}}>
-                  <div style={{background:"rgba(10,10,16,0.82)",backdropFilter:"blur(40px) saturate(200%)",WebkitBackdropFilter:"blur(40px) saturate(200%)",border:"1px solid rgba(255,255,255,0.13)",borderRadius:28,boxShadow:"0 20px 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.1)",display:"flex",alignItems:"stretch",padding:"6px 4px 6px"}}>
+                  <div style={{background:"rgba(8,8,14,0.88)",backdropFilter:"blur(48px) saturate(220%)",WebkitBackdropFilter:"blur(48px) saturate(220%)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:28,boxShadow:"0 20px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.12)",display:"flex",alignItems:"stretch",padding:"6px 4px 6px"}}>
                     {PRIMARY.map(id=>{
                       const t=TABS.find(x=>x.id===id);
                       if(!t)return null;
                       const isActive=tab===id;
+                      const col=ICON_COLORS[id]||"#E8720C";
                       const cnt=id==="inbox"&&inboxCount>0?inboxCount:0;
                       return(
                         <button key={id} onClick={()=>setTab(id)}
-                          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:22,color:isActive?"#fff":"rgba(255,255,255,0.35)",fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",position:"relative"}}>
-                          <span style={{filter:isActive?"drop-shadow(0 0 8px "+(ICON_COLORS[id]||"#E8720C")+"cc)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,18,isActive)}</span>
-                          <span style={{letterSpacing:"0.02em",color:isActive?(ICON_COLORS[id]||"#E8720C"):"rgba(255,255,255,0.35)"}}>{t.label}</span>
-                          {isActive&&<div style={{width:3,height:3,borderRadius:"50%",background:ICON_COLORS[id]||"#E8720C",marginTop:1,boxShadow:"0 0 6px "+(ICON_COLORS[id]||"#E8720C")}}/>}
+                          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.11)":"transparent",border:"none",borderRadius:22,fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.18)":"none",position:"relative"}}>
+                          <span style={{filter:isActive?"drop-shadow(0 0 10px "+col+"dd)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,19,isActive)}</span>
+                          <span style={{letterSpacing:"0.02em",color:isActive?col:"rgba(255,255,255,0.38)"}}>{t.label}</span>
+                          {isActive&&<div style={{width:4,height:4,borderRadius:"50%",background:col,marginTop:1,boxShadow:"0 0 8px "+col}}/>}
                           {cnt>0&&<div style={{position:"absolute",top:4,right:"50%",transform:"translateX(6px)",background:"#E8720C",color:"#fff",fontSize:7,fontWeight:900,minWidth:14,height:14,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px"}}>{cnt}</div>}
                         </button>
                       );
                     })}
-                    <button onClick={()=>setShowTabPicker(true)}
-                      style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:"transparent",border:"none",borderRadius:22,color:"rgba(255,255,255,0.35)",fontSize:9,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
-                      <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:20}}><Icon name="menu" size={18} color="rgba(255,255,255,0.35)"/></span>
+                    <button onClick={()=>{setShowTabPicker(true);setEditingPins(false);}}
+                      style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:"transparent",border:"none",borderRadius:22,color:"rgba(255,255,255,0.38)",fontSize:9,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+                      <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:20,opacity:0.55}}><Icon name="menu" size={19} color="#aaa"/></span>
                       <span>More</span>
                     </button>
                   </div>
                 </div>
 
                 {showTabPicker&&(
-                  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
+                  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>{setShowTabPicker(false);setEditingPins(false);}}>
                     <div style={{flex:1}}/>
-                    <div style={{background:"rgba(12,12,18,0.92)",backdropFilter:"blur(40px) saturate(200%)",WebkitBackdropFilter:"blur(40px) saturate(200%)",borderRadius:"28px 28px 0 0",border:"1px solid rgba(255,255,255,0.1)",borderBottom:"none",boxShadow:"0 -20px 60px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1)",padding:"20px 16px 40px",maxHeight:"80vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-                      <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.2)",margin:"0 auto 20px"}}/>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
-                        <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.6)",letterSpacing:"0.1em",textTransform:"uppercase"}}>All Tabs</div>
-                        <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer",lineHeight:1,width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                    <div style={{background:"rgba(10,10,18,0.94)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRadius:"28px 28px 0 0",border:"1px solid rgba(255,255,255,0.12)",borderBottom:"none",boxShadow:"0 -20px 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.1)",padding:"20px 16px 44px",maxHeight:"82vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+                      <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.2)",margin:"0 auto 18px"}}/>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:editingPins?8:16}}>
+                        <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.6)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{editingPins?"Pin Tabs":"All Tabs"}</div>
+                        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                          {editingPins?(
+                            <>
+                              <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{validPinned.length}/3 pinned</div>
+                              <button onClick={()=>setEditingPins(false)} style={{background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.18)",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",padding:"5px 14px",borderRadius:20,fontFamily:"Georgia,serif"}}>Done</button>
+                            </>
+                          ):(
+                            <>
+                              <button onClick={()=>setEditingPins(true)} style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:10,cursor:"pointer",padding:"5px 12px",borderRadius:20,fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>Edit Pins</button>
+                              <button onClick={()=>{setShowTabPicker(false);setEditingPins(false);}} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer",lineHeight:1,width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                            </>
+                          )}
+                        </div>
                       </div>
+                      {editingPins&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginBottom:14,lineHeight:1.5}}>Tap any tab to pin or unpin it. Overview is always locked. Up to 3 extras.</div>}
                       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
                         {TABS.map(t=>{
                           const isActive=tab===t.id;
+                          const isPinned=t.id===fixedTab||validPinned.includes(t.id);
+                          const col=ICON_COLORS[t.id]||"#E8720C";
                           return(
-                            <button key={t.id} onClick={()=>{setTab(t.id);setShowTabPicker(false);}}
-                              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px",borderRadius:16,
-                                background:isActive?"rgba(255,255,255,0.12)":"rgba(255,255,255,0.05)",
-                                border:"1px solid "+(isActive?"rgba(255,255,255,0.2)":"rgba(255,255,255,0.07)"),
+                            <button key={t.id} onClick={()=>{
+                              if(editingPins){togglePin(t.id);return;}
+                              setTab(t.id);setShowTabPicker(false);
+                            }}
+                              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px 10px",borderRadius:16,position:"relative",
+                                background:isActive?"rgba(255,255,255,0.13)":(editingPins&&isPinned?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.05)"),
+                                border:"1px solid "+(isActive?"rgba(255,255,255,0.22)":(editingPins&&isPinned?col+"44":"rgba(255,255,255,0.07)")),
                                 boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",
-                                color:isActive?"#fff":"rgba(255,255,255,0.45)",fontSize:10,fontWeight:isActive?700:400,
+                                color:isActive?"#fff":"rgba(255,255,255,0.5)",fontSize:10,fontWeight:isActive?700:400,
                                 cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
-                              <span style={{filter:isActive?"drop-shadow(0 0 8px "+(ICON_COLORS[t.id]||"#E8720C")+"cc)":"none",display:"flex",alignItems:"center",justifyContent:"center",height:22}}>{renderTabIcon(t.id,20,isActive,true)}</span>
-                              <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?(ICON_COLORS[t.id]||"#E8720C"):"rgba(255,255,255,0.45)"}}>{t.label}</span>
+                              {editingPins&&(
+                                <div style={{position:"absolute",top:6,right:6,width:14,height:14,borderRadius:"50%",
+                                  background:t.id===fixedTab?"rgba(255,255,255,0.15)":isPinned?col:"transparent",
+                                  border:"1.5px solid "+(t.id===fixedTab?"rgba(255,255,255,0.2)":isPinned?col:"rgba(255,255,255,0.25)"),
+                                  display:"flex",alignItems:"center",justifyContent:"center"}}>
+                                  {t.id===fixedTab?<Icon name="lock" size={7} color="rgba(255,255,255,0.4)"/>:isPinned?<span style={{fontSize:7,color:"#fff",fontWeight:900,lineHeight:1}}>✓</span>:<span style={{fontSize:8,color:"rgba(255,255,255,0.4)",lineHeight:1}}>+</span>}
+                                </div>
+                              )}
+                              <span style={{filter:isActive?"drop-shadow(0 0 8px "+col+"cc)":"none",display:"flex",alignItems:"center",justifyContent:"center",height:22}}>{renderTabIcon(t.id,20,isActive,true)}</span>
+                              <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?col:"rgba(255,255,255,0.5)"}}>{t.label}</span>
                             </button>
                           );
                         })}
