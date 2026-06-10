@@ -1973,9 +1973,9 @@ export default function Athlete(){
 
           {/* ── LIQUID GLASS BOTTOM NAV ── */}
           {(()=>{
-            const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"activity","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"mapPin"};
-            const EMOJI_MAP={"anvil":"⚒","mcastles":"🍑"};
-            const renderTabIcon=(id,size,color)=>{const n=ICON_MAP[id];if(n)return <Icon name={n} size={size} color={color}/>;return <span style={{fontSize:size,lineHeight:1}}>{EMOJI_MAP[id]||"•"}</span>;};
+            const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"activity","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"mapPin","anvil":"anvil","mcastles":"crown"};
+            const ICON_COLORS={"profile":"#8CB4D5","prs":"#E8720C","attendance":"#534AB7","weight":"#D4AF37","verse":"#5BBFEA","draft":"#E8720C","mygroup":"#708090","anvil":"#D4AF37","body":"#C0392B","leaderboard":"#D4AF37","prayer":"#9B59B6","bracelets":"#E87AAC","photos":"#5BBFEA","notes":"#888","habits":"#1A9E8F","private":"#555","stretching":"#1E6B3A","journey":"#E8720C","mcastles":"#E87AAC"};
+            const renderTabIcon=(id,size,isActive,grid=false)=>{const n=ICON_MAP[id];const col=ICON_COLORS[id]||"#aaa";const op=isActive?1:grid?0.5:0.38;if(n)return <span style={{opacity:op,display:"flex",alignItems:"center"}}><Icon name={n} size={size} color={col}/></span>;return <span style={{fontSize:size,lineHeight:1,opacity:op}}>{col}</span>;};
             const PRIMARY=["profile","prs","attendance","weight"];
             const tabColor=isForge?"#E8720C":STEEL;
             return(
@@ -1989,9 +1989,9 @@ export default function Athlete(){
                       return(
                         <button key={id} onClick={()=>setTab(id)}
                           style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:22,color:isActive?"#fff":"rgba(255,255,255,0.35)",fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none"}}>
-                          <span style={{filter:isActive?"drop-shadow(0 0 6px "+tabColor+"aa)":"none",transition:"filter 0.15s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,18,isActive?tabColor:"rgba(255,255,255,0.35)")}</span>
-                          <span style={{letterSpacing:"0.02em",color:isActive?tabColor:"rgba(255,255,255,0.35)"}}>{t.label}</span>
-                          {isActive&&<div style={{width:3,height:3,borderRadius:"50%",background:tabColor,marginTop:1,boxShadow:"0 0 6px "+tabColor}}/>}
+                          <span style={{filter:isActive?"drop-shadow(0 0 8px "+(ICON_COLORS[id]||tabColor)+"cc)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,18,isActive)}</span>
+                          <span style={{letterSpacing:"0.02em",color:isActive?(ICON_COLORS[id]||tabColor):"rgba(255,255,255,0.35)"}}>{t.label}</span>
+                          {isActive&&<div style={{width:3,height:3,borderRadius:"50%",background:ICON_COLORS[id]||tabColor,marginTop:1,boxShadow:"0 0 6px "+(ICON_COLORS[id]||tabColor)}}/>}
                         </button>
                       );
                     })}
@@ -2023,8 +2023,8 @@ export default function Athlete(){
                                 boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",
                                 color:isActive?"#fff":"rgba(255,255,255,0.45)",fontSize:10,fontWeight:isActive?700:400,
                                 cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
-                              <span style={{filter:isActive?"drop-shadow(0 0 6px "+tabColor+"99)":"none",display:"flex",alignItems:"center",justifyContent:"center",height:22}}>{renderTabIcon(t.id,20,isActive?tabColor:"rgba(255,255,255,0.45)")}</span>
-                              <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?tabColor:"rgba(255,255,255,0.45)"}}>{t.label}</span>
+                              <span style={{filter:isActive?"drop-shadow(0 0 8px "+(ICON_COLORS[t.id]||tabColor)+"cc)":"none",display:"flex",alignItems:"center",justifyContent:"center",height:22}}>{renderTabIcon(t.id,20,isActive,true)}</span>
+                              <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?(ICON_COLORS[t.id]||tabColor):"rgba(255,255,255,0.45)"}}>{t.label}</span>
                             </button>
                           );
                         })}

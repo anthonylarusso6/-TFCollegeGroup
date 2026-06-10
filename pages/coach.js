@@ -1020,9 +1020,9 @@ export default function Coach(){
         <div style={{padding:"1rem",maxWidth:900,margin:"0 auto",paddingBottom:"110px"}}>
           {/* ── LIQUID GLASS BOTTOM NAV ── */}
           {(()=>{
-            const ICON_MAP={"overview":"barChart","draft":"target","teams":"users","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","prroom":"award"};
-            const EMOJI_MAP={"anvil":"⚒","mcastles-post":"🍑"};
-            const renderTabIcon=(id,size,color)=>{const n=ICON_MAP[id];if(n)return <Icon name={n} size={size} color={color}/>;return <span style={{fontSize:size,lineHeight:1}}>{EMOJI_MAP[id]||"•"}</span>;};
+            const ICON_MAP={"overview":"barChart","draft":"target","teams":"users","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","prroom":"award","anvil":"anvil","mcastles-post":"crown"};
+            const ICON_COLORS={"overview":"#E8720C","draft":"#E8720C","teams":"#708090","roster":"#8CB4D5","attendance":"#534AB7","accountability":"#1E6B3A","anvil":"#D4AF37","inbox":"#9B59B6","leaderboard":"#D4AF37","goals":"#E8720C","fellowship":"#9B59B6","mindset":"#5BBFEA","culture":"#E8720C","prayers":"#9B59B6","weights":"#D4AF37","photos":"#5BBFEA","engagement":"#E8720C","qr":"#708090","mcastles-post":"#E87AAC","ironroom":"#C0392B","injuries":"#C0392B","habits":"#1A9E8F","callouts":"#D4AF37","prroom":"#D4AF37"};
+            const renderTabIcon=(id,size,isActive,grid=false)=>{const n=ICON_MAP[id];const col=ICON_COLORS[id]||"#aaa";const op=isActive?1:grid?0.5:0.38;if(n)return <span style={{opacity:op,display:"flex",alignItems:"center"}}><Icon name={n} size={size} color={col}/></span>;return <span style={{fontSize:size,lineHeight:1,opacity:op}}>{col}</span>;};
             const PRIMARY=coachRole==="kevin"?["roster","mindset","attendance"]:["overview","roster","inbox","attendance"];
             return(
               <>
@@ -1036,9 +1036,9 @@ export default function Coach(){
                       return(
                         <button key={id} onClick={()=>setTab(id)}
                           style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.1)":"transparent",border:"none",borderRadius:22,color:isActive?"#fff":"rgba(255,255,255,0.35)",fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",position:"relative"}}>
-                          <span style={{filter:isActive?"drop-shadow(0 0 6px #E8720Caa)":"none",transition:"filter 0.15s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,18,isActive?"#E8720C":"rgba(255,255,255,0.35)")}</span>
-                          <span style={{letterSpacing:"0.02em",color:isActive?"#E8720C":"rgba(255,255,255,0.35)"}}>{t.label}</span>
-                          {isActive&&<div style={{width:3,height:3,borderRadius:"50%",background:"#E8720C",marginTop:1,boxShadow:"0 0 6px #E8720C"}}/>}
+                          <span style={{filter:isActive?"drop-shadow(0 0 8px "+(ICON_COLORS[id]||"#E8720C")+"cc)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,18,isActive)}</span>
+                          <span style={{letterSpacing:"0.02em",color:isActive?(ICON_COLORS[id]||"#E8720C"):"rgba(255,255,255,0.35)"}}>{t.label}</span>
+                          {isActive&&<div style={{width:3,height:3,borderRadius:"50%",background:ICON_COLORS[id]||"#E8720C",marginTop:1,boxShadow:"0 0 6px "+(ICON_COLORS[id]||"#E8720C")}}/>}
                           {cnt>0&&<div style={{position:"absolute",top:4,right:"50%",transform:"translateX(6px)",background:"#E8720C",color:"#fff",fontSize:7,fontWeight:900,minWidth:14,height:14,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px"}}>{cnt}</div>}
                         </button>
                       );
@@ -1071,8 +1071,8 @@ export default function Coach(){
                                 boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",
                                 color:isActive?"#fff":"rgba(255,255,255,0.45)",fontSize:10,fontWeight:isActive?700:400,
                                 cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
-                              <span style={{filter:isActive?"drop-shadow(0 0 6px #E8720C99)":"none",display:"flex",alignItems:"center",justifyContent:"center",height:22}}>{renderTabIcon(t.id,20,isActive?"#E8720C":"rgba(255,255,255,0.45)")}</span>
-                              <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?"#E8720C":"rgba(255,255,255,0.45)"}}>{t.label}</span>
+                              <span style={{filter:isActive?"drop-shadow(0 0 8px "+(ICON_COLORS[t.id]||"#E8720C")+"cc)":"none",display:"flex",alignItems:"center",justifyContent:"center",height:22}}>{renderTabIcon(t.id,20,isActive,true)}</span>
+                              <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?(ICON_COLORS[t.id]||"#E8720C"):"rgba(255,255,255,0.45)"}}>{t.label}</span>
                             </button>
                           );
                         })}

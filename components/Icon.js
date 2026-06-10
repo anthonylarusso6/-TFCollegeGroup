@@ -47,6 +47,10 @@ const PATHS = {
   hinge:       <><path d="M20 12l-8 8-8-8M20 6l-8 8-8-8"/></>,
   // Award
   award:       <><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></>,
+  // Anvil (wide top, narrow neck, wide base)
+  anvil:       <><path d="M3 20h18M5 20v-2.5h14V20M8 17.5v-3c0-2.2 1.8-4 4-4s4 1.8 4 4v3"/><path d="M11 10.5V7.5h2v3"/></>,
+  // Crown (for MCastles)
+  crown:       <><path d="M3 19h18M5 19V9l3.5 4.5 3.5-8 3.5 8 3.5-4.5v10"/><circle cx="5" cy="9" r="1"/><circle cx="19" cy="9" r="1"/><circle cx="12" cy="4.5" r="1"/></>,
   // Map pin for journey
   mapPin:      <><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></>,
   // Chart bar
