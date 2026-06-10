@@ -261,7 +261,7 @@ export default function Athlete(){
   const athleteIdRef=useRef(null);
   const isPickingRef=useRef(false);
   const touchStartRef=useRef(null);
-  const contentRef=useRef(null);
+  const slideDirRef=useRef(0);
 
   useEffect(()=>{loadData();},[]);
 
@@ -918,7 +918,7 @@ export default function Athlete(){
 
   if(screen==="profile"&&selectedAthlete){
     const TABS=[
-      {id:"profile",label:"My Profile"},
+      {id:"profile",label:"Profile"},
       {id:"mcastles",label:"MCastles"},
       {id:"verse",label:"Verse"},
       {id:"attendance",label:"Attendance"},
@@ -948,9 +948,8 @@ export default function Athlete(){
       touchStartRef.current=null;
       if(Math.abs(dx)<52||Math.abs(dx)<Math.abs(dy)*1.5)return;
       const idx=PRIMARY_NAV.indexOf(tab);
-      const animate=(dir)=>{if(!contentRef.current)return;const el=contentRef.current;el.style.animation="none";void el.offsetWidth;el.style.animation=dir>0?"tfSlideFromRight 0.22s ease-out":"tfSlideFromLeft 0.22s ease-out";};
-      if(dx>0&&idx<PRIMARY_NAV.length-1){setTab(PRIMARY_NAV[idx+1]);animate(1);}
-      else if(dx<0&&idx>0){setTab(PRIMARY_NAV[idx-1]);animate(-1);}
+      if(dx>0&&idx<PRIMARY_NAV.length-1){slideDirRef.current=1;setTab(PRIMARY_NAV[idx+1]);}
+      else if(dx<0&&idx>0){slideDirRef.current=-1;setTab(PRIMARY_NAV[idx-1]);}
     };
 
     const myGroupIdx=selectedAthlete.group_idx;
@@ -1039,7 +1038,7 @@ export default function Athlete(){
 
     return(
       <>
-        <style>{`@keyframes tfSlideFromRight{from{transform:translateX(28px);opacity:0.8}to{transform:translateX(0);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-28px);opacity:0.8}to{transform:translateX(0);opacity:1}}`}</style>
+        <style>{`@keyframes tfSlideFromRight{from{transform:translateX(44px);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-44px);opacity:0}to{transform:translateX(0);opacity:1}}`}</style>
         <Head><title>{selectedAthlete.name} — TF College Group</title></Head>
         {milestone&&(
           <div onClick={()=>setMilestone(null)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
@@ -1088,7 +1087,7 @@ export default function Athlete(){
             </div>
           </div>
 
-          <div ref={contentRef} style={{padding:"1.25rem",background:"transparent",minHeight:"60vh",paddingBottom:"110px"}}>
+          <div key={tab} style={{padding:"1.25rem",background:"transparent",minHeight:"60vh",paddingBottom:"110px",animation:slideDirRef.current>0?"tfSlideFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both":slideDirRef.current<0?"tfSlideFromLeft 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both":"none",willChange:"transform"}}>
 
             {tab==="profile"&&(
               <div>
@@ -2017,11 +2016,11 @@ export default function Athlete(){
                       const isActive=tab===id;
                       const col=ICON_COLORS[id]||tabColor;
                       return(
-                        <button key={id} onClick={()=>setTab(id)}
+                        <button key={id} onClick={()=>{slideDirRef.current=0;setTab(id);}}
                           style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.11)":"transparent",border:"none",borderRadius:22,fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.18)":"none"}}>
                           <span style={{filter:isActive?"drop-shadow(0 0 10px "+col+"dd)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,19,isActive)}</span>
                           <span style={{letterSpacing:"0.02em",color:isActive?col:"rgba(255,255,255,0.38)"}}>{t.label}</span>
-                          {isActive&&<div style={{width:4,height:4,borderRadius:"50%",background:col,marginTop:1,boxShadow:"0 0 8px "+col}}/>}
+                          {isActive&&<div style={{width:20,height:2,borderRadius:2,background:col,boxShadow:"0 0 6px "+col+"99",marginTop:1}}/>}
                         </button>
                       );
                     })}

@@ -178,7 +178,7 @@ export default function Coach(){
   const[showBioOffer,setShowBioOffer]=useState(false);
   const[pendingNav,setPendingNav]=useState(null);
   const touchStartRef=useRef(null);
-  const contentRef=useRef(null);
+  const slideDirRef=useRef(0);
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
@@ -1013,14 +1013,13 @@ export default function Coach(){
     touchStartRef.current=null;
     if(Math.abs(dx)<52||Math.abs(dx)<Math.abs(dy)*1.5)return;
     const idx=PRIMARY_NAV.indexOf(tab);
-    const animate=(dir)=>{if(!contentRef.current)return;const el=contentRef.current;el.style.animation="none";void el.offsetWidth;el.style.animation=dir>0?"tfSlideFromRight 0.22s ease-out":"tfSlideFromLeft 0.22s ease-out";};
-    if(dx>0&&idx<PRIMARY_NAV.length-1){setTab(PRIMARY_NAV[idx+1]);animate(1);}
-    else if(dx<0&&idx>0){setTab(PRIMARY_NAV[idx-1]);animate(-1);}
+    if(dx>0&&idx<PRIMARY_NAV.length-1){slideDirRef.current=1;setTab(PRIMARY_NAV[idx+1]);}
+    else if(dx<0&&idx>0){slideDirRef.current=-1;setTab(PRIMARY_NAV[idx-1]);}
   };
 
   return(
     <>
-      <style>{`@keyframes tfSlideFromRight{from{transform:translateX(28px);opacity:0.8}to{transform:translateX(0);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-28px);opacity:0.8}to{transform:translateX(0);opacity:1}}`}</style>
+      <style>{`@keyframes tfSlideFromRight{from{transform:translateX(44px);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-44px);opacity:0}to{transform:translateX(0);opacity:1}}`}</style>
       <Head><title>Coach Dashboard — TF College Group</title></Head>
       <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",minHeight:"100vh"}}>
 
@@ -1039,7 +1038,7 @@ export default function Coach(){
           </div>
         </div>
 
-        <div ref={contentRef} style={{padding:"1rem",maxWidth:900,margin:"0 auto",paddingBottom:"110px"}}>
+        <div key={tab} style={{padding:"1rem",maxWidth:900,margin:"0 auto",paddingBottom:"110px",animation:slideDirRef.current>0?"tfSlideFromRight 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both":slideDirRef.current<0?"tfSlideFromLeft 0.28s cubic-bezier(0.25,0.46,0.45,0.94) both":"none",willChange:"transform"}}>
           {/* ── LIQUID GLASS BOTTOM NAV ── */}
           {(()=>{
             const ICON_MAP={"overview":"barChart","draft":"target","teams":"users","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","prroom":"award","anvil":"anvil","mcastles-post":"crown"};
@@ -1065,11 +1064,11 @@ export default function Coach(){
                       const col=ICON_COLORS[id]||"#E8720C";
                       const cnt=id==="inbox"&&inboxCount>0?inboxCount:0;
                       return(
-                        <button key={id} onClick={()=>setTab(id)}
+                        <button key={id} onClick={()=>{slideDirRef.current=0;setTab(id);}}
                           style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.11)":"transparent",border:"none",borderRadius:22,fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.18)":"none",position:"relative"}}>
                           <span style={{filter:isActive?"drop-shadow(0 0 10px "+col+"dd)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,19,isActive)}</span>
                           <span style={{letterSpacing:"0.02em",color:isActive?col:"rgba(255,255,255,0.38)"}}>{t.label}</span>
-                          {isActive&&<div style={{width:4,height:4,borderRadius:"50%",background:col,marginTop:1,boxShadow:"0 0 8px "+col}}/>}
+                          {isActive&&<div style={{width:20,height:2,borderRadius:2,background:col,boxShadow:"0 0 6px "+col+"99",marginTop:1}}/>}
                           {cnt>0&&<div style={{position:"absolute",top:4,right:"50%",transform:"translateX(6px)",background:"#E8720C",color:"#fff",fontSize:7,fontWeight:900,minWidth:14,height:14,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px"}}>{cnt}</div>}
                         </button>
                       );
