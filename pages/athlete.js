@@ -2088,7 +2088,7 @@ export default function Athlete(){
                         </div>
                       )}
                       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-                        {TABS.map(t=>{
+                        {TABS.filter(t=>editingPins||!PRIMARY.includes(t.id)).map(t=>{
                           const isActive=tab===t.id;
                           const isPinned=t.id==="profile"||validPinned.includes(t.id);
                           const col=ICON_COLORS[t.id]||tabColor;
