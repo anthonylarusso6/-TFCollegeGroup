@@ -90,6 +90,9 @@ export default function Coach(){
   const[showTabPicker,setShowTabPicker]=useState(false);
   const[pinnedTabs,setPinnedTabs]=useState(["roster","inbox","attendance"]);
   const[editingPins,setEditingPins]=useState(false);
+  const[navDragId,setNavDragId]=useState(null);
+  const navDragOrderRef=useRef(null);
+  const navLastSwapY=useRef(0);
   const[athletes,setAthletes]=useState([]);
   const[attendance,setAttendance]=useState([]);
   const[inbox,setInbox]=useState([]);
@@ -1102,7 +1105,37 @@ export default function Coach(){
                           )}
                         </div>
                       </div>
-                      {editingPins&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginBottom:14,lineHeight:1.5}}>Tap any tab to pin or unpin it. Overview is always locked. Up to 3 extras.</div>}
+                      {editingPins&&(
+                        <div style={{marginBottom:14}}>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>Drag to reorder</div>
+                          <div style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",borderRadius:14,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",marginBottom:7,opacity:0.5}}>
+                            {renderTabIcon(fixedTab,18,false)}
+                            <span style={{fontSize:13,color:"rgba(255,255,255,0.4)",flex:1}}>{TABS.find(x=>x.id===fixedTab)?.label||fixedTab}</span>
+                            <Icon name="lock" size={13} color="rgba(255,255,255,0.2)"/>
+                          </div>
+                          {validPinned.map(id=>{
+                            const t=TABS.find(x=>x.id===id);
+                            const col=ICON_COLORS[id]||"#aaa";
+                            if(!t)return null;
+                            const isDragging=navDragId===id;
+                            return(
+                              <div key={id}
+                                onTouchStart={(e)=>{e.stopPropagation();navDragOrderRef.current=[...validPinned];navLastSwapY.current=e.touches[0].clientY;setNavDragId(id);}}
+                                onTouchMove={(e)=>{if(navDragId!==id)return;e.stopPropagation();const dy=e.touches[0].clientY-navLastSwapY.current;if(Math.abs(dy)<50)return;const dir=dy>0?1:-1;const arr=navDragOrderRef.current;const from=arr.indexOf(id);const to=from+dir;if(to>=0&&to<arr.length){[arr[from],arr[to]]=[arr[to],arr[from]];navLastSwapY.current+=dir*50;setPinnedTabs([...arr]);}}}
+                                onTouchEnd={(e)=>{e.stopPropagation();if(navDragOrderRef.current){try{localStorage.setItem("tf_pinned_coach_"+coachRole,JSON.stringify(navDragOrderRef.current));}catch(err){}navDragOrderRef.current=null;}setNavDragId(null);}}
+                                style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",borderRadius:14,background:isDragging?"rgba(255,255,255,0.13)":"rgba(255,255,255,0.07)",border:"1px solid "+(isDragging?col+"55":"rgba(255,255,255,0.1)"),marginBottom:7,transform:isDragging?"scale(1.025) translateY(-2px)":"scale(1) translateY(0)",boxShadow:isDragging?"0 10px 30px rgba(0,0,0,0.5)":"none",transition:isDragging?"none":"background 0.15s,border-color 0.15s,transform 0.18s,box-shadow 0.18s",touchAction:"none",userSelect:"none",WebkitUserSelect:"none"}}>
+                                {renderTabIcon(id,18,true)}
+                                <span style={{fontSize:13,color:"#fff",flex:1}}>{t.label}</span>
+                                <div style={{display:"flex",flexDirection:"column",gap:3,opacity:isDragging?0.9:0.35,transition:"opacity 0.15s"}}>
+                                  {[0,1,2].map(i=><div key={i} style={{width:18,height:1.5,borderRadius:1,background:"rgba(255,255,255,0.8)"}}/>)}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          <div style={{height:"0.5px",background:"rgba(255,255,255,0.08)",margin:"10px 0 14px"}}/>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginBottom:10,lineHeight:1.5}}>Tap tiles below to add or remove</div>
+                        </div>
+                      )}
                       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
                         {TABS.map(t=>{
                           const isActive=tab===t.id;
