@@ -1090,7 +1090,7 @@ export default function Athlete(){
             </div>
           </div>
 
-          <div key={tab} style={{padding:"1.25rem",background:"transparent",minHeight:"60vh",paddingBottom:"110px",animation:slideDirRef.current>0?"tfSlideFromRight 0.32s cubic-bezier(0.22,1,0.36,1) both":slideDirRef.current<0?"tfSlideFromLeft 0.32s cubic-bezier(0.22,1,0.36,1) both":"none",willChange:"transform,opacity"}}>
+          <div key={tab} style={{padding:"1.25rem",background:"transparent",minHeight:"60vh",paddingBottom:"1.25rem",animation:slideDirRef.current>0?"tfSlideFromRight 0.32s cubic-bezier(0.22,1,0.36,1) both":slideDirRef.current<0?"tfSlideFromLeft 0.32s cubic-bezier(0.22,1,0.36,1) both":"none",willChange:"transform,opacity"}}>
 
             {tab==="profile"&&(
               <div>
@@ -2011,7 +2011,7 @@ export default function Athlete(){
             const renderTabIcon=(id,size,isActive,grid=false)=>{const n=ICON_MAP[id];const col=ICON_COLORS[id]||"#aaa";const op=isActive?1:grid?0.65:0.55;if(n)return <span style={{opacity:op,display:"flex",alignItems:"center"}}><Icon name={n} size={size} color={col}/></span>;return <span style={{fontSize:size,lineHeight:1,opacity:op}}>{col}</span>;};
             return(
               <>
-                <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:448,zIndex:1000,fontFamily:"Georgia,serif"}}>
+                <div style={{width:"100%",padding:"0 16px 16px",boxSizing:"border-box",fontFamily:"Georgia,serif"}}>
                   <div style={{background:"rgba(8,8,14,0.88)",backdropFilter:"blur(48px) saturate(220%)",WebkitBackdropFilter:"blur(48px) saturate(220%)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:28,boxShadow:"0 20px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.12)",display:"flex",alignItems:"stretch",padding:"6px 4px 6px"}}>
                     {PRIMARY.map(id=>{
                       const t=TABS.find(x=>x.id===id);
