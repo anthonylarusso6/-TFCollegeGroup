@@ -726,7 +726,7 @@ export default function Coach(){
   };
 
   const completeCoachAuth=(role,tab)=>{
-    setAuthed(true);setCoachRole(role);if(tab)setTab(tab);setPin("");setEditingPins(false);
+    setAuthed(true);setCoachRole(role);if(tab)setTab(tab);setPin("");setEditingPins(false);slideDirRef.current=0;
     try{const s=localStorage.getItem("tf_pinned_coach_"+role);setPinnedTabs(s?JSON.parse(s):(role==="kevin"?["mindset","attendance"]:["roster","inbox","attendance"]));}catch(e){}
   };
 
@@ -1144,7 +1144,7 @@ export default function Coach(){
                           return(
                             <button key={t.id} onClick={()=>{
                               if(editingPins){togglePin(t.id);return;}
-                              setTab(t.id);setShowTabPicker(false);
+                              slideDirRef.current=0;setTab(t.id);setShowTabPicker(false);setEditingPins(false);
                             }}
                               style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px 10px",borderRadius:16,position:"relative",
                                 background:isActive?"rgba(255,255,255,0.13)":(editingPins&&isPinned?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.05)"),

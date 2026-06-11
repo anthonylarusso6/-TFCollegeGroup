@@ -533,7 +533,7 @@ export default function Athlete(){
     setPrayerText("");setPrayerSent(false);
     setInjuryText("");setInjurySent(false);setInjuryOpen(false);
     setGoalSaved({});setGoalText({});setMyVote(null);
-    setTab("profile");setEditingPins(false);
+    setTab("profile");setEditingPins(false);slideDirRef.current=0;
     try{const s=localStorage.getItem("tf_pinned_"+a.id);setPinnedTabs(s?JSON.parse(s):["prs","attendance","weight"]);}catch(e){setPinnedTabs(["prs","attendance","weight"]);}
     // Auto-trigger Face ID if credential exists — check availability inline (don't rely on bioAvail state)
     const raw=localStorage.getItem("tf_bio_"+a.id);
@@ -911,7 +911,7 @@ export default function Athlete(){
               :(<><div style={{fontSize:13,fontWeight:800,color:"#4cdd80",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Keep it up</div><div style={{fontSize:13,color:"#888",lineHeight:1.7}}>Early is the only acceptable arrival. ⚒</div></>)}
             </div>
           )}
-          <button onClick={()=>{setScreen("profile");setTab("profile");}} style={{width:"100%",maxWidth:360,padding:"18px",borderRadius:14,border:"none",background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.06em",textTransform:"uppercase",boxShadow:"0 6px 30px #E8720C44"}}>
+          <button onClick={()=>{setScreen("profile");setTab("profile");slideDirRef.current=0;}} style={{width:"100%",maxWidth:360,padding:"18px",borderRadius:14,border:"none",background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.06em",textTransform:"uppercase",boxShadow:"0 6px 30px #E8720C44"}}>
             My Profile →
           </button>
         </div>
@@ -1096,7 +1096,7 @@ export default function Athlete(){
               <div>
                 {(()=>{const _est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><Icon name="zap" size={22} color="rgba(255,255,255,0.6)"/></div>);})()}
                 {weightLoggedToday===false&&(
-                  <div onClick={()=>setTab("weight")} style={{background:"linear-gradient(135deg,#1a3a1a,#0e240e)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+                  <div onClick={()=>{slideDirRef.current=0;setTab("weight");}} style={{background:"linear-gradient(135deg,#1a3a1a,#0e240e)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
                     <div>
                       <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>Weigh-in day</div>
                       <div style={{fontSize:11,color:GREEN}}>Tap to log your weight → stay on track</div>
@@ -2095,7 +2095,7 @@ export default function Athlete(){
                           return(
                             <button key={t.id} onClick={()=>{
                               if(editingPins){togglePin(t.id);return;}
-                              setTab(t.id);setShowTabPicker(false);
+                              slideDirRef.current=0;setTab(t.id);setShowTabPicker(false);setEditingPins(false);
                             }}
                               style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px 10px",borderRadius:16,position:"relative",
                                 background:isActive?"rgba(255,255,255,0.13)":(editingPins&&isPinned?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.05)"),
