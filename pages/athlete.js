@@ -1994,9 +1994,9 @@ export default function Athlete(){
               </div>
             )}
           </div>
-
-          {/* ── LIQUID GLASS BOTTOM NAV ── */}
-          {(()=>{
+        </div>
+        {/* ── LIQUID GLASS BOTTOM NAV ── */}
+        {(()=>{
             const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"activity","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"mapPin","anvil":"anvil","mcastles":"crown"};
             const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#F0C040","verse":"#4DC8F5","draft":"#FF7A2F","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#F0C040","prayer":"#B56EE8","bracelets":"#F080B0","photos":"#4DC8F5","notes":"#999","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#FF7A2F","mcastles":"#F080B0"};
             const tabColor=isForge?"#E8720C":STEEL;
@@ -2124,7 +2124,6 @@ export default function Athlete(){
               </>
             );
           })()}
-        </div>
       </>
     );
   }
