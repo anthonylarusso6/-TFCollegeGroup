@@ -235,6 +235,13 @@ export default function Athlete(){
   const[navDragId,setNavDragId]=useState(null);
   const navDragOrderRef=useRef(null);
   const navLastSwapY=useRef(0);
+  const[jiggleMode,setJiggleMode]=useState(false);
+  const[jiggleDragId,setJiggleDragId]=useState(null);
+  const longPressNavRef=useRef(null);
+  const jiggleDragOrderRef=useRef(null);
+  const jiggleLastSwapX=useRef(0);
+  const jiggleDragStartX=useRef(0);
+  const jiggleDragElemRef=useRef(null);
   const[checkinInfo,setCheckinInfo]=useState(null);
   const[tab,setTab]=useState("profile");
   const[loading,setLoading]=useState(true);
@@ -1041,7 +1048,7 @@ export default function Athlete(){
 
     return(
       <>
-        <style>{`@keyframes tfSlideFromRight{from{transform:translateX(52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}`}</style>
+        <style>{`@keyframes tfSlideFromRight{from{transform:translateX(52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfJiggle{0%{transform:rotate(-1.5deg) scale(1.03)}100%{transform:rotate(1.5deg) scale(1.03)}}`}</style>
         <Head><title>{selectedAthlete.name} — TF College Group</title></Head>
         {milestone&&(
           <div onClick={()=>setMilestone(null)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
@@ -2018,12 +2025,48 @@ export default function Athlete(){
                       if(!t)return null;
                       const isActive=tab===id;
                       const col=ICON_COLORS[id]||tabColor;
+                      const isJiggling=jiggleMode&&id!=="profile"&&jiggleDragId!==id;
+                      const isDragging=jiggleDragId===id;
                       return(
-                        <button key={id} onClick={()=>{slideDirRef.current=0;setTab(id);}}
-                          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive?"rgba(255,255,255,0.11)":"transparent",border:"none",borderRadius:22,fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.18)":"none"}}>
-                          <span style={{filter:isActive?"drop-shadow(0 0 10px "+col+"dd)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,19,isActive)}</span>
-                          <span style={{letterSpacing:"0.02em",color:isActive?col:"rgba(255,255,255,0.38)"}}>{t.label}</span>
-                          {isActive&&<div style={{width:20,height:2,borderRadius:2,background:col,boxShadow:"0 0 6px "+col+"99",marginTop:1}}/>}
+                        <button key={id}
+                          ref={isDragging?jiggleDragElemRef:null}
+                          onClick={()=>{if(jiggleMode)return;slideDirRef.current=0;setTab(id);}}
+                          onTouchStart={(e)=>{
+                            if(id==="profile")return;
+                            const startX=e.touches[0].clientX;
+                            longPressNavRef.current=setTimeout(()=>{
+                              if(navigator.vibrate)navigator.vibrate(20);
+                              jiggleDragOrderRef.current=[...validPinned];
+                              jiggleDragStartX.current=startX;
+                              jiggleLastSwapX.current=startX;
+                              setJiggleDragId(id);
+                              setJiggleMode(true);
+                            },480);
+                          }}
+                          onTouchMove={(e)=>{
+                            if(!jiggleMode){clearTimeout(longPressNavRef.current);return;}
+                            if(jiggleDragId!==id)return;
+                            e.stopPropagation();
+                            const cx=e.touches[0].clientX;
+                            if(jiggleDragElemRef.current){jiggleDragElemRef.current.style.transform=`translateX(${cx-jiggleDragStartX.current}px) scale(1.14)`;}
+                            const dx=cx-jiggleLastSwapX.current;
+                            if(Math.abs(dx)<50)return;
+                            const dir=dx>0?1:-1;
+                            const arr=jiggleDragOrderRef.current;
+                            const from=arr.indexOf(id);
+                            const to=from+dir;
+                            if(to>=0&&to<arr.length){[arr[from],arr[to]]=[arr[to],arr[from]];jiggleLastSwapX.current+=dir*50;jiggleDragStartX.current+=dir*50;setPinnedTabs([...arr]);}
+                          }}
+                          onTouchEnd={()=>{
+                            clearTimeout(longPressNavRef.current);
+                            if(jiggleDragElemRef.current)jiggleDragElemRef.current.style.transform="";
+                            setJiggleDragId(null);
+                            if(jiggleDragOrderRef.current){try{localStorage.setItem("tf_pinned_"+selectedAthlete.id,JSON.stringify(jiggleDragOrderRef.current));}catch(err){}jiggleDragOrderRef.current=null;}
+                          }}
+                          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive&&!jiggleMode?"rgba(255,255,255,0.11)":"transparent",border:"none",borderRadius:22,fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:isDragging?"none":"transform 0.18s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:isDragging?"0 12px 32px rgba(0,0,0,0.55)":isActive&&!jiggleMode?"inset 0 1px 0 rgba(255,255,255,0.18)":"none",animation:isJiggling?"tfJiggle 0.22s ease-in-out infinite alternate":"none",position:"relative",zIndex:isDragging?10:1,userSelect:"none",WebkitUserSelect:"none",touchAction:jiggleMode?"none":"auto"}}>
+                          <span style={{filter:isActive&&!jiggleMode?"drop-shadow(0 0 10px "+col+"dd)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,19,isActive)}</span>
+                          <span style={{letterSpacing:"0.02em",color:isActive&&!jiggleMode?col:"rgba(255,255,255,0.38)"}}>{t.label}</span>
+                          {isActive&&!jiggleMode&&<div style={{width:20,height:2,borderRadius:2,background:col,boxShadow:"0 0 6px "+col+"99",marginTop:1}}/>}
                         </button>
                       );
                     })}
@@ -2034,6 +2077,12 @@ export default function Athlete(){
                     </button>
                   </div>
                 </div>
+
+                {jiggleMode&&(
+                  <div style={{position:"fixed",bottom:100,left:"50%",transform:"translateX(-50%)",zIndex:1002}}>
+                    <button onClick={()=>{setJiggleMode(false);setJiggleDragId(null);if(jiggleDragElemRef.current)jiggleDragElemRef.current.style.transform="";}} style={{background:"rgba(255,255,255,0.92)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",color:"#000",fontSize:13,fontWeight:800,padding:"9px 28px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 4px 20px rgba(0,0,0,0.35)",letterSpacing:"0.04em"}}>Done</button>
+                  </div>
+                )}
 
                 {showTabPicker&&(
                   <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>{setShowTabPicker(false);setEditingPins(false);}}>
