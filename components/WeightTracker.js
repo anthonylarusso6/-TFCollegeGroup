@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import EmptyState from "./EmptyState";
+import { hSuccess, hError } from "../lib/haptics";
 const VAPID_KEY = "BObWJUwxM9tPxbrXUhj4JW15F1ngheVLKhqlSiQklDc0LtlPMITMNB1D-jx8ywwEnZfPsYKGCI5EmgCMqfRt2IU";
 
 function urlBase64ToUint8Array(base64String) {
@@ -143,8 +145,9 @@ export default function WeightTracker({ athleteId, onWeighed }) {
       }
       await loadEntries();
       setWeight(""); setSaved(true); setTimeout(() => setSaved(false), 3000);
+      hSuccess();
       if (onWeighed) onWeighed();
-    } catch (e) { setError("Save failed. Please try again."); }
+    } catch (e) { setError("Save failed. Please try again."); hError(); }
     finally { setSaving(false); }
   };
 
@@ -725,11 +728,7 @@ export default function WeightTracker({ athleteId, onWeighed }) {
       )}
 
       {entries.length === 0 && !saving && (
-        <div style={{ background: BG, borderRadius: 12, padding: "2.5rem", textAlign: "center", border: "1px solid #222" }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>⚖️</div>
-          <div style={{ fontSize: 14, fontWeight: 500, color: "#fff", marginBottom: 6 }}>Start tracking your weight</div>
-          <div style={{ fontSize: 12, color: "#555" }}>Log your first entry above and watch your progress build week by week.</div>
-        </div>
+        <EmptyState icon="scale" color={GREEN} title="Start tracking your weight" hint="Log your first entry above and watch your progress build week by week." />
       )}
     </div>
   );

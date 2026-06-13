@@ -13,6 +13,8 @@ import MindsetMonday from "../components/MindsetMonday";
 import CultureEvents from "../components/CultureEvents";
 import InjuryBodyMap from "../components/InjuryBodyMap";
 import Icon from "../components/Icon";
+import EmptyState from "../components/EmptyState";
+import { hTap } from "../lib/haptics";
 
 const COACH_PIN="1803";
 
@@ -130,6 +132,10 @@ export default function Coach(){
   const[lbSort,setLbSort]=useState("early");
   const[inboxFilter,setInboxFilter]=useState("all");
   const[inboxAthFilter,setInboxAthFilter]=useState("");
+  // Read/unread layer — tracks which inbox items the coach has already seen.
+  // Persisted per-coach in localStorage; new items glow + show a NEW badge until viewed.
+  const inboxSeenRef=useRef(null);
+  const[inboxNewIds,setInboxNewIds]=useState(()=>new Set());
   const[rosterSearch,setRosterSearch]=useState("");
   const[rosterStatus,setRosterStatus]=useState("active");
   const[rosterExpanded,setRosterExpanded]=useState(null);
@@ -198,6 +204,15 @@ export default function Coach(){
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
+  // When the coach opens the inbox, mark everything currently loaded as seen so the
+  // NEW badges don't reappear next session. The in-session inboxNewIds stay for display.
+  useEffect(()=>{
+    if(tab!=="inbox"||inbox.length===0)return;
+    if(inboxSeenRef.current===null)inboxSeenRef.current=new Set();
+    inbox.forEach(x=>inboxSeenRef.current.add(x.id));
+    try{localStorage.setItem("tf_inbox_seen_"+coachRole,JSON.stringify([...inboxSeenRef.current].slice(-500)));}catch(e){}
+  },[tab,inbox,coachRole]);
+
   useEffect(()=>{
     if(!selectedCoach)return;
     setBioCredId(null);setShowBioOffer(false);
@@ -257,7 +272,15 @@ export default function Coach(){
     if(aths)setAthletes(prev=>aths.map(a=>({...a,photo_url:a.photo_url||prev.find(p=>p.id===a.id)?.photo_url||null})));
     if(aths)setGoalReviews(Object.fromEntries(aths.map(a=>[a.id,a.goal_review_status||""])));
     if(att)setAttendance(att);
-    if(inb)setInbox(inb);
+    if(inb){
+      setInbox(inb);
+      // Load the per-coach "seen" set lazily, then flag any items not yet seen as new.
+      if(inboxSeenRef.current===null){
+        try{const s=localStorage.getItem("tf_inbox_seen_"+coachRole);inboxSeenRef.current=new Set(s?JSON.parse(s):[]);}catch(e){inboxSeenRef.current=new Set();}
+      }
+      const fresh=new Set(inb.filter(x=>!inboxSeenRef.current.has(x.id)).map(x=>x.id));
+      setInboxNewIds(fresh);
+    }
     if(anv)setAnvil(anv);
     if(lb)setLeaderboard(lb);
     if(ann&&ann.length>0){setCurrentAnnouncement(ann[0]);setAnnouncement(ann[0].message);}
@@ -2422,6 +2445,12 @@ export default function Coach(){
 
           {tab==="inbox"&&(
             <div>
+              {inboxNewIds.size>0&&(
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12,padding:"10px 14px",borderRadius:12,background:PUR+"14",border:"1px solid "+PUR+"33"}}>
+                  <div style={{width:8,height:8,borderRadius:"50%",background:PUR,flexShrink:0,boxShadow:"0 0 8px "+PUR}}/>
+                  <span style={{fontSize:12.5,color:"#ddd",fontWeight:600}}>{inboxNewIds.size} new {inboxNewIds.size===1?"message":"messages"} since your last visit</span>
+                </div>
+              )}
               {/* Unread counts + filter */}
               <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
                 {[
@@ -2474,32 +2503,29 @@ export default function Coach(){
                     {inj.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #1e1e1e",borderTop:"3px solid "+RED}}>
                         <div style={{display:"flex",alignItems:"center",gap:7,fontSize:13,fontWeight:600,color:RED,marginBottom:10}}><Icon name="alertTriangle" size={14} color={RED}/>Injury flags · {inj.length}</div>
-                        {inj.map((item,i)=><InboxItem key={i} item={item} color={RED} bg="#1a0808" type="injury" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"inj-"+item.id)} genLoading={genLoading} loadKey={"inj-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
+                        {inj.map((item,i)=><InboxItem key={i} item={item} color={RED} bg="#1a0808" type="injury" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"inj-"+item.id)} genLoading={genLoading} loadKey={"inj-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
                       </div>
                     )}
                     {msgs.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #1e1e1e",borderTop:"3px solid "+PUR}}>
                         <div style={{display:"flex",alignItems:"center",gap:7,fontSize:13,fontWeight:600,color:PUR,marginBottom:10}}><Icon name="chat" size={14} color={PUR}/>Messages · {msgs.length}</div>
-                        {msgs.map((item,i)=><InboxItem key={i} item={item} color={PUR} bg="#13122a" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"msg-"+item.id)} genLoading={genLoading} loadKey={"msg-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
+                        {msgs.map((item,i)=><InboxItem key={i} item={item} color={PUR} bg="#13122a" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"msg-"+item.id)} genLoading={genLoading} loadKey={"msg-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
                       </div>
                     )}
                     {prays.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #1e1e1e",borderTop:"3px solid "+GREEN}}>
                         <div style={{display:"flex",alignItems:"center",gap:7,fontSize:13,fontWeight:600,color:GREEN,marginBottom:10}}><Icon name="pray" size={14} color={GREEN}/>Prayer requests · {prays.length}</div>
-                        {prays.map((item,i)=><InboxItem key={i} item={item} color={GREEN} bg="#0d1a10" type="prayer" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"pry-"+item.id)} genLoading={genLoading} loadKey={"pry-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
+                        {prays.map((item,i)=><InboxItem key={i} item={item} color={GREEN} bg="#0d1a10" type="prayer" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"pry-"+item.id)} genLoading={genLoading} loadKey={"pry-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
                       </div>
                     )}
                     {other.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",border:"0.5px solid #1e1e1e"}}>
                         <div style={{fontSize:13,fontWeight:600,color:"#666",marginBottom:10}}>Other · {other.length}</div>
-                        {other.map((item,i)=><InboxItem key={i} item={item} color="#888" bg="#1a1a1a" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"oth-"+item.id)} genLoading={genLoading} loadKey={"oth-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
+                        {other.map((item,i)=><InboxItem key={i} item={item} color="#888" bg="#1a1a1a" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"oth-"+item.id)} genLoading={genLoading} loadKey={"oth-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
                       </div>
                     )}
                     {filtered.length===0&&(
-                      <div style={{background:"#111",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #2a2a2a"}}>
-                        <div style={{fontSize:32,marginBottom:8}}>✓</div>
-                        <div style={{fontSize:14,color:"#555"}}>Inbox is clear</div>
-                      </div>
+                      <EmptyState icon="checkSquare" color={GREEN} title="Inbox is clear" hint="No open messages, injuries, or prayer requests right now. New ones will land here." />
                     )}
                   </>
                 );
@@ -3281,7 +3307,7 @@ export default function Coach(){
                       return(
                         <button key={id}
                           ref={isDragging?jiggleDragElemRef:null}
-                          onClick={()=>{if(jiggleMode)return;slideDirRef.current=0;setTab(id);}}
+                          onClick={()=>{if(jiggleMode)return;hTap();slideDirRef.current=0;setTab(id);}}
                           onTouchStart={(e)=>{
                             if(id===fixedTab)return;
                             const startX=e.touches[0].clientX;
@@ -3560,7 +3586,7 @@ export default function Coach(){
   );
 }
 
-function InboxItem({item,color,bg,type,onReply,onGenerate,genLoading,loadKey,onArchive,onPriority,athletes}){
+function InboxItem({item,color,bg,type,onReply,onGenerate,genLoading,loadKey,onArchive,onPriority,athletes,isNew}){
   const[reply,setReply]=useState(item.reply||"");
   const[sent,setSent]=useState(item.reply_sent||false);
   const[showReply,setShowReply]=useState(!item.reply_sent);
@@ -3572,14 +3598,18 @@ function InboxItem({item,color,bg,type,onReply,onGenerate,genLoading,loadKey,onA
   };
   const RED="#C0392B",GREEN="#1E6B3A",GOLD="#D4AF37",STEEL="#708090";
   return(
-    <div style={{padding:"12px 0",borderBottom:"0.5px solid #1e1e1e",opacity:item.archived?0.5:1}}>
+    <div className={isNew?"tf-pulse-glow":""} style={{padding:isNew?"12px":"12px 0",margin:isNew?"0 -4px 4px":0,borderRadius:isNew?12:0,borderBottom:isNew?"none":"0.5px solid #1e1e1e",background:isNew?color+"0d":"transparent",opacity:item.archived?0.5:1}}>
       <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-        <div style={{width:34,height:34,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,flexShrink:0,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff"}}>
-          {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(item.athletes?.name||"?")[0]}
+        <div style={{position:"relative",flexShrink:0}}>
+          {isNew&&<div style={{position:"absolute",top:-2,right:-2,width:9,height:9,borderRadius:"50%",background:color,border:"2px solid #0d0d0d",zIndex:2}}/>}
+          <div style={{width:34,height:34,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff"}}>
+            {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(item.athletes?.name||"?")[0]}
+          </div>
         </div>
         <div style={{flex:1}}>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             <span style={{fontSize:13,fontWeight:600,color}}>{item.anonymous?"Anonymous":item.athletes?.name}</span>
+            {isNew&&<span style={{fontSize:8.5,background:color,color:"#fff",padding:"1px 6px",borderRadius:4,fontWeight:800,letterSpacing:"0.06em"}}>NEW</span>}
             {item.priority&&<span style={{fontSize:9,background:RED,color:"#fff",padding:"1px 5px",borderRadius:3,fontWeight:600}}>URGENT</span>}
             {item.reply_sent&&<span style={{fontSize:10,color:GREEN}}>✓ Replied</span>}
           </div>

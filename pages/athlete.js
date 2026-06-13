@@ -20,6 +20,7 @@ import MCastlesTab from "../components/MCastlesTab";
 import InjuryBodyMap from "../components/InjuryBodyMap";
 import HabitsTab from "../components/HabitsTab";
 import Icon from "../components/Icon";
+import { hTap, hSuccess, hError, hCelebrate } from "../lib/haptics";
 
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
@@ -515,9 +516,10 @@ export default function Athlete(){
       existing=att.data;existErr=att.error;lb=lbRes.data;
     }
     if(existErr)console.error("Attendance check error:",existErr);
-    if(existing&&existing.length>0)return{status:existing[0].status,time:existing[0].time_logged,already:true};
+    if(existing&&existing.length>0){hTap();return{status:existing[0].status,time:existing[0].time_logged,already:true};}
     const{error:insertErr}=await supabase.from("attendance").insert({athlete_id:athlete.id,date:today_date,day:today,status,time_logged:timeStr});
-    if(insertErr){console.error("Attendance insert error:",insertErr);return{status,time:timeStr,error:insertErr.message};}
+    if(insertErr){console.error("Attendance insert error:",insertErr);hError();return{status,time:timeStr,error:insertErr.message};}
+    if(status==="early")hSuccess();else hError();
     let milestoneHit=null;
     if(lb&&lb.length>0){
       const updates={};
@@ -543,6 +545,7 @@ export default function Athlete(){
       }
       await supabase.from("leaderboard").insert({athlete_id:athlete.id,early_count:status==="early"?1:0,late_count:status==="late"?1:0,current_streak:status==="early"?1:0,best_streak:status==="early"?1:0});
     }
+    if(milestoneHit)hCelebrate();
     return{status,time:timeStr,milestoneHit};
   };
 
@@ -896,8 +899,18 @@ export default function Athlete(){
           <div style={{position:"fixed",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+accentColor+",transparent)",maxWidth:480,margin:"0 auto"}}/>
           {/* Big ambient glow */}
           <div style={{position:"fixed",top:"20%",left:"50%",transform:"translateX(-50%)",width:500,height:400,background:"radial-gradient(ellipse,"+accentColor+"12 0%,transparent 65%)",pointerEvents:"none"}}/>
+          {/* Confetti sparks — fire on a fresh early check-in */}
+          {!noClass&&!alreadyIn&&!isLate&&(
+            <div style={{position:"fixed",top:"22%",left:"50%",width:0,height:0,pointerEvents:"none",zIndex:5}}>
+              {Array.from({length:14}).map((_,i)=>{
+                const ang=(i/14)*Math.PI*2;const dist=60+((i*37)%50);
+                const cols=[GREEN,GOLD,ORANGE,"#fff"];
+                return <div key={i} style={{position:"absolute",left:Math.cos(ang)*dist,top:Math.sin(ang)*dist*0.6,width:7,height:7,borderRadius:i%3===0?"50%":1,background:cols[i%cols.length],opacity:0,animation:`tfSpark 1.1s ease-out ${0.1+(i%5)*0.06}s both`,boxShadow:`0 0 8px ${cols[i%cols.length]}`}}/>;
+              })}
+            </div>
+          )}
           {/* Status icon */}
-          <div style={{position:"relative",marginBottom:24}}>
+          <div className="tf-pop" style={{position:"relative",marginBottom:24}}>
             <div style={{position:"absolute",inset:-20,borderRadius:"50%",border:"0.5px solid "+accentColor+"15",pointerEvents:"none"}}/>
             <div style={{position:"absolute",inset:-10,borderRadius:"50%",border:"1px solid "+accentColor+"25",pointerEvents:"none"}}/>
             <div style={{width:100,height:100,borderRadius:"50%",background:"linear-gradient(145deg,"+(noClass?"#222,#333":alreadyIn?PUR+",#3a2d8f":isLate?"#8B0000,#cc2200":GREEN+",#0d4a20")+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:48,boxShadow:"0 0 80px "+accentColor+"44,0 0 160px "+accentColor+"18"}}>
@@ -916,7 +929,7 @@ export default function Athlete(){
           {checkinInfo&&<div style={{fontSize:13,color:"#444",marginBottom:20,letterSpacing:"0.04em"}}>Signed in at {checkinInfo.time}</div>}
           {checkinInfo?.error&&<div style={{fontSize:12,color:"#ff5555",marginBottom:12,padding:"10px 16px",background:"#1a0505",borderRadius:12,border:"1px solid #3a0808"}}>Save failed: {checkinInfo.error}</div>}
           {streak>0&&!noClass&&(
-            <div style={{padding:"12px 24px",borderRadius:12,background:"linear-gradient(135deg,#051a0a,#0a2010)",border:"1px solid "+GREEN+"33",marginBottom:20,display:"inline-flex",alignItems:"center",gap:10,boxShadow:"0 4px 20px "+GREEN+"22"}}>
+            <div className="tf-pop" style={{padding:"12px 24px",borderRadius:12,background:"linear-gradient(135deg,#051a0a,#0a2010)",border:"1px solid "+GREEN+"33",marginBottom:20,display:"inline-flex",alignItems:"center",gap:10,boxShadow:"0 4px 20px "+GREEN+"22",animationDelay:"0.2s"}}>
               <span style={{display:"flex",alignItems:"center"}}><Icon name="flame" size={20} color={GREEN}/></span>
               <span style={{fontSize:15,color:GREEN,fontWeight:800}}>{streak}-day early streak</span>
             </div>
@@ -2041,7 +2054,7 @@ export default function Athlete(){
                       return(
                         <button key={id}
                           ref={isDragging?jiggleDragElemRef:null}
-                          onClick={()=>{if(jiggleMode)return;slideDirRef.current=0;setTab(id);}}
+                          onClick={()=>{if(jiggleMode)return;hTap();slideDirRef.current=0;setTab(id);}}
                           onTouchStart={(e)=>{
                             if(id==="profile")return;
                             const startX=e.touches[0].clientX;

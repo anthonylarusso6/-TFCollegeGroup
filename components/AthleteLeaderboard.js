@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BG, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { SkeletonList } from "./Skeleton";
 
 const CLASS_DAYS=["Mon","Tue","Thu","Fri"];
 
@@ -109,7 +110,7 @@ export default function AthleteLeaderboard({athleteId}){
   const maxEarly=displayLb.length>0?Math.max(...displayLb.map(r=>view==="week"?r.earlyWeek:r.earlyAll),1):1;
   const podiumColors=[GOLD,"#C0C0C0","#CD7F32"];
 
-  if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading leaderboard...</div>;
+  if(loading)return<div style={{paddingTop:8}}><SkeletonList rows={6}/></div>;
   if(displayLb.length===0)return(
     <div style={{background:"#141414",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #252525"}}>
       <div style={{fontSize:32,marginBottom:8}}>🏆</div>

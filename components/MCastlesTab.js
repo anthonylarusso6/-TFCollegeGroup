@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { Skeleton } from "./Skeleton";
 
 const GOLD = "#D4AF37";
 const ORANGE = "#E8720C";
@@ -43,7 +44,12 @@ export default function MCastlesTab() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "3rem", color: "#555", fontSize: 13 }}>Loading...</div>
+        <div>
+          <Skeleton height={220} radius={14} style={{ marginBottom: 12 }} />
+          <Skeleton width="40%" height={14} style={{ marginBottom: 10 }} />
+          <Skeleton width="90%" height={11} style={{ marginBottom: 6 }} />
+          <Skeleton width="70%" height={11} />
+        </div>
       ) : !photo ? (
         <div style={{ background: "#111", borderRadius: 14, padding: "2.5rem 1.5rem", textAlign: "center", border: "0.5px solid #252525" }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🍑🚀</div>

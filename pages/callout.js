@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import Icon from "../components/Icon";
+import { hTap, hSuccess } from "../lib/haptics";
 
 const RED="#C0392B";
 const GREEN="#2FA869";
@@ -46,6 +47,7 @@ export default function Callout(){
   };
 
   const submitLog=async()=>{
+    hSuccess();
     const vLabel=violation==="Other"?otherText:violation;
     const crunches=type==="selfreport"?25*count:30*count;
     try{
@@ -169,7 +171,7 @@ export default function Callout(){
           {/* DONE screen */}
           {done&&(
             <div style={{textAlign:"center",padding:"2.5rem 1rem 3rem"}}>
-              <div style={{width:80,height:80,borderRadius:"50%",background:GREEN+"22",border:"2px solid "+GREEN+"55",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",boxShadow:"0 0 32px "+GREEN+"44"}}>
+              <div className="tf-pop" style={{width:80,height:80,borderRadius:"50%",background:GREEN+"22",border:"2px solid "+GREEN+"55",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",boxShadow:"0 0 32px "+GREEN+"44"}}>
                 <Icon name="checkSquare" size={38} color={GREEN}/>
               </div>
               <div style={{fontSize:26,fontWeight:800,color:"#fff",marginBottom:6,letterSpacing:"-0.02em"}}>Logged</div>
@@ -200,7 +202,7 @@ export default function Callout(){
                   const isForge=a.role==="forge";
                   const avatarColor=isForge?RED:"#708090";
                   return(
-                    <button key={a.id} onClick={()=>{setSelected(a);setStep("violation");}}
+                    <button key={a.id} onClick={()=>{hTap();setSelected(a);setStep("violation");}}
                       style={{...glass(),padding:"16px 10px 14px",textAlign:"center",cursor:"pointer",fontFamily:"Georgia,serif",position:"relative",transition:"border-color 0.18s,background 0.18s"}}
                       onMouseEnter={e=>{e.currentTarget.style.borderColor=avatarColor+"66";e.currentTarget.style.background="rgba(255,255,255,0.07)";}}
                       onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.08)";e.currentTarget.style.background="rgba(255,255,255,0.045)";}}>
@@ -240,7 +242,7 @@ export default function Callout(){
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:9,marginBottom:14}}>
                 {VIOLATIONS.map(v=>(
-                  <button key={v.label} onClick={()=>{setViolation(v.label);if(v.label!=="Other")setStep("confirm");}}
+                  <button key={v.label} onClick={()=>{hTap();setViolation(v.label);if(v.label!=="Other")setStep("confirm");}}
                     style={{...glass({borderColor:violation===v.label?RED+"66":"rgba(255,255,255,0.08)",background:violation===v.label?"rgba(192,57,43,0.14)":"rgba(255,255,255,0.045)"}),padding:"15px 14px",cursor:"pointer",fontFamily:"Georgia,serif",display:"flex",alignItems:"center",gap:12,transition:"all 0.15s"}}
                     onMouseEnter={e=>{if(violation!==v.label){e.currentTarget.style.background="rgba(255,255,255,0.07)";e.currentTarget.style.borderColor="rgba(255,255,255,0.15)";}}}
                     onMouseLeave={e=>{if(violation!==v.label){e.currentTarget.style.background="rgba(255,255,255,0.045)";e.currentTarget.style.borderColor="rgba(255,255,255,0.08)";}}}>

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { BG, RED, GREEN, GOLD, STEEL, ORANGE, PUR } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 import Icon from "./Icon";
+import { Skeleton, SkeletonList } from "./Skeleton";
+import { hSuccess } from "../lib/haptics";
 
 const DAYS=["Mon","Tue","Thu","Fri"];
 const DAY_LABELS={Mon:"Monday",Tue:"Tuesday",Thu:"Thursday",Fri:"Friday"};
@@ -258,7 +260,7 @@ export default function PRLog({athleteId,gender}){
       if(error){setLoadError(error.message);setSaving(null);return;}
       setLogs(prev=>{const existing=prev[liftName]||[];return{...prev,[liftName]:[data,...existing]};});
       setInputs(prev=>({...prev,[liftName]:{weight:"",reps:""}}));
-      setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);
+      setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);hSuccess();
       // Nudge athlete to log weight if they haven't today
       try{
         const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
@@ -417,7 +419,10 @@ export default function PRLog({athleteId,gender}){
   const rAvgPts=activeCats.map((_,i)=>{const[x,y]=rPt(i,(1/RADAR_SCALE)*RR);return`${x},${y}`;}).join(" ");
 
   if(!program)return(
-    <div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading program...</div>
+    <div style={{paddingTop:8}}>
+      <Skeleton height={70} radius={14} style={{marginBottom:12}}/>
+      <SkeletonList rows={5} avatar={false}/>
+    </div>
   );
 
   return(
