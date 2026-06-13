@@ -744,10 +744,11 @@ export default function Coach(){
     try{const storedOrder=localStorage.getItem("tf_more_order_coach_"+role);const defaultOrder=ALL_TABS.map(t=>t.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});setMoreOrder(initOrder);moreOrderRef.current=initOrder;}catch(e){}
   };
 
-  const authenticateWithBiometric=async()=>{
+  const authenticateWithBiometric=async(cid)=>{
+    const coach=cid||selectedCoach;
     try{
-      const raw=localStorage.getItem("tf_bio_coach_"+selectedCoach);
-      if(!raw)return;
+      const raw=localStorage.getItem("tf_bio_coach_"+coach);
+      if(!raw)return false;
       const stored=JSON.parse(raw);
       const challenge=crypto.getRandomValues(new Uint8Array(32));
       const credIdBytes=Uint8Array.from(atob(stored.credId),c=>c.charCodeAt(0));
@@ -760,8 +761,9 @@ export default function Coach(){
           timeout:60000,
         }
       });
-      if(assertion){const nav=coachNavFor(selectedCoach);completeCoachAuth(nav.role,nav.tab);}
-    }catch(e){}
+      if(assertion){const nav=coachNavFor(coach);completeCoachAuth(nav.role,nav.tab);return true;}
+    }catch(e){/* cancelled — fall through to PIN */}
+    return false;
   };
 
   const registerBiometric=async()=>{
@@ -859,6 +861,10 @@ export default function Coach(){
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 {coaches.map(c=>(
                   <button key={c.id} onClick={()=>{
+                    // Fire Face ID instantly within the tap gesture (no awaits before
+                    // credentials.get) so the prompt appears immediately on iOS.
+                    let bioRaw=null;try{bioRaw=localStorage.getItem("tf_bio_coach_"+c.id);}catch(e){}
+                    if(bioRaw)authenticateWithBiometric(c.id);
                     setSelectedCoach(c.id);
                     setPin("");setPinError("");
                     const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin())||(c.id==="mcastles"&&getMCastlesPin());
@@ -900,7 +906,7 @@ export default function Coach(){
 
               {/* Bio shortcut button — above PIN dots when credential stored */}
               {bioCredId&&pinStep==="enter"&&!showBioOffer&&(
-                <button onClick={authenticateWithBiometric}
+                <button onClick={()=>authenticateWithBiometric()}
                   style={{marginBottom:20,display:"flex",alignItems:"center",gap:10,padding:"13px 24px",
                     borderRadius:14,border:"1px solid "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"44",
                     background:(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"12",

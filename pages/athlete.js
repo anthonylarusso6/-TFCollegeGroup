@@ -505,12 +505,19 @@ export default function Athlete(){
     const late=estTime.getHours()>cut.h||(estTime.getHours()===cut.h&&estTime.getMinutes()>=cut.m);
     const status=late?"late":"early";
     const today_date=estTime.getFullYear()+"-"+String(estTime.getMonth()+1).padStart(2,"0")+"-"+String(estTime.getDate()).padStart(2,"0");
-    const{data:existing,error:existErr}=await supabase.from("attendance").select("*").eq("athlete_id",athlete.id).eq("date",today_date);
+    // Fetch attendance + leaderboard in parallel — they're independent reads
+    let existing,existErr,lb;
+    {
+      const[att,lbRes]=await Promise.all([
+        supabase.from("attendance").select("*").eq("athlete_id",athlete.id).eq("date",today_date),
+        supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id),
+      ]);
+      existing=att.data;existErr=att.error;lb=lbRes.data;
+    }
     if(existErr)console.error("Attendance check error:",existErr);
     if(existing&&existing.length>0)return{status:existing[0].status,time:existing[0].time_logged,already:true};
     const{error:insertErr}=await supabase.from("attendance").insert({athlete_id:athlete.id,date:today_date,day:today,status,time_logged:timeStr});
     if(insertErr){console.error("Attendance insert error:",insertErr);return{status,time:timeStr,error:insertErr.message};}
-    const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id);
     let milestoneHit=null;
     if(lb&&lb.length>0){
       const updates={};
@@ -540,6 +547,12 @@ export default function Athlete(){
   };
 
   const selectAthlete=async(a)=>{
+    // Fire Face ID FIRST, synchronously within the tap gesture — no awaits before
+    // navigator.credentials.get() so iOS keeps the user-activation and the prompt
+    // appears instantly (an await here makes the sheet sluggish or require a 2nd tap).
+    let bioRaw=null;try{bioRaw=localStorage.getItem("tf_bio_"+a.id);}catch(e){}
+    const bioPromise=bioRaw?authenticateWithBiometric(a):null;
+
     setSelectedAthlete(a);
     setPin("");setPinError("");setPinStep("enter");setPinConfirm("");
     setFeedbackText("");setFeedbackSent(false);
@@ -550,31 +563,20 @@ export default function Athlete(){
     try{const s=localStorage.getItem("tf_pinned_"+a.id);setPinnedTabs(s?JSON.parse(s):["prs","attendance","weight"]);}catch(e){setPinnedTabs(["prs","attendance","weight"]);}
     const defaultOrder=["profile","mcastles","verse","attendance","draft","mygroup","anvil","weight","body","prs","stretching","leaderboard","prayer","bracelets","photos","notes","habits","private"];
     try{const storedOrder=localStorage.getItem("tf_more_order_"+a.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});setMoreOrder(initOrder);moreOrderRef.current=initOrder;}catch(e){setMoreOrder(defaultOrder);moreOrderRef.current=defaultOrder;}
-    // Auto-trigger Face ID if credential exists — check availability inline (don't rely on bioAvail state)
-    const raw=localStorage.getItem("tf_bio_"+a.id);
-    let canBio=false;
-    if(raw&&window.PublicKeyCredential){
-      try{canBio=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){}
-    }
-    if(raw&&canBio){
-      const handled=await authenticateWithBiometric(a);
-      if(handled){
-        await loadAttendance(a.id);
-        await loadDraft();
-        try{
-          const{data}=await supabase.from("athletes").select("*").eq("id",a.id).single();
-          if(data)setSelectedAthlete(data);
-        }catch(e){}
-        return;
-      }
+
+    // Load supporting data in parallel while Face ID is scanning
+    const loads=Promise.all([
+      loadAttendance(a.id),
+      loadDraft(),
+      (async()=>{try{const{data}=await supabase.from("athletes").select("*").eq("id",a.id).single();if(data)setSelectedAthlete(data);}catch(e){}})(),
+    ]);
+
+    if(bioPromise){
+      const handled=await bioPromise;
+      if(handled){await loads;return;}
     }
     setScreen("login");
-    await loadAttendance(a.id);
-    await loadDraft();
-    try{
-      const{data}=await supabase.from("athletes").select("*").eq("id",a.id).single();
-      if(data)setSelectedAthlete(data);
-    }catch(e){}
+    await loads;
   };
 
   const submitPin=async()=>{
@@ -806,7 +808,7 @@ export default function Athlete(){
         {/* Biometric shortcut — shown when credential stored */}
         {bioCredId&&!showBioOffer&&(
           <div style={{marginBottom:22,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-            <button onClick={authenticateWithBiometric}
+            <button onClick={()=>authenticateWithBiometric()}
               style={{display:"flex",alignItems:"center",gap:10,padding:"14px 28px",
                 borderRadius:16,border:"1px solid "+(isForge?RED:STEEL)+"44",
                 background:(isForge?RED:STEEL)+"12",color:"#fff",fontSize:15,fontWeight:700,
