@@ -912,14 +912,14 @@ export default function Coach(){
                     background:(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"12",
                     color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",
                     letterSpacing:"0.02em",margin:"0 auto 20px",boxShadow:"0 0 20px "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"22"}}>
-                  <span style={{fontSize:24}}>👆</span>
+                  <Icon name="faceId" size={22} color="#fff"/>
                   <span>Use {getBioLabel()}</span>
                 </button>
               )}
 
               {showBioOffer?(
                 <div style={{width:"100%",maxWidth:300,textAlign:"center",margin:"0 auto"}}>
-                  <div style={{fontSize:44,marginBottom:12}}>👆</div>
+                  <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><Icon name="faceId" size={42} color={coaches.find(x=>x.id===selectedCoach)?.color||GOLD}/></div>
                   <div style={{fontSize:17,fontWeight:800,color:"#fff",marginBottom:8,letterSpacing:"-0.01em"}}>Enable {getBioLabel()}?</div>
                   <div style={{fontSize:12,color:"#555",marginBottom:24,lineHeight:1.6}}>
                     Skip the PIN next time and sign in instantly with your fingerprint or face.
@@ -1152,7 +1152,7 @@ export default function Coach(){
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📣</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="megaphone" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📣</div>
@@ -1172,7 +1172,7 @@ export default function Coach(){
                 <div onClick={()=>{setRecapOpen(o=>{if(!o&&!recapData)loadRecap();return!o;})}}
                      style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"16px 18px",cursor:"pointer",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📊</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.07,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="barChart" size={66} color="#fff"/></div>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📊</div>
                     <div style={{flex:1}}>
@@ -1246,7 +1246,7 @@ export default function Coach(){
                 <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+RED+"33"}}>
                   <div style={{background:"linear-gradient(140deg,"+RED+"30,"+RED+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+RED+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>🚨</div>
+                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="alertTriangle" size={66} color="#fff"/></div>
                     <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+RED+"12,transparent 70%)",pointerEvents:"none"}}/>
                     <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                       <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+RED+"44,"+RED+"22)",border:"1px solid "+RED+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+RED+"33"}}>🚨</div>
@@ -1283,7 +1283,7 @@ export default function Coach(){
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GREEN+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+GREEN+"30,"+GREEN+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+GREEN+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📊</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="barChart" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GREEN+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GREEN+"44,"+GREEN+"22)",border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GREEN+"33"}}>📊</div>
@@ -1333,7 +1333,7 @@ export default function Coach(){
               <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⏱</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="clock" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>⏱</div>
@@ -1389,13 +1389,13 @@ export default function Coach(){
               </div>
               <div style={{position:"relative",marginBottom:12}}>
                 <input value={rosterSearch} onChange={e=>setRosterSearch(e.target.value)} placeholder="Search name or sport..." style={{width:"100%",padding:"10px 12px 10px 34px",borderRadius:10,border:"0.5px solid #252525",fontSize:13,fontFamily:"Georgia,serif",background:"#1a1a1a",color:"#ddd",boxSizing:"border-box"}}/>
-                <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#aaa"}}>🔍</div>
+                <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#aaa"}}><Icon name="search" size={15} color="rgba(255,255,255,0.4)"/></div>
                 {rosterSearch&&<button onClick={()=>setRosterSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:14,color:"#aaa",cursor:"pointer"}}>✕</button>}
               </div>
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>👥</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="users" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>👥</div>
@@ -1503,7 +1503,7 @@ export default function Coach(){
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GREEN+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+GREEN+"30,"+GREEN+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+GREEN+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📅</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="calendar" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GREEN+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GREEN+"44,"+GREEN+"22)",border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GREEN+"33"}}>📅</div>
@@ -1532,7 +1532,7 @@ export default function Coach(){
                 <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+RED+"33"}}>
                   <div style={{background:"linear-gradient(140deg,"+RED+"30,"+RED+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+RED+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚠️</div>
+                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="alertTriangle" size={66} color="#fff"/></div>
                     <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+RED+"12,transparent 70%)",pointerEvents:"none"}}/>
                     <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                       <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+RED+"44,"+RED+"22)",border:"1px solid "+RED+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+RED+"33"}}>⚠️</div>
@@ -1558,7 +1558,7 @@ export default function Coach(){
               <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GREEN+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+GREEN+"30,"+GREEN+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+GREEN+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📋</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="list" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GREEN+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}}>
                     <div style={{display:"flex",alignItems:"center",gap:14}}>
@@ -1658,7 +1658,7 @@ export default function Coach(){
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>🙏</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="pray" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>🙏</div>
@@ -1693,7 +1693,7 @@ export default function Coach(){
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GREEN+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+GREEN+"30,"+GREEN+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+PUR+")"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚖️</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="scale" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GREEN+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GREEN+"44,"+GREEN+"22)",border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GREEN+"33"}}>⚖️</div>
@@ -1711,7 +1711,7 @@ export default function Coach(){
 
               {weightLogs.length===0&&(
                 <div style={{background:"#111",borderRadius:20,padding:"2rem",textAlign:"center",border:"0.5px solid #252525"}}>
-                  <div style={{fontSize:32,marginBottom:8}}>⚖️</div>
+                  <div style={{marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="scale" size={30} color="rgba(255,255,255,0.35)"/></div>
                   <div style={{fontSize:13,color:"#555"}}>No weight logs yet.</div>
                   <div style={{fontSize:11,color:"#444",marginTop:4}}>Athletes log from their Weight tab.</div>
                 </div>
@@ -1921,7 +1921,7 @@ export default function Coach(){
                 <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
                   <div style={{background:"linear-gradient(140deg,"+GOLD+"30,"+GOLD+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+",#C084FC,"+GOLD+"44)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none"}}>🏆</div>
+                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="trophy" size={66} color="#fff"/></div>
                     <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                       <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>🏆</div>
                       <div>
@@ -1946,7 +1946,7 @@ export default function Coach(){
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📸</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="camera" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📸</div>
@@ -1965,7 +1965,7 @@ export default function Coach(){
                         <img src={gpPreview} style={{width:"100%",maxHeight:220,objectFit:"cover",display:"block"}} alt=""/>
                       ):(
                         <div style={{textAlign:"center",padding:"1.5rem"}}>
-                          <div style={{fontSize:28,marginBottom:6}}>📷</div>
+                          <div style={{marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="camera" size={28} color="rgba(255,255,255,0.4)"/></div>
                           <div style={{fontSize:12,color:"#555"}}>Tap to choose photo</div>
                         </div>
                       )}
@@ -2021,7 +2021,7 @@ export default function Coach(){
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid #4285f433"}}>
                 <div style={{background:"linear-gradient(140deg,#4285f430,#4285f410,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#4285f4,#4285f444,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📁</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="fileText" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,#4285f412,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,#4285f444,#4285f422)",border:"1px solid #4285f444",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px #4285f433"}}>📁</div>
@@ -2045,7 +2045,7 @@ export default function Coach(){
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+STEEL+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+STEEL+"30,"+STEEL+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+","+STEEL+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>👤</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="profile" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+STEEL+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+STEEL+"44,"+STEEL+"22)",border:"1px solid "+STEEL+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+STEEL+"33"}}>👤</div>
@@ -2099,7 +2099,7 @@ export default function Coach(){
               <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+ORANGE+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+ORANGE+"30,"+ORANGE+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+ORANGE+","+ORANGE+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📱</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="smartphone" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+ORANGE+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+ORANGE+"33"}}>📱</div>
@@ -2201,7 +2201,7 @@ export default function Coach(){
               <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📊</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="barChart" size={66} color="#fff"/></div>
                   <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📊</div>
@@ -2473,19 +2473,19 @@ export default function Coach(){
                   <>
                     {inj.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #1e1e1e",borderTop:"3px solid "+RED}}>
-                        <div style={{fontSize:13,fontWeight:600,color:RED,marginBottom:10}}>🤕 Injury flags · {inj.length}</div>
+                        <div style={{display:"flex",alignItems:"center",gap:7,fontSize:13,fontWeight:600,color:RED,marginBottom:10}}><Icon name="alertTriangle" size={14} color={RED}/>Injury flags · {inj.length}</div>
                         {inj.map((item,i)=><InboxItem key={i} item={item} color={RED} bg="#1a0808" type="injury" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"inj-"+item.id)} genLoading={genLoading} loadKey={"inj-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
                       </div>
                     )}
                     {msgs.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #1e1e1e",borderTop:"3px solid "+PUR}}>
-                        <div style={{fontSize:13,fontWeight:600,color:PUR,marginBottom:10}}>💬 Messages · {msgs.length}</div>
+                        <div style={{display:"flex",alignItems:"center",gap:7,fontSize:13,fontWeight:600,color:PUR,marginBottom:10}}><Icon name="chat" size={14} color={PUR}/>Messages · {msgs.length}</div>
                         {msgs.map((item,i)=><InboxItem key={i} item={item} color={PUR} bg="#13122a" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"msg-"+item.id)} genLoading={genLoading} loadKey={"msg-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
                       </div>
                     )}
                     {prays.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #1e1e1e",borderTop:"3px solid "+GREEN}}>
-                        <div style={{fontSize:13,fontWeight:600,color:GREEN,marginBottom:10}}>🙏 Prayer requests · {prays.length}</div>
+                        <div style={{display:"flex",alignItems:"center",gap:7,fontSize:13,fontWeight:600,color:GREEN,marginBottom:10}}><Icon name="pray" size={14} color={GREEN}/>Prayer requests · {prays.length}</div>
                         {prays.map((item,i)=><InboxItem key={i} item={item} color={GREEN} bg="#0d1a10" type="prayer" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"pry-"+item.id)} genLoading={genLoading} loadKey={"pry-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes}/>)}
                       </div>
                     )}
@@ -2547,7 +2547,7 @@ export default function Coach(){
               <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
                 <div style={{background:"linear-gradient(140deg,"+GOLD+"22,"+GOLD+"08,#0d0d0d)",padding:"16px 18px",position:"relative",overflow:"hidden"}}>
                   <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>🏆</div>
+                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.07,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="trophy" size={66} color="#fff"/></div>
                   <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                     <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>🏆</div>
                     <div style={{flex:1}}>
@@ -2607,7 +2607,7 @@ export default function Coach(){
               {/* Search + filter */}
               <div style={{position:"relative",marginBottom:10}}>
                 <input value={goalsSearch} onChange={e=>setGoalsSearch(e.target.value)} placeholder="Search athlete..." style={{width:"100%",padding:"10px 12px 10px 34px",borderRadius:10,border:"0.5px solid #2a2a2a",fontSize:13,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",boxSizing:"border-box"}}/>
-                <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#aaa"}}>🔍</div>
+                <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#aaa"}}><Icon name="search" size={15} color="rgba(255,255,255,0.4)"/></div>
                 {goalsSearch&&<button onClick={()=>setGoalsSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:14,color:"#aaa",cursor:"pointer"}}>✕</button>}
               </div>
               <div style={{display:"flex",gap:6,marginBottom:12}}>
@@ -2790,7 +2790,7 @@ export default function Coach(){
                 <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+RED+"33"}}>
                   <div style={{background:"linear-gradient(140deg,"+RED+"30,"+RED+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+RED+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none"}}>🩺</div>
+                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.07,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="activity" size={66} color="#fff"/></div>
                     <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                       <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+RED+"44,"+RED+"22)",border:"1px solid "+RED+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🩺</div>
                       <div>
@@ -2914,7 +2914,7 @@ export default function Coach(){
                 <div style={{borderRadius:20,marginBottom:16,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
                   <div style={{background:"linear-gradient(140deg,"+GOLD+"28,"+GOLD+"0a,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none"}}>🏋️</div>
+                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.07,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="barbell" size={66} color="#fff"/></div>
                     <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                       <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>🏋️</div>
                       <div style={{flex:1}}>
@@ -3036,7 +3036,7 @@ export default function Coach(){
                 <div style={{borderRadius:20,marginBottom:16,overflow:"hidden",border:"1px solid "+GREEN+"33",boxShadow:"0 8px 32px #00000060"}}>
                   <div style={{background:"linear-gradient(140deg,"+GREEN+"30,"+GREEN+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+GREEN+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>💧</div>
+                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="droplet" size={66} color="#fff"/></div>
                     <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                       <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GREEN+"44,"+GREEN+"22)",border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>💧</div>
                       <div style={{flex:1}}>
@@ -3191,7 +3191,7 @@ export default function Coach(){
                 <div style={{borderRadius:20,marginBottom:16,overflow:"hidden",border:"1px solid "+RED+"33",boxShadow:"0 8px 32px #00000060"}}>
                   <div style={{background:"linear-gradient(140deg,"+RED+"30,"+RED+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+RED+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚠️</div>
+                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="alertTriangle" size={66} color="#fff"/></div>
                     <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                       <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+RED+"44,"+RED+"22)",border:"1px solid "+RED+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚠️</div>
                       <div style={{flex:1}}>
@@ -3205,7 +3205,7 @@ export default function Coach(){
                 </div>
                 <div style={{position:"relative",marginBottom:12}}>
                   <input value={calloutAthFilter} onChange={e=>setCalloutAthFilter(e.target.value)} placeholder="Filter by athlete..." style={{width:"100%",padding:"10px 12px 10px 34px",borderRadius:10,border:"0.5px solid #2a2a2a",fontSize:13,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",boxSizing:"border-box"}}/>
-                  <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#555"}}>🔍</div>
+                  <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#555"}}><Icon name="search" size={15} color="rgba(255,255,255,0.4)"/></div>
                   {calloutAthFilter&&<button onClick={()=>setCalloutAthFilter("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:14,color:"#aaa",cursor:"pointer"}}>✕</button>}
                 </div>
                 {filtered.length===0&&(

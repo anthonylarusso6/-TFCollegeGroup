@@ -62,6 +62,8 @@ const PATHS = {
   clock:       <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
   chevronRight:<><polyline points="9 18 15 12 9 6"/></>,
   qr:          <><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14.5" y1="14" x2="14.5" y2="17.5"/><line x1="17.5" y1="14.5" x2="21" y2="14.5"/><line x1="21" y1="17.5" x2="21" y2="21"/><line x1="14" y1="21" x2="17.5" y2="21"/></>,
+  mail:        <><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></>,
+  faceId:      <><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 10v1M15 10v1M12 9.5v3l-1 .5M10 15.5c1.2.8 2.8.8 4 0"/></>,
 };
 
 export default function Icon({name, size=18, color="currentColor", style={}}) {

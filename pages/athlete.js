@@ -814,7 +814,7 @@ export default function Athlete(){
                 background:(isForge?RED:STEEL)+"12",color:"#fff",fontSize:15,fontWeight:700,
                 cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",
                 boxShadow:"0 0 24px "+(isForge?RED:STEEL)+"22"}}>
-              <span style={{fontSize:26}}>👆</span>
+              <Icon name="faceId" size={24} color="#fff"/>
               <span>Use {(()=>{const ua=navigator.userAgent||"";return/iPhone|iPad|iPod/.test(ua)?"Face ID / Touch ID":/Mac/.test(ua)?"Touch ID":/Android/.test(ua)?"Fingerprint":"Biometrics";})()}</span>
             </button>
             <button onClick={()=>{
@@ -830,7 +830,7 @@ export default function Athlete(){
         {showBioOffer?(
           /* Bio enroll offer — replaces keypad after first PIN success */
           <div style={{width:"100%",maxWidth:320,textAlign:"center"}}>
-            <div style={{fontSize:44,marginBottom:12}}>👆</div>
+            <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><Icon name="faceId" size={42} color={isForge?RED:STEEL}/></div>
             <div style={{fontSize:18,fontWeight:800,color:"#fff",marginBottom:8,letterSpacing:"-0.01em"}}>Enable Biometrics?</div>
             <div style={{fontSize:12,color:"#555",marginBottom:28,lineHeight:1.6}}>
               Skip the PIN next time. Sign in instantly with your fingerprint or face.
@@ -901,7 +901,7 @@ export default function Athlete(){
             <div style={{position:"absolute",inset:-20,borderRadius:"50%",border:"0.5px solid "+accentColor+"15",pointerEvents:"none"}}/>
             <div style={{position:"absolute",inset:-10,borderRadius:"50%",border:"1px solid "+accentColor+"25",pointerEvents:"none"}}/>
             <div style={{width:100,height:100,borderRadius:"50%",background:"linear-gradient(145deg,"+(noClass?"#222,#333":alreadyIn?PUR+",#3a2d8f":isLate?"#8B0000,#cc2200":GREEN+",#0d4a20")+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:48,boxShadow:"0 0 80px "+accentColor+"44,0 0 160px "+accentColor+"18"}}>
-              {noClass?"📅":alreadyIn?"✓":isLate?"⚠":"✓"}
+              <Icon name={noClass?"calendar":alreadyIn?"checkSquare":isLate?"clock":"flame"} size={46} color="#fff"/>
             </div>
           </div>
           {/* Giant status text */}
@@ -1135,7 +1135,7 @@ export default function Athlete(){
                 )}
                 {notifCard==="ios-browser"&&(
                   <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a1e"}}>
-                    <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:6}}>🔔 Get lock screen reminders</div>
+                    <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,fontWeight:700,color:"#fff",marginBottom:6}}><Icon name="bell" size={13} color="#fff"/>Get lock screen reminders</div>
                     <div style={{fontSize:11,color:"#888",lineHeight:1.6,marginBottom:8}}>
                       On iPhone, add this app to your Home Screen first:<br/>
                       <span style={{color:"#aaa"}}>Tap <strong style={{color:"#fff"}}>Share</strong> → <strong style={{color:"#fff"}}>Add to Home Screen</strong> → open from there</span>
@@ -1146,7 +1146,7 @@ export default function Athlete(){
                 {notifCard==="denied"&&(
                   <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #2a1e1e",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
                     <div>
-                      <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>🔔 Notifications blocked</div>
+                      <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}><Icon name="bell" size={13} color="#fff"/>Notifications blocked</div>
                       <div style={{fontSize:10,color:"#555"}}>Enable in your browser or phone settings</div>
                     </div>
                     <div style={{fontSize:10,color:"#555",flexShrink:0}}>Settings → Safari/Chrome</div>
@@ -1156,7 +1156,7 @@ export default function Athlete(){
                   <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a3a"}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
                       <div>
-                        <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>👆 Enable Face ID / Touch ID</div>
+                        <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}><Icon name="faceId" size={13} color="#fff"/>Enable Face ID / Touch ID</div>
                         <div style={{fontSize:10,color:"#555"}}>Sign in instantly — skip the PIN next time</div>
                       </div>
                       <button disabled={bioRegistering} onClick={async()=>{
@@ -1432,7 +1432,7 @@ export default function Athlete(){
                   <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid #00aff033"}}>
                     <div style={{background:"linear-gradient(140deg,#001828,#000d18,#0d0d0d)",padding:"16px 18px",position:"relative",overflow:"hidden"}}>
                       <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#00aff0,#00aff055,transparent)"}}/>
-                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none"}}>💬</div>
+                      <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.07,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="chat" size={66} color="#fff"/></div>
                       <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,#00aff044,#00aff022)",border:"1px solid #00aff044",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px #00aff033"}}>💬</div>
                         <div style={{flex:1}}>
@@ -1455,7 +1455,7 @@ export default function Athlete(){
                   <div style={{borderRadius:20,overflow:"hidden",border:"1px solid "+GOLD+"33",boxShadow:"0 8px 32px #00000060"}}>
                     <div style={{background:"linear-gradient(140deg,"+GOLD+"30,"+GOLD+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                       <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
-                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>🎯</div>
+                      <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="target" size={66} color="#fff"/></div>
                       <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🎯</div>
                         <div>
@@ -1734,7 +1734,7 @@ export default function Athlete(){
                   <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+STEEL+"33"}}>
                     <div style={{background:"linear-gradient(140deg,"+STEEL+"30,"+STEEL+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                       <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+","+STEEL+"44,transparent)"}}/>
-                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⏳</div>
+                      <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="clock" size={66} color="#fff"/></div>
                       <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+STEEL+"12,transparent 70%)",pointerEvents:"none"}}/>
                       <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+STEEL+"44,"+STEEL+"22)",border:"1px solid "+STEEL+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+STEEL+"33"}}>⏳</div>
@@ -1875,7 +1875,7 @@ export default function Athlete(){
                 <div style={{borderRadius:20,marginTop:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+ORANGE+"33"}}>
                   <div style={{background:"linear-gradient(140deg,"+ORANGE+"30,"+ORANGE+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+ORANGE+","+ORANGE+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>📅</div>
+                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="calendar" size={66} color="#fff"/></div>
                     <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+ORANGE+"12,transparent 70%)",pointerEvents:"none"}}/>
                     <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
                       <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+ORANGE+"33"}}>📅</div>
@@ -1965,7 +1965,7 @@ export default function Athlete(){
                 <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+STEEL+"33"}}>
                   <div style={{background:"linear-gradient(140deg,"+STEEL+"30,"+STEEL+"10,#0d0d0d)",padding:"20px 18px 18px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+","+STEEL+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>✉️</div>
+                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="mail" size={66} color="#fff"/></div>
                     <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+STEEL+"12,transparent 70%)",pointerEvents:"none"}}/>
                     <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative",marginBottom:14}}>
                       <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+STEEL+"44,"+STEEL+"22)",border:"1px solid "+STEEL+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+STEEL+"33"}}>✉️</div>
@@ -1988,7 +1988,7 @@ export default function Athlete(){
                 <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
                   <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>🙏</div>
+                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="pray" size={66} color="#fff"/></div>
                     <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
                     <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative",marginBottom:14}}>
                       <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>🙏</div>
