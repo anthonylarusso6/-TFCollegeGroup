@@ -35,6 +35,7 @@ export default function App({ Component, pageProps }) {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:image" content="https://tfcollegegroup.com/og-image.jpg" />
       </Head>
+      <div style={{position:"fixed",top:0,left:0,right:0,height:"env(safe-area-inset-top)",background:"#080808",zIndex:9999,pointerEvents:"none"}}/>
       <Component {...pageProps} />
     </>
   )

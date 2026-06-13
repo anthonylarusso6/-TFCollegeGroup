@@ -1072,7 +1072,7 @@ export default function Athlete(){
         )}
         <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",overflowX:"hidden"}}>
           {/* Profile header */}
-          <div style={{background:"linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.02) 100%)",backdropFilter:"blur(20px) saturate(180%)",WebkitBackdropFilter:"blur(20px) saturate(180%)",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
+          <div style={{background:"linear-gradient(180deg,#0e0e1c 0%,#0a0a14 100%)",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
             {/* Top accent */}
             <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+(isForge?"rgba(232,114,12,0.9),rgba(192,57,43,0.8)":"rgba(96,106,117,0.8),rgba(138,154,164,0.9)")+",transparent)"}}/>
             {/* Ambient glow */}
