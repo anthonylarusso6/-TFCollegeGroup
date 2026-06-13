@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { GOLD } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { Skeleton } from "./Skeleton";
 
 export default function GroupPhotos(){
   const[photos,setPhotos]=useState([]);
@@ -25,7 +26,12 @@ export default function GroupPhotos(){
   },[]);
 
   if(loading)return(
-    <div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading photos...</div>
+    <div>
+      <Skeleton height={64} radius={12} style={{marginBottom:12}}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+        {Array.from({length:4}).map((_,i)=><Skeleton key={i} height={150} radius={12}/>)}
+      </div>
+    </div>
   );
 
   return(

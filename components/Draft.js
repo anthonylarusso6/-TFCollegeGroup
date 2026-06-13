@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BG, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { SkeletonList } from "./Skeleton";
 
 const playPickSound=()=>{
   try{
@@ -326,7 +327,7 @@ export default function Draft({athletes=[]}){
   const clockCol=curGroup!==undefined?COLORS[curGroup%COLORS.length]:COLORS[0];
   const clockPickedCount=curGroup!==undefined?(groups[curGroup]||[]).length-1:0;
 
-  if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888"}}>Loading...</div>;
+  if(loading)return<div style={{paddingTop:8}}><SkeletonList rows={6}/></div>;
 
   return(
     <div>

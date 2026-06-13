@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { SkeletonList } from "./Skeleton";
 
 const PUR="#534AB7";
 const GREEN="#1E6B3A";
@@ -115,9 +116,9 @@ export default function PrayerWall({athleteId, athleteName}){
           <div style={{fontSize:10,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:"0.14em"}}>Group prayer requests · {prayers.length}</div>
         </div>
         <div style={{background:"#0e0e0e",padding:"0 18px"}}>
-          {loading&&<div style={{fontSize:12,color:"#444",textAlign:"center",padding:"1.5rem 0"}}>Loading...</div>}
+          {loading&&<div style={{padding:"16px 0"}}><SkeletonList rows={3} avatar={false}/></div>}
           {!loading&&prayers.length===0&&(
-            <div style={{fontSize:12,color:"#444",textAlign:"center",padding:"1.5rem 0"}}>No prayer requests yet. Be the first to share.</div>
+            <div style={{fontSize:12,color:"#666",textAlign:"center",padding:"2rem 0",lineHeight:1.6}}>No prayer requests yet.<br/>Be the first to share.</div>
           )}
           {prayers.map((p,i)=>(
             <div key={i} style={{padding:"14px 0",borderBottom:i<prayers.length-1?"0.5px solid #1a1a1a":"none"}}>

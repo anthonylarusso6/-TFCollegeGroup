@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { SkeletonList } from "./Skeleton";
 
 
 const RECURRING=[
@@ -137,7 +138,7 @@ export default function CultureEvents({athletes=[]}){
 
   const activeTemplate=templates.find(t=>t.id===msgType)||templates[0];
 
-  if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading...</div>;
+  if(loading)return<div style={{paddingTop:8}}><SkeletonList rows={4}/></div>;
 
   return(
     <div>

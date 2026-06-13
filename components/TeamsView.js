@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { SkeletonList } from "./Skeleton";
 
 const GC=["#534AB7","#C0392B","#1E6B3A","#D4AF37","#E8720C","#1A4F8A"];
 const getTier=(i,n)=>i<2?1:i===2?2:3;
@@ -153,7 +154,7 @@ export default function TeamsView({athletes=[]}){
     setSaving(false);
   };
 
-  if(loading)return<div style={{textAlign:"center",padding:"3rem",color:"#555",fontSize:13}}>Loading teams...</div>;
+  if(loading)return<div style={{paddingTop:8}}><SkeletonList rows={5}/></div>;
 
   const allAssigned=Object.values(groups).flat();
   const active=athletes.filter(a=>a.status==="active");

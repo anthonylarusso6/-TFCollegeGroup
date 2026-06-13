@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { RED, GREEN, GOLD, ORANGE, PUR } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { SkeletonList } from "./Skeleton";
 
 const DAYS=["Mon","Tue","Thu","Fri"];
 const DAY_LABELS={Mon:"Monday",Tue:"Tuesday",Thu:"Thursday",Fri:"Friday"};
@@ -90,7 +91,7 @@ export default function ProgramUpload(){
     setSaving(false);
   };
 
-  if(loading)return<div style={{textAlign:"center",padding:"2rem",color:"#888",fontSize:13}}>Loading...</div>;
+  if(loading)return<div style={{paddingTop:8}}><SkeletonList rows={4} avatar={false}/></div>;
 
   const activeDayLifts=days[activeDay]||[];
 
