@@ -1,13 +1,15 @@
-// v3
+// v4
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
+import Icon from "../components/Icon";
 
 const GOLD="#D4AF37";
 const RED="#C0392B";
-const STEEL="#708090";
+const STEEL="#8CA0B0";
 const ORANGE="#E8720C";
-const GREEN="#1E6B3A";
+const GREEN="#2FA869";
+const PURPLE="#8C82E8";
 
 const QUOTES=[
   {q:"Iron sharpens iron. Show up and make each other better.",a:"Proverbs 27:17"},
@@ -25,13 +27,13 @@ const QUOTES=[
 ];
 
 const PROGRAM_DAYS=[
-  {day:"Mon",time:"9:00am",note:"Mindset Monday",color:GOLD},
-  {day:"Tue",time:"9:30am",note:"Training",color:ORANGE},
-  {day:"Wed",time:"—",note:"Rest",color:"#333"},
-  {day:"Thu",time:"9:30am",note:"Training",color:ORANGE},
-  {day:"Fri",time:"9:00am",note:"Fellowship",color:GREEN},
-  {day:"Sat",time:"—",note:"Rest",color:"#333"},
-  {day:"Sun",time:"—",note:"Rest",color:"#333"},
+  {day:"Mon",time:"9:00",note:"Mindset",color:GOLD},
+  {day:"Tue",time:"9:30",note:"Training",color:ORANGE},
+  {day:"Wed",time:"—",note:"Rest",color:"#3a3a3a"},
+  {day:"Thu",time:"9:30",note:"Training",color:ORANGE},
+  {day:"Fri",time:"9:00",note:"Fellowship",color:GREEN},
+  {day:"Sat",time:"—",note:"Rest",color:"#3a3a3a"},
+  {day:"Sun",time:"—",note:"Rest",color:"#3a3a3a"},
 ];
 
 export default function Landing(){
@@ -192,144 +194,209 @@ export default function Landing(){
     }
   };
 
+  const handleQrUnlock=(next)=>{
+    setQrPin(next);
+    setQrPinError(false);
+    if(next.length===4){
+      if(next==="1803"){
+        sessionStorage.setItem("qr_unlocked","1");
+        setQrUnlocked(true);
+        setQrPinModal(false);
+        setQrFullscreen(true);
+      }else{
+        setQrPinError(true);
+        setQrPin("");
+      }
+    }
+  };
+
   const estTime=(typeof window!=="undefined"&&time)?new Date(time.toLocaleString("en-US",{timeZone:"America/New_York"})):new Date();
   const day=typeof window!=="undefined"?["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][estTime.getDay()]:"Mon";
   const isClassDay=typeof window!=="undefined"&&["Mon","Tue","Thu","Fri"].includes(day);
   const isMonFri=typeof window!=="undefined"&&(day==="Mon"||day==="Fri");
   const todayQuote=QUOTES[new Date().getDate()%QUOTES.length];
 
+  // ── Glass design tokens ──
+  const glass={background:"rgba(255,255,255,0.045)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:18,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"};
+  const sectionLabel=(icon,text,color="rgba(255,255,255,0.42)")=>(
+    <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:12}}>
+      <Icon name={icon} size={13} color={color}/>
+      <span style={{fontSize:10,color,textTransform:"uppercase",letterSpacing:"0.16em",fontWeight:700}}>{text}</span>
+    </div>
+  );
+
   return(
     <>
       <Head>
         <title>TF College Group</title>
         <meta name="description" content="TF College Group — Iron sharpens iron"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1"/>
-        <meta name="theme-color" content="#0f0f0f"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+        <meta name="theme-color" content="#080808"/>
         <link rel="manifest" href="/manifest.json"/>
       </Head>
-      <div style={{minHeight:"100vh",background:"#0f0f0f",fontFamily:"Georgia,serif",position:"relative",overflowY:"auto"}}>
+      <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",fontFamily:"Georgia,serif",position:"relative",overflowX:"hidden",color:"#fff"}}>
 
         {/* Ambient glows */}
-        <div style={{position:"fixed",top:-150,left:-100,width:400,height:400,borderRadius:"50%",background:ORANGE,opacity:0.05,filter:"blur(100px)",pointerEvents:"none"}}/>
-        <div style={{position:"fixed",bottom:-100,right:-100,width:300,height:300,borderRadius:"50%",background:GOLD,opacity:0.05,filter:"blur(80px)",pointerEvents:"none"}}/>
+        <div style={{position:"fixed",top:-160,left:-120,width:420,height:420,borderRadius:"50%",background:ORANGE,opacity:0.06,filter:"blur(120px)",pointerEvents:"none",zIndex:0}}/>
+        <div style={{position:"fixed",bottom:-120,right:-120,width:340,height:340,borderRadius:"50%",background:GOLD,opacity:0.05,filter:"blur(100px)",pointerEvents:"none",zIndex:0}}/>
 
         {/* Top bar */}
-        <div style={{padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"0.5px solid #1a1a1a"}}>
-          <div style={{fontSize:11,color:"#444",letterSpacing:"0.1em",textTransform:"uppercase"}}>tfcollegegroup.com</div>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <div style={{position:"relative",zIndex:1,padding:"16px 20px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+          <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",letterSpacing:"0.12em",textTransform:"uppercase"}}>tfcollegegroup.com</div>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
             {weather&&(
-              <div style={{fontSize:12,color:"#888"}}>
-                <span style={{marginRight:4}}>{weather.icon}</span>{weather.temp}°F
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.55)",display:"flex",alignItems:"center",gap:4}}>
+                <span>{weather.icon}</span>{weather.temp}°
               </div>
             )}
-            <div style={{textAlign:"right"}}>
-              <div suppressHydrationWarning style={{fontSize:11,color:isClassDay?GREEN:"#555",fontWeight:600}}>
-                {isClassDay?"⚡ Class day":"No class"}
-              </div>
+            <div suppressHydrationWarning style={{display:"flex",alignItems:"center",gap:6,fontSize:10,fontWeight:700,padding:"4px 11px",borderRadius:20,background:isClassDay?GREEN+"22":"rgba(255,255,255,0.05)",border:"1px solid "+(isClassDay?GREEN+"44":"rgba(255,255,255,0.08)"),color:isClassDay?"#5FD08A":"rgba(255,255,255,0.4)"}}>
+              <span style={{width:6,height:6,borderRadius:"50%",background:isClassDay?"#3AD17A":"#555",boxShadow:isClassDay?"0 0 8px #3AD17A":"none"}}/>
+              {isClassDay?"Class day":"No class"}
             </div>
           </div>
         </div>
 
-        <div style={{maxWidth:480,margin:"0 auto",padding:"0 18px 3rem",opacity:loaded?1:0,transform:loaded?"none":"translateY(20px)",transition:"opacity 0.8s,transform 0.8s"}}>
+        <div style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 18px 3rem",opacity:loaded?1:0,transform:loaded?"none":"translateY(16px)",transition:"opacity 0.7s ease,transform 0.7s ease"}}>
 
-          {/* Class day banner */}
-          {isClassDay&&(
-            <div style={{background:"linear-gradient(135deg,#1a0800,#250e00)",border:"1px solid "+ORANGE+"44",borderRadius:14,padding:"14px 18px",marginTop:16,marginBottom:12,position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+ORANGE+",transparent)"}}/>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                <div>
-                  <div style={{fontSize:11,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:3}}>🔥 Class today</div>
-                  <div style={{fontSize:15,fontWeight:700,color:"#fff"}}>{isMonFri?"9:00am":"9:30am"} sharp · {isMonFri?(day==="Mon"?"Mindset Monday":"Fellowship Friday"):"Training"}</div>
-                  <div style={{fontSize:11,color:"#555",marginTop:2}}>On time is late. Early is the only standard.</div>
-                </div>
-                {todayAttendance!==null&&(
-                  <div style={{textAlign:"center",background:"#111",borderRadius:10,padding:"8px 12px"}}>
-                    <div style={{fontSize:20,fontWeight:900,color:GREEN}}>{todayAttendance}</div>
-                    <div style={{fontSize:9,color:"#555"}}>early</div>
+          {/* Hero */}
+          <div style={{textAlign:"center",paddingTop:28,marginBottom:6}}>
+            <div style={{width:168,margin:"0 auto 18px",boxShadow:"0 0 60px "+ORANGE+"33,0 20px 50px rgba(0,0,0,0.6)",border:"1px solid "+ORANGE+"33",borderRadius:20,overflow:"hidden"}}>
+              <img src="/poster.png" alt="TF College Group" style={{width:"100%",height:"auto",display:"block"}}/>
+            </div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,0.32)",textTransform:"uppercase",letterSpacing:"0.28em",marginBottom:10}}>Triple F · College Group</div>
+            <h1 style={{fontSize:30,fontWeight:800,color:"#fff",margin:"0 0 10px",letterSpacing:"-0.02em",lineHeight:1.05}}>TF College Group</h1>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:9,fontSize:11,color:"rgba(255,255,255,0.42)",letterSpacing:"0.04em"}}>
+              <span>Faith</span><span style={{color:ORANGE,opacity:0.7}}>·</span><span>Family</span><span style={{color:ORANGE,opacity:0.7}}>·</span><span>Fitness</span>
+            </div>
+          </div>
+
+          {/* Today / Next class */}
+          {(isClassDay||countdown)&&(
+            <div style={{...glass,borderColor:(isClassDay?ORANGE:GOLD)+"38",padding:"16px 18px",marginTop:20,marginBottom:14,position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+(isClassDay?ORANGE:GOLD)+",transparent)"}}/>
+              {isClassDay&&(
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{width:44,height:44,borderRadius:13,background:ORANGE+"1e",border:"1px solid "+ORANGE+"40",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name="zap" size={21} color={ORANGE}/></div>
+                    <div>
+                      <div style={{fontSize:9,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700,marginBottom:3}}>Class today</div>
+                      <div suppressHydrationWarning style={{fontSize:16,fontWeight:800,color:"#fff",lineHeight:1.1}}>{isMonFri?"9:00am":"9:30am"} sharp</div>
+                      <div suppressHydrationWarning style={{fontSize:11,color:"rgba(255,255,255,0.42)",marginTop:2}}>{isMonFri?(day==="Mon"?"Mindset Monday":"Fellowship Friday"):"Training day"}</div>
+                    </div>
                   </div>
-                )}
-              </div>
+                  {todayAttendance!==null&&(
+                    <div style={{textAlign:"center",background:GREEN+"18",border:"1px solid "+GREEN+"33",borderRadius:12,padding:"8px 13px",flexShrink:0}}>
+                      <div style={{fontSize:21,fontWeight:900,color:"#5FD08A",lineHeight:1}}>{todayAttendance}</div>
+                      <div style={{fontSize:8,color:"#5FD08A",opacity:0.7,marginTop:3,textTransform:"uppercase",letterSpacing:"0.06em"}}>early</div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {countdown&&(
+                <>
+                  {isClassDay&&<div style={{height:1,background:"rgba(255,255,255,0.07)",margin:"14px 0"}}/>}
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
+                    <Icon name="clock" size={12} color={GOLD}/>
+                    <span style={{fontSize:10,color:"rgba(255,255,255,0.45)",textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700}}>{countdown.label}</span>
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    {[{v:countdown.days,l:"Days"},{v:countdown.hours,l:"Hrs"},{v:countdown.mins,l:"Min"},{v:countdown.secs,l:"Sec"}].map(t=>(
+                      <div key={t.l} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"10px 4px",textAlign:"center"}}>
+                        <div suppressHydrationWarning style={{fontSize:24,fontWeight:900,color:"#fff",lineHeight:1,letterSpacing:"-0.02em"}}>{String(t.v).padStart(2,"0")}</div>
+                        <div style={{fontSize:8,color:"rgba(255,255,255,0.35)",marginTop:5,textTransform:"uppercase",letterSpacing:"0.08em"}}>{t.l}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              {isClassDay&&(
+                <div style={{fontSize:10.5,color:"rgba(255,255,255,0.32)",marginTop:countdown?12:10,fontStyle:"italic"}}>On time is late. Early is the only standard.</div>
+              )}
             </div>
           )}
 
-          {/* Poster */}
-          <div style={{width:190,margin:"20px auto 16px",boxShadow:"0 0 50px "+ORANGE+"44,0 0 100px "+ORANGE+"18",border:"1.5px solid "+ORANGE+"33",borderRadius:18,overflow:"hidden"}}>
-            <img src="/poster.png" alt="TF College Group" style={{width:"100%",height:"auto",display:"block"}}/>
-          </div>
-
-          {/* Title */}
-          <div style={{textAlign:"center",marginBottom:20}}>
-            <div style={{fontSize:11,color:"#444",textTransform:"uppercase",letterSpacing:"0.2em",marginBottom:8}}>Triple F · College Group</div>
-            <h1 style={{fontSize:32,fontWeight:800,color:"#fff",margin:"0 0 8px",letterSpacing:"-0.02em",lineHeight:1.1}}>TF College Group</h1>
-          </div>
-
           {/* Quote of the day */}
-          <div style={{background:"#111",borderRadius:14,padding:"14px 18px",marginBottom:16,border:"0.5px solid #1e1e1e",position:"relative",overflow:"hidden"}}>
+          <div style={{...glass,padding:"15px 18px",marginBottom:14,position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+ORANGE+","+GOLD+",transparent)"}}/>
-            <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>📖 Today's word</div>
-            <div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.7,marginBottom:6}}>"{todayQuote.q}"</div>
-            <div style={{fontSize:11,color:"#555"}}>— {todayQuote.a}</div>
+            {sectionLabel("book","Today's word",ORANGE)}
+            <div style={{fontSize:13.5,color:"rgba(255,255,255,0.82)",fontStyle:"italic",lineHeight:1.7,marginBottom:8}}>"{todayQuote.q}"</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>— {todayQuote.a}</div>
           </div>
 
           {/* Stats row */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:16}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
             {[
-              {label:"Athletes",val:athleteCount||"—",color:STEEL},
-              {label:"Classes",val:classCount!==null?classCount:"—",color:ORANGE},
-              {label:"Week",val:weekProgress?`${weekProgress.current}/12`:"1/12",color:GOLD},
+              {label:"Athletes",val:athleteCount||"—",color:STEEL,icon:"users"},
+              {label:"Classes",val:classCount!==null?classCount:"—",color:ORANGE,icon:"calendar"},
+              {label:"Week",val:weekProgress?`${weekProgress.current}/12`:"1/12",color:GOLD,icon:"activity"},
             ].map((s,i)=>(
-              <div key={i} style={{background:"#111",borderRadius:12,padding:"12px 8px",textAlign:"center",border:"0.5px solid #1e1e1e"}}>
-                <div style={{fontSize:18,fontWeight:800,color:s.color}}>{s.val}</div>
-                <div style={{fontSize:9,color:"#444",marginTop:3,textTransform:"uppercase",letterSpacing:"0.05em"}}>{s.label}</div>
+              <div key={i} style={{...glass,padding:"13px 8px",textAlign:"center"}}>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:7,opacity:0.85}}><Icon name={s.icon} size={15} color={s.color}/></div>
+                <div style={{fontSize:19,fontWeight:800,color:s.color,lineHeight:1}}>{s.val}</div>
+                <div style={{fontSize:8.5,color:"rgba(255,255,255,0.35)",marginTop:5,textTransform:"uppercase",letterSpacing:"0.08em"}}>{s.label}</div>
               </div>
             ))}
           </div>
 
-          {/* Season progress bar */}
+          {/* Season progress */}
           {weekProgress&&(
-            <div style={{background:"#111",borderRadius:14,padding:"14px 18px",marginBottom:16,border:"0.5px solid #1e1e1e"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em"}}>Season progress</div>
-                <div style={{fontSize:12,fontWeight:700,color:GREEN}}>Week {weekProgress.current} of {weekProgress.total}</div>
+            <div style={{...glass,padding:"14px 18px",marginBottom:14}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.45)",textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700}}>Season progress</span>
+                <span style={{fontSize:12,fontWeight:700,color:"#5FD08A"}}>Week {weekProgress.current} / {weekProgress.total}</span>
               </div>
-              <div style={{height:6,background:"#222",borderRadius:3,overflow:"hidden",marginBottom:4}}>
-                <div style={{height:"100%",width:weekProgress.pct+"%",background:"linear-gradient(90deg,"+ORANGE+","+GOLD+")",borderRadius:3}}/>
+              <div style={{height:7,background:"rgba(255,255,255,0.07)",borderRadius:4,overflow:"hidden"}}>
+                <div style={{height:"100%",width:weekProgress.pct+"%",background:"linear-gradient(90deg,"+ORANGE+","+GOLD+")",borderRadius:4,boxShadow:"0 0 12px "+ORANGE+"66",transition:"width 1s ease"}}/>
               </div>
-              <div style={{fontSize:10,color:"#444"}}>{weekProgress.pct}% complete</div>
+              <div style={{fontSize:9.5,color:"rgba(255,255,255,0.3)",marginTop:7}}>{weekProgress.pct}% complete</div>
             </div>
           )}
 
-          {/* Countdown */}
-          {countdown&&(
-            <div style={{background:"linear-gradient(135deg,#1a1400,#221b00)",border:"1px solid "+GOLD+"33",borderRadius:14,padding:"16px",marginBottom:16,textAlign:"center",position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+GOLD+",transparent)"}}/>
-              <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:12}}>⚒ {countdown.label}</div>
-              <div style={{display:"flex",justifyContent:"center",gap:12}}>
-                {[{v:countdown.days,l:"Days"},{v:countdown.hours,l:"Hrs"},{v:countdown.mins,l:"Min"},{v:countdown.secs,l:"Sec"}].map(t=>(
-                  <div key={t.l} style={{background:"#1a1500",borderRadius:10,padding:"8px 12px",minWidth:52,border:"0.5px solid "+GOLD+"22"}}>
-                    <div style={{fontSize:26,fontWeight:900,color:GOLD,lineHeight:1,textAlign:"center"}}>{String(t.v).padStart(2,"0")}</div>
-                    <div style={{fontSize:9,color:"#555",marginTop:4,textAlign:"center",textTransform:"uppercase",letterSpacing:"0.05em"}}>{t.l}</div>
-                  </div>
-                ))}
-              </div>
+          {/* This week's Anvil */}
+          <div style={{...glass,borderColor:GOLD+"33",padding:"18px",marginBottom:14,position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+GOLD+",transparent)"}}/>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:14}}>
+              <Icon name="anvil" size={14} color={GOLD}/>
+              <span style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.16em",fontWeight:700}}>This week's Anvil</span>
             </div>
-          )}
+            {anvilWinner?(
+              <div style={{textAlign:"center"}}>
+                <div style={{width:74,height:74,borderRadius:"50%",margin:"0 auto 12px",border:"2px solid "+GOLD,overflow:"hidden",background:"#1a1a1a",boxShadow:"0 0 24px "+GOLD+"55",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:800,color:GOLD}}>
+                  {anvilWinner.photo_url?
+                    <img src={anvilWinner.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={anvilWinner.athlete_name}/>
+                    :(anvilWinner.athlete_name||"?")[0]
+                  }
+                </div>
+                <div style={{fontSize:18,fontWeight:800,color:GOLD,marginBottom:5,letterSpacing:"-0.01em"}}>{anvilWinner.athlete_name}</div>
+                {anvilWinner.note&&<div style={{fontSize:12,color:"rgba(255,255,255,0.5)",fontStyle:"italic",lineHeight:1.6}}>"{anvilWinner.note}"</div>}
+              </div>
+            ):(
+              <div style={{textAlign:"center"}}>
+                <div style={{marginBottom:8,display:"flex",justifyContent:"center"}}><Icon name="anvil" size={36} color={GOLD} style={{filter:"drop-shadow(0 0 10px "+GOLD+"55)"}}/></div>
+                <div style={{fontSize:14,fontWeight:700,color:GOLD,marginBottom:3}}>To be announced</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",fontStyle:"italic"}}>"The anvil does not move."</div>
+              </div>
+            )}
+          </div>
 
-          {/* Forge leaders */}
+          {/* This week's Forge */}
           {forgeLeaders.length>0&&(
-            <div style={{background:"#111",borderRadius:14,padding:"14px 18px",marginBottom:16,border:"0.5px solid "+RED+"33",position:"relative",overflow:"hidden"}}>
+            <div style={{...glass,borderColor:RED+"2e",padding:"15px 18px",marginBottom:14,position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+RED+",transparent)"}}/>
-              <div style={{fontSize:11,color:RED,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>🔴 This week's Forge</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+              <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:12}}>
+                <Icon name="flame" size={13} color={RED}/>
+                <span style={{fontSize:10,color:RED,textTransform:"uppercase",letterSpacing:"0.16em",fontWeight:700}}>This week's Forge</span>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
                 {forgeLeaders.map((leader,i)=>{
                   const name=typeof leader==="string"?leader:leader.name;
                   const photoUrl=typeof leader==="object"?leader.photo_url:null;
                   return(
-                  <div key={i} style={{background:"#1a0d0d",borderRadius:8,padding:"8px 10px",display:"flex",alignItems:"center",gap:8,border:"0.5px solid "+RED+"22"}}>
+                  <div key={i} style={{background:"rgba(192,57,43,0.08)",borderRadius:10,padding:"8px 11px",display:"flex",alignItems:"center",gap:9,border:"1px solid "+RED+"22"}}>
                     <div style={{width:32,height:32,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
                       {photoUrl?<img src={photoUrl} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>{e.target.style.display="none";}} alt=""/>:(name||"?")[0]}
                     </div>
-                    <div style={{fontSize:12,color:"#ddd",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.85)",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name}</div>
                   </div>
                   );
                 })}
@@ -337,146 +404,67 @@ export default function Landing(){
             </div>
           )}
 
-          {/* Anvil winner */}
-          <div style={{background:"linear-gradient(135deg,#1f1700,#2a2000)",border:"1px solid "+GOLD+"33",borderRadius:14,padding:"16px 18px",marginBottom:16,position:"relative",overflow:"hidden"}}>
-            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+GOLD+",transparent)"}}/>
-            <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:12,textAlign:"center"}}>⚒ This week's Anvil</div>
-            {anvilWinner?(
-              <div style={{textAlign:"center"}}>
-                <div style={{width:72,height:72,borderRadius:"50%",margin:"0 auto 10px",border:"2px solid "+GOLD,overflow:"hidden",background:"#333",boxShadow:"0 0 20px "+GOLD+"55",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:700,color:GOLD}}>
-                  {anvilWinner.photo_url?
-                    <img src={anvilWinner.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={anvilWinner.athlete_name}/>
-                    :(anvilWinner.athlete_name||"?")[0]
-                  }
-                </div>
-                <div style={{fontSize:17,fontWeight:800,color:GOLD,marginBottom:4}}>{anvilWinner.athlete_name}</div>
-                {anvilWinner.note&&<div style={{fontSize:12,color:"#888",fontStyle:"italic",lineHeight:1.6}}>"{anvilWinner.note}"</div>}
-              </div>
-            ):(
-              <div style={{textAlign:"center"}}>
-                <div style={{fontSize:36,marginBottom:6,filter:"drop-shadow(0 0 8px "+GOLD+"44)"}}>⚒</div>
-                <div style={{fontSize:14,fontWeight:600,color:GOLD,marginBottom:2}}>To be announced</div>
-                <div style={{fontSize:11,color:"#555",fontStyle:"italic"}}>"The anvil does not move."</div>
-              </div>
-            )}
-          </div>
-
-          {/* Photo of the week */}
-          {photo&&(
-            <div style={{borderRadius:14,overflow:"hidden",marginBottom:16,position:"relative",border:"1px solid #222"}}>
-              <img src={photo.photo_url} alt="Culture" style={{width:"100%",height:200,objectFit:"cover",display:"block"}}/>
-              <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(0,0,0,0.7),transparent)"}}/>
-              <div style={{position:"absolute",bottom:12,left:14}}>
-                <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2}}>📸 Latest photo</div>
-                {photo.caption&&<div style={{fontSize:12,color:"#fff",fontWeight:500}}>{photo.caption}</div>}
-              </div>
-            </div>
-          )}
-
-          {/* Program schedule */}
-          <div style={{background:"#111",borderRadius:14,padding:"14px 18px",marginBottom:16,border:"0.5px solid #1e1e1e"}}>
-            <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>📅 Weekly schedule</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
-              {PROGRAM_DAYS.map((d,i)=>{
-                const isToday=day===d.day;
-                return(
-                  <div key={i} style={{textAlign:"center",padding:"8px 4px",borderRadius:8,background:isToday?d.color+"22":"transparent",border:isToday?"1px solid "+d.color+"44":"1px solid transparent"}}>
-                    <div style={{fontSize:9,fontWeight:700,color:isToday?d.color:"#555",marginBottom:3,textTransform:"uppercase"}}>{d.day}</div>
-                    <div style={{fontSize:11,color:d.time==="—"?"#333":"#888"}}>{d.time}</div>
-                    <div style={{fontSize:8,color:d.color=="#333"?"#333":d.color,marginTop:2,lineHeight:1.2}}>{d.note}</div>
+          {/* Quick access */}
+          <div style={{marginBottom:14}}>
+            {sectionLabel("grid","Quick access")}
+            <div style={{display:"flex",flexDirection:"column",gap:9}}>
+              {[
+                {href:"/athlete",icon:"profile",label:"Athlete Portal",sub:"Sign in · Check-in · Your profile",color:STEEL},
+                {href:"/coach",icon:"anvil",label:"Coach Dashboard",sub:"Roster · Draft · Inbox · Everything",color:GOLD},
+                {href:"/callout",icon:"megaphone",label:"Call-Out Station",sub:"iPad · Weight room · Log violations",color:RED},
+              ].map((btn,i)=>(
+                <a key={i} href={btn.href} style={{textDecoration:"none"}}>
+                  <div style={{...glass,padding:"13px 16px",display:"flex",alignItems:"center",gap:13,cursor:"pointer",transition:"border-color 0.18s,background 0.18s"}}
+                    onMouseEnter={e=>{e.currentTarget.style.borderColor=btn.color+"66";e.currentTarget.style.background="rgba(255,255,255,0.06)";}}
+                    onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.08)";e.currentTarget.style.background="rgba(255,255,255,0.045)";}}>
+                    <div style={{width:42,height:42,borderRadius:12,background:btn.color+"1c",border:"1px solid "+btn.color+"33",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><Icon name={btn.icon} size={20} color={btn.color}/></div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:2}}>{btn.label}</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{btn.sub}</div>
+                    </div>
+                    <Icon name="chevronRight" size={16} color="rgba(255,255,255,0.25)"/>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                </a>
+              ))}
 
-          {/* Nav buttons */}
-          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
-            {[
-              {href:"/athlete",icon:"⚙",label:"Athlete Portal",sub:"Sign in · Check-in · Your profile",color:STEEL},
-              {href:"/coach",icon:"⚒",label:"Coach Dashboard",sub:"Roster · Draft · Inbox · Everything",color:GOLD},
-              {href:"/callout",icon:"📲",label:"Call-Out Station",sub:"iPad · Weight room · Log violations",color:RED},
-            ].map((btn,i)=>(
-              <a key={i} href={btn.href} style={{textDecoration:"none"}}>
-                <div style={{padding:"14px 18px",borderRadius:14,border:"1px solid #1e1e1e",background:"#111",cursor:"pointer",display:"flex",alignItems:"center",gap:14}}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor=btn.color+"66";}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor="#1e1e1e";}}>
-                  <div style={{width:44,height:44,borderRadius:12,background:btn.color+"22",border:"1px solid "+btn.color+"33",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>{btn.icon}</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:14,fontWeight:600,color:btn.color,marginBottom:2}}>{btn.label}</div>
-                    <div style={{fontSize:11,color:"#555"}}>{btn.sub}</div>
-                  </div>
-                  <div style={{fontSize:16,color:"#333"}}>→</div>
+              {/* QR Check-In */}
+              <div onClick={()=>{if(qrUnlocked){setQrFullscreen(true);}else{setQrPin("");setQrPinError(false);setQrPinModal(true);}}}
+                style={{...glass,padding:"13px 16px",display:"flex",alignItems:"center",gap:13,cursor:"pointer",transition:"border-color 0.18s,background 0.18s"}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor=ORANGE+"66";e.currentTarget.style.background="rgba(255,255,255,0.06)";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.08)";e.currentTarget.style.background="rgba(255,255,255,0.045)";}}>
+                <div style={{width:42,height:42,borderRadius:10,background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden"}}>
+                  {qrDataUrl?<img src={qrDataUrl} style={{width:38,height:38}} alt="QR"/>:<Icon name="qr" size={20} color="#1a1a1a"/>}
                 </div>
-              </a>
-            ))}
-          </div>
-
-          {/* QR Check-In */}
-          <div onClick={()=>{if(qrUnlocked){setQrFullscreen(true);}else{setQrPin("");setQrPinError(false);setQrPinModal(true);}}} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 18px",borderRadius:14,border:"1px solid #1e1e1e",background:"#111",cursor:"pointer",marginBottom:10}}
-            onMouseEnter={e=>e.currentTarget.style.borderColor=ORANGE+"66"}
-            onMouseLeave={e=>e.currentTarget.style.borderColor="#1e1e1e"}>
-            <div style={{width:44,height:44,borderRadius:10,background:"#1a1a1a",border:"1px solid #2a2a2a",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,overflow:"hidden"}}>
-              {qrDataUrl?<img src={qrDataUrl} style={{width:40,height:40}} alt="QR"/>:<div style={{fontSize:20}}>📱</div>}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:2}}>Check-In QR Code</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{qrUnlocked?"Tap to display fullscreen at the door":"Coach passcode required"}</div>
+                </div>
+                <Icon name={qrUnlocked?"qr":"lock"} size={15} color="rgba(255,255,255,0.3)"/>
+              </div>
             </div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:14,fontWeight:600,color:ORANGE,marginBottom:2}}>Check-In QR Code</div>
-              <div style={{fontSize:11,color:"#555"}}>{qrUnlocked?"Tap to display fullscreen at the door":"Coach passcode required"}</div>
-            </div>
-            <div style={{fontSize:16,color:"#333"}}>{qrUnlocked?"⛶":"🔒"}</div>
           </div>
 
           {/* PIN modal */}
           {qrPinModal&&(
             <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={()=>setQrPinModal(false)}>
-              <div onClick={e=>e.stopPropagation()} style={{background:"#111",borderRadius:16,padding:"2rem 1.5rem",width:280,border:"1px solid #2a2a2a",textAlign:"center",fontFamily:"Georgia,serif"}}>
-                <div style={{fontSize:24,marginBottom:8}}>🔒</div>
+              <div onClick={e=>e.stopPropagation()} style={{background:"rgba(18,18,26,0.98)",borderRadius:20,padding:"2rem 1.5rem",width:280,border:"1px solid rgba(255,255,255,0.1)",textAlign:"center",fontFamily:"Georgia,serif",boxShadow:"0 30px 80px rgba(0,0,0,0.7)"}}>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:10}}><Icon name="lock" size={24} color={ORANGE}/></div>
                 <div style={{fontSize:15,fontWeight:700,color:"#fff",marginBottom:4}}>Coach Passcode</div>
-                <div style={{fontSize:12,color:"#555",marginBottom:20}}>Enter your passcode to display the QR</div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.4)",marginBottom:20}}>Enter your passcode to display the QR</div>
                 <div style={{display:"flex",justifyContent:"center",gap:12,marginBottom:16}}>
                   {[0,1,2,3].map(i=>(
-                    <div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+ORANGE,background:i<qrPin.length?ORANGE:"transparent"}}/>
+                    <div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+ORANGE,background:i<qrPin.length?ORANGE:"transparent",transition:"background 0.15s"}}/>
                   ))}
                 </div>
-                {qrPinError&&<div style={{fontSize:12,color:RED,marginBottom:12}}>Wrong passcode. Try again.</div>}
+                {qrPinError&&<div style={{fontSize:12,color:"#E66",marginBottom:12}}>Wrong passcode. Try again.</div>}
                 <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:8}}>
                   {[1,2,3,4,5,6,7,8,9].map(n=>(
-                    <button key={n} onClick={()=>{
-                      const next=qrPin+n;
-                      setQrPin(next);
-                      setQrPinError(false);
-                      if(next.length===4){
-                        if(next==="1803"){
-                          sessionStorage.setItem("qr_unlocked","1");
-                          setQrUnlocked(true);
-                          setQrPinModal(false);
-                          setQrFullscreen(true);
-                        }else{
-                          setQrPinError(true);
-                          setQrPin("");
-                        }
-                      }
-                    }} style={{padding:"14px",borderRadius:10,border:"1px solid #2a2a2a",background:"#1a1a1a",color:"#fff",fontSize:18,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>{n}</button>
+                    <button key={n} onClick={()=>handleQrUnlock(qrPin+n)} style={{padding:"14px",borderRadius:12,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",color:"#fff",fontSize:18,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>{n}</button>
                   ))}
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                  <button onClick={()=>setQrPinModal(false)} style={{padding:"14px",borderRadius:10,border:"1px solid #2a2a2a",background:"#1a1a1a",color:"#555",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
-                  <button onClick={()=>{
-                    const next=qrPin+"0";
-                    setQrPin(next);
-                    setQrPinError(false);
-                    if(next.length===4){
-                      if(next==="1803"){
-                        sessionStorage.setItem("qr_unlocked","1");
-                        setQrUnlocked(true);
-                        setQrPinModal(false);
-                        setQrFullscreen(true);
-                      }else{
-                        setQrPinError(true);
-                        setQrPin("");
-                      }
-                    }
-                  }} style={{padding:"14px",borderRadius:10,border:"1px solid #2a2a2a",background:"#1a1a1a",color:"#fff",fontSize:18,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>0</button>
+                  <button onClick={()=>setQrPinModal(false)} style={{padding:"14px",borderRadius:12,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.03)",color:"rgba(255,255,255,0.4)",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
+                  <button onClick={()=>handleQrUnlock(qrPin+"0")} style={{padding:"14px",borderRadius:12,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",color:"#fff",fontSize:18,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>0</button>
                 </div>
               </div>
             </div>
@@ -492,31 +480,64 @@ export default function Landing(){
             </div>
           )}
 
-          {/* GroupMe + Notifications */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+          {/* Weekly schedule */}
+          <div style={{...glass,padding:"14px 16px",marginBottom:14}}>
+            {sectionLabel("calendar","Weekly schedule")}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4}}>
+              {PROGRAM_DAYS.map((d,i)=>{
+                const isToday=day===d.day;
+                const isRest=d.time==="—";
+                return(
+                  <div key={i} style={{textAlign:"center",padding:"9px 3px",borderRadius:10,background:isToday?d.color+"22":"rgba(255,255,255,0.02)",border:"1px solid "+(isToday?d.color+"55":"rgba(255,255,255,0.05)")}}>
+                    <div style={{fontSize:9,fontWeight:700,color:isToday?d.color:"rgba(255,255,255,0.4)",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.04em"}}>{d.day}</div>
+                    <div style={{fontSize:11,fontWeight:600,color:isRest?"rgba(255,255,255,0.18)":"rgba(255,255,255,0.7)"}}>{d.time}</div>
+                    <div style={{fontSize:7.5,color:isRest?"rgba(255,255,255,0.18)":d.color,marginTop:3,lineHeight:1.2,textTransform:"uppercase",letterSpacing:"0.03em"}}>{d.note}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Photo of the week */}
+          {photo&&(
+            <div style={{borderRadius:18,overflow:"hidden",marginBottom:14,position:"relative",border:"1px solid rgba(255,255,255,0.08)"}}>
+              <img src={photo.photo_url} alt="Culture" style={{width:"100%",height:200,objectFit:"cover",display:"block"}}/>
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(0,0,0,0.8),transparent 60%)"}}/>
+              <div style={{position:"absolute",bottom:13,left:15,right:15}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                  <Icon name="camera" size={12} color="rgba(255,255,255,0.6)"/>
+                  <span style={{fontSize:9.5,color:"rgba(255,255,255,0.6)",textTransform:"uppercase",letterSpacing:"0.1em"}}>Latest photo</span>
+                </div>
+                {photo.caption&&<div style={{fontSize:12.5,color:"#fff",fontWeight:500}}>{photo.caption}</div>}
+              </div>
+            </div>
+          )}
+
+          {/* Connect: GroupMe + Notifications */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:14}}>
             <a href={groupmeLink} target="_blank" rel="noreferrer" style={{textDecoration:"none"}}>
-              <div style={{background:"#111",borderRadius:14,padding:"14px",border:"1px solid #1e1e1e",textAlign:"center",cursor:"pointer"}}
-                onMouseEnter={e=>e.currentTarget.style.borderColor="#00aff0aa"}
-                onMouseLeave={e=>e.currentTarget.style.borderColor="#1e1e1e"}>
-                <div style={{fontSize:26,marginBottom:6}}>💬</div>
-                <div style={{fontSize:12,fontWeight:700,color:"#00aff0",marginBottom:2}}>GroupMe</div>
-                <div style={{fontSize:10,color:"#555"}}>Join the group chat</div>
+              <div style={{...glass,padding:"15px 12px",textAlign:"center",cursor:"pointer",transition:"border-color 0.18s,background 0.18s",height:"100%"}}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor="#00aff0aa";e.currentTarget.style.background="rgba(255,255,255,0.06)";}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.08)";e.currentTarget.style.background="rgba(255,255,255,0.045)";}}>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><Icon name="chat" size={22} color="#00aff0"/></div>
+                <div style={{fontSize:12.5,fontWeight:700,color:"#fff",marginBottom:2}}>GroupMe</div>
+                <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Join the group chat</div>
               </div>
             </a>
-            <div style={{background:"#111",borderRadius:14,padding:"14px",border:"1px solid "+(notifGranted?GREEN+"44":"#1e1e1e"),textAlign:"center",cursor:"pointer"}}
+            <div style={{...glass,borderColor:notifGranted?GREEN+"44":"rgba(255,255,255,0.08)",padding:"15px 12px",textAlign:"center",cursor:"pointer",transition:"border-color 0.18s,background 0.18s"}}
               onClick={toggleNotif}
-              onMouseEnter={e=>e.currentTarget.style.borderColor=GREEN+"66"}
-              onMouseLeave={e=>e.currentTarget.style.borderColor=notifGranted?GREEN+"44":"#1e1e1e"}>
-              <div style={{fontSize:26,marginBottom:6}}>{notifGranted?"🔔":"🔕"}</div>
-              <div style={{fontSize:12,fontWeight:700,color:notifGranted?GREEN:"#888",marginBottom:2}}>{notifGranted?"Notifications on":"Get notified"}</div>
-              <div style={{fontSize:10,color:"#555"}}>Draft · class alerts</div>
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=GREEN+"66";e.currentTarget.style.background="rgba(255,255,255,0.06)";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=notifGranted?GREEN+"44":"rgba(255,255,255,0.08)";e.currentTarget.style.background="rgba(255,255,255,0.045)";}}>
+              <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><Icon name={notifGranted?"bell":"bellOff"} size={22} color={notifGranted?"#5FD08A":"rgba(255,255,255,0.5)"}/></div>
+              <div style={{fontSize:12.5,fontWeight:700,color:notifGranted?"#5FD08A":"#fff",marginBottom:2}}>{notifGranted?"Notifications on":"Get notified"}</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>Draft · class alerts</div>
             </div>
           </div>
 
           {/* Verse of the day */}
-          <div style={{background:"linear-gradient(135deg,#0d0d1f,#12122a)",borderRadius:14,padding:"16px 18px",marginBottom:16,border:"1px solid #534AB722",position:"relative",overflow:"hidden"}}>
+          <div style={{background:"linear-gradient(135deg,rgba(83,74,183,0.13),rgba(83,74,183,0.03))",border:"1px solid #534AB733",borderRadius:18,padding:"16px 18px",marginBottom:14,position:"relative",overflow:"hidden"}}>
             <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#534AB7,"+GOLD+",transparent)"}}/>
-            <div style={{fontSize:10,color:"#534AB7",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:10}}>📖 Verse of the Day</div>
+            {sectionLabel("book","Verse of the day",PURPLE)}
             {(()=>{
               const VERSES=[
                 {t:"As iron sharpens iron, so one person sharpens another.",r:"Proverbs 27:17"},
@@ -535,47 +556,49 @@ export default function Landing(){
               const v=VERSES[new Date().getDate()%VERSES.length];
               return(
                 <div>
-                  <div style={{fontSize:14,color:"#e0e0e0",fontStyle:"italic",lineHeight:1.8,marginBottom:10}}>"{v.t}"</div>
-                  <div style={{display:"inline-block",padding:"4px 12px",borderRadius:20,background:"#534AB722",border:"1px solid #534AB744"}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#534AB7"}}>{v.r}</div>
+                  <div style={{fontSize:14,color:"rgba(255,255,255,0.88)",fontStyle:"italic",lineHeight:1.8,marginBottom:11}}>"{v.t}"</div>
+                  <div style={{display:"inline-block",padding:"4px 13px",borderRadius:20,background:"#534AB722",border:"1px solid #534AB744"}}>
+                    <div style={{fontSize:11,fontWeight:700,color:PURPLE}}>{v.r}</div>
                   </div>
                 </div>
               );
             })()}
           </div>
 
-          {/* Program values */}
-          <div style={{background:"#111",borderRadius:14,padding:"14px 18px",marginBottom:16,border:"0.5px solid #1e1e1e"}}>
-            <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:12}}>⚒ The three tiers</div>
+          {/* The three tiers */}
+          <div style={{...glass,padding:"15px 18px",marginBottom:16}}>
+            {sectionLabel("anvil","The three tiers")}
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {[
-                {icon:"⚙️",title:"The Iron",color:STEEL,desc:"Every athlete enters here. Gray. Unfinished. Ready to be shaped. The work starts now."},
-                {icon:"🔥",title:"The Forge",color:RED,desc:"Weekly leaders. Drafted. Responsible for setting the standard and leading the group."},
-                {icon:"⚒",title:"The Anvil",color:GOLD,desc:"The highest individual honor. Cannot be drafted. Can only be earned. One per week."},
+                {icon:"barbell",title:"The Iron",color:STEEL,desc:"Every athlete enters here. Gray. Unfinished. Ready to be shaped. The work starts now."},
+                {icon:"flame",title:"The Forge",color:RED,desc:"Weekly leaders. Drafted. Responsible for setting the standard and leading the group."},
+                {icon:"anvil",title:"The Anvil",color:GOLD,desc:"The highest individual honor. Cannot be drafted. Can only be earned. One per week."},
               ].map((v,i)=>(
-                <div key={i} style={{display:"flex",gap:14,alignItems:"flex-start",padding:"10px 12px",borderRadius:10,background:v.color+"0a",border:"1px solid "+v.color+"22"}}>
-                  <div style={{fontSize:22,flexShrink:0,marginTop:2}}>{v.icon}</div>
+                <div key={i} style={{display:"flex",gap:13,alignItems:"flex-start",padding:"11px 13px",borderRadius:12,background:v.color+"0d",border:"1px solid "+v.color+"22"}}>
+                  <div style={{width:34,height:34,borderRadius:10,background:v.color+"1c",border:"1px solid "+v.color+"33",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}><Icon name={v.icon} size={17} color={v.color}/></div>
                   <div>
                     <div style={{fontSize:13,fontWeight:700,color:v.color,marginBottom:3}}>{v.title}</div>
-                    <div style={{fontSize:12,color:"#666",lineHeight:1.6}}>{v.desc}</div>
+                    <div style={{fontSize:11.5,color:"rgba(255,255,255,0.5)",lineHeight:1.6}}>{v.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Animated anvil + role progression */}
-          <div style={{textAlign:"center",marginBottom:16}}>
-            <div style={{fontSize:48,animation:"anvil-pulse 2s ease-in-out infinite",display:"inline-block"}}>⚒</div>
-            <style>{`@keyframes anvil-pulse{0%,100%{filter:drop-shadow(0 0 8px ${GOLD}44);transform:scale(1);}50%{filter:drop-shadow(0 0 20px ${GOLD}88);transform:scale(1.05);}}`}</style>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:8}}>
-              {[{l:"The Iron",c:STEEL},{l:"→",c:"#333"},{l:"The Forge",c:RED},{l:"→",c:"#333"},{l:"The Anvil",c:GOLD}].map((x,i)=>(
-                <div key={i} style={{fontSize:11,color:x.c,fontWeight:i%2===0?600:400}}>{x.l}</div>
-              ))}
+          {/* Animated anvil + progression */}
+          <div style={{textAlign:"center",marginBottom:18}}>
+            <span style={{display:"inline-block",animation:"anvil-pulse 2.4s ease-in-out infinite"}}><Icon name="anvil" size={42} color={GOLD}/></span>
+            <style>{`@keyframes anvil-pulse{0%,100%{filter:drop-shadow(0 0 8px ${GOLD}55);transform:scale(1);}50%{filter:drop-shadow(0 0 22px ${GOLD}aa);transform:scale(1.06);}}`}</style>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:7,marginTop:10}}>
+              <span style={{fontSize:11,color:STEEL,fontWeight:600}}>The Iron</span>
+              <Icon name="chevronRight" size={12} color="rgba(255,255,255,0.25)"/>
+              <span style={{fontSize:11,color:RED,fontWeight:600}}>The Forge</span>
+              <Icon name="chevronRight" size={12} color="rgba(255,255,255,0.25)"/>
+              <span style={{fontSize:11,color:GOLD,fontWeight:600}}>The Anvil</span>
             </div>
           </div>
 
-          <div style={{textAlign:"center",fontSize:11,color:"#333",letterSpacing:"0.05em"}}>
+          <div style={{textAlign:"center",fontSize:10,color:"rgba(255,255,255,0.25)",letterSpacing:"0.06em"}}>
             TF College Group · Triple F Sports · Knoxville, TN
           </div>
         </div>
