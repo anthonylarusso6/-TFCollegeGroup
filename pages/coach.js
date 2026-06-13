@@ -741,7 +741,7 @@ export default function Coach(){
   const completeCoachAuth=(role,tab)=>{
     setAuthed(true);setCoachRole(role);if(tab)setTab(tab);setPin("");setEditingPins(false);slideDirRef.current=0;
     try{const s=localStorage.getItem("tf_pinned_coach_"+role);setPinnedTabs(s?JSON.parse(s):(role==="kevin"?["mindset","attendance"]:["roster","inbox","attendance"]));}catch(e){}
-    try{const storedOrder=localStorage.getItem("tf_more_order_coach_"+role);const defaultOrder=ALL_TABS.map(t=>t.id);const initOrder=storedOrder?JSON.parse(storedOrder):defaultOrder;setMoreOrder(initOrder);moreOrderRef.current=initOrder;}catch(e){}
+    try{const storedOrder=localStorage.getItem("tf_more_order_coach_"+role);const defaultOrder=ALL_TABS.map(t=>t.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});setMoreOrder(initOrder);moreOrderRef.current=initOrder;}catch(e){}
   };
 
   const authenticateWithBiometric=async()=>{
