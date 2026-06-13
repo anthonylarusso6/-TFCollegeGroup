@@ -242,6 +242,12 @@ export default function Athlete(){
   const jiggleLastSwapX=useRef(0);
   const jiggleDragStartX=useRef(0);
   const jiggleDragElemRef=useRef(null);
+  const[moreOrder,setMoreOrder]=useState([]);
+  const moreOrderRef=useRef([]);
+  const[gridDragId,setGridDragId]=useState(null);
+  const gridDragElemRef=useRef(null);
+  const gridLongPressRef=useRef(null);
+  const gridLastOverId=useRef(null);
   const[checkinInfo,setCheckinInfo]=useState(null);
   const[tab,setTab]=useState("profile");
   const[loading,setLoading]=useState(true);
@@ -542,6 +548,8 @@ export default function Athlete(){
     setGoalSaved({});setGoalText({});setMyVote(null);
     setTab("profile");setEditingPins(false);slideDirRef.current=0;
     try{const s=localStorage.getItem("tf_pinned_"+a.id);setPinnedTabs(s?JSON.parse(s):["prs","attendance","weight"]);}catch(e){setPinnedTabs(["prs","attendance","weight"]);}
+    const defaultOrder=["profile","mcastles","verse","attendance","mygroup","anvil","weight","body","prs","stretching","leaderboard","prayer","bracelets","photos","notes","habits","private","draft","journey","private"];
+    try{const storedOrder=localStorage.getItem("tf_more_order_"+a.id);const initOrder=storedOrder?JSON.parse(storedOrder):defaultOrder;setMoreOrder(initOrder);moreOrderRef.current=initOrder;}catch(e){setMoreOrder(defaultOrder);moreOrderRef.current=defaultOrder;}
     // Auto-trigger Face ID if credential exists — check availability inline (don't rely on bioAvail state)
     const raw=localStorage.getItem("tf_bio_"+a.id);
     let canBio=false;
@@ -2137,21 +2145,63 @@ export default function Athlete(){
                         </div>
                       )}
                       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-                        {TABS.filter(t=>editingPins||!PRIMARY.includes(t.id)).map(t=>{
+                        {(moreOrder.length?moreOrder.map(id=>TABS.find(t=>t.id===id)).filter(Boolean):TABS).filter(t=>editingPins||!PRIMARY.includes(t.id)).map(t=>{
                           const isActive=tab===t.id;
                           const isPinned=t.id==="profile"||validPinned.includes(t.id);
                           const col=ICON_COLORS[t.id]||tabColor;
                           return(
-                            <button key={t.id} onClick={()=>{
-                              if(editingPins){togglePin(t.id);return;}
-                              slideDirRef.current=0;setTab(t.id);setShowTabPicker(false);setEditingPins(false);
-                            }}
+                            <button key={t.id}
+                              data-tab-id={t.id}
+                              ref={gridDragId===t.id?gridDragElemRef:null}
+                              onClick={()=>{
+                                if(gridDragId)return;
+                                if(editingPins){togglePin(t.id);return;}
+                                slideDirRef.current=0;setTab(t.id);setShowTabPicker(false);setEditingPins(false);
+                              }}
+                              onTouchStart={(e)=>{
+                                const startTouch=e.touches[0];
+                                gridLongPressRef.current=setTimeout(()=>{
+                                  if(navigator.vibrate)navigator.vibrate(20);
+                                  moreOrderRef.current=[...(moreOrder.length?moreOrder:TABS.map(x=>x.id))];
+                                  gridLastOverId.current=t.id;
+                                  setGridDragId(t.id);
+                                },480);
+                              }}
+                              onTouchMove={(e)=>{
+                                if(gridDragId!==t.id){clearTimeout(gridLongPressRef.current);return;}
+                                e.stopPropagation();e.preventDefault();
+                                if(gridDragElemRef.current){gridDragElemRef.current.style.transform="scale(1.12)";gridDragElemRef.current.style.zIndex="20";gridDragElemRef.current.style.boxShadow="0 12px 32px rgba(0,0,0,0.55)";}
+                                const el=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
+                                const btn=el?.closest("[data-tab-id]");
+                                const overId=btn?.dataset?.tabId;
+                                if(overId&&overId!==t.id&&overId!==gridLastOverId.current){
+                                  const arr=moreOrderRef.current;
+                                  const fi=arr.indexOf(t.id);const ti=arr.indexOf(overId);
+                                  if(fi!==-1&&ti!==-1){[arr[fi],arr[ti]]=[arr[ti],arr[fi]];setMoreOrder([...arr]);}
+                                  if(pinnedTabs.includes(t.id)&&pinnedTabs.includes(overId)){
+                                    setPinnedTabs(prev=>{const p=[...prev];const pf=p.indexOf(t.id);const pt=p.indexOf(overId);if(pf!==-1&&pt!==-1)[p[pf],p[pt]]=[p[pt],p[pf]];return p;});
+                                  }
+                                  gridLastOverId.current=overId;
+                                }
+                              }}
+                              onTouchEnd={()=>{
+                                clearTimeout(gridLongPressRef.current);
+                                if(gridDragElemRef.current){gridDragElemRef.current.style.transform="";gridDragElemRef.current.style.zIndex="";gridDragElemRef.current.style.boxShadow="";}
+                                setGridDragId(null);
+                                if(moreOrderRef.current.length){
+                                  try{localStorage.setItem("tf_more_order_"+selectedAthlete.id,JSON.stringify(moreOrderRef.current));}catch(err){}
+                                  if(pinnedTabs.length){try{localStorage.setItem("tf_pinned_"+selectedAthlete.id,JSON.stringify(pinnedTabs));}catch(err){}}
+                                }
+                              }}
                               style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px 10px",borderRadius:16,position:"relative",
-                                background:isActive?"rgba(255,255,255,0.13)":(editingPins&&isPinned?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.05)"),
+                                background:gridDragId===t.id?"rgba(255,255,255,0.18)":isActive?"rgba(255,255,255,0.13)":(editingPins&&isPinned?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.05)"),
                                 border:"1px solid "+(isActive?"rgba(255,255,255,0.22)":(editingPins&&isPinned?col+"44":"rgba(255,255,255,0.07)")),
                                 boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",
                                 color:isActive?"#fff":"rgba(255,255,255,0.5)",fontSize:10,fontWeight:isActive?700:400,
-                                cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
+                                cursor:"pointer",fontFamily:"Georgia,serif",
+                                transition:gridDragId===t.id?"none":"transform 0.18s cubic-bezier(0.34,1.56,0.64,1)",
+                                animation:gridDragId&&gridDragId!==t.id?"tfJiggle 0.22s ease-in-out infinite alternate":"none",
+                                touchAction:"none",userSelect:"none",WebkitUserSelect:"none"}}>
                               {/* Pin indicator dot */}
                               {editingPins&&(
                                 <div style={{position:"absolute",top:6,right:6,width:14,height:14,borderRadius:"50%",
