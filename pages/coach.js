@@ -6,7 +6,6 @@ import TeamsView from "../components/TeamsView";
 import ProgramUpload from "../components/ProgramUpload";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
-import Draft from "../components/Draft";
 import Accountability from "../components/Accountability";
 import FellowshipFriday from "../components/FellowshipFriday";
 import MindsetMonday from "../components/MindsetMonday";
@@ -707,7 +706,6 @@ export default function Coach(){
 
   const ALL_TABS=[
     {id:"overview",label:"Overview",icon:"📊"},
-    {id:"draft",label:"Draft",icon:"🎯"},
     {id:"teams",label:"Teams",icon:"👥"},
     {id:"roster",label:"Roster",icon:"👥"},
     {id:"attendance",label:"Attendance",icon:"📅"},
@@ -1394,8 +1392,6 @@ export default function Coach(){
               </div>
             </div>
           )}
-
-          {tab==="draft"&&<Draft athletes={athletes.filter(a=>a.status==="active")}/>}
 
           {tab==="teams"&&(
             <TeamsView athletes={athletes}/>
