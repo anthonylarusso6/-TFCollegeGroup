@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { Skeleton } from "./Skeleton";
+import EmptyState from "./EmptyState";
 
 const GOLD = "#D4AF37";
 const ORANGE = "#E8720C";
@@ -51,11 +52,7 @@ export default function MCastlesTab() {
           <Skeleton width="70%" height={11} />
         </div>
       ) : !photo ? (
-        <div style={{ background: "#111", borderRadius: 14, padding: "2.5rem 1.5rem", textAlign: "center", border: "0.5px solid #252525" }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🍑🚀</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#ddd", marginBottom: 8 }}>No photo this week yet</div>
-          <div style={{ fontSize: 13, color: "#555" }}>MCASTLES drops a new motivational photo every week. Check back soon.</div>
-        </div>
+        <EmptyState icon="camera" color={ORANGE} title="No photo this week yet" hint="MCASTLES drops a new motivational photo every week. Check back soon." />
       ) : (
         <div>
           {/* Week label */}

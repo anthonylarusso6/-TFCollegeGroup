@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { BG, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 import { SkeletonList } from "./Skeleton";
+import EmptyState from "./EmptyState";
 
 const CLASS_DAYS=["Mon","Tue","Thu","Fri"];
 
@@ -111,12 +112,7 @@ export default function AthleteLeaderboard({athleteId}){
   const podiumColors=[GOLD,"#C0C0C0","#CD7F32"];
 
   if(loading)return<div style={{paddingTop:8}}><SkeletonList rows={6}/></div>;
-  if(displayLb.length===0)return(
-    <div style={{background:"#141414",borderRadius:12,padding:"2rem",textAlign:"center",border:"0.5px solid #252525"}}>
-      <div style={{fontSize:32,marginBottom:8}}>🏆</div>
-      <div style={{fontSize:13,color:"#555"}}>No check-ins yet. Be the first to show up early!</div>
-    </div>
-  );
+  if(displayLb.length===0)return <EmptyState icon="trophy" color={GOLD} title="No check-ins yet" hint="Be the first to show up early and earn your spot on the leaderboard." />;
 
   return(
     <div>

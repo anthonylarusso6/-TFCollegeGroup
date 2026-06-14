@@ -30,12 +30,12 @@ export default function VerseOfDay(){
         <div style={{fontSize:16,color:"#fff",fontStyle:"italic",lineHeight:1.8,marginBottom:16}}>"{verse.text}"</div>
         <div style={{fontSize:13,fontWeight:500,color:PUR}}>{verse.ref}</div>
       </div>
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>More scriptures</div>
+      <div style={{background:"rgba(255,255,255,0.045)",borderRadius:12,padding:"1.25rem",border:"1px solid rgba(255,255,255,0.08)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:12}}>More scriptures</div>
         {VERSES.filter((_,i)=>i!==dayIdx%VERSES.length).slice(0,6).map((v,i)=>(
-          <div key={i} style={{padding:"10px 0",borderBottom:i<5?"0.5px solid #f0f0f0":"none"}}>
+          <div key={i} style={{padding:"10px 0",borderBottom:i<5?"0.5px solid rgba(255,255,255,0.06)":"none"}}>
             <div style={{fontSize:11,fontWeight:500,color:PUR,marginBottom:3}}>{v.ref}</div>
-            <div style={{fontSize:12,color:"#555",fontStyle:"italic",lineHeight:1.6}}>"{v.text}"</div>
+            <div style={{fontSize:12,color:"#aaa",fontStyle:"italic",lineHeight:1.6}}>"{v.text}"</div>
           </div>
         ))}
       </div>

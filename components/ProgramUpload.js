@@ -115,9 +115,9 @@ export default function ProgramUpload(){
       )}
 
       {/* Phase name */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>📋 Phase name</div>
-        <input value={phase} onChange={e=>setPhase(e.target.value)} placeholder="e.g. Strength Phase 1, Hypertrophy Block..." style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",background:"#fafafa",color:"#1a1a1a",boxSizing:"border-box"}}/>
+      <div style={{background:"rgba(255,255,255,0.045)",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid rgba(255,255,255,0.08)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:8}}>📋 Phase name</div>
+        <input value={phase} onChange={e=>setPhase(e.target.value)} placeholder="e.g. Strength Phase 1, Hypertrophy Block..." style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid rgba(255,255,255,0.1)",fontSize:13,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd",boxSizing:"border-box"}}/>
       </div>
 
       {/* Day selector */}
@@ -126,7 +126,7 @@ export default function ProgramUpload(){
           const isActive=activeDay===d;
           const liftCount=(days[d]||[]).length;
           return(
-            <button key={d} onClick={()=>setActiveDay(d)} style={{flex:1,padding:"10px 4px",borderRadius:10,border:"1px solid "+(isActive?ORANGE:"#e0e0e0"),background:isActive?ORANGE:"#fff",color:isActive?"#fff":"#888",fontSize:11,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",position:"relative"}}>
+            <button key={d} onClick={()=>setActiveDay(d)} style={{flex:1,padding:"10px 4px",borderRadius:10,border:"1px solid "+(isActive?ORANGE:"rgba(255,255,255,0.1)"),background:isActive?ORANGE:"rgba(255,255,255,0.04)",color:isActive?"#fff":"#888",fontSize:11,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",position:"relative"}}>
               <div>{d}</div>
               {liftCount>0&&<div style={{fontSize:9,marginTop:2,color:isActive?"rgba(255,255,255,0.8)":GREEN}}>{liftCount} lifts</div>}
             </button>
@@ -138,13 +138,13 @@ export default function ProgramUpload(){
       <div style={{display:"flex",gap:6,marginBottom:10,alignItems:"center"}}>
         <div style={{fontSize:11,color:"#aaa",flexShrink:0}}>Copy from:</div>
         {DAYS.filter(d=>d!==activeDay).map(d=>(
-          <button key={d} onClick={()=>copyDayTo(d,activeDay)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"0.5px solid #e0e0e0",background:"#f5f5f5",color:"#888",cursor:"pointer",fontFamily:"Georgia,serif"}}>{d}</button>
+          <button key={d} onClick={()=>copyDayTo(d,activeDay)} style={{fontSize:11,padding:"4px 10px",borderRadius:6,border:"0.5px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",color:"#888",cursor:"pointer",fontFamily:"Georgia,serif"}}>{d}</button>
         ))}
       </div>
 
       {/* Lift selection */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>{DAY_LABELS[activeDay]} lifts</div>
+      <div style={{background:"rgba(255,255,255,0.045)",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid rgba(255,255,255,0.08)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:4}}>{DAY_LABELS[activeDay]} lifts</div>
         <div style={{fontSize:11,color:"#aaa",marginBottom:12}}>Tap to add. Long-press to set tier.</div>
 
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
@@ -153,7 +153,7 @@ export default function ProgramUpload(){
             const tier=getLiftTier(activeDay,lift);
             const tc=TIER_COLORS[tier];
             return(
-              <div key={i} style={{borderRadius:8,border:"1px solid "+(selected?tc.color:"#e0e0e0"),background:selected?tc.color+"11":"#fafafa",overflow:"hidden"}}>
+              <div key={i} style={{borderRadius:8,border:"1px solid "+(selected?tc.color:"rgba(255,255,255,0.08)"),background:selected?tc.color+"11":"rgba(255,255,255,0.03)",overflow:"hidden"}}>
                 <button onClick={()=>toggleLift(activeDay,lift,1)} style={{width:"100%",padding:"8px 10px",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",display:"flex",alignItems:"center",gap:6}}>
                   {selected&&<div style={{width:8,height:8,borderRadius:"50%",background:tc.color,flexShrink:0}}/>}
                   <span style={{fontSize:11,fontWeight:selected?700:400,color:selected?tc.color:"#888"}}>{lift}</span>
@@ -174,14 +174,14 @@ export default function ProgramUpload(){
       </div>
 
       {/* Notes */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>📝 Coaching notes</div>
-        <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Focus points, cues, expectations for this phase..." style={{width:"100%",minHeight:60,padding:"10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:12,fontFamily:"Georgia,serif",background:"#fafafa",color:"#1a1a1a",resize:"vertical",boxSizing:"border-box"}}/>
+      <div style={{background:"rgba(255,255,255,0.045)",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid rgba(255,255,255,0.08)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:8}}>📝 Coaching notes</div>
+        <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Focus points, cues, expectations for this phase..." style={{width:"100%",minHeight:60,padding:"10px",borderRadius:8,border:"0.5px solid rgba(255,255,255,0.1)",fontSize:12,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd",resize:"vertical",boxSizing:"border-box"}}/>
       </div>
 
-      {saveErr&&<div style={{fontSize:12,color:RED,marginBottom:8,padding:"8px 12px",background:"#FFF0F0",borderRadius:8}}>{saveErr}</div>}
+      {saveErr&&<div style={{fontSize:12,color:RED,marginBottom:8,padding:"8px 12px",background:"rgba(192,57,43,0.15)",border:"0.5px solid rgba(192,57,43,0.3)",borderRadius:8}}>{saveErr}</div>}
 
-      <button onClick={saveProgram} disabled={saving} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:saving?"#e0e0e0":"linear-gradient(135deg,"+ORANGE+","+RED+")",color:saving?"#aaa":"#fff",fontSize:14,fontWeight:700,cursor:saving?"not-allowed":"pointer",fontFamily:"Georgia,serif"}}>
+      <button onClick={saveProgram} disabled={saving} style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:saving?"rgba(255,255,255,0.1)":"linear-gradient(135deg,"+ORANGE+","+RED+")",color:saving?"#aaa":"#fff",fontSize:14,fontWeight:700,cursor:saving?"not-allowed":"pointer",fontFamily:"Georgia,serif"}}>
         {saved?"✓ Program pushed to athletes!":saving?"Saving...":"Push program to athletes →"}
       </button>
     </div>

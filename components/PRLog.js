@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import Icon from "./Icon";
 import { Skeleton, SkeletonList } from "./Skeleton";
 import { hSuccess } from "../lib/haptics";
+import EmptyState from "./EmptyState";
 
 const DAYS=["Mon","Tue","Thu","Fri"];
 const DAY_LABELS={Mon:"Monday",Tue:"Tuesday",Thu:"Thursday",Fri:"Friday"};
@@ -1024,11 +1025,7 @@ export default function PRLog({athleteId,gender}){
       {view==="dashboard"&&(
         <div>
           {allLiftNames.length===0?(
-            <div style={{background:BG,borderRadius:12,padding:"2.5rem",textAlign:"center",border:"1px solid #222"}}>
-              <div style={{fontSize:40,marginBottom:12}}>📊</div>
-              <div style={{fontSize:14,fontWeight:500,color:"#fff",marginBottom:6}}>No lift data yet</div>
-              <div style={{fontSize:12,color:"#555"}}>Log sessions in the Log tab to see your strength dashboard.</div>
-            </div>
+            <EmptyState icon="barChart" color={ORANGE} title="No lift data yet" hint="Log sessions in the Log tab to see your strength dashboard." />
           ):(
             <>
               {/* ── Power Index hero ── */}

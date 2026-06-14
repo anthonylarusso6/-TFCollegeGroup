@@ -1,19 +1,28 @@
 import { useState, useEffect } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import Icon from "./Icon";
+import { hTap, hSuccess } from "../lib/haptics";
 
+const glass=(extra={})=>({
+  background:"rgba(255,255,255,0.045)",
+  border:"1px solid rgba(255,255,255,0.08)",
+  borderRadius:14,
+  boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)",
+  ...extra,
+});
 
 const VIOLATIONS=[
-  {label:"Cussing",icon:"🤬",crunches:30},
-  {label:"Talking/Socializing 1min+",icon:"💬",crunches:30},
-  {label:"Walking (jog everywhere)",icon:"🚶",crunches:30},
-  {label:"Hands on head",icon:"🙌",crunches:30},
-  {label:"Bending over",icon:"🫸",crunches:30},
-  {label:"Hands on hips",icon:"🤜",crunches:30},
-  {label:"Standing around",icon:"🧍",crunches:30},
-  {label:"Not listening",icon:"🙉",crunches:30},
-  {label:"Doing drill incorrectly",icon:"❌",crunches:30},
-  {label:"Other",icon:"⚠️",crunches:30},
+  {label:"Cussing",icon:"alertTriangle",crunches:30},
+  {label:"Talking/Socializing 1min+",icon:"chat",crunches:30},
+  {label:"Walking (jog everywhere)",icon:"activity",crunches:30},
+  {label:"Hands on head",icon:"zap",crunches:30},
+  {label:"Bending over",icon:"barbell",crunches:30},
+  {label:"Hands on hips",icon:"barbell",crunches:30},
+  {label:"Standing around",icon:"clock",crunches:30},
+  {label:"Not listening",icon:"megaphone",crunches:30},
+  {label:"Doing drill incorrectly",icon:"target",crunches:30},
+  {label:"Other",icon:"list",crunches:30},
 ];
 
 export default function Accountability({athletes}){
@@ -36,33 +45,22 @@ export default function Accountability({athletes}){
 
   const submitLog=async()=>{
     setLoading(true);
+    hSuccess();
     const vLabel=violation==="Other"?otherText:violation;
     const baseCrunches=violation?.crunches||30;
     const crunches=type==="selfreport"?25*count:baseCrunches*count;
-    await supabase.from("callouts").insert({
-      athlete_id:selectedAthlete.id,
-      violation:vLabel,
-      count,
-      type,
-      crunches,
-    });
+    await supabase.from("callouts").insert({athlete_id:selectedAthlete.id,violation:vLabel,count,type,crunches});
     const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",selectedAthlete.id);
     if(lb&&lb.length>0){
       await supabase.from("leaderboard").update({callout_count:(lb[0].callout_count||0)+count}).eq("athlete_id",selectedAthlete.id);
-    } else {
+    }else{
       await supabase.from("leaderboard").insert({athlete_id:selectedAthlete.id,callout_count:count});
     }
     await loadCallouts();
-    setSaved(true);
-    setLoading(false);
+    setSaved(true);setLoading(false);
     setTimeout(()=>{
-      setSaved(false);
-      setStep("athlete");
-      setSelectedAthlete(null);
-      setViolation(null);
-      setOtherText("");
-      setCount(1);
-      setType("calledout");
+      setSaved(false);setStep("athlete");setSelectedAthlete(null);
+      setViolation(null);setOtherText("");setCount(1);setType("calledout");
     },2000);
   };
 
@@ -74,77 +72,83 @@ export default function Accountability({athletes}){
   const todayCallouts=callouts.filter(c=>new Date(c.logged_at).toDateString()===new Date().toDateString());
   const totalCrunchesToday=todayCallouts.reduce((sum,c)=>sum+(c.crunches||0),0);
   const patternMap={};
-  callouts.forEach(c=>{
-    const name=c.athletes?.name;
-    if(name)patternMap[name]=(patternMap[name]||0)+(c.count||1);
-  });
+  callouts.forEach(c=>{const name=c.athletes?.name;if(name)patternMap[name]=(patternMap[name]||0)+(c.count||1);});
   const patterns=Object.entries(patternMap).sort((a,b)=>b[1]-a[1]);
-  // Crunch leaderboard — total crunches per athlete all time
   const crunchMap={};
-  callouts.forEach(c=>{
-    const name=c.athletes?.name;
-    if(name)crunchMap[name]=(crunchMap[name]||0)+(c.crunches||0);
-  });
+  callouts.forEach(c=>{const name=c.athletes?.name;if(name)crunchMap[name]=(crunchMap[name]||0)+(c.crunches||0);});
   const crunchLb=Object.entries(crunchMap).sort((a,b)=>b[1]-a[1]);
 
   return(
     <div>
-      {/* Today's total crunches */}
+
+      {/* Daily crunch total */}
       {totalCrunchesToday>0&&(
-        <div style={{background:BG,borderRadius:12,padding:"1.25rem",marginBottom:12,border:"2px solid "+RED+"66",textAlign:"center"}}>
-          <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>Total crunches owed today</div>
-          <div style={{fontSize:56,fontWeight:700,color:RED,lineHeight:1}}>{totalCrunchesToday}</div>
-          <div style={{fontSize:12,color:"#888",marginTop:4}}>{todayCallouts.length} callout{todayCallouts.length!==1?"s":""} across {[...new Set(todayCallouts.map(c=>c.athlete_id))].length} athlete{[...new Set(todayCallouts.map(c=>c.athlete_id))].length!==1?"s":""}</div>
+        <div style={{...glass({borderRadius:16}),padding:"1.25rem",marginBottom:12,textAlign:"center",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+ORANGE+",transparent)"}}/>
+          <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Total crunches owed today</div>
+          <div style={{fontSize:56,fontWeight:900,color:RED,lineHeight:1,textShadow:"0 0 40px "+RED+"55"}}>{totalCrunchesToday}</div>
+          <div style={{fontSize:12,color:"#555",marginTop:4}}>{todayCallouts.length} callout{todayCallouts.length!==1?"s":""} · {[...new Set(todayCallouts.map(c=>c.athlete_id))].length} athlete{[...new Set(todayCallouts.map(c=>c.athlete_id))].length!==1?"s":""}</div>
         </div>
       )}
 
       {/* Rules reference */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>Rules & standards</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
+      <div style={{...glass({borderRadius:16}),padding:"1.25rem",marginBottom:12,position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+",transparent)"}}/>
+        <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:12}}>Rules &amp; Standards</div>
+
+        {/* Hand positions */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
           {[
-            {label:"Hand over hand",desc:"In front of body",icon:"🤝"},
-            {label:"Hands flat",desc:"Open on hips laying flat",icon:"🖐"},
-            {label:"Behind back",desc:"Hands on hands",icon:"🔒"},
+            {label:"Hand over hand",desc:"In front of body",icon:"pray"},
+            {label:"Hands flat",desc:"Open on hips laying flat",icon:"barbell"},
+            {label:"Behind back",desc:"Hands on hands",icon:"lock"},
           ].map(h=>(
-            <div key={h.label} style={{background:"#f9f9f9",borderRadius:10,padding:"10px",textAlign:"center",border:"0.5px solid #e0e0e0"}}>
-              <div style={{fontSize:24,marginBottom:4}}>{h.icon}</div>
-              <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a"}}>{h.label}</div>
-              <div style={{fontSize:11,color:"#888"}}>{h.desc}</div>
+            <div key={h.label} style={{background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"10px",textAlign:"center",border:"1px solid rgba(255,255,255,0.07)"}}>
+              <div style={{display:"flex",justifyContent:"center",marginBottom:6}}><Icon name={h.icon} size={22} color={ORANGE}/></div>
+              <div style={{fontSize:11,fontWeight:600,color:"#ddd",lineHeight:1.3}}>{h.label}</div>
+              <div style={{fontSize:10,color:"#555",marginTop:3}}>{h.desc}</div>
             </div>
           ))}
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+
+        {/* Consequence table */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
           {[
-            {rule:"Cussing",consequence:"30 crunches",color:"#8E44AD",bg:"#F5EEF8"},
-            {rule:"Talking/Socializing 1min+",consequence:"30 crunches",color:RED,bg:"#FCEBEB"},
-            {rule:"Walking (jog everywhere)",consequence:"30 crunches",color:RED,bg:"#FCEBEB"},
-            {rule:"Called out",consequence:"30 crunches",color:RED,bg:"#FCEBEB"},
-            {rule:"Self-report",consequence:"25 crunches",color:GREEN,bg:"#EAF3DE"},
-            {rule:"Late arrival",consequence:"50 crunches",color:"#854F0B",bg:"#FAEEDA"},
-            {rule:"No show",consequence:"1x shred mill 100yd gear 3 light resistance",color:"#1A4F8A",bg:"#E6F1FB"},
+            {rule:"Cussing",consequence:"30 crunches",color:"#8E44AD"},
+            {rule:"Talking 1min+",consequence:"30 crunches",color:RED},
+            {rule:"Walking",consequence:"30 crunches",color:RED},
+            {rule:"Called out",consequence:"30 crunches",color:RED},
+            {rule:"Self-report",consequence:"25 crunches",color:GREEN},
+            {rule:"Late arrival",consequence:"50 crunches",color:ORANGE},
+            {rule:"No show",consequence:"Shred mill 100yd",color:"#1A4F8A"},
           ].map(r=>(
-            <div key={r.rule} style={{background:r.bg,borderRadius:8,padding:"8px 10px",border:"0.5px solid "+r.color+"44"}}>
-              <div style={{fontSize:12,fontWeight:500,color:r.color}}>{r.rule}</div>
-              <div style={{fontSize:11,color:"#555"}}>{r.consequence}</div>
+            <div key={r.rule} style={{borderRadius:8,padding:"8px 10px",border:"1px solid "+r.color+"33",background:r.color+"0d"}}>
+              <div style={{fontSize:11,fontWeight:600,color:r.color}}>{r.rule}</div>
+              <div style={{fontSize:10,color:"#666",marginTop:2}}>{r.consequence}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Quick log */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+PUR}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Quick call-out log</div>
+      <div style={{...glass({borderRadius:16}),padding:"1.25rem",marginBottom:12,position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+",transparent)"}}/>
+        <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:14}}>Quick Call-Out Log</div>
 
-        {/* Step indicators */}
-        <div style={{display:"flex",gap:4,marginBottom:16}}>
-          {[{id:"athlete",label:"1. Athlete"},{id:"violation",label:"2. Violation"},{id:"confirm",label:"3. Confirm"}].map(s=>{
+        {/* Step tracker */}
+        <div style={{display:"flex",gap:4,marginBottom:18}}>
+          {[{id:"athlete",label:"Athlete"},{id:"violation",label:"Violation"},{id:"confirm",label:"Confirm"}].map(s=>{
             const steps=["athlete","violation","confirm"];
             const cur=steps.indexOf(step);
             const idx=steps.indexOf(s.id);
+            const done_=idx<cur;
+            const active=idx===cur;
             return(
-              <div key={s.id} style={{flex:1,padding:"5px",borderRadius:6,background:idx===cur?PUR:idx<cur?"#EAF3DE":"#f5f5f5",border:"0.5px solid "+(idx===cur?PUR:idx<cur?GREEN:"#e0e0e0"),textAlign:"center"}}>
-                <div style={{fontSize:10,color:idx===cur?"#fff":idx<cur?GREEN:"#888"}}>{idx<cur?"✓ ":""}{s.label}</div>
+              <div key={s.id} style={{flex:1,padding:"7px 4px",borderRadius:8,background:active?PUR:done_?GREEN+"22":"rgba(255,255,255,0.04)",border:"1px solid "+(active?PUR:done_?GREEN+"44":"rgba(255,255,255,0.08)"),textAlign:"center",transition:"all 0.2s"}}>
+                <div style={{fontSize:10,color:active?"#fff":done_?GREEN:"#555",fontWeight:active||done_?700:400}}>
+                  {done_&&<Icon name="checkSquare" size={9} color={GREEN} style={{marginRight:3,verticalAlign:"baseline"}}/>}
+                  {s.label}
+                </div>
               </div>
             );
           })}
@@ -153,19 +157,20 @@ export default function Accountability({athletes}){
         {/* Step 1 — Athlete */}
         {step==="athlete"&&(
           <div>
-            <div style={{fontSize:12,color:"#888",marginBottom:8}}>Who got called out?</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(100px,1fr))",gap:8}}>
+            <div style={{fontSize:11,color:"#555",marginBottom:10,letterSpacing:"0.04em",textTransform:"uppercase"}}>Who got called out?</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(88px,1fr))",gap:8}}>
               {athletes.map(a=>{
                 const todayCount=todayCallouts.filter(c=>c.athlete_id===a.id).reduce((n,c)=>n+(c.count||1),0);
                 const todayCrunches=todayCallouts.filter(c=>c.athlete_id===a.id).reduce((n,c)=>n+(c.crunches||0),0);
                 return(
-                  <button key={a.id} onClick={()=>{setSelectedAthlete(a);setStep("violation");}} style={{padding:"10px 8px",borderRadius:10,border:"0.5px solid "+(todayCount>0?RED+"66":"#e0e0e0"),background:todayCount>0?"#fff5f5":"#f9f9f9",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",position:"relative"}}>
-                    <div style={{width:40,height:40,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:500,color:"#fff",margin:"0 auto 6px",overflow:"hidden",flexShrink:0}}>
+                  <button key={a.id} onClick={()=>{hTap();setSelectedAthlete(a);setStep("violation");}}
+                    style={{padding:"10px 8px",borderRadius:12,border:"1px solid "+(todayCount>0?RED+"66":"rgba(255,255,255,0.08)"),background:todayCount>0?"rgba(192,57,43,0.15)":"rgba(255,255,255,0.04)",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",position:"relative",transition:"all 0.15s"}}>
+                    <div style={{width:38,height:38,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",margin:"0 auto 6px",overflow:"hidden",flexShrink:0}}>
                       {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
                     </div>
-                    <div style={{fontSize:11,fontWeight:500,color:"#1a1a1a"}}>{a.name.split(" ")[0]}</div>
-                    {todayCrunches>0&&<div style={{fontSize:10,color:RED,marginTop:2}}>{todayCrunches} 💪</div>}
-                    {todayCount>0&&<div style={{position:"absolute",top:4,right:4,width:18,height:18,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:600}}>{todayCount}</div>}
+                    <div style={{fontSize:11,fontWeight:600,color:"#ddd",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name.split(" ")[0]}</div>
+                    {todayCrunches>0&&<div style={{fontSize:9,color:RED,marginTop:2,fontWeight:700}}>{todayCrunches}</div>}
+                    {todayCount>0&&<div style={{position:"absolute",top:5,right:5,width:16,height:16,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:700}}>{todayCount}</div>}
                   </button>
                 );
               })}
@@ -176,22 +181,29 @@ export default function Accountability({athletes}){
         {/* Step 2 — Violation */}
         {step==="violation"&&(
           <div>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-              <button onClick={()=>setStep("athlete")} style={{background:"transparent",border:"none",color:"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>← Back</button>
-              <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a"}}>{selectedAthlete?.name} — select violation</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+              <button onClick={()=>{hTap();setStep("athlete");}} style={{background:"none",border:"none",color:"rgba(255,255,255,0.45)",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",display:"flex",alignItems:"center",gap:4}}>
+                <Icon name="chevronRight" size={12} color="rgba(255,255,255,0.45)" style={{transform:"rotate(180deg)"}}/> Back
+              </button>
+              <div style={{fontSize:12,fontWeight:600,color:"#ddd"}}>{selectedAthlete?.name}</div>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
               {VIOLATIONS.map(v=>(
-                <button key={v.label} onClick={()=>{setViolation(v.label);if(v.label!=="Other")setStep("confirm");}} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:10,border:"0.5px solid "+(violation===v.label?RED:"#e0e0e0"),background:violation===v.label?"#FCEBEB":"#f9f9f9",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
-                  <span style={{fontSize:20}}>{v.icon}</span>
-                  <span style={{fontSize:12,color:"#1a1a1a"}}>{v.label}</span>
+                <button key={v.label} onClick={()=>{hTap();setViolation(v.label);if(v.label!=="Other")setStep("confirm");}}
+                  style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:10,border:"1px solid "+(violation===v.label?RED+"77":"rgba(255,255,255,0.08)"),background:violation===v.label?"rgba(192,57,43,0.18)":"rgba(255,255,255,0.04)",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",transition:"all 0.15s"}}>
+                  <Icon name={v.icon} size={15} color={violation===v.label?RED:"rgba(255,255,255,0.4)"}/>
+                  <span style={{fontSize:12,color:violation===v.label?"#fff":"#aaa"}}>{v.label}</span>
                 </button>
               ))}
             </div>
             {violation==="Other"&&(
-              <div style={{marginTop:10}}>
-                <input value={otherText} onChange={e=>setOtherText(e.target.value)} placeholder="Describe violation..." style={{width:"100%",padding:"8px",fontSize:13,border:"0.5px solid #e0e0e0",borderRadius:8,background:"#fafafa",color:"#1a1a1a",fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:8}}/>
-                <button onClick={()=>otherText.trim()&&setStep("confirm")} style={{width:"100%",padding:"8px",borderRadius:8,border:"none",background:otherText.trim()?RED:"#e0e0e0",color:"#fff",fontSize:13,cursor:otherText.trim()?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>Continue →</button>
+              <div style={{marginTop:12}}>
+                <input value={otherText} onChange={e=>setOtherText(e.target.value)} placeholder="Describe violation..."
+                  style={{width:"100%",padding:"10px 12px",fontSize:13,border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,background:"rgba(255,255,255,0.07)",color:"#fff",fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:10,outline:"none"}}/>
+                <button onClick={()=>{if(otherText.trim()){hTap();setStep("confirm");}}}
+                  style={{width:"100%",padding:"11px",borderRadius:10,border:"none",background:otherText.trim()?"linear-gradient(135deg,"+RED+",#8B1A1A)":"rgba(255,255,255,0.07)",color:otherText.trim()?"#fff":"rgba(255,255,255,0.3)",fontSize:13,fontWeight:700,cursor:otherText.trim()?"pointer":"default",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+                  Continue →
+                </button>
               </div>
             )}
           </div>
@@ -200,42 +212,59 @@ export default function Accountability({athletes}){
         {/* Step 3 — Confirm */}
         {step==="confirm"&&(
           <div>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-              <button onClick={()=>setStep("violation")} style={{background:"transparent",border:"none",color:"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>← Back</button>
-              <div style={{fontSize:12,fontWeight:500,color:"#1a1a1a"}}>Confirm log</div>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+              <button onClick={()=>{hTap();setStep("violation");}} style={{background:"none",border:"none",color:"rgba(255,255,255,0.45)",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif",display:"flex",alignItems:"center",gap:4}}>
+                <Icon name="chevronRight" size={12} color="rgba(255,255,255,0.45)" style={{transform:"rotate(180deg)"}}/> Back
+              </button>
+              <div style={{fontSize:12,fontWeight:600,color:"#ddd"}}>Confirm log</div>
             </div>
-            <div style={{background:"#f9f9f9",borderRadius:10,padding:"12px",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-              <div style={{fontSize:14,fontWeight:500,color:"#1a1a1a",marginBottom:2}}>{selectedAthlete?.name}</div>
-              <div style={{fontSize:12,color:"#888",marginBottom:10}}>{violation==="Other"?otherText:violation}</div>
-              <div style={{marginBottom:10}}>
-                <div style={{fontSize:11,color:"#888",marginBottom:6}}>How many times?</div>
+            <div style={{background:"rgba(255,255,255,0.04)",borderRadius:12,padding:"14px",marginBottom:14,border:"1px solid rgba(255,255,255,0.08)"}}>
+              <div style={{fontSize:15,fontWeight:700,color:"#fff",marginBottom:2}}>{selectedAthlete?.name}</div>
+              <div style={{fontSize:12,color:"#888",marginBottom:14}}>{violation==="Other"?otherText:violation}</div>
+
+              {/* Count */}
+              <div style={{marginBottom:12}}>
+                <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>How many times?</div>
                 <div style={{display:"flex",gap:6}}>
                   {[1,2,3,4,5].map(n=>(
-                    <button key={n} onClick={()=>setCount(n)} style={{flex:1,padding:"8px",borderRadius:8,border:"0.5px solid "+(count===n?RED:"#e0e0e0"),background:count===n?"#FCEBEB":"transparent",color:count===n?RED:"#888",fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>{n}</button>
+                    <button key={n} onClick={()=>{hTap();setCount(n);}}
+                      style={{flex:1,padding:"10px",borderRadius:9,border:"1px solid "+(count===n?RED+"66":"rgba(255,255,255,0.08)"),background:count===n?"rgba(192,57,43,0.22)":"rgba(255,255,255,0.04)",color:count===n?"#fff":"rgba(255,255,255,0.5)",fontSize:16,fontWeight:count===n?900:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.1s"}}>
+                      {n}
+                    </button>
                   ))}
                 </div>
               </div>
-              <div style={{marginBottom:12}}>
-                <div style={{fontSize:11,color:"#888",marginBottom:6}}>Type</div>
+
+              {/* Type */}
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Type</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                  <button onClick={()=>setType("calledout")} style={{padding:"10px",borderRadius:8,border:"0.5px solid "+(type==="calledout"?RED:"#e0e0e0"),background:type==="calledout"?"#FCEBEB":"transparent",color:type==="calledout"?RED:"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                    Called out<div style={{fontSize:10,marginTop:2}}>30 crunches</div>
+                  <button onClick={()=>{hTap();setType("calledout");}}
+                    style={{padding:"11px",borderRadius:10,border:"1px solid "+(type==="calledout"?RED+"66":"rgba(255,255,255,0.08)"),background:type==="calledout"?"rgba(192,57,43,0.2)":"rgba(255,255,255,0.04)",color:type==="calledout"?"#fff":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:type==="calledout"?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+                    Called out<div style={{fontSize:10,marginTop:2,opacity:0.7}}>30 crunches</div>
                   </button>
-                  <button onClick={()=>setType("selfreport")} style={{padding:"10px",borderRadius:8,border:"0.5px solid "+(type==="selfreport"?GREEN:"#e0e0e0"),background:type==="selfreport"?"#EAF3DE":"transparent",color:type==="selfreport"?GREEN:"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                    Self-report<div style={{fontSize:10,marginTop:2}}>25 crunches</div>
+                  <button onClick={()=>{hTap();setType("selfreport");}}
+                    style={{padding:"11px",borderRadius:10,border:"1px solid "+(type==="selfreport"?GREEN+"66":"rgba(255,255,255,0.08)"),background:type==="selfreport"?"rgba(30,107,58,0.2)":"rgba(255,255,255,0.04)",color:type==="selfreport"?"#fff":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:type==="selfreport"?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+                    Self-report<div style={{fontSize:10,marginTop:2,opacity:0.7}}>25 crunches</div>
                   </button>
                 </div>
               </div>
-              <div style={{background:"#FCEBEB",borderRadius:8,padding:"10px",textAlign:"center",marginBottom:12}}>
-                <div style={{fontSize:11,color:"#888",marginBottom:2}}>Total consequence</div>
-                <div style={{fontSize:28,fontWeight:600,color:RED}}>{type==="selfreport"?25*count:30*count}</div>
-                <div style={{fontSize:12,color:"#888"}}>crunches</div>
+
+              {/* Total consequence */}
+              <div style={{borderRadius:10,padding:"14px",textAlign:"center",background:"rgba(192,57,43,0.14)",border:"1px solid "+RED+"33"}}>
+                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:4}}>Total consequence</div>
+                <div style={{fontSize:36,fontWeight:900,color:RED,lineHeight:1,textShadow:"0 0 20px "+RED+"55"}}>{type==="selfreport"?25*count:30*count}</div>
+                <div style={{fontSize:11,color:"#888",marginTop:2}}>crunches</div>
               </div>
             </div>
+
             {saved?(
-              <div style={{padding:"12px",borderRadius:8,background:"#EAF3DE",textAlign:"center",fontSize:13,color:GREEN,fontWeight:500}}>✓ Logged successfully</div>
+              <div style={{padding:"14px",borderRadius:10,background:"rgba(30,107,58,0.18)",textAlign:"center",fontSize:13,color:GREEN,fontWeight:700,border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                <Icon name="checkSquare" size={14} color={GREEN}/> Logged successfully
+              </div>
             ):(
-              <button onClick={submitLog} disabled={loading} style={{width:"100%",padding:"12px",borderRadius:8,border:"none",background:RED,color:"#fff",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+              <button onClick={submitLog} disabled={loading}
+                style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:"linear-gradient(135deg,"+RED+",#8B1A1A)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 6px 24px "+RED+"44",letterSpacing:"0.02em"}}>
                 {loading?"Logging...":"Log it →"}
               </button>
             )}
@@ -245,13 +274,15 @@ export default function Accountability({athletes}){
 
       {/* Pattern summary */}
       {patterns.length>0&&(
-        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>Pattern summary — all time</div>
+        <div style={{...glass({borderRadius:16}),padding:"1.25rem",marginBottom:12}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:12}}>Pattern Summary — All Time</div>
           {patterns.map(([name,total],i)=>(
-            <div key={name} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"0.5px solid #f0f0f0"}}>
-              <div style={{width:28,height:28,borderRadius:"50%",background:total>=3?RED:total>=2?"#FAEEDA":"#EAF3DE",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,color:total>=3?RED:total>=2?"#854F0B":GREEN,flexShrink:0}}>{total}</div>
-              <div style={{flex:1,fontSize:13,color:"#1a1a1a"}}>{name}</div>
-              {total>=3&&<span style={{fontSize:10,background:"#FCEBEB",color:RED,padding:"2px 7px",borderRadius:5}}>⚠ Conversation needed</span>}
+            <div key={name} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:i<patterns.length-1?"0.5px solid rgba(255,255,255,0.07)":"none"}}>
+              <div style={{width:30,height:30,borderRadius:"50%",background:total>=3?"rgba(192,57,43,0.25)":total>=2?"rgba(133,79,11,0.2)":"rgba(30,107,58,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:total>=3?RED:total>=2?ORANGE:GREEN,flexShrink:0,border:"1px solid "+(total>=3?RED+"44":total>=2?ORANGE+"44":GREEN+"44")}}>
+                {total}
+              </div>
+              <div style={{flex:1,fontSize:13,color:"#ddd"}}>{name}</div>
+              {total>=3&&<span style={{fontSize:9,background:"rgba(192,57,43,0.2)",color:RED,padding:"3px 8px",borderRadius:6,border:"1px solid "+RED+"33",fontWeight:700,letterSpacing:"0.04em"}}>Pattern</span>}
             </div>
           ))}
         </div>
@@ -259,27 +290,30 @@ export default function Accountability({athletes}){
 
       {/* Crunch leaderboard */}
       {crunchLb.length>0&&(
-        <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0",borderTop:"3px solid "+RED}}>
-          <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:4}}>💪 Crunch leaderboard</div>
-          <div style={{fontSize:12,color:"#888",marginBottom:12}}>Total crunches owed all season</div>
+        <div style={{...glass({borderRadius:16}),padding:"1.25rem",marginBottom:12,position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+ORANGE+",transparent)"}}/>
+          <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:2,display:"flex",alignItems:"center",gap:8}}>
+            <Icon name="barbell" size={14} color={RED}/> Crunch Leaderboard
+          </div>
+          <div style={{fontSize:11,color:"#555",marginBottom:14}}>Total crunches owed all season</div>
           {crunchLb.map(([name,total],i)=>{
             const ath=athletes.find(a=>a.name===name);
             const max=crunchLb[0][1];
             return(
-              <div key={name} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<crunchLb.length-1?"0.5px solid #f0f0f0":"none"}}>
-                <div style={{width:28,fontSize:13,fontWeight:600,color:i===0?"#D4AF37":i===1?"#999":i===2?"#CD7F32":"#888",textAlign:"center",flexShrink:0}}>
+              <div key={name} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:i<crunchLb.length-1?"0.5px solid rgba(255,255,255,0.07)":"none"}}>
+                <div style={{width:26,fontSize:12,fontWeight:700,color:i===0?GOLD:i===1?"#C0C0C0":i===2?"#CD7F32":"#555",textAlign:"center",flexShrink:0}}>
                   {i===0?"🥇":i===1?"🥈":i===2?"🥉":"#"+(i+1)}
                 </div>
-                <div style={{width:32,height:32,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
+                <div style={{width:30,height:30,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:500,color:"#fff",flexShrink:0,overflow:"hidden"}}>
                   {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(name||"?")[0]}
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{name}</div>
-                  <div style={{marginTop:3,height:4,borderRadius:2,background:"#f0f0f0",overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${(total/max)*100}%`,background:i===0?"#D4AF37":RED,borderRadius:2}}/>
+                  <div style={{fontSize:13,fontWeight:500,color:"#ddd"}}>{name}</div>
+                  <div style={{marginTop:4,height:4,borderRadius:2,background:"rgba(255,255,255,0.07)",overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${(total/max)*100}%`,background:i===0?GOLD:RED,borderRadius:2,boxShadow:"0 0 6px "+(i===0?GOLD:RED)+"66"}}/>
                   </div>
                 </div>
-                <div style={{fontSize:14,fontWeight:700,color:i===0?"#D4AF37":RED,flexShrink:0}}>{total}</div>
+                <div style={{fontSize:14,fontWeight:800,color:i===0?GOLD:RED,flexShrink:0}}>{total}</div>
               </div>
             );
           })}
@@ -287,20 +321,23 @@ export default function Accountability({athletes}){
       )}
 
       {/* Today's log */}
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:10}}>Today's log</div>
-        {todayCallouts.length===0&&<div style={{fontSize:13,color:"#aaa",textAlign:"center",padding:"10px 0"}}>Nothing logged today.</div>}
+      <div style={{...glass({borderRadius:16}),padding:"1.25rem"}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:12}}>Today's Log</div>
+        {todayCallouts.length===0&&(
+          <div style={{textAlign:"center",padding:"1rem 0",color:"#555",fontSize:12}}>Nothing logged today.</div>
+        )}
         {todayCallouts.map((c,i)=>(
-          <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"0.5px solid #f0f0f0"}}>
+          <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:i<todayCallouts.length-1?"0.5px solid rgba(255,255,255,0.07)":"none"}}>
             <div style={{flex:1}}>
-              <div style={{fontSize:13,fontWeight:500,color:"#1a1a1a"}}>{c.athletes?.name}</div>
-              <div style={{fontSize:11,color:"#888"}}>{c.violation} · {c.count}x · {c.type==="selfreport"?"Self-report":"Called out"}</div>
+              <div style={{fontSize:13,fontWeight:600,color:"#ddd"}}>{c.athletes?.name}</div>
+              <div style={{fontSize:11,color:"#555",marginTop:2}}>{c.violation} · {c.count}× · {c.type==="selfreport"?"Self-report":"Called out"}</div>
             </div>
-            <div style={{fontSize:14,fontWeight:500,color:RED,marginRight:8}}>{c.crunches} 💪</div>
-            <button onClick={()=>deleteCallout(c.id)} style={{background:"transparent",border:"none",color:"#aaa",cursor:"pointer",fontSize:12,fontFamily:"Georgia,serif"}}>✕</button>
+            <div style={{fontSize:14,fontWeight:800,color:RED,marginRight:4}}>{c.crunches}</div>
+            <button onClick={()=>deleteCallout(c.id)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.25)",cursor:"pointer",fontSize:14,padding:4}}>✕</button>
           </div>
         ))}
       </div>
+
     </div>
   );
 }

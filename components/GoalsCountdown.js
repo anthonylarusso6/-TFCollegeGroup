@@ -22,18 +22,18 @@ export default function GoalsCountdown({athlete}){
           <div style={{fontSize:11,color:"#555",marginTop:4}}>{deadline}</div>
         </div>
       )}
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:12}}>Athletic goal</div>
-        <div style={{fontSize:13,color:"#555",fontStyle:"italic",lineHeight:1.6,marginBottom:12}}>{athlete?.athletic_goal||"No goal set yet — go to My Profile to set one."}</div>
+      <div style={{background:"rgba(255,255,255,0.045)",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid rgba(255,255,255,0.08)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:12}}>Athletic goal</div>
+        <div style={{fontSize:13,color:"#aaa",fontStyle:"italic",lineHeight:1.6,marginBottom:12}}>{athlete?.athletic_goal||"No goal set yet — go to My Profile to set one."}</div>
         <div style={{fontSize:11,color:"#888",marginBottom:6}}>Goal deadline</div>
-        <input type="date" value={deadline} onChange={e=>setDeadline(e.target.value)} style={{width:"100%",padding:"10px",borderRadius:8,border:"0.5px solid #e0e0e0",fontSize:13,fontFamily:"Georgia,serif",background:"#fafafa",boxSizing:"border-box",marginBottom:10}}/>
+        <input type="date" value={deadline} onChange={e=>setDeadline(e.target.value)} style={{width:"100%",padding:"10px",borderRadius:8,border:"0.5px solid rgba(255,255,255,0.1)",fontSize:13,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd",boxSizing:"border-box",marginBottom:10}}/>
         <button onClick={save} disabled={!deadline||saving} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:GOLD,color:"#1a1a1a",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
           {saving?"Saving...":"Set deadline →"}
         </button>
       </div>
-      <div style={{background:"#fff",borderRadius:12,padding:"1.25rem",border:"0.5px solid #e0e0e0"}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a",marginBottom:8}}>Character goal</div>
-        <div style={{fontSize:13,color:"#555",fontStyle:"italic",lineHeight:1.6}}>{athlete?.character_goal||"No goal set yet."}</div>
+      <div style={{background:"rgba(255,255,255,0.045)",borderRadius:12,padding:"1.25rem",border:"1px solid rgba(255,255,255,0.08)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"}}>
+        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:8}}>Character goal</div>
+        <div style={{fontSize:13,color:"#aaa",fontStyle:"italic",lineHeight:1.6}}>{athlete?.character_goal||"No goal set yet."}</div>
       </div>
     </div>
   );

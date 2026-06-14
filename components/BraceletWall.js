@@ -27,16 +27,16 @@ export default function BraceletWall({athleteBracelet}){
       {BRACELETS_LIST.map((b,i)=>{
         const isMe=athleteBracelet===b.ref;
         return(
-          <div key={i} style={{background:"#fff",borderRadius:12,padding:"1rem",marginBottom:8,border:"0.5px solid "+(isMe?b.hex+"88":"#e0e0e0"),borderLeft:"4px solid "+b.hex}}>
+          <div key={i} style={{background:isMe?b.hex+"14":"rgba(255,255,255,0.04)",borderRadius:12,padding:"1rem",marginBottom:8,border:"1px solid "+(isMe?b.hex+"55":"rgba(255,255,255,0.07)"),borderLeft:"4px solid "+b.hex}}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div style={{width:10,height:10,borderRadius:"50%",background:b.hex}}/>
+                <div style={{width:10,height:10,borderRadius:"50%",background:b.hex,boxShadow:"0 0 8px "+b.hex+"88"}}/>
                 <span style={{fontSize:12,fontWeight:600,color:b.hex}}>{b.color}</span>
-                {isMe&&<span style={{fontSize:10,background:b.hex,color:"#fff",padding:"1px 6px",borderRadius:4}}>yours</span>}
+                {isMe&&<span style={{fontSize:10,background:b.hex,color:"#fff",padding:"1px 6px",borderRadius:4,fontWeight:700}}>yours</span>}
               </div>
-              <span style={{fontSize:11,color:"#888"}}>{b.ref}</span>
+              <span style={{fontSize:11,color:"#555"}}>{b.ref}</span>
             </div>
-            <div style={{fontSize:13,color:"#1a1a1a",fontStyle:"italic",lineHeight:1.6}}>"{b.text}"</div>
+            <div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>"{b.text}"</div>
           </div>
         );
       })}
