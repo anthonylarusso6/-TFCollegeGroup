@@ -3,7 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import TeamsView from "../components/TeamsView";
-import ResetTeams from "../components/ResetTeams";
 import ProgramUpload from "../components/ProgramUpload";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
@@ -708,7 +707,6 @@ export default function Coach(){
   const ALL_TABS=[
     {id:"overview",label:"Overview",icon:"📊"},
     {id:"teams",label:"Teams",icon:"👥"},
-    {id:"reset-teams",label:"Reset Teams",icon:"🔄"},
     {id:"roster",label:"Roster",icon:"👥"},
     {id:"attendance",label:"Attendance",icon:"📅"},
     {id:"accountability",label:"Accountability",icon:"✊"},
@@ -1397,10 +1395,6 @@ export default function Coach(){
 
           {tab==="teams"&&(
             <TeamsView athletes={athletes}/>
-          )}
-
-          {tab==="reset-teams"&&(
-            <ResetTeams athletes={athletes}/>
           )}
 
           {tab==="roster"&&(

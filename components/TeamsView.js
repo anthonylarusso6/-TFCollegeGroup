@@ -38,6 +38,9 @@ export default function TeamsView({athletes=[]}){
   const[picker,setPicker]=useState(null);           // athlete name waiting for group pick
   const[braceletModal,setBraceletModal]=useState(null); // group idx whose bracelet is being picked
   const[leaderPicker,setLeaderPicker]=useState(null);   // group idx whose leader is being picked
+  const[confirmReset,setConfirmReset]=useState(false);
+  const[resetting,setResetting]=useState(false);
+  const[resetErr,setResetErr]=useState("");
 
   useEffect(()=>{loadTeams();},[]);
 
@@ -152,6 +155,21 @@ export default function TeamsView({athletes=[]}){
       setSaveError(e.message||"Save failed — check console");
     }
     setSaving(false);
+  };
+
+  const doReset=async()=>{
+    setResetting(true);setResetErr("");
+    try{
+      const active=athletes.filter(a=>a.status==="active");
+      await Promise.all(active.map(a=>supabase.from("athletes").update({role:"iron",group_idx:null,tier:null,bracelet:null}).eq("id",a.id)));
+      if(draftId){
+        const{error}=await supabase.from("draft").update({phase:"setup",leaders:[],groups:[],bracelets:[],locked:false}).eq("id",draftId);
+        if(error)throw error;
+      }
+      setGroups({0:[],1:[],2:[],3:[]});setLeaders({});setBracelets({});setGroupCount(4);
+      setConfirmReset(false);
+    }catch(e){setResetErr(e.message||"Reset failed");}
+    setResetting(false);
   };
 
   if(loading)return<div style={{paddingTop:8}}><SkeletonList rows={5}/></div>;
@@ -462,6 +480,29 @@ export default function TeamsView({athletes=[]}){
           </div>
         );
       })}
+
+      {/* Reset section */}
+      <div style={{marginTop:24,borderTop:"0.5px solid #1e1e1e",paddingTop:20}}>
+        {resetErr&&<div style={{fontSize:12,color:"#C0392B",marginBottom:10,padding:"8px 12px",background:"rgba(192,57,43,0.12)",border:"0.5px solid rgba(192,57,43,0.3)",borderRadius:8}}>⚠ {resetErr}</div>}
+        {!confirmReset?(
+          <button onClick={()=>setConfirmReset(true)} style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid rgba(192,57,43,0.35)",background:"rgba(192,57,43,0.07)",color:"#C0392B",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+            Reset all teams
+          </button>
+        ):(
+          <div style={{background:"rgba(192,57,43,0.1)",borderRadius:12,padding:"1rem",border:"1px solid rgba(192,57,43,0.3)"}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#C0392B",marginBottom:4}}>Clear everything?</div>
+            <div style={{fontSize:12,color:"#888",marginBottom:14,lineHeight:1.6}}>All group assignments, leaders, and bracelets will be removed. This can't be undone.</div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={doReset} disabled={resetting} style={{flex:1,padding:"11px",borderRadius:10,border:"none",background:"#C0392B",color:"#fff",fontSize:13,fontWeight:700,cursor:resetting?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:resetting?0.6:1}}>
+                {resetting?"Resetting…":"Yes, reset"}
+              </button>
+              <button onClick={()=>setConfirmReset(false)} disabled={resetting} style={{padding:"11px 18px",borderRadius:10,border:"0.5px solid #2a2a2a",background:"transparent",color:"#555",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
