@@ -32,9 +32,6 @@ export default function TeamsView({athletes=[]}){
   const[saved,setSaved]=useState(false);
   const[saveError,setSaveError]=useState("");
   const[loadError,setLoadError]=useState("");
-  const[dragging,setDragging]=useState(null);
-  const[dragOver,setDragOver]=useState(null);
-  const[dragOverLeader,setDragOverLeader]=useState(null);
   const[picker,setPicker]=useState(null);           // athlete name waiting for group pick
   const[braceletModal,setBraceletModal]=useState(null); // group idx whose bracelet is being picked
   const[leaderPicker,setLeaderPicker]=useState(null);   // group idx whose leader is being picked
@@ -90,34 +87,6 @@ export default function TeamsView({athletes=[]}){
   const removeFromGroup=(name,idx)=>{
     setGroups(prev=>({...prev,[idx]:(prev[idx]||[]).filter(n=>n!==name)}));
     if(leaders[idx]===name)setLeaders(prev=>{const n={...prev};delete n[idx];return n;});
-  };
-
-  const onDragStart=(name,fromGroup)=>setDragging({name,fromGroup});
-  const onDragEnd=()=>{setDragging(null);setDragOver(null);setDragOverLeader(null);};
-
-  const onDropLeader=(groupIdx)=>{
-    if(!dragging)return;
-    const{name}=dragging;
-    setGroups(prev=>{
-      const n={...prev};
-      Object.keys(n).forEach(k=>{n[k]=(n[k]||[]).filter(x=>x!==name);});
-      n[groupIdx]=[...(n[groupIdx]||[]),name];
-      return n;
-    });
-    setLeaders(prev=>({...prev,[groupIdx]:name}));
-    setDragging(null);setDragOver(null);setDragOverLeader(null);
-  };
-
-  const onDropGroup=(toIdx)=>{
-    if(!dragging)return;
-    addToGroup(dragging.name,toIdx);
-    setDragging(null);setDragOver(null);
-  };
-
-  const onDropPool=()=>{
-    if(!dragging||dragging.fromGroup===null)return;
-    removeFromGroup(dragging.name,dragging.fromGroup);
-    setDragging(null);setDragOver(null);
   };
 
   const takenRefs=Object.values(bracelets).filter(Boolean).map(b=>b.ref);
@@ -353,18 +322,13 @@ export default function TeamsView({athletes=[]}){
 
       {/* Unassigned pool */}
       {unassigned.length>0&&(
-        <div
-          onDragOver={e=>{e.preventDefault();setDragOver("pool");}}
-          onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setDragOver(null);}}
-          onDrop={onDropPool}
-          style={{background:dragOver==="pool"?"#1a1a2a":"#111",borderRadius:14,padding:"14px",marginBottom:12,border:"1px dashed "+(dragOver==="pool"?"#534AB7":"#252525"),transition:"all 0.15s"}}>
-          <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Unassigned — tap to place · drag to group</div>
+        <div style={{background:"#111",borderRadius:14,padding:"14px",marginBottom:12,border:"1px dashed #252525"}}>
+          <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Unassigned — tap to place</div>
           <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
             {unassigned.map(a=>(
-              <div key={a.id} draggable
-                onDragStart={()=>onDragStart(a.name,null)} onDragEnd={onDragEnd}
+              <div key={a.id}
                 onClick={()=>setPicker(a.name)}
-                style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px 6px 6px",borderRadius:20,border:"0.5px solid #2a2a2a",background:"#1e1e1e",cursor:"grab",userSelect:"none"}}>
+                style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px 6px 6px",borderRadius:20,border:"0.5px solid #2a2a2a",background:"#1e1e1e",cursor:"pointer",userSelect:"none"}}>
                 <div style={{width:22,height:22,borderRadius:"50%",background:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#888",flexShrink:0,overflow:"hidden"}}>
                   {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
                 </div>
@@ -379,14 +343,10 @@ export default function TeamsView({athletes=[]}){
       {Array.from({length:groupCount},(_,i)=>{
         const color=GC[i];
         const members=groups[i]||[];
-        const isTarget=dragOver===i;
         const brac=bracelets[i]||null;
         return(
           <div key={i}
-            onDragOver={e=>{e.preventDefault();setDragOver(i);}}
-            onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setDragOver(null);}}
-            onDrop={()=>onDropGroup(i)}
-            style={{background:"#141414",borderRadius:14,padding:"14px",marginBottom:10,border:"2px solid "+(isTarget?color:color+"33"),boxShadow:isTarget?"0 0 20px "+color+"33":"none",transition:"all 0.15s"}}>
+            style={{background:"#141414",borderRadius:14,padding:"14px",marginBottom:10,border:"2px solid "+color+"33"}}>
 
             {/* Group header */}
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
@@ -396,18 +356,14 @@ export default function TeamsView({athletes=[]}){
               <div style={{marginLeft:"auto",fontSize:11,color:"#444"}}>{members.length}</div>
             </div>
 
-            {/* Leader drop zone */}
+            {/* Leader zone */}
             {(()=>{
-              const isLeaderTarget=dragOverLeader===i;
               const currentLeader=leaders[i];
               const leaderAth=currentLeader?athletes.find(a=>a.name===currentLeader):null;
               return(
                 <div
-                  onDragOver={e=>{e.preventDefault();e.stopPropagation();setDragOverLeader(i);setDragOver(null);}}
-                  onDragLeave={e=>{if(!e.currentTarget.contains(e.relatedTarget))setDragOverLeader(null);}}
-                  onDrop={e=>{e.stopPropagation();onDropLeader(i);}}
                   onClick={()=>setLeaderPicker(i)}
-                  style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:8,border:"1.5px dashed "+(isLeaderTarget?color:currentLeader?color+"55":"#2a2a2a"),background:isLeaderTarget?color+"18":currentLeader?color+"10":"transparent",transition:"all 0.15s",cursor:"pointer",minHeight:38}}>
+                  style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:8,border:"1.5px dashed "+(currentLeader?color+"55":"#2a2a2a"),background:currentLeader?color+"10":"transparent",cursor:"pointer",minHeight:38}}>
                   <span style={{fontSize:13,filter:"drop-shadow(0 0 4px "+(currentLeader?color+"88":"transparent")+")"}}>⚒</span>
                   {currentLeader?(
                     <div style={{display:"flex",alignItems:"center",gap:6,flex:1}}>
@@ -418,7 +374,7 @@ export default function TeamsView({athletes=[]}){
                       <span style={{fontSize:9,color:color+"88",marginLeft:2}}>Forge leader · tap to change</span>
                     </div>
                   ):(
-                    <span style={{fontSize:11,color:isLeaderTarget?color:"#444",flex:1}}>{isLeaderTarget?"Drop to set as leader":"Tap or drag to set Forge leader"}</span>
+                    <span style={{fontSize:11,color:"#444",flex:1}}>Tap to set Forge leader</span>
                   )}
                   {currentLeader&&(
                     <button onClick={e=>{e.stopPropagation();setLeaders(prev=>{const n={...prev};delete n[i];return n;});}} style={{background:"transparent",border:"none",cursor:"pointer",color:"#333",fontSize:13,lineHeight:1,padding:"0 2px"}}>×</button>
@@ -444,8 +400,8 @@ export default function TeamsView({athletes=[]}){
 
             {/* Members */}
             {members.length===0?(
-              <div style={{fontSize:12,color:isTarget?color+"88":"#2a2a2a",textAlign:"center",padding:"18px 8px",border:"1px dashed "+(isTarget?color+"55":"#252525"),borderRadius:8,transition:"all 0.15s"}}>
-                {isTarget?"Drop here":"Empty — drag athletes here"}
+              <div style={{fontSize:12,color:"#2a2a2a",textAlign:"center",padding:"18px 8px",border:"1px dashed #252525",borderRadius:8}}>
+                Empty — tap from pool above to add
               </div>
             ):(
               <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
@@ -453,9 +409,8 @@ export default function TeamsView({athletes=[]}){
                   const isLeader=leaders[i]===name;
                   const ath=athletes.find(a=>a.name===name);
                   return(
-                    <div key={name} draggable
-                      onDragStart={()=>onDragStart(name,i)} onDragEnd={onDragEnd}
-                      style={{display:"flex",alignItems:"center",gap:5,padding:"5px 4px 5px 6px",borderRadius:20,background:isLeader?color+"22":"#1e1e1e",border:"1px solid "+(isLeader?color+"88":"#2a2a2a"),cursor:"grab",userSelect:"none"}}>
+                    <div key={name}
+                      style={{display:"flex",alignItems:"center",gap:5,padding:"5px 4px 5px 6px",borderRadius:20,background:isLeader?color+"22":"#1e1e1e",border:"1px solid "+(isLeader?color+"88":"#2a2a2a"),userSelect:"none"}}>
                       <div style={{width:20,height:20,borderRadius:"50%",background:isLeader?color:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
                         {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:name[0]}
                       </div>
