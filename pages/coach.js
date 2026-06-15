@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import TeamsView from "../components/TeamsView";
+import ResetTeams from "../components/ResetTeams";
 import ProgramUpload from "../components/ProgramUpload";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
@@ -707,6 +708,7 @@ export default function Coach(){
   const ALL_TABS=[
     {id:"overview",label:"Overview",icon:"📊"},
     {id:"teams",label:"Teams",icon:"👥"},
+    {id:"reset-teams",label:"Reset Teams",icon:"🔄"},
     {id:"roster",label:"Roster",icon:"👥"},
     {id:"attendance",label:"Attendance",icon:"📅"},
     {id:"accountability",label:"Accountability",icon:"✊"},
@@ -1395,6 +1397,10 @@ export default function Coach(){
 
           {tab==="teams"&&(
             <TeamsView athletes={athletes}/>
+          )}
+
+          {tab==="reset-teams"&&(
+            <ResetTeams athletes={athletes}/>
           )}
 
           {tab==="roster"&&(
@@ -3275,8 +3281,8 @@ export default function Coach(){
         </div>
         {/* ── LIQUID GLASS BOTTOM NAV ── */}
         {(()=>{
-            const ICON_MAP={"overview":"barChart","draft":"target","teams":"users","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","prroom":"award","anvil":"anvil","mcastles-post":"crown"};
-            const ICON_COLORS={"overview":"#FF7A2F","draft":"#FF7A2F","teams":"#90A8C0","roster":"#8CB4D5","attendance":"#7B6EE8","accountability":"#3A9E5A","anvil":"#F0C040","inbox":"#B56EE8","leaderboard":"#F0C040","goals":"#FF7A2F","fellowship":"#B56EE8","mindset":"#4DC8F5","culture":"#FF7A2F","prayers":"#B56EE8","weights":"#F0C040","photos":"#4DC8F5","engagement":"#FF7A2F","qr":"#90A8C0","mcastles-post":"#F080B0","ironroom":"#E05555","injuries":"#E05555","habits":"#20BEA8","callouts":"#F0C040","prroom":"#F0C040"};
+            const ICON_MAP={"overview":"barChart","draft":"target","teams":"users","reset-teams":"refreshCw","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","prroom":"award","anvil":"anvil","mcastles-post":"crown"};
+            const ICON_COLORS={"overview":"#FF7A2F","draft":"#FF7A2F","teams":"#90A8C0","reset-teams":"#C0392B","roster":"#8CB4D5","attendance":"#7B6EE8","accountability":"#3A9E5A","anvil":"#F0C040","inbox":"#B56EE8","leaderboard":"#F0C040","goals":"#FF7A2F","fellowship":"#B56EE8","mindset":"#4DC8F5","culture":"#FF7A2F","prayers":"#B56EE8","weights":"#F0C040","photos":"#4DC8F5","engagement":"#FF7A2F","qr":"#90A8C0","mcastles-post":"#F080B0","ironroom":"#E05555","injuries":"#E05555","habits":"#20BEA8","callouts":"#F0C040","prroom":"#F0C040"};
             const fixedTab=coachRole==="kevin"?"roster":"overview";
             const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id)&&id!==fixedTab);
             const PRIMARY=[fixedTab,...validPinned];
