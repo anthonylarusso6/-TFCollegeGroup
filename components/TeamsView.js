@@ -341,6 +341,7 @@ export default function TeamsView({athletes=[]}){
             setGroupCount(n);
             setGroups(prev=>{const next={...prev};for(let i=0;i<n;i++){if(!next[i])next[i]=[];}return next;});
           }}
+          onWheel={e=>e.currentTarget.blur()}
           style={{width:"100%",accentColor:"#E8720C",cursor:"pointer",height:4}}
         />
         <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
