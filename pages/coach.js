@@ -10,7 +10,6 @@ import Accountability from "../components/Accountability";
 import FellowshipFriday from "../components/FellowshipFriday";
 import MindsetMonday from "../components/MindsetMonday";
 import CultureEvents from "../components/CultureEvents";
-import InjuryBodyMap from "../components/InjuryBodyMap";
 import Icon from "../components/Icon";
 import EmptyState from "../components/EmptyState";
 import { hTap } from "../lib/haptics";
@@ -3275,8 +3274,8 @@ export default function Coach(){
         </div>
         {/* ── LIQUID GLASS BOTTOM NAV ── */}
         {(()=>{
-            const ICON_MAP={"overview":"barChart","draft":"target","teams":"users","reset-teams":"refreshCw","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","prroom":"award","anvil":"anvil","mcastles-post":"crown"};
-            const ICON_COLORS={"overview":"#FF7A2F","draft":"#FF7A2F","teams":"#90A8C0","reset-teams":"#C0392B","roster":"#8CB4D5","attendance":"#7B6EE8","accountability":"#3A9E5A","anvil":"#F0C040","inbox":"#B56EE8","leaderboard":"#F0C040","goals":"#FF7A2F","fellowship":"#B56EE8","mindset":"#4DC8F5","culture":"#FF7A2F","prayers":"#B56EE8","weights":"#F0C040","photos":"#4DC8F5","engagement":"#FF7A2F","qr":"#90A8C0","mcastles-post":"#F080B0","ironroom":"#E05555","injuries":"#E05555","habits":"#20BEA8","callouts":"#F0C040","prroom":"#F0C040"};
+            const ICON_MAP={"overview":"barChart","teams":"users","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"pray","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","anvil":"anvil","mcastles-post":"crown"};
+            const ICON_COLORS={"overview":"#FF7A2F","teams":"#90A8C0","roster":"#8CB4D5","attendance":"#7B6EE8","accountability":"#3A9E5A","anvil":"#F0C040","inbox":"#B56EE8","leaderboard":"#F0C040","goals":"#FF7A2F","fellowship":"#B56EE8","mindset":"#4DC8F5","culture":"#FF7A2F","prayers":"#B56EE8","weights":"#F0C040","photos":"#4DC8F5","engagement":"#FF7A2F","qr":"#90A8C0","mcastles-post":"#F080B0","ironroom":"#E05555","injuries":"#E05555","habits":"#20BEA8","callouts":"#F0C040"};
             const fixedTab=coachRole==="kevin"?"roster":"overview";
             const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id)&&id!==fixedTab);
             const PRIMARY=[fixedTab,...validPinned];
