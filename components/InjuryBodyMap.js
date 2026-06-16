@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
-import Model from "react-body-highlighter";
+import { useState, useEffect } from "react";
 import { GREEN, RED } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 
@@ -25,7 +24,6 @@ const MUSCLE_NAMES = {
   "left-hand":"Left Hand", "right-hand":"Right Hand",
 };
 
-// chips shown for each view — ordered head→toe
 const FRONT_CHIPS = [
   "head","neck","chest","front-deltoids","biceps","forearm","left-hand","right-hand",
   "abs","obliques","adductor","quadriceps","knees","left-soleus","right-soleus",
@@ -212,6 +210,151 @@ const STRETCHES={
   ],
 };
 
+// ── Fitbod-style inline SVG body map ─────────────────────────────
+function BodySVG({view, partData, selected, onSelect}){
+  const BG   = "#0a1520";   // body silhouette fill
+  const BASE = "#1a2e44";   // unselected muscle
+  const SEL  = "#2a4a6a";   // selected, no issue
+
+  const mp=(id)=>{
+    const d=partData[id];
+    const isFlag=d?.status==="sore"||d?.status==="pain";
+    const isSel=selected===id;
+    const fill=isFlag
+      ?(isSel?(d.status==="pain"?RED:SORE):(d.status==="pain"?"#5a1010":"#7a5200"))
+      :(isSel?SEL:BASE);
+    const stroke=isSel?"#ffffff":isFlag?(d.status==="pain"?RED+"88":SORE+"88"):"#0a1520";
+    const sw=isSel?1.5:0.6;
+    const filter=isSel
+      ?"drop-shadow(0 0 6px rgba(255,255,255,0.55))"
+      :isFlag?`drop-shadow(0 0 5px ${d.status==="pain"?RED:SORE}99)`
+      :"none";
+    return{fill,stroke,strokeWidth:sw,style:{cursor:"pointer",filter,transition:"all 0.15s"},
+      onClick:(e)=>{e.stopPropagation();onSelect(id);}};
+  };
+
+  if(view==="front") return(
+    <svg viewBox="0 0 200 340" style={{display:"block",width:"100%",maxWidth:220,margin:"0 auto"}}>
+      {/* silhouette */}
+      <ellipse cx="100" cy="26"  rx="24" ry="28" fill={BG}/>
+      <rect x="90"  y="49"  width="20" height="18" rx="7"  fill={BG}/>
+      <rect x="46"  y="60"  width="108" height="90" rx="22" fill={BG}/>
+      <rect x="36"  y="65"  width="28"  height="94" rx="14" fill={BG}/>
+      <rect x="136" y="65"  width="28"  height="94" rx="14" fill={BG}/>
+      <rect x="83"  y="90"  width="34"  height="76" rx="12" fill={BG}/>
+      <ellipse cx="100" cy="175" rx="28" ry="14" fill={BG}/>
+      <rect x="66"  y="166" width="32"  height="94" rx="18" fill={BG}/>
+      <rect x="102" y="166" width="32"  height="94" rx="18" fill={BG}/>
+      <rect x="70"  y="237" width="26"  height="90" rx="14" fill={BG}/>
+      <rect x="104" y="237" width="26"  height="90" rx="14" fill={BG}/>
+      <rect x="65"  y="306" width="36"  height="28" rx="12" fill={BG}/>
+      <rect x="99"  y="306" width="36"  height="28" rx="12" fill={BG}/>
+
+      {/* muscles */}
+      <ellipse cx="100" cy="26"  rx="21" ry="24" {...mp("head")}/>
+      <ellipse cx="100" cy="58"  rx="9"  ry="9"  {...mp("neck")}/>
+
+      <ellipse cx="72"  cy="74"  rx="14" ry="10" {...mp("front-deltoids")}/>
+      <ellipse cx="128" cy="74"  rx="14" ry="10" {...mp("front-deltoids")}/>
+
+      <ellipse cx="87"  cy="93"  rx="15" ry="12" {...mp("chest")}/>
+      <ellipse cx="113" cy="93"  rx="15" ry="12" {...mp("chest")}/>
+
+      <ellipse cx="57"  cy="102" rx="10" ry="14" {...mp("biceps")}/>
+      <ellipse cx="143" cy="102" rx="10" ry="14" {...mp("biceps")}/>
+
+      <ellipse cx="51"  cy="132" rx="9"  ry="13" {...mp("forearm")}/>
+      <ellipse cx="149" cy="132" rx="9"  ry="13" {...mp("forearm")}/>
+
+      <ellipse cx="47"  cy="158" rx="11" ry="11" {...mp("left-hand")}/>
+      <ellipse cx="153" cy="158" rx="11" ry="11" {...mp("right-hand")}/>
+
+      {/* abs — 6-pack grid */}
+      {[[91,100],[101,100],[91,112],[101,112],[91,124],[101,124]].map(([x,y],i)=>(
+        <rect key={i} x={x} y={y} width="8" height="9" rx="3" {...mp("abs")}/>
+      ))}
+
+      <ellipse cx="79"  cy="116" rx="9"  ry="17" {...mp("obliques")}/>
+      <ellipse cx="121" cy="116" rx="9"  ry="17" {...mp("obliques")}/>
+
+      <ellipse cx="100" cy="203" rx="8"  ry="21" {...mp("adductor")}/>
+
+      <ellipse cx="84"  cy="211" rx="17" ry="27" {...mp("quadriceps")}/>
+      <ellipse cx="116" cy="211" rx="17" ry="27" {...mp("quadriceps")}/>
+
+      <ellipse cx="84"  cy="249" rx="13" ry="9"  {...mp("knees")}/>
+      <ellipse cx="116" cy="249" rx="13" ry="9"  {...mp("knees")}/>
+
+      <ellipse cx="84"  cy="278" rx="10" ry="21" {...mp("left-soleus")}/>
+      <ellipse cx="116" cy="278" rx="10" ry="21" {...mp("right-soleus")}/>
+
+      <ellipse cx="83"  cy="312" rx="15" ry="10" {...mp("left-ankle")}/>
+      <ellipse cx="117" cy="312" rx="15" ry="10" {...mp("right-ankle")}/>
+    </svg>
+  );
+
+  return(
+    <svg viewBox="0 0 200 340" style={{display:"block",width:"100%",maxWidth:220,margin:"0 auto"}}>
+      {/* silhouette */}
+      <ellipse cx="100" cy="26"  rx="24" ry="28" fill={BG}/>
+      <rect x="90"  y="49"  width="20"  height="18" rx="7"  fill={BG}/>
+      <rect x="46"  y="60"  width="108" height="90" rx="22" fill={BG}/>
+      <rect x="36"  y="65"  width="28"  height="94" rx="14" fill={BG}/>
+      <rect x="136" y="65"  width="28"  height="94" rx="14" fill={BG}/>
+      <rect x="83"  y="90"  width="34"  height="76" rx="12" fill={BG}/>
+      <ellipse cx="100" cy="175" rx="30" ry="18" fill={BG}/>
+      <rect x="64"  y="166" width="36"  height="94" rx="18" fill={BG}/>
+      <rect x="100" y="166" width="36"  height="94" rx="18" fill={BG}/>
+      <rect x="70"  y="237" width="26"  height="90" rx="14" fill={BG}/>
+      <rect x="104" y="237" width="26"  height="90" rx="14" fill={BG}/>
+      <rect x="65"  y="306" width="36"  height="28" rx="12" fill={BG}/>
+      <rect x="99"  y="306" width="36"  height="28" rx="12" fill={BG}/>
+
+      {/* muscles */}
+      <ellipse cx="100" cy="26"  rx="21" ry="24" {...mp("head")}/>
+      <ellipse cx="100" cy="58"  rx="9"  ry="9"  {...mp("neck")}/>
+
+      <ellipse cx="82"  cy="76"  rx="17" ry="13" {...mp("trapezius")}/>
+      <ellipse cx="118" cy="76"  rx="17" ry="13" {...mp("trapezius")}/>
+
+      <ellipse cx="67"  cy="80"  rx="11" ry="9"  {...mp("back-deltoids")}/>
+      <ellipse cx="133" cy="80"  rx="11" ry="9"  {...mp("back-deltoids")}/>
+
+      <ellipse cx="100" cy="100" rx="22" ry="18" {...mp("upper-back")}/>
+
+      <ellipse cx="57"  cy="103" rx="10" ry="14" {...mp("triceps")}/>
+      <ellipse cx="143" cy="103" rx="10" ry="14" {...mp("triceps")}/>
+
+      <ellipse cx="100" cy="132" rx="16" ry="13" {...mp("lower-back")}/>
+
+      <ellipse cx="51"  cy="132" rx="9"  ry="13" {...mp("forearm")}/>
+      <ellipse cx="149" cy="132" rx="9"  ry="13" {...mp("forearm")}/>
+
+      <ellipse cx="47"  cy="158" rx="11" ry="11" {...mp("left-hand")}/>
+      <ellipse cx="153" cy="158" rx="11" ry="11" {...mp("right-hand")}/>
+
+      <ellipse cx="87"  cy="176" rx="20" ry="19" {...mp("gluteal")}/>
+      <ellipse cx="113" cy="176" rx="20" ry="19" {...mp("gluteal")}/>
+
+      <ellipse cx="72"  cy="207" rx="9"  ry="23" {...mp("abductors")}/>
+      <ellipse cx="128" cy="207" rx="9"  ry="23" {...mp("abductors")}/>
+
+      <ellipse cx="85"  cy="214" rx="17" ry="27" {...mp("hamstring")}/>
+      <ellipse cx="115" cy="214" rx="17" ry="27" {...mp("hamstring")}/>
+
+      <ellipse cx="85"  cy="249" rx="13" ry="9"  {...mp("knees")}/>
+      <ellipse cx="115" cy="249" rx="13" ry="9"  {...mp("knees")}/>
+
+      <ellipse cx="85"  cy="282" rx="12" ry="22" {...mp("calves")}/>
+      <ellipse cx="115" cy="282" rx="12" ry="22" {...mp("calves")}/>
+
+      <ellipse cx="83"  cy="312" rx="15" ry="10" {...mp("left-ankle")}/>
+      <ellipse cx="117" cy="312" rx="15" ry="10" {...mp("right-ankle")}/>
+    </svg>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────
 export default function InjuryBodyMap({athleteId, readOnly=false}){
   const[view,setView]=useState("front");
   const[partData,setPartData]=useState({});
@@ -263,15 +406,11 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       });
       if(ie)throw ie;
       setPartData(prev=>({...prev,[selected]:{status:pStatus,pain:pPain,description:pDesc.trim(),updatedAt:now}}));
-
       if(notifyCoach&&pStatus!=="good"){
         const zoneName=MUSCLE_NAMES[selected]||selected;
         const inboxMsg=`Body Map — ${zoneName}: ${STATUS[pStatus].label}${pPain>0?" (pain "+pPain+"/10)":""}. ${pDesc.trim()}`;
-        try{
-          await supabase.from("inbox").insert({athlete_id:athleteId,type:"injury",message:inboxMsg});
-        }catch(e2){}
+        try{await supabase.from("inbox").insert({athlete_id:athleteId,type:"injury",message:inboxMsg});}catch(e2){}
       }
-
       setSaved(true);
       setTimeout(()=>setSaved(false),3000);
     }catch(e){
@@ -287,17 +426,10 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       const{error}=await supabase.from("announcements").delete()
         .eq("type","body_injury").eq("day",String(athleteId));
       if(error)throw error;
-      setPartData({});
-      setSelected(null);
+      setPartData({});setSelected(null);
     }catch(e){}
     setClearing(false);
   };
-
-  const bodyData=useMemo(()=>
-    Object.entries(partData)
-      .filter(([,d])=>d.status==="sore"||d.status==="pain")
-      .map(([id,d])=>({name:id,muscles:[id],frequency:d.status==="pain"?2:1}))
-  ,[partData]);
 
   const chips=view==="front"?FRONT_CHIPS:BACK_CHIPS;
   const selName=selected?MUSCLE_NAMES[selected]||selected:null;
@@ -316,18 +448,12 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
 
   return(
     <div>
-      {/* CSS for polygon hover glow */}
-      <style>{`
-        .rbh polygon{transition:opacity 0.12s,filter 0.12s;}
-        .rbh polygon:hover{opacity:0.6!important;filter:brightness(1.8) saturate(1.4);cursor:pointer;}
-      `}</style>
-
       {/* Header */}
       <div style={{background:"#111",borderRadius:12,padding:"14px 16px",marginBottom:12,border:"1px solid "+RED+"33",borderLeft:"3px solid "+RED}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
           <div>
             <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:2}}>Body Check-In</div>
-            <div style={{fontSize:11,color:"#555"}}>{readOnly?"Athlete's injury status":"Tap the body or a chip below to check in"}</div>
+            <div style={{fontSize:11,color:"#555"}}>{readOnly?"Athlete's injury status":"Tap a muscle to check in"}</div>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             {injCount>0&&!readOnly&&(
@@ -344,7 +470,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
         </div>
       </div>
 
-      {/* Front/Back toggle */}
+      {/* Front / Back toggle */}
       <div style={{display:"flex",gap:6,marginBottom:12,background:"#0e0e0e",borderRadius:12,padding:4,border:"1px solid #1e1e1e"}}>
         {["front","back"].map(v=>(
           <button key={v} onClick={()=>{setView(v);setSelected(null);}} style={{flex:1,padding:"11px",borderRadius:9,border:"none",background:view===v?"linear-gradient(135deg,"+RED+"dd,"+RED+"88)":"transparent",color:view===v?"#fff":"#555",fontSize:13,fontWeight:view===v?800:400,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:view===v?"0.04em":"0"}}>
@@ -354,7 +480,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       </div>
 
       {/* Legend */}
-      <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:12}}>
+      <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:10}}>
         {Object.entries(STATUS).map(([k,v])=>(
           <div key={k} style={{display:"flex",alignItems:"center",gap:5,fontSize:10,color:"#777"}}>
             <div style={{width:10,height:10,borderRadius:"50%",background:v.color,boxShadow:"0 0 6px "+v.color+"88"}}/>
@@ -363,75 +489,25 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
         ))}
       </div>
 
-      {/* Body Map — large, high contrast */}
-      <div style={{background:"#080f18",borderRadius:20,padding:"20px 8px 16px",marginBottom:14,border:"1px solid #1a2e44",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+RED+"55,transparent,"+RED+"55)"}}/>
-        <div style={{maxWidth:340,margin:"0 auto",position:"relative"}}>
-          <Model
-            type={view==="front"?"anterior":"posterior"}
-            data={bodyData}
-            bodyColor="#3a5068"
-            highlightedColors={[SORE+"ff",RED+"ff"]}
-            onClick={({muscle})=>selectPart(muscle)}
-            svgStyle={{display:"block",stroke:"#1a2e44",strokeWidth:"0.6"}}
-          />
-          {/* Custom overlays: hands + feet (not in library SVG) */}
-          {(["left-hand","right-hand","left-ankle","right-ankle"]).map(id=>{
-            const d=partData[id];
-            const isFlag=d?.status==="sore"||d?.status==="pain";
-            const c=isFlag?(d.status==="pain"?RED:SORE):"#3a5068";
-            const isSel=selected===id;
-            if(readOnly&&!isFlag)return null;
-            const isHand=id.includes("hand");
-            const isLeft=id.includes("left");
-            const pos=isHand
-              ? (isLeft
-                  ?{left:"1%",top:"50%"}
-                  :{right:"1%",top:"50%"})
-              : (isLeft
-                  ?{left:"23%",bottom:"0%"}
-                  :{right:"23%",bottom:"0%"});
-            return(
-              <button key={id} onClick={()=>selectPart(id)} style={{
-                position:"absolute",
-                background:isFlag?c+"dd":isSel?"rgba(58,80,104,0.88)":"rgba(58,80,104,0.55)",
-                border:isSel?"2px solid #fff":isFlag?`1.5px solid ${c}bb`:"1px solid rgba(58,80,104,0.55)",
-                cursor:"pointer",
-                borderRadius:isHand?12:10,
-                width:isHand?42:50,
-                height:isHand?50:30,
-                padding:0,
-                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-                gap:1,
-                transition:"all 0.12s",
-                boxShadow:isSel?`0 0 14px ${c}aa,0 2px 8px rgba(0,0,0,0.6)`:isFlag?`0 0 10px ${c}77`:"none",
-                ...pos
-              }}>
-                <span style={{fontSize:isHand?20:16,lineHeight:1,display:"block",transform:isLeft?"scaleX(-1)":"none",pointerEvents:"none"}}>
-                  {isHand?"✋":"🦶"}
-                </span>
-                <span style={{fontSize:8,color:"#fff",fontWeight:800,opacity:0.85,letterSpacing:"0.06em",lineHeight:1,pointerEvents:"none"}}>
-                  {isLeft?"L":"R"}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        {!selected&&!readOnly&&(
-          <div style={{textAlign:"center",fontSize:11,color:"#3a5068",marginTop:4,letterSpacing:"0.04em"}}>
-            ↑ tap a muscle above or a chip below
-          </div>
-        )}
+      {/* Body map */}
+      <div style={{background:"#060e18",borderRadius:20,padding:"16px 8px 12px",marginBottom:14,border:"1px solid #0d2035",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+RED+"44,transparent,"+RED+"44)"}}/>
+        <BodySVG view={view} partData={partData} selected={selected} onSelect={selectPart}/>
         {selected&&(
-          <div style={{textAlign:"center",marginTop:6}}>
+          <div style={{textAlign:"center",marginTop:8}}>
             <span style={{fontSize:12,fontWeight:700,color:STATUS[pStatus]?.color||"#fff",background:(STATUS[pStatus]?.color||"#fff")+"18",padding:"4px 14px",borderRadius:20,border:"1px solid "+(STATUS[pStatus]?.color||"#fff")+"44"}}>
               {selName} · {STATUS[pStatus]?.label}
             </span>
           </div>
         )}
+        {!selected&&!readOnly&&(
+          <div style={{textAlign:"center",fontSize:11,color:"#1a3a55",marginTop:6,letterSpacing:"0.04em"}}>
+            tap a muscle above or a chip below
+          </div>
+        )}
       </div>
 
-      {/* Muscle chips — tappable for athletes, read-only indicators for coach */}
+      {/* Muscle chips */}
       <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16,padding:"2px 0"}}>
         {chips.map(id=>{
           const c=chipColor(id);
@@ -517,7 +593,6 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
             )}
           </div>
 
-          {/* Status buttons */}
           <div style={{marginBottom:14}}>
             <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>How does it feel?</div>
             <div style={{display:"flex",gap:8}}>
@@ -530,7 +605,6 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
             </div>
           </div>
 
-          {/* Pain scale */}
           {pStatus!=="good"&&(
             <div style={{marginBottom:14}}>
               <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Pain Level{pPain>0?": "+pPain+"/10":""}</div>
@@ -548,7 +622,6 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
             </div>
           )}
 
-          {/* Description */}
           <div style={{marginBottom:14}}>
             <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>
               Describe the injury
@@ -564,7 +637,6 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
             />
           </div>
 
-          {/* Notify coach toggle */}
           {pStatus!=="good"&&(
             <div style={{marginBottom:14,display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>setNotifyCoach(v=>!v)}>
               <div style={{width:32,height:18,borderRadius:9,background:notifyCoach?RED+"cc":"#2a2a2a",border:"1px solid "+(notifyCoach?RED+"66":"#333"),position:"relative",transition:"background 0.2s",flexShrink:0}}>
@@ -574,7 +646,6 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
             </div>
           )}
 
-          {/* Save row */}
           <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",gap:10}}>
             {saved&&<div style={{fontSize:11,color:GREEN,fontWeight:700}}>✓ Saved{notifyCoach&&pStatus!=="good"?" · Coach notified":""}</div>}
             {saveErr&&<div style={{fontSize:11,color:RED,fontWeight:700}}>Save failed — try again</div>}
