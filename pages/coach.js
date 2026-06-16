@@ -120,7 +120,7 @@ export default function Coach(){
   const[newGender,setNewGender]=useState("");
   const[newRole,setNewRole]=useState("iron");
   const[genLoading,setGenLoading]=useState(null);
-  const[attDate,setAttDate]=useState((()=>{const n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");})());
+  const[attDate,setAttDate]=useState((()=>{const e=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));return e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0");})());
   const[attRecords,setAttRecords]=useState(null);
   const[weightSort,setWeightSort]=useState("change");
   const[weightData,setWeightData]=useState(null);
@@ -641,7 +641,7 @@ export default function Coach(){
       const[{data:weekAtt},{data:lbRows},{data:weekInbox}]=await Promise.all([
         supabase.from("attendance").select("*,athletes(name)").gte("date",monStr).lte("date",todayStr),
         supabase.from("leaderboard").select("*,athletes(name)").order("current_streak",{ascending:false}),
-        supabase.from("inbox").select("*,athletes(name)").eq("done",false).gte("created_at",monday.toISOString()),
+        supabase.from("inbox").select("*,athletes(name)").eq("done",false).gte("created_at",new Date(monday.getTime()+(now.getTime()-est.getTime())).toISOString()),
       ]);
       setRecapData({weekAtt:weekAtt||[],lbRows:lbRows||[],weekInbox:weekInbox||[]});
     }catch(e){console.error("Recap load:",e);}

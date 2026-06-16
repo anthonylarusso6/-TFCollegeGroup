@@ -23,7 +23,12 @@ export default async function handler(req, res) {
 
     if (!data?.message) return res.status(200).json({ ok: true, sent: false, reason: "no_sub" });
 
-    const sub = JSON.parse(data.message);
+    let sub;
+    try { sub = JSON.parse(data.message); } catch {
+      await supabase.from("announcements").update({ active: false })
+        .eq("type", "push_sub").eq("day", String(athleteId));
+      return res.status(200).json({ ok: true, sent: false, reason: "bad_sub" });
+    }
     await webpush.sendNotification(sub, JSON.stringify({ title, body, url: url || "/athlete" }));
     return res.status(200).json({ ok: true, sent: true });
   } catch (e) {

@@ -139,7 +139,8 @@ const piColor=(score)=>{
 };
 
 export default function PRLog({athleteId,gender}){
-  const today=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][new Date().getDay()];
+  const _estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const today=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][_estNow.getDay()];
   const defaultDay=DAYS.includes(today)?today:"Mon";
   const[view,setView]=useState("log");
   const[activeDay,setActiveDay]=useState(defaultDay);

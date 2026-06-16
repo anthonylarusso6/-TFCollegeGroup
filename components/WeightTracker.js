@@ -135,9 +135,9 @@ export default function WeightTracker({ athleteId, onWeighed }) {
     try {
       const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
       const today = estNow.getFullYear() + "-" + String(estNow.getMonth() + 1).padStart(2, "0") + "-" + String(estNow.getDate()).padStart(2, "0");
-      const existing = entries.find(e => e.date === today);
-      if (existing) {
-        const { error: err } = await supabase.from("weight_log").update({ weight: parseFloat(weight) }).eq("id", existing.id);
+      const { data: todayRow } = await supabase.from("weight_log").select("id").eq("athlete_id", athleteId).eq("date", today).maybeSingle();
+      if (todayRow) {
+        const { error: err } = await supabase.from("weight_log").update({ weight: parseFloat(weight) }).eq("id", todayRow.id);
         if (err) { setError("Save failed: " + err.message); return; }
       } else {
         const { error: err } = await supabase.from("weight_log").insert({ athlete_id: athleteId, date: today, weight: parseFloat(weight) });

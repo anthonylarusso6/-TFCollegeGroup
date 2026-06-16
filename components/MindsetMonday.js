@@ -240,6 +240,7 @@ const WEEKS=[
 
 function printHandout(week, typeColor) {
   const w = window.open("", "_blank");
+  if (!w) return;
   w.document.write(`<!DOCTYPE html><html><head><title>Mindset Monday — Week ${week.week}: ${week.title}</title>
   <style>
     body{font-family:Georgia,serif;max-width:680px;margin:40px auto;padding:0 24px;color:#1a1a1a;line-height:1.7;}

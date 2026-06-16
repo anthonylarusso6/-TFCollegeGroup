@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { SkeletonList } from "./Skeleton";
 
@@ -27,6 +27,7 @@ export default function TeamsView({athletes=[]}){
   const[bracelets,setBracelets]=useState({});   // {groupIdx: bracelet object | null}
   const[groupCount,setGroupCount]=useState(4);
   const[draftId,setDraftId]=useState(null);
+  const draftIdRef=useRef(null);
   const[loading,setLoading]=useState(true);
   const[saving,setSaving]=useState(false);
   const[saved,setSaved]=useState(false);
@@ -47,7 +48,7 @@ export default function TeamsView({athletes=[]}){
       const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
       if(data&&data.length>0){
         const d=data[0];
-        setDraftId(d.id);
+        setDraftId(d.id);draftIdRef.current=d.id;
         const loadedGroups=d.groups||[];
         const gc=Math.max(loadedGroups.length,4);
         setGroupCount(gc);
@@ -99,14 +100,14 @@ export default function TeamsView({athletes=[]}){
       const leadersArr=Array.from({length:groupCount},(_,i)=>leaders[i]||null);
       const braceletsArr=Array.from({length:groupCount},(_,i)=>bracelets[i]||null);
       const payload={groups:groupsArr,leaders:leadersArr,bracelets:braceletsArr};
-      if(draftId){
-        // Don't overwrite phase/locked when editing — preserve existing draft state
-        const{error:err}=await supabase.from("draft").update(payload).eq("id",draftId);
+      const currentDraftId=draftIdRef.current||draftId;
+      if(currentDraftId){
+        const{error:err}=await supabase.from("draft").update(payload).eq("id",currentDraftId);
         if(err)throw err;
       }else{
         const{data:inserted,error:err}=await supabase.from("draft").insert({...payload,phase:"setup",locked:false}).select().single();
         if(err)throw err;
-        if(inserted)setDraftId(inserted.id);
+        if(inserted){draftIdRef.current=inserted.id;setDraftId(inserted.id);}
       }
       for(let i=0;i<groupCount;i++){
         for(const name of(groupsArr[i]||[])){

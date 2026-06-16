@@ -46,7 +46,7 @@ export default function Accountability({athletes}){
   const submitLog=async()=>{
     setLoading(true);
     hSuccess();
-    const vLabel=violation==="Other"?otherText:violation;
+    const vLabel=violation?.label==="Other"?otherText:violation?.label;
     const baseCrunches=violation?.crunches||30;
     const crunches=type==="selfreport"?25*count:baseCrunches*count;
     await supabase.from("callouts").insert({athlete_id:selectedAthlete.id,violation:vLabel,count,type,crunches});
@@ -69,7 +69,9 @@ export default function Accountability({athletes}){
     setCallouts(p=>p.filter(c=>c.id!==id));
   };
 
-  const todayCallouts=callouts.filter(c=>new Date(c.logged_at).toDateString()===new Date().toDateString());
+  const _estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const _todayEST=_estNow.getFullYear()+"-"+String(_estNow.getMonth()+1).padStart(2,"0")+"-"+String(_estNow.getDate()).padStart(2,"0");
+  const todayCallouts=callouts.filter(c=>{const d=new Date(new Date(c.logged_at).toLocaleString("en-US",{timeZone:"America/New_York"}));return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")===_todayEST;});
   const totalCrunchesToday=todayCallouts.reduce((sum,c)=>sum+(c.crunches||0),0);
   const patternMap={};
   callouts.forEach(c=>{const name=c.athletes?.name;if(name)patternMap[name]=(patternMap[name]||0)+(c.count||1);});
@@ -189,14 +191,14 @@ export default function Accountability({athletes}){
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
               {VIOLATIONS.map(v=>(
-                <button key={v.label} onClick={()=>{hTap();setViolation(v.label);if(v.label!=="Other")setStep("confirm");}}
-                  style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:10,border:"1px solid "+(violation===v.label?RED+"77":"rgba(255,255,255,0.08)"),background:violation===v.label?"rgba(192,57,43,0.18)":"rgba(255,255,255,0.04)",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",transition:"all 0.15s"}}>
-                  <Icon name={v.icon} size={15} color={violation===v.label?RED:"rgba(255,255,255,0.4)"}/>
-                  <span style={{fontSize:12,color:violation===v.label?"#fff":"#aaa"}}>{v.label}</span>
+                <button key={v.label} onClick={()=>{hTap();setViolation(v);if(v.label!=="Other")setStep("confirm");}}
+                  style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:10,border:"1px solid "+(violation?.label===v.label?RED+"77":"rgba(255,255,255,0.08)"),background:violation?.label===v.label?"rgba(192,57,43,0.18)":"rgba(255,255,255,0.04)",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",transition:"all 0.15s"}}>
+                  <Icon name={v.icon} size={15} color={violation?.label===v.label?RED:"rgba(255,255,255,0.4)"}/>
+                  <span style={{fontSize:12,color:violation?.label===v.label?"#fff":"#aaa"}}>{v.label}</span>
                 </button>
               ))}
             </div>
-            {violation==="Other"&&(
+            {violation?.label==="Other"&&(
               <div style={{marginTop:12}}>
                 <input value={otherText} onChange={e=>setOtherText(e.target.value)} placeholder="Describe violation..."
                   style={{width:"100%",padding:"10px 12px",fontSize:13,border:"1px solid rgba(255,255,255,0.12)",borderRadius:10,background:"rgba(255,255,255,0.07)",color:"#fff",fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:10,outline:"none"}}/>
@@ -220,7 +222,7 @@ export default function Accountability({athletes}){
             </div>
             <div style={{background:"rgba(255,255,255,0.04)",borderRadius:12,padding:"14px",marginBottom:14,border:"1px solid rgba(255,255,255,0.08)"}}>
               <div style={{fontSize:15,fontWeight:700,color:"#fff",marginBottom:2}}>{selectedAthlete?.name}</div>
-              <div style={{fontSize:12,color:"#888",marginBottom:14}}>{violation==="Other"?otherText:violation}</div>
+              <div style={{fontSize:12,color:"#888",marginBottom:14}}>{violation?.label==="Other"?otherText:violation?.label}</div>
 
               {/* Count */}
               <div style={{marginBottom:12}}>
