@@ -348,7 +348,6 @@ export default function Athlete(){
           allowCredentials:[{type:"public-key",id:credIdBytes,transports:["internal"]}],
           userVerification:"required",
           timeout:60000,
-          hints:["client-device"], // prefer platform authenticator (Face ID → iCloud Keychain)
         }
       });
       if(assertion){
