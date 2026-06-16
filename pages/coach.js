@@ -772,9 +772,10 @@ export default function Coach(){
         publicKey:{
           challenge,
           rpId:window.location.hostname,
-          allowCredentials:[], // discoverable — OS shows ALL passkeys for this site
+          allowCredentials:[],
           userVerification:"required",
           timeout:60000,
+          hints:["client-device"], // prefer platform authenticator (Face ID → iCloud Keychain)
         }
       });
       if(assertion){
@@ -818,9 +819,9 @@ export default function Coach(){
           },
           pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
           authenticatorSelection:{
-            // No authenticatorAttachment — allows iCloud Keychain, Chrome passkeys, etc.
+            authenticatorAttachment:"platform", // forces Face ID/Touch ID → iCloud Keychain, not Chrome PM
             userVerification:"required",
-            residentKey:"required", // required for discoverable credential (empty allowCredentials) flow
+            residentKey:"required",
           },
           timeout:60000,
         }
