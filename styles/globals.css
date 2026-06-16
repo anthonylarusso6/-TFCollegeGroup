@@ -22,6 +22,7 @@ body {
   padding-top: env(safe-area-inset-top);
   padding-top: constant(safe-area-inset-top);
   overscroll-behavior-x: none;
+  overscroll-behavior-y: none;
 }
 
 a {

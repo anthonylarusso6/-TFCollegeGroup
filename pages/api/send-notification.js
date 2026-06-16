@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, sent: true });
   } catch (e) {
     // If subscription is expired/invalid, deactivate it
-    if (e.statusCode === 410 || e.statusCode === 404) {
+    if (e.statusCode === 410 || e.statusCode === 404 || e.statusCode === 400 || e.statusCode === 401) {
       await supabase.from("announcements").update({ active: false })
         .eq("type", "push_sub").eq("day", String(athleteId));
     }

@@ -793,6 +793,8 @@ export default function Coach(){
             if(raw&&JSON.parse(raw).credId===credB64){resolvedCoach=c;break;}
           }
         }
+        // If we couldn't identify the coach from the passkey and no coach was pre-selected, refuse
+        if(resolvedCoach===fallbackCoach&&!cid&&!selectedCoach)return false;
         const nav=coachNavFor(resolvedCoach);
         completeCoachAuth(nav.role,nav.tab);
         return true;

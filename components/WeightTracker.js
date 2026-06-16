@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 import EmptyState from "./EmptyState";
@@ -66,6 +66,7 @@ export default function WeightTracker({ athleteId, onWeighed }) {
   const[notifLoading, setNotifLoading] = useState(false);
   const[confirmDelete, setConfirmDelete] = useState(null);
   const[deleting, setDeleting] = useState(null);
+  const savingRef = useRef(false);
 
   const loadEntries = async () => {
     try {
@@ -130,12 +131,14 @@ export default function WeightTracker({ athleteId, onWeighed }) {
   };
 
   const save = async () => {
-    if (!weight) return;
+    if (!weight || savingRef.current) return;
+    savingRef.current = true;
     setSaving(true); setError("");
     try {
       const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
       const today = estNow.getFullYear() + "-" + String(estNow.getMonth() + 1).padStart(2, "0") + "-" + String(estNow.getDate()).padStart(2, "0");
-      const { data: todayRow } = await supabase.from("weight_log").select("id").eq("athlete_id", athleteId).eq("date", today).maybeSingle();
+      const { data: todayRow, error: selectErr } = await supabase.from("weight_log").select("id").eq("athlete_id", athleteId).eq("date", today).maybeSingle();
+      if (selectErr) { setError("Save failed: " + selectErr.message); return; }
       if (todayRow) {
         const { error: err } = await supabase.from("weight_log").update({ weight: parseFloat(weight) }).eq("id", todayRow.id);
         if (err) { setError("Save failed: " + err.message); return; }
@@ -148,7 +151,7 @@ export default function WeightTracker({ athleteId, onWeighed }) {
       hSuccess();
       if (onWeighed) onWeighed();
     } catch (e) { setError("Save failed. Please try again."); hError(); }
-    finally { setSaving(false); }
+    finally { setSaving(false); savingRef.current = false; }
   };
 
   const saveGoal = async (val, mode) => {

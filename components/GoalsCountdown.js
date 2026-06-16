@@ -8,7 +8,7 @@ export default function GoalsCountdown({athlete}){
   const[deadline,setDeadline]=useState(athlete?.goal_deadline||"");
   const[saving,setSaving]=useState(false);
   const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
-  const daysLeft=deadline?Math.max(0,Math.ceil((new Date(deadline+"T23:59:59")-estNow)/(1000*60*60*24))):null;
+  const daysLeft=deadline?Math.max(0,Math.ceil((new Date(deadline.slice(0,10)+"T23:59:59")-estNow)/(1000*60*60*24))):null;
   const save=async()=>{
     setSaving(true);
     try{await supabase.from("athletes").update({goal_deadline:deadline}).eq("id",athlete.id);}catch(e){}
