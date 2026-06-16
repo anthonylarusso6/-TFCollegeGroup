@@ -210,11 +210,11 @@ const STRETCHES={
   ],
 };
 
-// ── Fitbod-style inline SVG body map ─────────────────────────────
+// ── Anatomical SVG body map (real polygon paths from react-body-highlighter) ──
 function BodySVG({view, partData, selected, onSelect}){
-  const BG   = "#0a1520";   // body silhouette fill
-  const BASE = "#1a2e44";   // unselected muscle
-  const SEL  = "#2a4a6a";   // selected, no issue
+  const BODY="#1c2d40";
+  const BASE="#2a4a6a";
+  const SEL ="#3a6a9a";
 
   const mp=(id)=>{
     const d=partData[id];
@@ -223,133 +223,163 @@ function BodySVG({view, partData, selected, onSelect}){
     const fill=isFlag
       ?(isSel?(d.status==="pain"?RED:SORE):(d.status==="pain"?"#5a1010":"#7a5200"))
       :(isSel?SEL:BASE);
-    const stroke=isSel?"#ffffff":isFlag?(d.status==="pain"?RED+"88":SORE+"88"):"#0a1520";
-    const sw=isSel?1.5:0.6;
+    const stroke=isSel?"#ffffff":isFlag?(d.status==="pain"?RED+"88":SORE+"88"):"none";
+    const sw=isSel?1.2:0.8;
     const filter=isSel
-      ?"drop-shadow(0 0 6px rgba(255,255,255,0.55))"
-      :isFlag?`drop-shadow(0 0 5px ${d.status==="pain"?RED:SORE}99)`
+      ?"drop-shadow(0 0 4px rgba(255,255,255,0.5))"
+      :isFlag?`drop-shadow(0 0 4px ${d.status==="pain"?RED:SORE}bb)`
       :"none";
     return{fill,stroke,strokeWidth:sw,style:{cursor:"pointer",filter,transition:"all 0.15s"},
       onClick:(e)=>{e.stopPropagation();onSelect(id);}};
   };
 
+  const svgStyle={display:"block",width:"100%",maxWidth:220,margin:"0 auto"};
+
   if(view==="front") return(
-    <svg viewBox="0 0 200 340" style={{display:"block",width:"100%",maxWidth:220,margin:"0 auto"}}>
+    <svg viewBox="0 0 100 215" style={svgStyle}>
+      <rect width="100" height="215" fill="#060e18"/>
       {/* silhouette */}
-      <ellipse cx="100" cy="26"  rx="24" ry="28" fill={BG}/>
-      <rect x="90"  y="49"  width="20" height="18" rx="7"  fill={BG}/>
-      <rect x="46"  y="60"  width="108" height="90" rx="22" fill={BG}/>
-      <rect x="36"  y="65"  width="28"  height="94" rx="14" fill={BG}/>
-      <rect x="136" y="65"  width="28"  height="94" rx="14" fill={BG}/>
-      <rect x="83"  y="90"  width="34"  height="76" rx="12" fill={BG}/>
-      <ellipse cx="100" cy="175" rx="28" ry="14" fill={BG}/>
-      <rect x="66"  y="166" width="32"  height="94" rx="18" fill={BG}/>
-      <rect x="102" y="166" width="32"  height="94" rx="18" fill={BG}/>
-      <rect x="70"  y="237" width="26"  height="90" rx="14" fill={BG}/>
-      <rect x="104" y="237" width="26"  height="90" rx="14" fill={BG}/>
-      <rect x="65"  y="306" width="36"  height="28" rx="12" fill={BG}/>
-      <rect x="99"  y="306" width="36"  height="28" rx="12" fill={BG}/>
-
-      {/* muscles */}
-      <ellipse cx="100" cy="26"  rx="21" ry="24" {...mp("head")}/>
-      <ellipse cx="100" cy="58"  rx="9"  ry="9"  {...mp("neck")}/>
-
-      <ellipse cx="72"  cy="74"  rx="14" ry="10" {...mp("front-deltoids")}/>
-      <ellipse cx="128" cy="74"  rx="14" ry="10" {...mp("front-deltoids")}/>
-
-      <ellipse cx="87"  cy="93"  rx="15" ry="12" {...mp("chest")}/>
-      <ellipse cx="113" cy="93"  rx="15" ry="12" {...mp("chest")}/>
-
-      <ellipse cx="57"  cy="102" rx="10" ry="14" {...mp("biceps")}/>
-      <ellipse cx="143" cy="102" rx="10" ry="14" {...mp("biceps")}/>
-
-      <ellipse cx="51"  cy="132" rx="9"  ry="13" {...mp("forearm")}/>
-      <ellipse cx="149" cy="132" rx="9"  ry="13" {...mp("forearm")}/>
-
-      <ellipse cx="47"  cy="158" rx="11" ry="11" {...mp("left-hand")}/>
-      <ellipse cx="153" cy="158" rx="11" ry="11" {...mp("right-hand")}/>
-
-      {/* abs — 6-pack grid */}
-      {[[91,100],[101,100],[91,112],[101,112],[91,124],[101,124]].map(([x,y],i)=>(
-        <rect key={i} x={x} y={y} width="8" height="9" rx="3" {...mp("abs")}/>
-      ))}
-
-      <ellipse cx="79"  cy="116" rx="9"  ry="17" {...mp("obliques")}/>
-      <ellipse cx="121" cy="116" rx="9"  ry="17" {...mp("obliques")}/>
-
-      <ellipse cx="100" cy="203" rx="8"  ry="21" {...mp("adductor")}/>
-
-      <ellipse cx="84"  cy="211" rx="17" ry="27" {...mp("quadriceps")}/>
-      <ellipse cx="116" cy="211" rx="17" ry="27" {...mp("quadriceps")}/>
-
-      <ellipse cx="84"  cy="249" rx="13" ry="9"  {...mp("knees")}/>
-      <ellipse cx="116" cy="249" rx="13" ry="9"  {...mp("knees")}/>
-
-      <ellipse cx="84"  cy="278" rx="10" ry="21" {...mp("left-soleus")}/>
-      <ellipse cx="116" cy="278" rx="10" ry="21" {...mp("right-soleus")}/>
-
-      <ellipse cx="83"  cy="312" rx="15" ry="10" {...mp("left-ankle")}/>
-      <ellipse cx="117" cy="312" rx="15" ry="10" {...mp("right-ankle")}/>
+      <ellipse cx="50" cy="13" rx="12" ry="13" fill={BODY}/>
+      <rect x="42" y="24" width="16" height="9" rx="3" fill={BODY}/>
+      <rect x="28" y="30" width="44" height="42" rx="10" fill={BODY}/>
+      <rect x="17" y="30" width="14" height="44" rx="7" fill={BODY}/>
+      <rect x="69" y="30" width="14" height="44" rx="7" fill={BODY}/>
+      <rect x="33" y="68" width="34" height="40" rx="5" fill={BODY}/>
+      <rect x="15" y="68" width="12" height="36" rx="6" fill={BODY}/>
+      <rect x="73" y="68" width="12" height="36" rx="6" fill={BODY}/>
+      <rect x="2"  y="99" width="16" height="14" rx="6" fill={BODY}/>
+      <rect x="82" y="99" width="16" height="14" rx="6" fill={BODY}/>
+      <rect x="30" y="90" width="40" height="70" rx="8" fill={BODY}/>
+      <rect x="32" y="153" width="15" height="57" rx="8" fill={BODY}/>
+      <rect x="53" y="153" width="15" height="57" rx="8" fill={BODY}/>
+      <rect x="29" y="200" width="21" height="14" rx="5" fill={BODY}/>
+      <rect x="50" y="200" width="21" height="14" rx="5" fill={BODY}/>
+      {/* HEAD */}
+      <polygon points="42.4 2.9 40 11.8 42 19.6 46.1 23.3 49.8 25.3 54.7 22.4 57.6 19.2 59.2 10.2 57.1 2.4 49.8 0" {...mp("head")}/>
+      {/* NECK */}
+      <polygon points="55.5 23.7 50.6 33.5 50.6 39.2 61.6 40 70.6 44.9 69.4 36.7 63.3 35.1 58.4 30.6" {...mp("neck")}/>
+      <polygon points="29 44.9 30.2 37.1 36.3 35.1 41.2 30.2 44.5 24.5 49 33.9 48.6 39.2 38 39.6" {...mp("neck")}/>
+      {/* FRONT DELTOIDS */}
+      <polygon points="78.4 53.1 79.6 47.8 79.2 41.2 75.9 38 71 36.3 72.2 42.9 71.4 47.3" {...mp("front-deltoids")}/>
+      <polygon points="28.2 47.3 21.2 53.1 20 47.8 20.4 40.8 24.5 37.1 28.6 37.1 27 43.3" {...mp("front-deltoids")}/>
+      {/* CHEST */}
+      <polygon points="51.8 41.6 51 55.1 58 57.9 67.8 55.5 70.6 47.3 62 41.6" {...mp("chest")}/>
+      <polygon points="29.8 46.5 31.4 55.5 40.8 57.9 48.2 55.1 47.8 42 37.6 42" {...mp("chest")}/>
+      {/* BICEPS */}
+      <polygon points="16.7 68.2 18 71.4 22.9 66.1 29 53.9 27.8 49.4 20.4 55.9" {...mp("biceps")}/>
+      <polygon points="71.4 49.4 70.2 54.7 76.3 66.1 81.6 71.8 82.9 69 78.8 55.5" {...mp("biceps")}/>
+      {/* TRICEPS (visible on sides) */}
+      <polygon points="69.4 55.5 69.4 61.6 75.9 72.7 77.6 70.2 75.5 67.3" {...mp("triceps")}/>
+      <polygon points="22.4 69.4 29.8 55.5 29.8 60.8 22.9 73.1" {...mp("triceps")}/>
+      {/* FOREARM */}
+      <polygon points="6.1 88.6 10.2 75.1 14.7 70.2 16.3 74.3 19.2 73.5 4.5 97.6 0 100" {...mp("forearm")}/>
+      <polygon points="84.5 69.8 83.3 73.5 80 73.1 95.1 98.4 100 100.4 93.5 89.4 89.8 76.3" {...mp("forearm")}/>
+      <polygon points="77.6 72.2 77.6 77.6 80.4 84.1 85.3 89.8 92.2 101.2 94.7 99.6" {...mp("forearm")}/>
+      <polygon points="6.9 101.2 13.5 90.6 18.8 84.1 21.6 77.1 21.2 71.8 4.9 98.8" {...mp("forearm")}/>
+      {/* ABS */}
+      <polygon points="56.3 59.2 58 64.1 58.4 78 58.4 92.7 56.3 98.4 55.1 104.1 51.4 107.8 51 84.5 50.6 67.3 51 57.1" {...mp("abs")}/>
+      <polygon points="43.7 58.8 48.6 57.1 49 67.3 48.6 84.5 48.2 107.3 44.5 103.7 40.8 91.4 40.8 78.4 41.2 64.5" {...mp("abs")}/>
+      {/* OBLIQUES */}
+      <polygon points="68.6 63.3 67.3 57.1 58.8 59.6 60 64.1 60.4 83.3 65.7 78.8 66.5 69.8" {...mp("obliques")}/>
+      <polygon points="33.9 78.4 33.1 71.8 31 63.3 32.2 57.1 40.8 59.2 39.2 63.3 39.2 83.7" {...mp("obliques")}/>
+      {/* ABDUCTORS (outer thigh / hip) */}
+      <polygon points="52.7 110.2 54.3 124.9 60 110.2 62 100 64.9 94.3 60 92.7 56.7 104.5" {...mp("abductors")}/>
+      <polygon points="47.8 110.6 44.9 125.3 42 115.9 40.4 113.1 39.6 107.3 38 102.4 34.7 93.9 39.6 92.2 41.6 99.2 43.7 105.3" {...mp("abductors")}/>
+      {/* QUADRICEPS */}
+      <polygon points="34.7 98.8 37.1 108.2 37.1 127.8 34.3 137.1 31 132.7 29.4 120 28.2 111.4 29.4 100.8 32.2 94.7" {...mp("quadriceps")}/>
+      <polygon points="63.3 105.7 64.5 100 66.9 94.7 70.2 101.2 71 111.8 68.2 133.1 65.3 137.6 62.4 128.6 62 111.4" {...mp("quadriceps")}/>
+      <polygon points="38.8 129.4 38.4 112.2 41.2 118.4 44.5 129.4 42.9 135.1 40 146.1 36.3 146.5 35.5 140" {...mp("quadriceps")}/>
+      <polygon points="59.6 145.7 55.5 129 60.8 113.9 61.2 130.2 64.1 139.6 62.9 146.5" {...mp("quadriceps")}/>
+      <polygon points="32.7 138.4 26.5 145.7 25.7 136.7 25.7 127.3 26.9 114.3 29.4 133.5" {...mp("quadriceps")}/>
+      <polygon points="71.8 113.1 73.9 124.1 73.9 140.4 72.7 145.7 66.5 138.4 70.2 133.5" {...mp("quadriceps")}/>
+      {/* KNEES */}
+      <polygon points="33.9 140 34.7 143.3 35.5 147.3 36.3 151 35.1 156.7 29.8 156.7 27.3 152.7 27.3 147.3 30.2 144.1" {...mp("knees")}/>
+      <polygon points="65.7 140 72.2 147.8 72.2 152.2 69.8 157.1 64.9 156.7 62.9 151" {...mp("knees")}/>
+      {/* SHINS / ANTERIOR LOWER LEG (left-soleus=athlete left=SVG right, right-soleus=athlete right=SVG left) */}
+      <polygon points="71.4 160.4 73.5 153.5 76.7 161.2 79.6 167.8 78.4 187.8 79.6 195.5 74.7 195.5" {...mp("left-soleus")}/>
+      <polygon points="72.7 195.1 69.8 159.2 65.3 158.4 64.1 162.4 64.1 165.3 65.7 177.1" {...mp("left-soleus")}/>
+      <polygon points="24.9 194.7 27.8 164.9 28.2 160.4 26.1 154.3 24.9 157.6 22.4 161.6 20.8 167.8 22 188.2 20.8 195.5" {...mp("right-soleus")}/>
+      <polygon points="35.5 158.4 35.9 162.4 35.9 166.9 35.1 172.2 35.1 176.7 32.2 182 30.6 187.3 26.9 194.7 27.3 187.8 28.2 180.4 28.6 175.5 29 169.8 29.8 164.1 30.2 158.8" {...mp("right-soleus")}/>
+      {/* HANDS */}
+      <polygon points="0 100 1 107 3 113 8 115 14 113 17 107 15 100" {...mp("left-hand")}/>
+      <polygon points="85 100 82 107 84 113 90 115 96 113 99 107 100 100" {...mp("right-hand")}/>
+      {/* ANKLES / FEET */}
+      <polygon points="21 196 19 204 22 211 28 214 34 212 36 205 35 197" {...mp("right-ankle")}/>
+      <polygon points="64 197 63 205 65 212 71 214 77 211 79 204 78 197" {...mp("left-ankle")}/>
     </svg>
   );
 
   return(
-    <svg viewBox="0 0 200 340" style={{display:"block",width:"100%",maxWidth:220,margin:"0 auto"}}>
+    <svg viewBox="0 0 100 215" style={svgStyle}>
+      <rect width="100" height="215" fill="#060e18"/>
       {/* silhouette */}
-      <ellipse cx="100" cy="26"  rx="24" ry="28" fill={BG}/>
-      <rect x="90"  y="49"  width="20"  height="18" rx="7"  fill={BG}/>
-      <rect x="46"  y="60"  width="108" height="90" rx="22" fill={BG}/>
-      <rect x="36"  y="65"  width="28"  height="94" rx="14" fill={BG}/>
-      <rect x="136" y="65"  width="28"  height="94" rx="14" fill={BG}/>
-      <rect x="83"  y="90"  width="34"  height="76" rx="12" fill={BG}/>
-      <ellipse cx="100" cy="175" rx="30" ry="18" fill={BG}/>
-      <rect x="64"  y="166" width="36"  height="94" rx="18" fill={BG}/>
-      <rect x="100" y="166" width="36"  height="94" rx="18" fill={BG}/>
-      <rect x="70"  y="237" width="26"  height="90" rx="14" fill={BG}/>
-      <rect x="104" y="237" width="26"  height="90" rx="14" fill={BG}/>
-      <rect x="65"  y="306" width="36"  height="28" rx="12" fill={BG}/>
-      <rect x="99"  y="306" width="36"  height="28" rx="12" fill={BG}/>
-
-      {/* muscles */}
-      <ellipse cx="100" cy="26"  rx="21" ry="24" {...mp("head")}/>
-      <ellipse cx="100" cy="58"  rx="9"  ry="9"  {...mp("neck")}/>
-
-      <ellipse cx="82"  cy="76"  rx="17" ry="13" {...mp("trapezius")}/>
-      <ellipse cx="118" cy="76"  rx="17" ry="13" {...mp("trapezius")}/>
-
-      <ellipse cx="67"  cy="80"  rx="11" ry="9"  {...mp("back-deltoids")}/>
-      <ellipse cx="133" cy="80"  rx="11" ry="9"  {...mp("back-deltoids")}/>
-
-      <ellipse cx="100" cy="100" rx="22" ry="18" {...mp("upper-back")}/>
-
-      <ellipse cx="57"  cy="103" rx="10" ry="14" {...mp("triceps")}/>
-      <ellipse cx="143" cy="103" rx="10" ry="14" {...mp("triceps")}/>
-
-      <ellipse cx="100" cy="132" rx="16" ry="13" {...mp("lower-back")}/>
-
-      <ellipse cx="51"  cy="132" rx="9"  ry="13" {...mp("forearm")}/>
-      <ellipse cx="149" cy="132" rx="9"  ry="13" {...mp("forearm")}/>
-
-      <ellipse cx="47"  cy="158" rx="11" ry="11" {...mp("left-hand")}/>
-      <ellipse cx="153" cy="158" rx="11" ry="11" {...mp("right-hand")}/>
-
-      <ellipse cx="87"  cy="176" rx="20" ry="19" {...mp("gluteal")}/>
-      <ellipse cx="113" cy="176" rx="20" ry="19" {...mp("gluteal")}/>
-
-      <ellipse cx="72"  cy="207" rx="9"  ry="23" {...mp("abductors")}/>
-      <ellipse cx="128" cy="207" rx="9"  ry="23" {...mp("abductors")}/>
-
-      <ellipse cx="85"  cy="214" rx="17" ry="27" {...mp("hamstring")}/>
-      <ellipse cx="115" cy="214" rx="17" ry="27" {...mp("hamstring")}/>
-
-      <ellipse cx="85"  cy="249" rx="13" ry="9"  {...mp("knees")}/>
-      <ellipse cx="115" cy="249" rx="13" ry="9"  {...mp("knees")}/>
-
-      <ellipse cx="85"  cy="282" rx="12" ry="22" {...mp("calves")}/>
-      <ellipse cx="115" cy="282" rx="12" ry="22" {...mp("calves")}/>
-
-      <ellipse cx="83"  cy="312" rx="15" ry="10" {...mp("left-ankle")}/>
-      <ellipse cx="117" cy="312" rx="15" ry="10" {...mp("right-ankle")}/>
+      <ellipse cx="50" cy="11" rx="11" ry="11" fill={BODY}/>
+      <rect x="42" y="21" width="16" height="9" rx="3" fill={BODY}/>
+      <rect x="28" y="28" width="44" height="48" rx="10" fill={BODY}/>
+      <rect x="16" y="30" width="15" height="46" rx="7" fill={BODY}/>
+      <rect x="69" y="30" width="15" height="46" rx="7" fill={BODY}/>
+      <rect x="33" y="72" width="34" height="34" rx="5" fill={BODY}/>
+      <rect x="15" y="72" width="12" height="34" rx="6" fill={BODY}/>
+      <rect x="73" y="72" width="12" height="34" rx="6" fill={BODY}/>
+      <rect x="3"  y="99" width="15" height="14" rx="6" fill={BODY}/>
+      <rect x="82" y="99" width="15" height="14" rx="6" fill={BODY}/>
+      <rect x="30" y="96" width="40" height="68" rx="8" fill={BODY}/>
+      <rect x="32" y="156" width="15" height="58" rx="8" fill={BODY}/>
+      <rect x="53" y="156" width="15" height="58" rx="8" fill={BODY}/>
+      <rect x="29" y="203" width="20" height="11" rx="4" fill={BODY}/>
+      <rect x="51" y="203" width="20" height="11" rx="4" fill={BODY}/>
+      {/* HEAD */}
+      <polygon points="50.6 0 46 0.9 40.9 5.5 40.4 12.8 45.1 20 55.7 20 59.1 13.6 59.6 4.7 55.7 1.3" {...mp("head")}/>
+      {/* TRAPEZIUS */}
+      <polygon points="44.7 21.7 47.7 21.7 47.2 38.3 47.7 64.7 38.3 53.2 35.3 40.9 31.1 36.6 39.1 33.2 43.8 27.2" {...mp("trapezius")}/>
+      <polygon points="52.3 21.7 55.7 21.7 56.6 27.2 60.9 32.8 68.9 36.6 64.7 40.4 61.7 53.2 52.3 64.7 53.2 38.3" {...mp("trapezius")}/>
+      {/* BACK DELTOIDS */}
+      <polygon points="29.4 37 23 39.1 17.4 44.3 18.3 53.6 24.3 49.4 27.2 46.4" {...mp("back-deltoids")}/>
+      <polygon points="71.1 37 78.3 39.6 82.6 44.7 81.7 53.6 74.9 49 72.3 45.1" {...mp("back-deltoids")}/>
+      {/* UPPER BACK */}
+      <polygon points="31.1 38.7 28.1 48.9 28.5 55.3 34 75.3 47.2 71.1 47.2 66.4 36.6 54 33.6 41.3" {...mp("upper-back")}/>
+      <polygon points="68.9 38.7 71.9 49.4 71.5 56.2 66 75.3 52.8 71.1 52.8 66.4 63.4 54.5 66.4 41.7" {...mp("upper-back")}/>
+      {/* TRICEPS */}
+      <polygon points="26.8 49.8 17.9 55.7 14.5 72.3 16.6 81.7 21.7 63.8 26.8 55.7" {...mp("triceps")}/>
+      <polygon points="73.6 50.2 82.1 55.7 86 73.2 83.4 82.1 77.9 63 73.2 55.7" {...mp("triceps")}/>
+      <polygon points="26.8 58.3 26.8 68.5 23 75.3 19.1 77.4 22.6 65.5" {...mp("triceps")}/>
+      <polygon points="72.8 58.3 77 64.7 80.4 77.4 76.6 75.3 72.8 68.9" {...mp("triceps")}/>
+      {/* LOWER BACK */}
+      <polygon points="47.7 72.8 34.5 77 35.3 83.4 49.4 102.1 46.8 82.9" {...mp("lower-back")}/>
+      <polygon points="52.3 72.8 65.5 77 64.7 83.4 50.6 102.1 53.2 83.8" {...mp("lower-back")}/>
+      {/* FOREARM */}
+      <polygon points="86.4 75.7 91.1 83.4 93.2 94 100 106.4 96.2 104.3 88.1 89.4 84.3 83.8" {...mp("forearm")}/>
+      <polygon points="13.6 75.7 8.9 83.8 6.8 93.6 0 106.4 3.8 104.3 12.3 88.5 15.7 83" {...mp("forearm")}/>
+      <polygon points="81.3 79.6 77.4 77.9 79.1 84.7 91.1 103.8 93.2 108.9 94.5 104.7" {...mp("forearm")}/>
+      <polygon points="18.7 79.6 22.1 77.9 20.9 84.2 9.4 103 6.8 108.5 5.1 104.7" {...mp("forearm")}/>
+      {/* GLUTEAL */}
+      <polygon points="44.7 99.6 30.2 108.5 29.8 118.7 31.5 126 47.2 121.3 49.4 114.9" {...mp("gluteal")}/>
+      <polygon points="55.3 99.1 51.1 114.5 52.3 120.9 68.1 126 69.8 119.1 69.4 108.5" {...mp("gluteal")}/>
+      {/* ABDUCTORS */}
+      <polygon points="48.1 123 44.7 123 41.3 125.5 45.1 144.3 48.5 135.7 48.9 129.4" {...mp("abductors")}/>
+      <polygon points="51.9 122.6 55.7 123.4 59.1 126 54.9 144.3 51.9 136.2 51.1 129.4" {...mp("abductors")}/>
+      {/* HAMSTRING */}
+      <polygon points="28.9 122.1 31.1 129.4 36.6 126 35.3 135.3 34.5 150.2 29.4 158.3 28.9 146.8 27.7 141.3 27.2 131.5" {...mp("hamstring")}/>
+      <polygon points="71.5 121.7 69.4 128.9 63.8 126 65.5 136.6 66.4 150.2 71.1 158.3 71.5 147.7 72.8 142.1 73.6 131.9" {...mp("hamstring")}/>
+      <polygon points="38.7 125.5 44.3 146 40.4 166.8 36.2 152.8 37 135.3" {...mp("hamstring")}/>
+      <polygon points="61.7 125.5 63.4 136.2 64.3 153.2 60 166.8 56.2 146.4" {...mp("hamstring")}/>
+      {/* KNEES */}
+      <polygon points="34.5 153.2 31.1 159.1 33.6 166.4 37.4 162.6" {...mp("knees")}/>
+      <polygon points="66.4 153.6 63 163 66.8 166.4 69.4 159.1" {...mp("knees")}/>
+      {/* CALVES */}
+      <polygon points="29.4 160.4 28.5 167.2 24.7 179.6 23.8 192.8 25.5 197 28.5 193.2 29.8 180 31.9 171.1 31.9 166.8" {...mp("calves")}/>
+      <polygon points="37.4 165.1 35.3 167.7 33.2 171.9 31.1 180.4 30.2 191.9 34 200 38.7 190.6 39.1 168.9" {...mp("calves")}/>
+      <polygon points="63 165.1 61.3 168.5 61.7 190.6 66.4 199.6 70.6 191.9 68.9 179.6 66.8 170.2" {...mp("calves")}/>
+      <polygon points="70.6 160.4 72.3 168.5 75.7 179.1 76.6 192.8 74.5 196.6 72.3 193.6 70.6 179.6 68.1 168.1" {...mp("calves")}/>
+      {/* SOLEUS (posterior lower leg) */}
+      <polygon points="28.5 195.7 30.2 195.7 33.6 201.7 30.6 213 28.5 208 26.8 198.3" {...mp("left-soleus")}/>
+      <polygon points="69.8 195.7 71.9 195.7 73.6 198.3 71.9 208 70.2 213 67.2 202.1" {...mp("right-soleus")}/>
+      {/* HANDS */}
+      <polygon points="0 100 1 107 3 113 8 115 14 113 17 107 15 100" {...mp("left-hand")}/>
+      <polygon points="85 100 82 107 84 113 90 115 96 113 99 107 100 100" {...mp("right-hand")}/>
+      {/* ANKLES / FEET */}
+      <polygon points="21 196 19 204 22 211 28 214 34 212 36 205 35 197" {...mp("right-ankle")}/>
+      <polygon points="64 197 63 205 65 212 71 214 77 211 79 204 78 197" {...mp("left-ankle")}/>
     </svg>
   );
 }
