@@ -386,26 +386,34 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
             const isLeft=id.includes("left");
             const pos=isHand
               ? (isLeft
-                  ?{left:"3%",top:"51%",width:38,height:34,borderRadius:"30% 35% 40% 35%"}
-                  :{right:"3%",top:"51%",width:38,height:34,borderRadius:"35% 30% 35% 40%"})
+                  ?{left:"1%",top:"50%"}
+                  :{right:"1%",top:"50%"})
               : (isLeft
-                  ?{left:"27%",bottom:"1%",width:52,height:20,borderRadius:"40% 40% 45% 45% / 55% 55% 45% 45%"}
-                  :{right:"27%",bottom:"1%",width:52,height:20,borderRadius:"40% 40% 45% 45% / 55% 55% 45% 45%"});
+                  ?{left:"23%",bottom:"0%"}
+                  :{right:"23%",bottom:"0%"});
             return(
-              <div key={id} onClick={()=>selectPart(id)} style={{
+              <button key={id} onClick={()=>selectPart(id)} style={{
                 position:"absolute",
-                background:isFlag?c+"ee":"#3a5068aa",
-                border:isSel?"2px solid #fff":isFlag?`1px solid ${c}88`:"1px solid #1a2e4488",
+                background:isFlag?c+"dd":isSel?"rgba(58,80,104,0.88)":"rgba(58,80,104,0.55)",
+                border:isSel?"2px solid #fff":isFlag?`1.5px solid ${c}bb`:"1px solid rgba(58,80,104,0.55)",
                 cursor:"pointer",
-                display:"flex",alignItems:"center",justifyContent:"center",
+                borderRadius:isHand?12:10,
+                width:isHand?42:50,
+                height:isHand?50:30,
+                padding:0,
+                display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                gap:1,
                 transition:"all 0.12s",
-                boxShadow:isSel?`0 0 10px ${c}88`:isFlag?`0 0 6px ${c}55`:"none",
+                boxShadow:isSel?`0 0 14px ${c}aa,0 2px 8px rgba(0,0,0,0.6)`:isFlag?`0 0 10px ${c}77`:"none",
                 ...pos
               }}>
-                <span style={{fontSize:7,color:"#ffffffaa",fontWeight:700,letterSpacing:"0.04em",lineHeight:1,pointerEvents:"none"}}>
-                  {isHand?(isLeft?"L\nHAND":"R\nHAND"):(isLeft?"L":"R")}
+                <span style={{fontSize:isHand?20:16,lineHeight:1,display:"block",transform:isLeft?"scaleX(-1)":"none",pointerEvents:"none"}}>
+                  {isHand?"✋":"🦶"}
                 </span>
-              </div>
+                <span style={{fontSize:8,color:"#fff",fontWeight:800,opacity:0.85,letterSpacing:"0.06em",lineHeight:1,pointerEvents:"none"}}>
+                  {isLeft?"L":"R"}
+                </span>
+              </button>
             );
           })}
         </div>

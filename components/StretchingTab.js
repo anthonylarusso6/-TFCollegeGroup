@@ -70,13 +70,31 @@ const CATS={
     {n:"Inchworm",d:10,t:"Walk hands out to plank, then walk feet to meet hands. Dynamic full-chain warm-up."},
     {n:"Nordic Stretch",d:30,t:"Kneel, have a partner hold ankles, lean forward slowly. Eccentric hamstring strengthening."},
   ]},
-  calves:{l:"Calves",i:"🦶",c:"#1A4F8A",s:[
+  calves:{l:"Calves",i:"🦵",c:"#1A4F8A",s:[
     {n:"Wall Calf Stretch",d:45,t:"Back leg straight, heel flat on ground, toes up the wall. Targets the gastrocnemius."},
     {n:"Bent Knee Calf",d:45,t:"Same position, bend the back knee. This shifts focus to the soleus below."},
     {n:"Step Calf Stretch",d:45,t:"Heel off the edge of a step. Lower it slowly. Full range with gravity assist."},
     {n:"Downward Dog Press",d:10,t:"In down dog, alternate pressing each heel to the floor. Dynamic calf stretch."},
     {n:"Seated Towel Stretch",d:45,t:"Towel looped around foot, pull toward you with straight leg. Calf and plantar fascia."},
     {n:"Ankle Circles",d:10,t:"Full range rotation both directions. Loosens calf, Achilles tendon, and ankle joint."},
+  ]},
+  knees:{l:"Knees",i:"🦿",c:"#0F6E56",s:[
+    {n:"Standing Quad Stretch",d:45,t:"Pull ankle to glute and hold. Relieves tension on the quad and patellar tendon. Keep knees together."},
+    {n:"Seated Hamstring Stretch",d:45,t:"Extend leg, flex foot, hinge from the hips. Reduces the pull on the back of the knee from tight hamstrings."},
+    {n:"IT Band Stretch",d:30,t:"Cross one leg behind the other, lean away from the back-foot side. Reduces lateral knee tension and runner's knee."},
+    {n:"Seated Knee Circles",d:30,t:"Sit on seat edge, foot off the ground. Trace SLOW gentle circles in pain-free range only. Lubricates the joint."},
+    {n:"Hip Flexor Lunge",d:45,t:"Back knee on floor, torso tall, push hips forward. Releasing tight hip flexors directly reduces load transferred through the knee."},
+    {n:"Calf Stretch (Straight Leg)",d:30,t:"Press heel flat into floor, leg straight. Reduces posterior knee tension caused by tight calves and Achilles."},
+    {n:"Terminal Knee Extension",d:30,t:"Loop band around a rack at knee height. Step back so band pulls knee into slight bend. Straighten knee slowly. Targets VMO for patellar tracking."},
+  ]},
+  ankles:{l:"Ankles",i:"🦶",c:"#854F0B",s:[
+    {n:"Ankle Circles",d:30,t:"Foot off the floor, trace large slow circles in both directions through the full comfortable range. Do both directions — don't skip."},
+    {n:"Alphabet Tracing",d:60,t:"Use your big toe to slowly trace every letter A–Z. Mobilises the ankle in all planes that circles alone miss."},
+    {n:"Achilles Stretch (Bent Knee)",d:45,t:"Stand facing wall, back foot slightly bent at the knee. Press the heel firmly into the floor. This hits the soleus and Achilles attachment directly."},
+    {n:"Banded Dorsiflexion",d:30,t:"Loop a band around a rack at ankle height. Step forward so the band pulls the ankle back. Bend the knee slightly — feel the front of the ankle open."},
+    {n:"Towel Foot Pull",d:45,t:"Seated, legs extended, towel looped around the ball of one foot. Pull gently toward you with the knee straight. Stretches the calf and plantar fascia."},
+    {n:"Single-Leg Balance",d:30,t:"Stand on one foot, keep ankle stable for the full hold. Progress to eyes closed or an unstable surface. Rebuilds proprioception lost after sprains."},
+    {n:"Slow Calf Raises",d:30,t:"Rise fully onto toes, lower over 4–5 counts. Loads and strengthens the entire ankle-calf complex through full range."},
   ]},
 };
 
