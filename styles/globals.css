@@ -21,7 +21,7 @@ body {
   /* Fill the iOS status-bar notch area with the dark background */
   padding-top: env(safe-area-inset-top);
   padding-top: constant(safe-area-inset-top);
-  overscroll-behavior: none;
+  overscroll-behavior-x: none;
 }
 
 a {

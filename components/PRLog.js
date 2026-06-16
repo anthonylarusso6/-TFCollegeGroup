@@ -252,9 +252,10 @@ export default function PRLog({athleteId,gender}){
     setSaving(liftName);
     const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
     const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
+    const tierNum=typeof tier==="number"?tier:3; // "circuit"/"guns_and_glory" → 3
     const entry={
       athlete_id:athleteId,lift:liftName,weight:parseFloat(inp.weight),
-      reps:parseInt(inp.reps)||1,date:today,day:activeDay,tier:tier||1,
+      reps:parseInt(inp.reps)||1,date:today,day:activeDay,tier:tierNum,
     };
     try{
       const{data,error}=await supabase.from("pr_log").insert(entry).select().single();
