@@ -765,23 +765,38 @@ export default function Coach(){
   };
 
   const authenticateWithBiometric=async(cid)=>{
-    const coach=cid||selectedCoach;
+    const fallbackCoach=cid||selectedCoach||"ant";
     try{
-      const raw=localStorage.getItem("tf_bio_coach_"+coach);
-      if(!raw)return false;
-      const stored=JSON.parse(raw);
       const challenge=crypto.getRandomValues(new Uint8Array(32));
-      const credIdBytes=Uint8Array.from(atob(stored.credId),c=>c.charCodeAt(0));
       const assertion=await navigator.credentials.get({
         publicKey:{
           challenge,
-          rpId:stored.rpId||window.location.hostname,
-          allowCredentials:[{type:"public-key",id:credIdBytes}],
+          rpId:window.location.hostname,
+          allowCredentials:[], // discoverable — OS shows ALL passkeys for this site
           userVerification:"required",
           timeout:60000,
         }
       });
-      if(assertion){const nav=coachNavFor(coach);completeCoachAuth(nav.role,nav.tab);return true;}
+      if(assertion){
+        // Identify coach from userHandle (set during registration)
+        let resolvedCoach=fallbackCoach;
+        if(assertion.response.userHandle){
+          const handle=new TextDecoder().decode(assertion.response.userHandle);
+          const parsed=handle.replace("coach_","");
+          if(["ant","kevin","malkmus","mcastles"].includes(parsed))resolvedCoach=parsed;
+        }
+        // If userHandle didn't resolve it, match by rawId
+        if(resolvedCoach===fallbackCoach){
+          const credB64=btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
+          for(const c of["ant","kevin","malkmus","mcastles"]){
+            const raw=localStorage.getItem("tf_bio_coach_"+c);
+            if(raw&&JSON.parse(raw).credId===credB64){resolvedCoach=c;break;}
+          }
+        }
+        const nav=coachNavFor(resolvedCoach);
+        completeCoachAuth(nav.role,nav.tab);
+        return true;
+      }
     }catch(e){/* cancelled — fall through to PIN */}
     return false;
   };
@@ -800,7 +815,11 @@ export default function Coach(){
             displayName:c?.name||selectedCoach,
           },
           pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
-          authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"preferred"},
+          authenticatorSelection:{
+            // No authenticatorAttachment — allows iCloud Keychain, Chrome passkeys, etc.
+            userVerification:"required",
+            residentKey:"required", // required for discoverable credential (empty allowCredentials) flow
+          },
           timeout:60000,
         }
       });
@@ -877,7 +896,19 @@ export default function Coach(){
             <>
               <div style={{width:72,height:72,borderRadius:20,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto 1.5rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,boxShadow:"0 0 60px #E8720C55,0 0 120px #E8720C22"}}>⚒</div>
               <div style={{fontSize:24,fontWeight:900,color:"#fff",marginBottom:4,letterSpacing:"-0.02em",textTransform:"uppercase"}}>Coach Login</div>
-              <div style={{fontSize:12,color:"#555",marginBottom:28,letterSpacing:"0.04em"}}>Select your name to continue</div>
+              <div style={{fontSize:12,color:"#555",marginBottom:20,letterSpacing:"0.04em"}}>Select your name to continue</div>
+              {/* Quick Sign In — appears when any passkey is stored for this site */}
+              {bioAvail&&(()=>{const anyStored=["ant","kevin","malkmus","mcastles"].some(c=>{try{return!!localStorage.getItem("tf_bio_coach_"+c);}catch(e){return false;}});return anyStored;})()&&(
+                <button onClick={()=>authenticateWithBiometric(null)}
+                  style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+                    padding:"15px",borderRadius:14,border:"1px solid rgba(232,114,12,0.35)",
+                    background:"linear-gradient(135deg,rgba(232,114,12,0.12),rgba(192,57,43,0.08))",
+                    color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",
+                    marginBottom:16,boxShadow:"0 0 24px rgba(232,114,12,0.15)",letterSpacing:"0.01em"}}>
+                  <Icon name="faceId" size={22} color="#E8720C"/>
+                  <span>Quick Sign In</span>
+                </button>
+              )}
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 {coaches.map(c=>(
                   <button key={c.id} onClick={()=>{
@@ -1025,6 +1056,7 @@ export default function Coach(){
                 ))}
               </div>
               <div style={{marginTop:10,fontSize:10,color:"#2a2a2a",textAlign:"center",letterSpacing:"0.04em"}}>Tap keypad or type on keyboard</div>
+              {bioCredId&&<button onClick={()=>{try{localStorage.removeItem("tf_bio_coach_"+selectedCoach);}catch(e){}setBioCredId(null);}} style={{marginTop:12,background:"transparent",border:"none",color:"#2a2a2a",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>Reset saved passkey</button>}
               {pinError&&<div style={{marginTop:12,fontSize:12,color:"#ff5555",padding:"8px 16px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
             </>
             )}
