@@ -348,6 +348,7 @@ export default function Athlete(){
           allowCredentials:[{type:"public-key",id:credIdBytes,transports:["internal"]}],
           userVerification:"required",
           timeout:60000,
+          hints:["client-device"], // prefer platform authenticator (Face ID → iCloud Keychain)
         }
       });
       if(assertion){
@@ -1186,6 +1187,30 @@ export default function Athlete(){
                       </button>
                     </div>
                     {bioRegResult==="success"&&<div style={{fontSize:11,color:GREEN,fontWeight:700,marginTop:8}}>✓ Face ID enabled — use it next time you log in</div>}
+                    {bioRegResult==="failed"&&<div style={{fontSize:11,color:"#e05",marginTop:8}}>Setup failed — make sure Face ID is enabled in your phone settings and try again</div>}
+                  </div>
+                )}
+                {bioAvail&&bioCredId&&(
+                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a3a"}}>
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
+                      <div>
+                        <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}><Icon name="faceId" size={13} color="#fff"/>Face ID / Touch ID enabled</div>
+                        <div style={{fontSize:10,color:"#555"}}>Reset to re-register with Apple Passwords</div>
+                      </div>
+                      <button disabled={bioRegistering} onClick={async()=>{
+                        setBioRegistering(true);setBioRegResult(null);
+                        try{localStorage.removeItem("tf_bio_declined_"+selectedAthlete.id);}catch(e){}
+                        try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
+                        setBioDeclined(false);setBioCredId(null);
+                        await registerBiometric(true);
+                        const stored=localStorage.getItem("tf_bio_"+selectedAthlete.id);
+                        if(stored){setBioRegResult("success");}else{setBioRegResult("failed");}
+                        setBioRegistering(false);
+                      }} style={{padding:"8px 14px",borderRadius:10,border:"none",background:bioRegistering?"#222":"#1a1a1a",color:bioRegistering?"#555":"#888",fontSize:12,fontWeight:700,cursor:bioRegistering?"default":"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,border:"0.5px solid #333"}}>
+                        {bioRegistering?"Resetting…":"Reset →"}
+                      </button>
+                    </div>
+                    {bioRegResult==="success"&&<div style={{fontSize:11,color:GREEN,fontWeight:700,marginTop:8}}>✓ Face ID re-registered with Apple Passwords</div>}
                     {bioRegResult==="failed"&&<div style={{fontSize:11,color:"#e05",marginTop:8}}>Setup failed — make sure Face ID is enabled in your phone settings and try again</div>}
                   </div>
                 )}
