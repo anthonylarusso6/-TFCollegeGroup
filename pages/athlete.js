@@ -1629,7 +1629,7 @@ export default function Athlete(){
 
             {tab==="mcastles"&&<MCastlesTab/>}
 
-            {tab==="events"&&<AthleteEventsTab/>}
+            {tab==="events"&&<AthleteEventsTab athleteName={selectedAthlete.name}/>}
 
             {tab==="attendance"&&(
               <div>
