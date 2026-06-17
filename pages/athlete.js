@@ -17,6 +17,7 @@ import GoalsCountdown from "../components/GoalsCountdown";
 import GroupPhotos from "../components/GroupPhotos";
 import AchievementBadges from "../components/AchievementBadges";
 import MCastlesTab from "../components/MCastlesTab";
+import AthleteEventsTab from "../components/AthleteEventsTab";
 import InjuryBodyMap from "../components/InjuryBodyMap";
 import HabitsTab from "../components/HabitsTab";
 import Icon from "../components/Icon";
@@ -564,7 +565,7 @@ export default function Athlete(){
     setGoalSaved({});setGoalText({});setMyVote(null);
     setTab("profile");setEditingPins(false);slideDirRef.current=0;
     try{const s=localStorage.getItem("tf_pinned_"+a.id);setPinnedTabs(s?JSON.parse(s):["prs","attendance","weight"]);}catch(e){setPinnedTabs(["prs","attendance","weight"]);}
-    const defaultOrder=["profile","mcastles","verse","attendance","mygroup","anvil","weight","body","prs","stretching","leaderboard","prayer","bracelets","photos","notes","habits","private"];
+    const defaultOrder=["profile","mcastles","events","verse","attendance","mygroup","anvil","weight","body","prs","stretching","leaderboard","prayer","bracelets","photos","notes","habits","private"];
     try{const storedOrder=localStorage.getItem("tf_more_order_"+a.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});setMoreOrder(initOrder);moreOrderRef.current=initOrder;}catch(e){setMoreOrder(defaultOrder);moreOrderRef.current=defaultOrder;}
 
     // Load supporting data in parallel while Face ID is scanning
@@ -953,6 +954,7 @@ export default function Athlete(){
     const TABS=[
       {id:"profile",label:"Profile"},
       {id:"mcastles",label:"MCastles"},
+      {id:"events",label:"Events"},
       {id:"verse",label:"Verse"},
       {id:"attendance",label:"Attendance"},
       {id:"mygroup",label:"My Group"},
@@ -1626,6 +1628,8 @@ export default function Athlete(){
             {tab==="photos"&&<GroupPhotos/>}
 
             {tab==="mcastles"&&<MCastlesTab/>}
+
+            {tab==="events"&&<AthleteEventsTab/>}
 
             {tab==="attendance"&&(
               <div>
