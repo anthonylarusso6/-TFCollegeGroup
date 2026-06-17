@@ -12,6 +12,7 @@ import CultureEvents from "../components/CultureEvents";
 import Icon from "../components/Icon";
 import EmptyState from "../components/EmptyState";
 import { hTap } from "../lib/haptics";
+import TeamsView from "../components/TeamsView";
 
 const COACH_PIN="1803";
 
@@ -705,6 +706,7 @@ export default function Coach(){
   const ALL_TABS=[
     {id:"overview",label:"Overview",icon:"📊"},
     {id:"roster",label:"Roster",icon:"👥"},
+    {id:"teams",label:"Teams",icon:"👥"},
     {id:"attendance",label:"Attendance",icon:"📅"},
     {id:"accountability",label:"Accountability",icon:"✊"},
     {id:"anvil",label:"The Anvil",icon:"⚒"},
@@ -1425,6 +1427,8 @@ export default function Coach(){
             </div>
           )}
 
+
+          {tab==="teams"&&(<TeamsView athletes={athletes}/>)}
 
           {tab==="roster"&&(
             <div>
