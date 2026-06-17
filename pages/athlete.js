@@ -566,7 +566,7 @@ export default function Athlete(){
     setTab("profile");setEditingPins(false);slideDirRef.current=0;
     try{const s=localStorage.getItem("tf_pinned_"+a.id);setPinnedTabs(s?JSON.parse(s):["prs","attendance","weight"]);}catch(e){setPinnedTabs(["prs","attendance","weight"]);}
     const defaultOrder=["profile","mcastles","events","verse","attendance","mygroup","anvil","weight","body","prs","stretching","leaderboard","prayer","bracelets","photos","notes","habits","private"];
-    try{const storedOrder=localStorage.getItem("tf_more_order_"+a.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});setMoreOrder(initOrder);moreOrderRef.current=initOrder;}catch(e){setMoreOrder(defaultOrder);moreOrderRef.current=defaultOrder;}
+    try{const storedOrder=localStorage.getItem("tf_more_order_"+a.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});const newTabs=defaultOrder.filter(id=>!seen.has(id));const fullOrder=[...initOrder,...newTabs];setMoreOrder(fullOrder);moreOrderRef.current=fullOrder;}catch(e){setMoreOrder(defaultOrder);moreOrderRef.current=defaultOrder;}
 
     // Load supporting data in parallel while Face ID is scanning
     const loads=Promise.all([
