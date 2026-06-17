@@ -45,6 +45,9 @@ export default function CultureEvents({athletes=[]}){
   const[photos,setPhotos]=useState([]);
   const[selectedPhoto,setSelectedPhoto]=useState(null);
   const[loading,setLoading]=useState(true);
+  const[promptText,setPromptText]=useState("");
+  const[parsing,setParsing]=useState(false);
+  const[parseErr,setParseErr]=useState(false);
 
   useEffect(()=>{loadAll();},[]);
 
@@ -71,6 +74,29 @@ export default function CultureEvents({athletes=[]}){
     if(!newEvent.name.trim())return;
     try{const{data}=await supabase.from("culture_events").insert({...newEvent}).select().single();if(data)setEvents(p=>[...p,data]);}catch(e){}
     setNewEvent({name:"",date:"",time:"",location:"",notes:""});
+  };
+
+  const parseEventPrompt=async()=>{
+    if(!promptText.trim())return;
+    setParsing(true);setParseErr(false);
+    const today=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const yyyy=today.getFullYear(),mm=String(today.getMonth()+1).padStart(2,"0"),dd=String(today.getDate()).padStart(2,"0");
+    try{
+      const res=await fetch("/api/ai-task",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:`Today is ${yyyy}-${mm}-${dd}. Parse this event description and return ONLY a JSON object with these keys: name (string), date (YYYY-MM-DD string or ""), time (readable string like "3:00 PM" or ""), location (string or ""), notes (any extra details or ""). No markdown, no explanation, just the JSON.\n\nEvent: "${promptText.trim()}"`})});
+      const d=await res.json();
+      const txt=(d.text||"").trim();
+      const match=txt.match(/\{[\s\S]*\}/);
+      if(!match)throw new Error("no json");
+      const parsed=JSON.parse(match[0]);
+      setNewEvent(p=>({
+        name:parsed.name||p.name,
+        date:parsed.date||p.date,
+        time:parsed.time||p.time,
+        location:parsed.location||p.location,
+        notes:parsed.notes||p.notes,
+      }));
+    }catch(e){setParseErr(true);setTimeout(()=>setParseErr(false),3000);}
+    setParsing(false);
   };
 
   const deleteEvent=async(id)=>{
@@ -215,12 +241,35 @@ export default function CultureEvents({athletes=[]}){
         {/* Add event form */}
         <div style={{marginTop:14,paddingTop:14,borderTop:"0.5px solid rgba(255,255,255,0.07)"}}>
           <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Add new event</div>
-          <input value={newEvent.name} onChange={e=>setNewEvent(p=>({...p,name:e.target.value}))} placeholder="Event name" style={{width:"100%",padding:"9px 11px",fontSize:13,borderRadius:10,fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:7}}/>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:7}}>
-            <input type="date" value={newEvent.date} onChange={e=>setNewEvent(p=>({...p,date:e.target.value}))} style={{padding:"7px 9px",fontSize:12,borderRadius:8,fontFamily:"Georgia,serif"}}/>
-            <input value={newEvent.time} onChange={e=>setNewEvent(p=>({...p,time:e.target.value}))} placeholder="Time" style={{padding:"7px 9px",fontSize:12,borderRadius:8,fontFamily:"Georgia,serif"}}/>
+
+          {/* AI prompt input */}
+          <div style={{marginBottom:10}}>
+            <textarea
+              value={promptText}
+              onChange={e=>setPromptText(e.target.value)}
+              onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();parseEventPrompt();}}}
+              placeholder="Describe the event… e.g. Top Golf Saturday June 21 at 2pm, meet at the parking lot"
+              style={{width:"100%",minHeight:64,padding:"10px 12px",fontSize:13,borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",lineHeight:1.55}}
+            />
+            <button onClick={parseEventPrompt} disabled={parsing||!promptText.trim()}
+              style={{width:"100%",padding:"9px",borderRadius:9,border:"none",background:parsing||!promptText.trim()?"rgba(255,255,255,0.07)":"linear-gradient(135deg,"+PUR+",#3a32a0)",color:parsing||!promptText.trim()?"rgba(255,255,255,0.2)":"#fff",fontSize:12,fontWeight:700,cursor:parsing||!promptText.trim()?"not-allowed":"pointer",fontFamily:"Georgia,serif",marginTop:5}}>
+              {parsing?"Parsing…":"✦ Fill in details →"}
+            </button>
+            {parseErr&&<div style={{fontSize:11,color:RED,marginTop:5,textAlign:"center"}}>Couldn't parse — fill in the fields below manually</div>}
           </div>
-          <input value={newEvent.location} onChange={e=>setNewEvent(p=>({...p,location:e.target.value}))} placeholder="Location" style={{width:"100%",padding:"9px 11px",fontSize:12,borderRadius:10,fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:8}}/>
+
+          {/* Detail fields (auto-filled or manual) */}
+          <div style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 10px 6px",border:"1px solid rgba(255,255,255,0.06)",marginBottom:8}}>
+            <div style={{fontSize:9,color:"#444",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Details</div>
+            <input value={newEvent.name} onChange={e=>setNewEvent(p=>({...p,name:e.target.value}))} placeholder="Event name" style={{width:"100%",padding:"8px 10px",fontSize:13,borderRadius:9,border:"1px solid rgba(255,255,255,0.09)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:6}}/>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:6}}>
+              <input type="date" value={newEvent.date} onChange={e=>setNewEvent(p=>({...p,date:e.target.value}))} style={{padding:"7px 9px",fontSize:12,borderRadius:8,border:"1px solid rgba(255,255,255,0.09)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif"}}/>
+              <input value={newEvent.time} onChange={e=>setNewEvent(p=>({...p,time:e.target.value}))} placeholder="Time" style={{padding:"7px 9px",fontSize:12,borderRadius:8,border:"1px solid rgba(255,255,255,0.09)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif"}}/>
+            </div>
+            <input value={newEvent.location} onChange={e=>setNewEvent(p=>({...p,location:e.target.value}))} placeholder="Location" style={{width:"100%",padding:"8px 10px",fontSize:12,borderRadius:9,border:"1px solid rgba(255,255,255,0.09)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:6}}/>
+            <textarea value={newEvent.notes} onChange={e=>setNewEvent(p=>({...p,notes:e.target.value}))} placeholder="Notes (optional)" style={{width:"100%",minHeight:48,padding:"8px 10px",fontSize:12,borderRadius:9,border:"1px solid rgba(255,255,255,0.09)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box"}}/>
+          </div>
+
           <button onClick={addEvent} disabled={!newEvent.name.trim()}
             style={{width:"100%",padding:"11px",borderRadius:10,border:"none",background:newEvent.name.trim()?"linear-gradient(135deg,"+GOLD+","+ORANGE+")":"rgba(255,255,255,0.07)",color:newEvent.name.trim()?"#1a1a1a":"rgba(255,255,255,0.2)",fontSize:13,fontWeight:700,cursor:newEvent.name.trim()?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
             Add event →
