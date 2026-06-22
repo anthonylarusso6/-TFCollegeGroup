@@ -5,18 +5,18 @@ import { supabase } from "../lib/supabase";
 
 export default function BraceletWall({athleteBracelet}){
   const BRACELETS_LIST=[
-    {ref:"Prov 3:5-6",color:"Cobalt Blue",hex:"#1A4F8A",text:"Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight."},
-    {ref:"Phil 4:13",color:"Forest Green",hex:"#0F6E56",text:"I can do all this through him who gives me strength."},
-    {ref:"Josh 1:9",color:"Crimson Red",hex:"#C0392B",text:"Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go."},
-    {ref:"Isa 40:31",color:"Royal Purple",hex:"#534AB7",text:"Those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint."},
-    {ref:"Rom 8:28",color:"Burnt Orange",hex:"#D4530B",text:"And we know that in all things God works for the good of those who love him, who have been called according to his purpose."},
-    {ref:"Jer 29:11",color:"Antique Gold",hex:"#D4AF37",text:"For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future."},
-    {ref:"2 Tim 1:7",color:"Steel Blue",hex:"#708090",text:"For the Spirit God gave us does not make us timid, but gives us power, love and self-discipline."},
-    {ref:"Matt 6:33",color:"Olive Green",hex:"#6B7A2A",text:"But seek first his kingdom and his righteousness, and all these things will be given to you as well."},
-    {ref:"Ps 46:10",color:"Midnight Navy",hex:"#1B2A4A",text:"He says, Be still, and know that I am God; I will be exalted among the nations, I will be exalted in the earth."},
-    {ref:"Gal 6:9",color:"Copper Brown",hex:"#7B4F2E",text:"Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up."},
-    {ref:"Prov 27:17",color:"Charcoal",hex:"#3D3D3D",text:"As iron sharpens iron, so one person sharpens another."},
-    {ref:"Mic 6:8",color:"Ivory White",hex:"#C8C0A8",text:"He has shown you, O mortal, what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God."},
+    {ref:"1 John 3:1",   color:"Dark Blue",    hex:"#1A3A6B", text:"See what great love the Father has lavished on us, that we should be called children of God! And that is what we are!"},
+    {ref:"1 Pet 5:7",    color:"Baby Blue",    hex:"#5BAFD6", text:"Cast all your anxiety on him because he cares for you."},
+    {ref:"Prov 3:5",     color:"Light Orange", hex:"#F5A033", text:"Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight."},
+    {ref:"Ps 46:10",     color:"Dark Orange",  hex:"#CC4A0A", text:"He says, Be still, and know that I am God; I will be exalted among the nations, I will be exalted in the earth."},
+    {ref:"1 Cor 13:13",  color:"Dark Pink",    hex:"#C2185B", text:"And now these three remain: faith, hope and love. But the greatest of these is love."},
+    {ref:"Phil 4:13",    color:"Dark Red",     hex:"#8E1515", text:"I can do all this through him who gives me strength."},
+    {ref:"Jer 29:11",    color:"Teal",         hex:"#007B7B", text:"For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future."},
+    {ref:"Matt 11:28",   color:"Purple",       hex:"#6B2FA0", text:"Come to me, all you who are weary and burdened, and I will give you rest."},
+    {ref:"Gen 1:3",      color:"Yellow",       hex:"#D4B800", text:"And God said, Let there be light, and there was light."},
+    {ref:"John 14:6",    color:"Light Purple", hex:"#9B5FC0", text:"Jesus answered, I am the way and the truth and the life. No one comes to the Father except through me."},
+    {ref:"Josh 1:9",     color:"Green",        hex:"#1E7A34", text:"Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go."},
+    {ref:"Ps 27:1",      color:"Olive Green",  hex:"#5C6B1A", text:"The Lord is my light and my salvation — whom shall I fear? The Lord is the stronghold of my life — of whom shall I be afraid?"},
   ];
   return(
     <div>
@@ -36,7 +36,7 @@ export default function BraceletWall({athleteBracelet}){
               </div>
               <span style={{fontSize:11,color:"#555"}}>{b.ref}</span>
             </div>
-            <div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>"{b.text}"</div>
+            <div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>&#x201C;{b.text}&#x201D;</div>
           </div>
         );
       })}
