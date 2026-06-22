@@ -68,7 +68,7 @@ const DEFAULT_PROGRAM={
     {name:"SA Banded Rot. Jammer Press",   tier:1,sets:"4x5e",                   inputType:"band_weight"},
     {name:"SA Lat Pull Down",              tier:1,sets:"4x14e",                  inputType:"weight"},
     {name:"DB Pronated Trap Raise",        tier:1,sets:"3x15",                   inputType:"weight"},
-    {name:"Heavy Prowler Sprint",          tier:2,sets:"4x20 yards",               inputType:"weight"},
+    {name:"Heavy Prowler Sprint",          tier:2,sets:"4x20 yards",               inputType:"weight_yards"},
     {name:"Weighted Plank Holds",          tier:2,sets:"3x30s",                  inputType:"weight"},
     {name:"KB Shrugs",                     tier:2,sets:"3x15",                   inputType:"kb"},
     {name:"Battle Rope Waves",             tier:"circuit",sets:"30s",            inputType:"bodyweight"},
@@ -864,6 +864,38 @@ export default function PRLog({athleteId,gender}){
                       );
                     }
 
+                    // ── WEIGHT (lbs) + YARDS (sled/prowler) ─────────
+                    if(itype==="weight_yards"){
+                      return(
+                        <div>
+                          <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:9,color:"#555",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:600}}>Weight (lbs)</div>
+                              <input type="number" inputMode="decimal" value={inp.weight||""}
+                                onChange={e=>setInput(lift.name,"weight",e.target.value)}
+                                placeholder={last?`Last: ${last}`:"0"}
+                                style={{width:"100%",padding:"11px",borderRadius:9,border:"1px solid #252525",fontSize:16,fontFamily:"Georgia,serif",textAlign:"center",background:"#0f0f0f",boxSizing:"border-box",fontWeight:700,color:"#fff"}}/>
+                            </div>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:9,color:"#555",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:600}}>Yards</div>
+                              <input type="number" inputMode="numeric" value={inp.reps||""}
+                                onChange={e=>setInput(lift.name,"reps",e.target.value)}
+                                placeholder="0"
+                                style={{width:"100%",padding:"11px",borderRadius:9,border:"1px solid #252525",fontSize:16,fontFamily:"Georgia,serif",textAlign:"center",background:"#0f0f0f",boxSizing:"border-box",fontWeight:700,color:"#fff"}}/>
+                            </div>
+                            <div>{logBtn(!inp.weight||!inp.reps)}</div>
+                          </div>
+                          {inp.weight&&inp.reps&&(
+                            <div style={{textAlign:"center",fontSize:11,color:"#444",marginTop:8,padding:"6px",background:"#0a0a0a",borderRadius:8,border:"0.5px solid #1a1a1a"}}>
+                              <span style={{color:ORANGE,fontWeight:800}}>{inp.weight} lbs</span>
+                              <span style={{color:"#555",margin:"0 6px"}}>×</span>
+                              <span style={{color:GOLD,fontWeight:800}}>{inp.reps} yards</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
                     // ── STANDARD WEIGHT + REPS (default) ────────────
                     return(
                       <div>
@@ -926,7 +958,7 @@ export default function PRLog({athleteId,gender}){
                         {liftHistory.slice(0,5).map((h,hi)=>(
                           <div key={hi} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:hi<Math.min(liftHistory.length,5)-1?"0.5px solid #1a1a1a":"none"}}>
                             <div style={{fontSize:11,color:"#444"}}>{new Date(h.date).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
-                            <div style={{fontSize:12,fontWeight:700,color:"#ccc"}}>{h.weight} lbs × {h.reps||1} {itype==="kb2_yards"?"yards":"reps"}</div>
+                            <div style={{fontSize:12,fontWeight:700,color:"#ccc"}}>{h.weight} lbs × {h.reps||1} {(itype==="kb2_yards"||itype==="weight_yards")?"yards":"reps"}</div>
                             {h.weight===pr&&<div style={{fontSize:10,color:GOLD,fontWeight:700}}>PR 🏆</div>}
                             {confirmDelete===h.id?(
                               <div style={{display:"flex",gap:4,marginLeft:4}}>
