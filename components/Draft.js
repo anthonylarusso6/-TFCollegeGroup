@@ -300,14 +300,14 @@ export default function Draft({athletes=[]}){
       const leaderName=(snap.leaders||[])[i];
       if(leaderName){
         const a=athletes.find(x=>x.name===leaderName);
-        if(a)restores.push(supabase.from("athletes").update({role:snap.step==="done"?"forge":"iron",group_idx:i,tier:getTier(i,n)}).eq("id",a.id).catch(e=>{}));
+        if(a)restores.push((async()=>{try{await supabase.from("athletes").update({role:snap.step==="done"?"forge":"iron",group_idx:i,tier:getTier(i,n)}).eq("id",a.id);}catch(e){}})());
       }
       const members=((snap.groups||{})[i]||[]);
       for(let j=1;j<members.length;j++){
         const name=members[j];
         if(name===leaderName)continue;
         const a=athletes.find(x=>x.name===name);
-        if(a)restores.push(supabase.from("athletes").update({role:"iron",group_idx:i,tier:getTier(i,n)}).eq("id",a.id).catch(e=>{}));
+        if(a)restores.push((async()=>{try{await supabase.from("athletes").update({role:"iron",group_idx:i,tier:getTier(i,n)}).eq("id",a.id);}catch(e){}})());
       }
     }
     await Promise.all(restores);
