@@ -60,18 +60,18 @@ const CLASS_DAYS=["Mon","Tue","Thu","Fri"];
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
 const BRACELETS=[
-  {color:"Light orange",ref:"Proverbs 3:5",text:"Trust in the Lord with all your heart.",hex:"#F5A623"},
-  {color:"Dark orange",ref:"Psalm 46:10",text:"Be still, and know that I am God.",hex:"#D4581A"},
-  {color:"Yellow",ref:"Genesis 1:3",text:"And God said, let there be light.",hex:"#E8C84A"},
-  {color:"Light blue",ref:"1 Peter 5:7",text:"Cast all your anxiety on him.",hex:"#5BBFEA"},
-  {color:"Dark blue",ref:"1 John 3:1",text:"See what great love the Father has lavished on us.",hex:"#1A4F8A"},
-  {color:"Red",ref:"Philippians 4:13",text:"I can do all things through Christ who strengthens me.",hex:"#C0392B"},
-  {color:"Pink",ref:"1 Corinthians 13:13",text:"The greatest of these is love.",hex:"#E87AAC"},
-  {color:"Dark purple",ref:"Matthew 11:28",text:"Come to me, all who are weary, and I will give you rest.",hex:"#5B2D8E"},
-  {color:"Light purple",ref:"John 14:6",text:"I am the way and the truth and the life.",hex:"#9B59B6"},
-  {color:"Dark green",ref:"Joshua 1:9",text:"Be strong and courageous.",hex:"#1E6B3A"},
-  {color:"Light green",ref:"Psalm 27:1",text:"The Lord is my light and my salvation.",hex:"#58B368"},
-  {color:"Teal",ref:"Jeremiah 29:11",text:"Plans to prosper you and not to harm you.",hex:"#1A9E8F"},
+  {color:"Dark Blue",   ref:"1 John 3:1",   text:"See what great love the Father has lavished on us, that we should be called children of God!",hex:"#1A3A6B"},
+  {color:"Baby Blue",   ref:"1 Pet 5:7",    text:"Cast all your anxiety on him because he cares for you.",hex:"#5BAFD6"},
+  {color:"Light Orange",ref:"Prov 3:5",     text:"Trust in the Lord with all your heart and lean not on your own understanding.",hex:"#F5A033"},
+  {color:"Dark Orange", ref:"Ps 46:10",     text:"Be still, and know that I am God.",hex:"#CC4A0A"},
+  {color:"Dark Pink",   ref:"1 Cor 13:13",  text:"And now these three remain: faith, hope and love. But the greatest of these is love.",hex:"#C2185B"},
+  {color:"Dark Red",    ref:"Phil 4:13",    text:"I can do all this through him who gives me strength.",hex:"#8E1515"},
+  {color:"Teal",        ref:"Jer 29:11",    text:"Plans to prosper you and not to harm you, plans to give you hope and a future.",hex:"#007B7B"},
+  {color:"Purple",      ref:"Matt 11:28",   text:"Come to me, all you who are weary and burdened, and I will give you rest.",hex:"#6B2FA0"},
+  {color:"Yellow",      ref:"Gen 1:3",      text:"And God said, Let there be light, and there was light.",hex:"#D4B800"},
+  {color:"Light Purple",ref:"John 14:6",    text:"I am the way and the truth and the life.",hex:"#9B5FC0"},
+  {color:"Green",       ref:"Josh 1:9",     text:"Be strong and courageous. Do not be afraid; do not be discouraged.",hex:"#1E7A34"},
+  {color:"Olive Green", ref:"Ps 27:1",      text:"The Lord is my light and my salvation — whom shall I fear?",hex:"#5C6B1A"},
 ];
 
 const TIER_COLORS={
@@ -677,7 +677,7 @@ export default function Athlete(){
   if(screen==="roster")return(
     <>
       <Head><title>TF College Group — Athlete</title></Head>
-      <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflow:"hidden"}}>
+      <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflowX:"hidden"}}>
         {/* Ambient fire glow top */}
         <div style={{position:"fixed",top:-120,left:"50%",transform:"translateX(-50%)",width:500,height:400,borderRadius:"50%",background:"radial-gradient(ellipse,#E8720C22 0%,transparent 70%)",pointerEvents:"none"}}/>
         {/* Ambient bottom */}
