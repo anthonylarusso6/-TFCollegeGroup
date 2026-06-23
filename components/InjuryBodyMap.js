@@ -212,32 +212,32 @@ const STRETCHES={
 
 // ── Anatomical SVG body map (real polygon paths from react-body-highlighter) ──
 function BodySVG({view, partData, selected, onSelect}){
-  const BODY="#1c2d40";
-  const BASE="#2a4a6a";
-  const SEL ="#3a6a9a";
+  const BODY="#282828";
+  const BASE="#353535";
+  const SEL ="#5e58b8";
 
   const mp=(id)=>{
     const d=partData[id];
     const isFlag=d?.status==="sore"||d?.status==="pain";
     const isSel=selected===id;
     const fill=isFlag
-      ?(isSel?(d.status==="pain"?RED:SORE):(d.status==="pain"?"#5a1010":"#7a5200"))
+      ?(isSel?(d.status==="pain"?RED:SORE):(d.status==="pain"?"#631515":"#7a4e00"))
       :(isSel?SEL:BASE);
-    const stroke=isSel?"#ffffff":isFlag?(d.status==="pain"?RED+"88":SORE+"88"):"none";
-    const sw=isSel?1.2:0.8;
+    const stroke=isSel?"#9990e8":isFlag?(d.status==="pain"?RED+"99":SORE+"99"):"none";
+    const sw=isSel?1.5:0.7;
     const filter=isSel
-      ?"drop-shadow(0 0 4px rgba(255,255,255,0.5))"
-      :isFlag?`drop-shadow(0 0 4px ${d.status==="pain"?RED:SORE}bb)`
+      ?"drop-shadow(0 0 5px #5e58b899)"
+      :isFlag?`drop-shadow(0 0 4px ${d.status==="pain"?RED:SORE}aa)`
       :"none";
-    return{fill,stroke,strokeWidth:sw,style:{cursor:"pointer",filter,transition:"all 0.15s"},
+    return{fill,stroke,strokeWidth:sw,style:{cursor:"pointer",filter,transition:"all 0.12s"},
       onClick:(e)=>{e.stopPropagation();onSelect(id);}};
   };
 
-  const svgStyle={display:"block",width:"100%",maxWidth:220,margin:"0 auto"};
+  const svgStyle={display:"block",width:"100%",maxWidth:200,margin:"0 auto"};
 
   if(view==="front") return(
     <svg viewBox="0 0 100 215" style={svgStyle}>
-      <rect width="100" height="215" fill="#060e18"/>
+      <rect width="100" height="215" fill="#111"/>
       {/* silhouette */}
       <ellipse cx="50" cy="13" rx="12" ry="13" fill={BODY}/>
       <rect x="42" y="24" width="16" height="9" rx="3" fill={BODY}/>
@@ -311,7 +311,7 @@ function BodySVG({view, partData, selected, onSelect}){
 
   return(
     <svg viewBox="0 0 100 215" style={svgStyle}>
-      <rect width="100" height="215" fill="#060e18"/>
+      <rect width="100" height="215" fill="#111"/>
       {/* silhouette */}
       <ellipse cx="50" cy="11" rx="11" ry="11" fill={BODY}/>
       <rect x="42" y="21" width="16" height="9" rx="3" fill={BODY}/>
@@ -479,81 +479,74 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
   return(
     <div>
       {/* Header */}
-      <div style={{background:"#111",borderRadius:12,padding:"14px 16px",marginBottom:12,border:"1px solid "+RED+"33",borderLeft:"3px solid "+RED}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-          <div>
-            <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:2}}>Body Check-In</div>
-            <div style={{fontSize:11,color:"#555"}}>{readOnly?"Athlete's injury status":"Tap a muscle to check in"}</div>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            {injCount>0&&!readOnly&&(
-              <button onClick={clearAll} disabled={clearing} style={{fontSize:10,color:"#888",background:"transparent",border:"1px solid #333",padding:"3px 10px",borderRadius:10,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                {clearing?"...":"Clear All"}
-              </button>
-            )}
-            {injCount>0&&(
-              <div style={{fontSize:10,color:RED,fontWeight:800,background:RED+"18",padding:"4px 10px",borderRadius:20,border:"1px solid "+RED+"44",whiteSpace:"nowrap"}}>
-                {injCount} flagged
-              </div>
-            )}
-          </div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:12}}>
+        <div>
+          <div style={{fontSize:14,fontWeight:800,color:"#fff",letterSpacing:"-0.01em"}}>Body Check-In</div>
+          <div style={{fontSize:11,color:"#444",marginTop:2}}>{readOnly?"Athlete's injury status":"Tap a muscle or chip to log it"}</div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          {injCount>0&&!readOnly&&(
+            <button onClick={clearAll} disabled={clearing} style={{fontSize:10,color:"#555",background:"#0e0e0e",border:"1px solid #2a2a2a",padding:"4px 12px",borderRadius:20,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+              {clearing?"…":"Clear all"}
+            </button>
+          )}
+          {injCount>0&&(
+            <div style={{fontSize:11,color:RED,fontWeight:800,background:RED+"18",padding:"4px 12px",borderRadius:20,border:"1px solid "+RED+"33",whiteSpace:"nowrap"}}>
+              {injCount} flagged
+            </div>
+          )}
         </div>
       </div>
 
       {/* Front / Back toggle */}
-      <div style={{display:"flex",gap:6,marginBottom:12,background:"#0e0e0e",borderRadius:12,padding:4,border:"1px solid #1e1e1e"}}>
+      <div style={{display:"flex",gap:6,marginBottom:14,background:"#0a0a0a",borderRadius:14,padding:4,border:"1px solid #222"}}>
         {["front","back"].map(v=>(
-          <button key={v} onClick={()=>{setView(v);setSelected(null);}} style={{flex:1,padding:"11px",borderRadius:9,border:"none",background:view===v?"linear-gradient(135deg,"+RED+"dd,"+RED+"88)":"transparent",color:view===v?"#fff":"#555",fontSize:13,fontWeight:view===v?800:400,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:view===v?"0.04em":"0"}}>
-            {v==="front"?"▲ Front":"▽ Back"}
+          <button key={v} onClick={()=>{setView(v);setSelected(null);}} style={{flex:1,padding:"10px 0",borderRadius:10,border:"none",background:view===v?"#1e1e1e":"transparent",color:view===v?"#ddd":"#3a3a3a",fontSize:12,fontWeight:view===v?700:400,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.06em",textTransform:"uppercase",transition:"all 0.15s",boxShadow:view===v?"0 1px 6px rgba(0,0,0,0.5)":"none"}}>
+            {v==="front"?"Front":"Back"}
           </button>
         ))}
       </div>
 
       {/* Legend */}
-      <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:10}}>
+      <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:12,flexWrap:"wrap"}}>
         {Object.entries(STATUS).map(([k,v])=>(
-          <div key={k} style={{display:"flex",alignItems:"center",gap:5,fontSize:10,color:"#777"}}>
-            <div style={{width:10,height:10,borderRadius:"50%",background:v.color,boxShadow:"0 0 6px "+v.color+"88"}}/>
+          <div key={k} style={{display:"flex",alignItems:"center",gap:5,fontSize:10,color:"#555"}}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:v.color}}/>
             {v.label}
           </div>
         ))}
       </div>
 
       {/* Body map */}
-      <div style={{background:"#060e18",borderRadius:20,padding:"16px 8px 12px",marginBottom:14,border:"1px solid #0d2035",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+RED+"44,transparent,"+RED+"44)"}}/>
+      <div style={{background:"#111",borderRadius:16,padding:"16px 8px 14px",marginBottom:14,border:"1px solid #222"}}>
         <BodySVG view={view} partData={partData} selected={selected} onSelect={selectPart}/>
-        {selected&&(
-          <div style={{textAlign:"center",marginTop:8}}>
-            <span style={{fontSize:12,fontWeight:700,color:STATUS[pStatus]?.color||"#fff",background:(STATUS[pStatus]?.color||"#fff")+"18",padding:"4px 14px",borderRadius:20,border:"1px solid "+(STATUS[pStatus]?.color||"#fff")+"44"}}>
+        {selected?(
+          <div style={{textAlign:"center",marginTop:10}}>
+            <span style={{fontSize:12,fontWeight:700,color:STATUS[pStatus]?.color||"#fff",background:(STATUS[pStatus]?.color||"#fff")+"18",padding:"5px 16px",borderRadius:20,border:"1px solid "+(STATUS[pStatus]?.color||"#fff")+"33"}}>
               {selName} · {STATUS[pStatus]?.label}
             </span>
           </div>
-        )}
-        {!selected&&!readOnly&&(
-          <div style={{textAlign:"center",fontSize:11,color:"#1a3a55",marginTop:6,letterSpacing:"0.04em"}}>
-            tap a muscle above or a chip below
-          </div>
+        ):(
+          !readOnly&&<div style={{textAlign:"center",fontSize:10,color:"#2e2e2e",marginTop:8,letterSpacing:"0.06em",textTransform:"uppercase"}}>tap a muscle or chip below</div>
         )}
       </div>
 
       {/* Muscle chips */}
-      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16,padding:"2px 0"}}>
+      <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:16,padding:"2px 0"}}>
         {chips.map(id=>{
           const c=chipColor(id);
           const isSel=selected===id;
           if(readOnly&&!c)return null;
           return(
             <button key={id} onClick={()=>selectPart(id)}
-              style={{padding:"7px 12px",borderRadius:20,
-                border:"1px solid "+(isSel?"#fff":c?c+"66":"#2a2a2a"),
-                background:isSel?(c||"#3a5068")+"33":c?c+"22":"#111",
-                color:isSel?"#fff":c?c:"#666",
-                fontSize:11,fontWeight:isSel?800:c?700:400,
+              style={{padding:"6px 11px",borderRadius:20,
+                border:"1px solid "+(isSel?"#4a4a6a":c?c+"55":"#222"),
+                background:isSel?"#2a2a40":c?c+"1a":"#0e0e0e",
+                color:isSel?"#c0b8ff":c?c:"#444",
+                fontSize:10,fontWeight:isSel?700:c?600:400,
                 cursor:readOnly?"default":"pointer",
-                fontFamily:"Georgia,serif",whiteSpace:"nowrap",transition:"all 0.12s",
-                boxShadow:isSel?"0 0 10px "+(c||"#3a5068")+"44":"none"}}>
-              {c&&<span style={{marginRight:4,fontSize:9}}>{partData[id]?.status==="pain"?"🔴":"🟡"}</span>}
+                fontFamily:"Georgia,serif",whiteSpace:"nowrap",transition:"all 0.1s"}}>
+              {c&&<span style={{marginRight:3,fontSize:8}}>{partData[id]?.status==="pain"?"●":"●"}</span>}
               {MUSCLE_NAMES[id]}
             </button>
           );
@@ -561,10 +554,10 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
         {readOnly&&Object.keys(partData).filter(id=>!chips.includes(id)&&(partData[id]?.status==="sore"||partData[id]?.status==="pain")).map(id=>{
           const c=chipColor(id);
           return(
-            <span key={id} style={{padding:"7px 12px",borderRadius:20,
-              border:"1px solid "+c+"66",background:c+"22",color:c,
-              fontSize:11,fontWeight:700,fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
-              {partData[id]?.status==="pain"?"🔴":"🟡"} {MUSCLE_NAMES[id]||id}
+            <span key={id} style={{padding:"6px 11px",borderRadius:20,
+              border:"1px solid "+c+"55",background:c+"1a",color:c,
+              fontSize:10,fontWeight:600,fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
+              {MUSCLE_NAMES[id]||id}
             </span>
           );
         })}
@@ -615,20 +608,20 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
 
       {/* Editable detail panel (athlete view) */}
       {selected&&selName&&!readOnly&&(
-        <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid #222",borderLeft:"3px solid "+RED}}>
-          <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:14,gap:8}}>
-            <div style={{fontSize:16,fontWeight:900,color:"#fff"}}>{selName}</div>
+        <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid #222"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,gap:8}}>
+            <div style={{fontSize:15,fontWeight:800,color:"#fff",letterSpacing:"-0.01em"}}>{selName}</div>
             {selEx?.updatedAt&&(
-              <div style={{fontSize:10,color:"#555",flexShrink:0}}>Updated {fmtDate(selEx.updatedAt)}</div>
+              <div style={{fontSize:10,color:"#333",flexShrink:0}}>{fmtDate(selEx.updatedAt)}</div>
             )}
           </div>
 
           <div style={{marginBottom:14}}>
-            <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>How does it feel?</div>
-            <div style={{display:"flex",gap:8}}>
+            <div style={{fontSize:9,color:"#3a3a3a",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>How does it feel?</div>
+            <div style={{display:"flex",gap:6}}>
               {Object.entries(STATUS).map(([k,v])=>(
-                <button key={k} onClick={()=>{setPStatus(k);if(k==="good")setPPain(0);}} style={{flex:1,padding:"10px 4px",borderRadius:10,border:"1px solid "+(pStatus===k?v.color+"88":"#222"),background:pStatus===k?v.color+"1a":"#0e0e0e",color:pStatus===k?v.color:"#444",fontSize:9,fontWeight:pStatus===k?700:400,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",lineHeight:1.4}}>
-                  <div style={{fontSize:16,marginBottom:3}}>{v.emoji}</div>
+                <button key={k} onClick={()=>{setPStatus(k);if(k==="good")setPPain(0);}} style={{flex:1,padding:"10px 4px",borderRadius:10,border:"1px solid "+(pStatus===k?v.color+"55":"#1e1e1e"),background:pStatus===k?v.color+"18":"#0a0a0a",color:pStatus===k?v.color:"#3a3a3a",fontSize:9,fontWeight:pStatus===k?700:400,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",lineHeight:1.5,transition:"all 0.1s"}}>
+                  <div style={{fontSize:15,marginBottom:3}}>{v.emoji}</div>
                   {v.label}
                 </button>
               ))}
@@ -637,13 +630,13 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
 
           {pStatus!=="good"&&(
             <div style={{marginBottom:14}}>
-              <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Pain Level{pPain>0?": "+pPain+"/10":""}</div>
-              <div style={{display:"flex",gap:4}}>
+              <div style={{fontSize:9,color:"#3a3a3a",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>Pain Level{pPain>0?" — "+pPain+"/10":""}</div>
+              <div style={{display:"flex",gap:3}}>
                 {[1,2,3,4,5,6,7,8,9,10].map(n=>{
                   const sel=pPain===n;
                   const c=n<=3?GREEN:n<=6?SORE:RED;
                   return(
-                    <button key={n} onClick={()=>setPPain(n)} style={{flex:1,height:34,borderRadius:8,border:"1px solid "+(sel?c+"88":"#222"),background:sel?c+"22":"#0e0e0e",color:sel?c:"#555",fontSize:11,fontWeight:sel?900:400,cursor:"pointer",padding:0}}>
+                    <button key={n} onClick={()=>setPPain(n)} style={{flex:1,height:32,borderRadius:6,border:"1px solid "+(sel?c+"66":"#1e1e1e"),background:sel?c+"22":"#0a0a0a",color:sel?c:"#333",fontSize:10,fontWeight:sel?800:400,cursor:"pointer",padding:0,transition:"all 0.1s"}}>
                       {n}
                     </button>
                   );
@@ -653,34 +646,32 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
           )}
 
           <div style={{marginBottom:14}}>
-            <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>
-              Describe the injury
-              {pStatus!=="good"&&!descEnough&&(
-                <span style={{color:SORE,marginLeft:6,textTransform:"none",letterSpacing:0,fontSize:9}}> · describe it to unlock stretches</span>
-              )}
+            <div style={{fontSize:9,color:"#3a3a3a",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>
+              Describe it
+              {pStatus!=="good"&&!descEnough&&<span style={{color:SORE,marginLeft:6,textTransform:"none",letterSpacing:0,fontSize:9,fontWeight:400}}> · 10+ chars to unlock stretches</span>}
             </div>
             <textarea
               value={pDesc}
               onChange={e=>setPDesc(e.target.value)}
-              placeholder="Where exactly does it hurt, what does it feel like, how it happened..."
-              style={{width:"100%",minHeight:80,padding:"10px",borderRadius:8,border:"1px solid "+(pDesc.length>5?"#333":"#1e1e1e"),fontSize:13,fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",background:"#0e0e0e",color:"#ddd",lineHeight:1.6}}
+              placeholder="Where does it hurt, what it feels like, how it happened..."
+              style={{width:"100%",minHeight:76,padding:"10px 12px",borderRadius:8,border:"1px solid "+(pDesc.length>5?"#2a2a2a":"#1a1a1a"),fontSize:13,fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",background:"#0a0a0a",color:"#ccc",lineHeight:1.6,outline:"none"}}
             />
           </div>
 
           {pStatus!=="good"&&(
             <div style={{marginBottom:14,display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>setNotifyCoach(v=>!v)}>
-              <div style={{width:32,height:18,borderRadius:9,background:notifyCoach?RED+"cc":"#2a2a2a",border:"1px solid "+(notifyCoach?RED+"66":"#333"),position:"relative",transition:"background 0.2s",flexShrink:0}}>
-                <div style={{position:"absolute",top:2,left:notifyCoach?15:2,width:12,height:12,borderRadius:"50%",background:"#fff",transition:"left 0.2s"}}/>
+              <div style={{width:30,height:17,borderRadius:9,background:notifyCoach?"#5e4444":"#1e1e1e",border:"1px solid "+(notifyCoach?RED+"44":"#2a2a2a"),position:"relative",transition:"background 0.2s",flexShrink:0}}>
+                <div style={{position:"absolute",top:2,left:notifyCoach?13:2,width:11,height:11,borderRadius:"50%",background:notifyCoach?RED:"#444",transition:"all 0.2s"}}/>
               </div>
-              <div style={{fontSize:11,color:notifyCoach?"#ddd":"#555"}}>Notify coach when saved</div>
+              <div style={{fontSize:11,color:notifyCoach?"#aaa":"#3a3a3a"}}>Notify coach</div>
             </div>
           )}
 
           <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",gap:10}}>
-            {saved&&<div style={{fontSize:11,color:GREEN,fontWeight:700}}>✓ Saved{notifyCoach&&pStatus!=="good"?" · Coach notified":""}</div>}
-            {saveErr&&<div style={{fontSize:11,color:RED,fontWeight:700}}>Save failed — try again</div>}
-            <button onClick={savePart} disabled={saving} style={{padding:"10px 24px",borderRadius:8,border:"none",background:saving?"#1a1a1a":"linear-gradient(135deg,"+RED+","+RED+"cc)",color:saving?"#444":"#fff",fontSize:12,fontWeight:700,cursor:saving?"default":"pointer",fontFamily:"Georgia,serif"}}>
-              {saving?"Saving...":"Save"}
+            {saved&&<div style={{fontSize:11,color:GREEN,fontWeight:700}}>Saved{notifyCoach&&pStatus!=="good"?" · coach notified":""}</div>}
+            {saveErr&&<div style={{fontSize:11,color:RED,fontWeight:700}}>Save failed</div>}
+            <button onClick={savePart} disabled={saving} style={{padding:"9px 22px",borderRadius:8,border:"none",background:saving?"#1a1a1a":"#2a2a2a",color:saving?"#333":"#ccc",fontSize:12,fontWeight:700,cursor:saving?"default":"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>
+              {saving?"Saving…":"Save"}
             </button>
           </div>
         </div>
@@ -688,29 +679,31 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
 
       {/* Stretches locked */}
       {showStretches&&!descEnough&&!readOnly&&(
-        <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid "+SORE+"33",textAlign:"center"}}>
-          <div style={{fontSize:20,marginBottom:8}}>🔒</div>
-          <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:4}}>Describe your injury first</div>
-          <div style={{fontSize:12,color:"#666",lineHeight:1.6}}>Stretches unlock once you've described the injury.</div>
+        <div style={{background:"#111",borderRadius:12,padding:"14px 16px",marginBottom:12,border:"1px solid #222",display:"flex",alignItems:"center",gap:12}}>
+          <div style={{fontSize:18,flexShrink:0}}>🔒</div>
+          <div>
+            <div style={{fontSize:12,fontWeight:700,color:"#888",marginBottom:2}}>Stretches locked</div>
+            <div style={{fontSize:11,color:"#3a3a3a",lineHeight:1.5}}>Describe the injury (10+ chars) to unlock.</div>
+          </div>
         </div>
       )}
 
       {/* Stretches */}
       {showStretches&&(descEnough||readOnly)&&(
-        <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid "+SORE+"33",borderLeft:"3px solid "+SORE}}>
-          <div style={{fontSize:14,fontWeight:900,color:"#fff",marginBottom:4}}>Stretches — {selName}</div>
-          <div style={{fontSize:11,color:SORE,marginBottom:14,lineHeight:1.6,background:SORE+"11",padding:"10px 12px",borderRadius:8,border:"1px solid "+SORE+"22"}}>
-            ⚠️ <strong>Stop any stretch that increases your pain.</strong> These are general mobility exercises — not medical treatment. Check with Coach Ant before training on an injury.
+        <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid #222"}}>
+          <div style={{fontSize:13,fontWeight:800,color:"#ccc",marginBottom:3,letterSpacing:"-0.01em"}}>Stretches — {selName}</div>
+          <div style={{fontSize:10,color:"#3a3a3a",marginBottom:14,lineHeight:1.6}}>
+            Stop any stretch that increases pain. General mobility only — check with Coach Ant before training on an injury.
           </div>
           {stretches.map((s,i)=>(
-            <div key={i} style={{marginBottom:10,padding:"12px",borderRadius:10,background:"#0e0e0e",border:"1px solid #1e1e1e"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5,gap:8}}>
-                <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>{s.name}</div>
-                <div style={{fontSize:9,color:SORE,fontWeight:700,background:SORE+"18",padding:"3px 8px",borderRadius:10,whiteSpace:"nowrap",flexShrink:0}}>{s.duration}</div>
+            <div key={i} style={{marginBottom:8,padding:"12px",borderRadius:10,background:"#0a0a0a",border:"1px solid #1e1e1e"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4,gap:8}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#ccc"}}>{s.name}</div>
+                <div style={{fontSize:9,color:"#555",background:"#1a1a1a",padding:"2px 8px",borderRadius:8,whiteSpace:"nowrap",flexShrink:0}}>{s.duration}</div>
               </div>
-              <div style={{fontSize:12,color:"#888",lineHeight:1.65,marginBottom:8}}>{s.desc}</div>
+              <div style={{fontSize:11,color:"#555",lineHeight:1.6,marginBottom:8}}>{s.desc}</div>
               <a href={ytUrl(s.name)} target="_blank" rel="noopener noreferrer"
-                style={{display:"inline-flex",alignItems:"center",gap:5,fontSize:11,color:"#ff4444",textDecoration:"none",background:"#ff000014",padding:"4px 10px",borderRadius:8,border:"1px solid #ff333322"}}>
+                style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:10,color:"#cc3333",textDecoration:"none",background:"#1a0808",padding:"4px 10px",borderRadius:6,border:"1px solid #2a1010"}}>
                 ▶ Watch on YouTube
               </a>
             </div>

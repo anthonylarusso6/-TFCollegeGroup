@@ -729,16 +729,11 @@ export default function Coach(){
   ];
   // Kevin only sees roster, mindset and attendance
   const KEVIN_TABS=["roster","mindset","attendance"];
-  // Malkmus (Luke) sees overview, attendance, leaderboard, culture, anvil, weights, engagement
-  const LUKE_TABS=["overview","attendance","leaderboard","culture","anvil","weights","engagement","habits","callouts"];
-  const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):coachRole==="malkmus"?ALL_TABS.filter(t=>LUKE_TABS.includes(t.id)):ALL_TABS;
+  const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):ALL_TABS;
 
   // Kevin PIN stored in localStorage
   const getKevinPin=()=>typeof window!=="undefined"?localStorage.getItem("kevin_coach_pin_v2"):null;
   const saveKevinPin=(p)=>localStorage.setItem("kevin_coach_pin_v2",p);
-  // Malkmus PIN stored in localStorage
-  const getMalkmusPin=()=>typeof window!=="undefined"?localStorage.getItem("malkmus_coach_pin"):null;
-  const saveMalkmusPin=(p)=>localStorage.setItem("malkmus_coach_pin",p);
   // MCastles PIN stored in localStorage
   const getMCastlesPin=()=>typeof window!=="undefined"?localStorage.getItem("mcastles_coach_pin"):null;
   const saveMCastlesPin=(p)=>localStorage.setItem("mcastles_coach_pin",p);
@@ -753,8 +748,8 @@ export default function Coach(){
   };
 
   const coachNavFor=(id)=>{
-    const roleMap={ant:"ant",kevin:"kevin",malkmus:"malkmus",mcastles:"mcastles"};
-    const tabMap={ant:"overview",kevin:"roster",malkmus:"overview",mcastles:"overview"};
+    const roleMap={ant:"ant",kevin:"kevin",mcastles:"mcastles"};
+    const tabMap={ant:"overview",kevin:"roster",mcastles:"overview"};
     return{role:roleMap[id]||"ant",tab:tabMap[id]||"overview"};
   };
 
@@ -784,12 +779,12 @@ export default function Coach(){
         if(assertion.response.userHandle){
           const handle=new TextDecoder().decode(assertion.response.userHandle);
           const parsed=handle.replace("coach_","");
-          if(["ant","kevin","malkmus","mcastles"].includes(parsed))resolvedCoach=parsed;
+          if(["ant","kevin","mcastles"].includes(parsed))resolvedCoach=parsed;
         }
         // If userHandle didn't resolve it, match by rawId
         if(resolvedCoach===fallbackCoach){
           const credB64=btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
-          for(const c of["ant","kevin","malkmus","mcastles"]){
+          for(const c of["ant","kevin","mcastles"]){
             const raw=localStorage.getItem("tf_bio_coach_"+c);
             if(raw&&JSON.parse(raw).credId===credB64){resolvedCoach=c;break;}
           }
@@ -853,10 +848,6 @@ export default function Coach(){
           const kp=getKevinPin();
           if(kp&&newPin===kp)offerBio({role:"kevin",tab:"roster"});
           else{setPinError("Wrong PIN. Try again.");setPin("");}
-        }else if(selectedCoach==="malkmus"){
-          const mp=getMalkmusPin();
-          if(mp&&newPin===mp)offerBio({role:"malkmus",tab:"overview"});
-          else{setPinError("Wrong PIN. Try again.");setPin("");}
         }else if(selectedCoach==="mcastles"){
           const mcp=getMCastlesPin();
           if(mcp&&newPin===mcp)offerBio({role:"mcastles",tab:"overview"});
@@ -865,10 +856,7 @@ export default function Coach(){
       }else if(pinStep==="create"){
         setPinConfirm(newPin);setPin("");setPinStep("confirm");setPinError("");
       }else if(pinStep==="confirm"){
-        if(selectedCoach==="malkmus"){
-          if(newPin===pinConfirm){saveMalkmusPin(newPin);offerBio({role:"malkmus",tab:"overview"});}
-          else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
-        }else if(selectedCoach==="mcastles"){
+        if(selectedCoach==="mcastles"){
           if(newPin===pinConfirm){saveMCastlesPin(newPin);offerBio({role:"mcastles",tab:"overview"});}
           else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
         }else{
@@ -882,7 +870,6 @@ export default function Coach(){
   const coaches=[
     {id:"ant",name:"Coach Ant",sub:"Head Coach",color:GOLD,emoji:"⚒"},
     {id:"kevin",name:"Coach Kevin",sub:"Guest Speaker",color:PUR,emoji:"📖"},
-    {id:"malkmus",name:"Luke",sub:"Assistant Coach",color:"#1A4F8A",emoji:"📋"},
     {id:"mcastles",name:"MCastles",sub:"Motivator · Full Access",color:ORANGE,emoji:"🍑🚀"},
   ];
 
@@ -901,7 +888,7 @@ export default function Coach(){
               <div style={{fontSize:24,fontWeight:900,color:"#fff",marginBottom:4,letterSpacing:"-0.02em",textTransform:"uppercase"}}>Coach Login</div>
               <div style={{fontSize:12,color:"#555",marginBottom:20,letterSpacing:"0.04em"}}>Select your name to continue</div>
               {/* Quick Sign In — appears when any passkey is stored for this site */}
-              {bioAvail&&(()=>{const anyStored=["ant","kevin","malkmus","mcastles"].some(c=>{try{return!!localStorage.getItem("tf_bio_coach_"+c);}catch(e){return false;}});return anyStored;})()&&(
+              {bioAvail&&(()=>{const anyStored=["ant","kevin","mcastles"].some(c=>{try{return!!localStorage.getItem("tf_bio_coach_"+c);}catch(e){return false;}});return anyStored;})()&&(
                 <button onClick={()=>authenticateWithBiometric(null)}
                   style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
                     padding:"15px",borderRadius:14,border:"1px solid rgba(232,114,12,0.35)",
@@ -921,7 +908,7 @@ export default function Coach(){
                     if(bioRaw)authenticateWithBiometric(c.id);
                     setSelectedCoach(c.id);
                     setPin("");setPinError("");
-                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin())||(c.id==="mcastles"&&getMCastlesPin());
+                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="mcastles"&&getMCastlesPin());
                     setPinStep(hasPin?"enter":"create");
                   }} style={{width:"100%",padding:0,borderRadius:14,border:"1px solid #1e1e1e",background:"linear-gradient(135deg,#0e0e0e,#131313)",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"stretch",textAlign:"left",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)"}}>
                     <div style={{width:4,background:"linear-gradient(180deg,"+c.color+","+c.color+"88)",flexShrink:0}}/>
@@ -1024,10 +1011,6 @@ export default function Coach(){
                         const kp=getKevinPin();
                         if(kp&&val===kp)offerBio({role:"kevin",tab:"roster"});
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
-                      }else if(selectedCoach==="malkmus"){
-                        const mp=getMalkmusPin();
-                        if(mp&&val===mp)offerBio({role:"malkmus",tab:"overview"});
-                        else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }else if(selectedCoach==="mcastles"){
                         const mcp=getMCastlesPin();
                         if(mcp&&val===mcp)offerBio({role:"mcastles",tab:"overview"});
@@ -1036,10 +1019,7 @@ export default function Coach(){
                     }else if(pinStep==="create"){
                       setPinConfirm(val);setPinStep("confirm");setPin("");
                     }else if(pinStep==="confirm"){
-                      if(selectedCoach==="malkmus"){
-                        if(val===pinConfirm){saveMalkmusPin(val);offerBio({role:"malkmus",tab:"overview"});}
-                        else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
-                      }else if(selectedCoach==="mcastles"){
+                      if(selectedCoach==="mcastles"){
                         if(val===pinConfirm){saveMCastlesPin(val);offerBio({role:"mcastles",tab:"overview"});}
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }else{
@@ -1107,7 +1087,7 @@ export default function Coach(){
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
             <div>
               <div style={{fontSize:18,fontWeight:900,color:"#fff",letterSpacing:"-0.01em",textTransform:"uppercase"}}>TF College Group</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"rgba(255,255,255,0.2)"}}>{isClassDay?"Class day":"No class"}</span></div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"rgba(255,255,255,0.2)"}}>{isClassDay?"Class day":"No class"}</span></div>
             </div>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>

@@ -52,11 +52,10 @@ export default function AttendanceCalendar({athleteId}){
     cur=new Date(year,month+1,1);
   }
 
-  // Default to current month
+  // Default to current month — re-sync whenever allMonths rebuilds (records load async)
   const today=new Date();
   const defaultIdx=allMonths.findIndex(m=>m.monthName===today.toLocaleString("default",{month:"long"})&&m.year===today.getFullYear());
-  const[initialized,setInitialized]=useState(false);
-  useEffect(()=>{if(!initialized&&defaultIdx>=0){setMonthIdx(defaultIdx);setInitialized(true);}},[defaultIdx]);
+  useEffect(()=>{if(defaultIdx>=0)setMonthIdx(defaultIdx);},[defaultIdx]);
 
   const month=allMonths[monthIdx]||allMonths[0];
   const DAYS_SHORT=["S","M","T","W","T","F","S"];
