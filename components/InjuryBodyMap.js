@@ -300,11 +300,29 @@ function BodySVG({view, partData, selected, onSelect}){
       <polygon points="24.9 194.7 27.8 164.9 28.2 160.4 26.1 154.3 24.9 157.6 22.4 161.6 20.8 167.8 22 188.2 20.8 195.5" {...mp("right-soleus")}/>
       <polygon points="35.5 158.4 35.9 162.4 35.9 166.9 35.1 172.2 35.1 176.7 32.2 182 30.6 187.3 26.9 194.7 27.3 187.8 28.2 180.4 28.6 175.5 29 169.8 29.8 164.1 30.2 158.8" {...mp("right-soleus")}/>
       {/* HANDS */}
-      <ellipse cx="9" cy="107" rx="9" ry="8" {...mp("left-hand")}/>
-      <ellipse cx="91" cy="107" rx="9" ry="8" {...mp("right-hand")}/>
+      <g {...mp("left-hand")}>
+        <rect x="2.5" y="109" width="13" height="8" rx="3"/>
+        <rect x="3" y="101" width="2.5" height="9" rx="1.5"/>
+        <rect x="6.5" y="100" width="2.5" height="9.5" rx="1.5"/>
+        <rect x="10" y="100" width="2.5" height="9.5" rx="1.5"/>
+        <rect x="13" y="102" width="2" height="8" rx="1.5"/>
+        <rect x="0.5" y="110" width="2" height="5" rx="1.5"/>
+      </g>
+      <g {...mp("right-hand")}>
+        <rect x="84.5" y="109" width="13" height="8" rx="3"/>
+        <rect x="84.5" y="102" width="2" height="8" rx="1.5"/>
+        <rect x="87.5" y="100" width="2.5" height="9.5" rx="1.5"/>
+        <rect x="91" y="100" width="2.5" height="9.5" rx="1.5"/>
+        <rect x="94.5" y="101" width="2.5" height="9" rx="1.5"/>
+        <rect x="97.5" y="110" width="2" height="5" rx="1.5"/>
+      </g>
       {/* ANKLES / FEET */}
-      <ellipse cx="39" cy="208" rx="11" ry="6" {...mp("right-ankle")}/>
-      <ellipse cx="61" cy="208" rx="11" ry="6" {...mp("left-ankle")}/>
+      <g {...mp("right-ankle")}>
+        <path d="M46 204 C46 201 41 200 36 200 C29 200 23 202 21 207 C20 210 22 213 27 213 C32 214 42 213 46 211 C48 210 48 207 46 204 Z"/>
+      </g>
+      <g {...mp("left-ankle")}>
+        <path d="M54 204 C54 201 59 200 64 200 C71 200 77 202 79 207 C80 210 78 213 73 213 C68 214 58 213 54 211 C52 210 52 207 54 204 Z"/>
+      </g>
     </svg>
   );
 
@@ -373,11 +391,29 @@ function BodySVG({view, partData, selected, onSelect}){
       <polygon points="28.5 195.7 30.2 195.7 33.6 201.7 30.6 213 28.5 208 26.8 198.3" {...mp("left-soleus")}/>
       <polygon points="69.8 195.7 71.9 195.7 73.6 198.3 71.9 208 70.2 213 67.2 202.1" {...mp("right-soleus")}/>
       {/* HANDS */}
-      <ellipse cx="9" cy="107" rx="9" ry="8" {...mp("left-hand")}/>
-      <ellipse cx="91" cy="107" rx="9" ry="8" {...mp("right-hand")}/>
+      <g {...mp("left-hand")}>
+        <rect x="2.5" y="109" width="13" height="8" rx="3"/>
+        <rect x="3" y="101" width="2.5" height="9" rx="1.5"/>
+        <rect x="6.5" y="100" width="2.5" height="9.5" rx="1.5"/>
+        <rect x="10" y="100" width="2.5" height="9.5" rx="1.5"/>
+        <rect x="13" y="102" width="2" height="8" rx="1.5"/>
+        <rect x="0.5" y="110" width="2" height="5" rx="1.5"/>
+      </g>
+      <g {...mp("right-hand")}>
+        <rect x="84.5" y="109" width="13" height="8" rx="3"/>
+        <rect x="84.5" y="102" width="2" height="8" rx="1.5"/>
+        <rect x="87.5" y="100" width="2.5" height="9.5" rx="1.5"/>
+        <rect x="91" y="100" width="2.5" height="9.5" rx="1.5"/>
+        <rect x="94.5" y="101" width="2.5" height="9" rx="1.5"/>
+        <rect x="97.5" y="110" width="2" height="5" rx="1.5"/>
+      </g>
       {/* ANKLES / FEET */}
-      <ellipse cx="39" cy="208" rx="11" ry="6" {...mp("right-ankle")}/>
-      <ellipse cx="61" cy="208" rx="11" ry="6" {...mp("left-ankle")}/>
+      <g {...mp("right-ankle")}>
+        <path d="M46 204 C46 201 41 200 36 200 C29 200 23 202 21 207 C20 210 22 213 27 213 C32 214 42 213 46 211 C48 210 48 207 46 204 Z"/>
+      </g>
+      <g {...mp("left-ankle")}>
+        <path d="M54 204 C54 201 59 200 64 200 C71 200 77 202 79 207 C80 210 78 213 73 213 C68 214 58 213 54 211 C52 210 52 207 54 204 Z"/>
+      </g>
     </svg>
   );
 }
@@ -516,7 +552,7 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
       </div>
 
       {/* Body map */}
-      <div style={{background:"#111",borderRadius:16,padding:"16px 8px 14px",marginBottom:14,border:"1px solid #222"}}>
+      <div style={{marginBottom:14,padding:"6px 0"}}>
         <BodySVG view={view} partData={partData} selected={selected} onSelect={selectPart}/>
         {selected?(
           <div style={{textAlign:"center",marginTop:10}}>
