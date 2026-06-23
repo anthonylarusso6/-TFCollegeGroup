@@ -729,11 +729,16 @@ export default function Coach(){
   ];
   // Kevin only sees roster, mindset and attendance
   const KEVIN_TABS=["roster","mindset","attendance"];
-  const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):ALL_TABS;
+  // Malkmus (Luke) sees overview, attendance, leaderboard, culture, anvil, weights, engagement
+  const LUKE_TABS=["overview","attendance","leaderboard","culture","anvil","weights","engagement","habits","callouts"];
+  const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):coachRole==="malkmus"?ALL_TABS.filter(t=>LUKE_TABS.includes(t.id)):ALL_TABS;
 
   // Kevin PIN stored in localStorage
   const getKevinPin=()=>typeof window!=="undefined"?localStorage.getItem("kevin_coach_pin_v2"):null;
   const saveKevinPin=(p)=>localStorage.setItem("kevin_coach_pin_v2",p);
+  // Malkmus PIN stored in localStorage
+  const getMalkmusPin=()=>typeof window!=="undefined"?localStorage.getItem("malkmus_coach_pin"):null;
+  const saveMalkmusPin=(p)=>localStorage.setItem("malkmus_coach_pin",p);
   // MCastles PIN stored in localStorage
   const getMCastlesPin=()=>typeof window!=="undefined"?localStorage.getItem("mcastles_coach_pin"):null;
   const saveMCastlesPin=(p)=>localStorage.setItem("mcastles_coach_pin",p);
@@ -748,8 +753,8 @@ export default function Coach(){
   };
 
   const coachNavFor=(id)=>{
-    const roleMap={ant:"ant",kevin:"kevin",mcastles:"mcastles"};
-    const tabMap={ant:"overview",kevin:"roster",mcastles:"overview"};
+    const roleMap={ant:"ant",kevin:"kevin",malkmus:"malkmus",mcastles:"mcastles"};
+    const tabMap={ant:"overview",kevin:"roster",malkmus:"overview",mcastles:"overview"};
     return{role:roleMap[id]||"ant",tab:tabMap[id]||"overview"};
   };
 
@@ -779,12 +784,12 @@ export default function Coach(){
         if(assertion.response.userHandle){
           const handle=new TextDecoder().decode(assertion.response.userHandle);
           const parsed=handle.replace("coach_","");
-          if(["ant","kevin","mcastles"].includes(parsed))resolvedCoach=parsed;
+          if(["ant","kevin","malkmus","mcastles"].includes(parsed))resolvedCoach=parsed;
         }
         // If userHandle didn't resolve it, match by rawId
         if(resolvedCoach===fallbackCoach){
           const credB64=btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
-          for(const c of["ant","kevin","mcastles"]){
+          for(const c of["ant","kevin","malkmus","mcastles"]){
             const raw=localStorage.getItem("tf_bio_coach_"+c);
             if(raw&&JSON.parse(raw).credId===credB64){resolvedCoach=c;break;}
           }
@@ -848,6 +853,10 @@ export default function Coach(){
           const kp=getKevinPin();
           if(kp&&newPin===kp)offerBio({role:"kevin",tab:"roster"});
           else{setPinError("Wrong PIN. Try again.");setPin("");}
+        }else if(selectedCoach==="malkmus"){
+          const mp=getMalkmusPin();
+          if(mp&&newPin===mp)offerBio({role:"malkmus",tab:"overview"});
+          else{setPinError("Wrong PIN. Try again.");setPin("");}
         }else if(selectedCoach==="mcastles"){
           const mcp=getMCastlesPin();
           if(mcp&&newPin===mcp)offerBio({role:"mcastles",tab:"overview"});
@@ -856,7 +865,10 @@ export default function Coach(){
       }else if(pinStep==="create"){
         setPinConfirm(newPin);setPin("");setPinStep("confirm");setPinError("");
       }else if(pinStep==="confirm"){
-        if(selectedCoach==="mcastles"){
+        if(selectedCoach==="malkmus"){
+          if(newPin===pinConfirm){saveMalkmusPin(newPin);offerBio({role:"malkmus",tab:"overview"});}
+          else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+        }else if(selectedCoach==="mcastles"){
           if(newPin===pinConfirm){saveMCastlesPin(newPin);offerBio({role:"mcastles",tab:"overview"});}
           else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
         }else{
@@ -870,6 +882,7 @@ export default function Coach(){
   const coaches=[
     {id:"ant",name:"Coach Ant",sub:"Head Coach",color:GOLD,emoji:"⚒"},
     {id:"kevin",name:"Coach Kevin",sub:"Guest Speaker",color:PUR,emoji:"📖"},
+    {id:"malkmus",name:"Luke",sub:"Assistant Coach",color:"#1A4F8A",emoji:"📋"},
     {id:"mcastles",name:"MCastles",sub:"Motivator · Full Access",color:ORANGE,emoji:"🍑🚀"},
   ];
 
@@ -888,7 +901,7 @@ export default function Coach(){
               <div style={{fontSize:24,fontWeight:900,color:"#fff",marginBottom:4,letterSpacing:"-0.02em",textTransform:"uppercase"}}>Coach Login</div>
               <div style={{fontSize:12,color:"#555",marginBottom:20,letterSpacing:"0.04em"}}>Select your name to continue</div>
               {/* Quick Sign In — appears when any passkey is stored for this site */}
-              {bioAvail&&(()=>{const anyStored=["ant","kevin","mcastles"].some(c=>{try{return!!localStorage.getItem("tf_bio_coach_"+c);}catch(e){return false;}});return anyStored;})()&&(
+              {bioAvail&&(()=>{const anyStored=["ant","kevin","malkmus","mcastles"].some(c=>{try{return!!localStorage.getItem("tf_bio_coach_"+c);}catch(e){return false;}});return anyStored;})()&&(
                 <button onClick={()=>authenticateWithBiometric(null)}
                   style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
                     padding:"15px",borderRadius:14,border:"1px solid rgba(232,114,12,0.35)",
@@ -908,7 +921,7 @@ export default function Coach(){
                     if(bioRaw)authenticateWithBiometric(c.id);
                     setSelectedCoach(c.id);
                     setPin("");setPinError("");
-                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="mcastles"&&getMCastlesPin());
+                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="malkmus"&&getMalkmusPin())||(c.id==="mcastles"&&getMCastlesPin());
                     setPinStep(hasPin?"enter":"create");
                   }} style={{width:"100%",padding:0,borderRadius:14,border:"1px solid #1e1e1e",background:"linear-gradient(135deg,#0e0e0e,#131313)",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"stretch",textAlign:"left",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)"}}>
                     <div style={{width:4,background:"linear-gradient(180deg,"+c.color+","+c.color+"88)",flexShrink:0}}/>
@@ -1011,6 +1024,10 @@ export default function Coach(){
                         const kp=getKevinPin();
                         if(kp&&val===kp)offerBio({role:"kevin",tab:"roster"});
                         else{setPinError("Wrong PIN. Try again.");setPin("");}
+                      }else if(selectedCoach==="malkmus"){
+                        const mp=getMalkmusPin();
+                        if(mp&&val===mp)offerBio({role:"malkmus",tab:"overview"});
+                        else{setPinError("Wrong PIN. Try again.");setPin("");}
                       }else if(selectedCoach==="mcastles"){
                         const mcp=getMCastlesPin();
                         if(mcp&&val===mcp)offerBio({role:"mcastles",tab:"overview"});
@@ -1019,7 +1036,10 @@ export default function Coach(){
                     }else if(pinStep==="create"){
                       setPinConfirm(val);setPinStep("confirm");setPin("");
                     }else if(pinStep==="confirm"){
-                      if(selectedCoach==="mcastles"){
+                      if(selectedCoach==="malkmus"){
+                        if(val===pinConfirm){saveMalkmusPin(val);offerBio({role:"malkmus",tab:"overview"});}
+                        else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+                      }else if(selectedCoach==="mcastles"){
                         if(val===pinConfirm){saveMCastlesPin(val);offerBio({role:"mcastles",tab:"overview"});}
                         else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
                       }else{
@@ -1087,7 +1107,7 @@ export default function Coach(){
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
             <div>
               <div style={{fontSize:18,fontWeight:900,color:"#fff",letterSpacing:"-0.01em",textTransform:"uppercase"}}>TF College Group</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"rgba(255,255,255,0.2)"}}>{isClassDay?"Class day":"No class"}</span></div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="malkmus"?"Luke":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"rgba(255,255,255,0.2)"}}>{isClassDay?"Class day":"No class"}</span></div>
             </div>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
@@ -3289,7 +3309,7 @@ export default function Coach(){
         {/* ── LIQUID GLASS BOTTOM NAV ── */}
         {(()=>{
             const ICON_MAP={"overview":"barChart","teams":"grid","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"heart","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","anvil":"anvil","mcastles-post":"crown"};
-            const ICON_COLORS={"overview":"#FF7A2F","teams":"#60A8D0","roster":"#8CB4D5","attendance":"#7B6EE8","accountability":"#3A9E5A","anvil":"#F0C040","inbox":"#B56EE8","leaderboard":"#FFD700","goals":"#44D9B0","fellowship":"#D4A8F0","mindset":"#4DC8F5","culture":"#E8720C","prayers":"#F080B0","weights":"#C8D040","photos":"#50D0B8","engagement":"#FF5A9D","qr":"#80C0D8","mcastles-post":"#F080B0","ironroom":"#E05555","injuries":"#FF8060","habits":"#20BEA8","callouts":"#FFC040"};
+            const ICON_COLORS={"overview":"#FF7A2F","teams":"#60A8D0","roster":"#8CB4D5","attendance":"#7B6EE8","accountability":"#3A9E5A","anvil":"#F0C040","inbox":"#B56EE8","leaderboard":"#FFD700","goals":"#44D9B0","fellowship":"#A080D0","mindset":"#4DC8F5","culture":"#E8720C","prayers":"#FF80A8","weights":"#C8D040","photos":"#50D0B8","engagement":"#FF5A9D","qr":"#80C0D8","mcastles-post":"#D060C0","ironroom":"#E05555","injuries":"#FF8060","habits":"#20BEA8","callouts":"#FFC040"};
             const fixedTab=coachRole==="kevin"?"roster":"overview";
             const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id)&&id!==fixedTab);
             const PRIMARY=[fixedTab,...validPinned];
@@ -3371,129 +3391,56 @@ export default function Coach(){
                 )}
 
                 {showTabPicker&&(
-                  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.65)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>{setShowTabPicker(false);setEditingPins(false);}}>
+                  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
                     <div style={{flex:1}}/>
-                    <div style={{background:"rgba(10,10,18,0.94)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRadius:"28px 28px 0 0",border:"1px solid rgba(255,255,255,0.12)",borderBottom:"none",boxShadow:"0 -20px 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.1)",padding:"20px 16px 44px",maxHeight:"82vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-                      <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.2)",margin:"0 auto 18px"}}/>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:editingPins?8:16}}>
-                        <div style={{fontSize:12,fontWeight:700,color:"rgba(255,255,255,0.6)",letterSpacing:"0.1em",textTransform:"uppercase"}}>{editingPins?"Pin Tabs":"All Tabs"}</div>
-                        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                          {editingPins?(
-                            <>
-                              <div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{validPinned.length}/3 pinned</div>
-                              <button onClick={()=>setEditingPins(false)} style={{background:"rgba(255,255,255,0.12)",border:"1px solid rgba(255,255,255,0.18)",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",padding:"5px 14px",borderRadius:20,fontFamily:"Georgia,serif"}}>Done</button>
-                            </>
-                          ):(
-                            <>
-                              <button onClick={()=>setEditingPins(true)} style={{background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:10,cursor:"pointer",padding:"5px 12px",borderRadius:20,fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>Edit Pins</button>
-                              <button onClick={()=>{setShowTabPicker(false);setEditingPins(false);}} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:14,cursor:"pointer",lineHeight:1,width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-                            </>
-                          )}
+                    <div style={{background:"rgba(10,10,18,0.97)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRadius:"28px 28px 0 0",border:"1px solid rgba(255,255,255,0.12)",borderBottom:"none",boxShadow:"0 -24px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.1)",maxHeight:"86vh",overflowY:"auto",paddingBottom:44}} onClick={e=>e.stopPropagation()}>
+                      <div style={{padding:"20px 16px 0",position:"sticky",top:0,background:"rgba(10,10,18,0.97)",zIndex:1}}>
+                        <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.2)",margin:"0 auto 16px"}}/>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                          <div style={{fontSize:17,fontWeight:800,color:"#fff"}}>All Tabs</div>
+                          <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer",lineHeight:1,width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0}}>✕</button>
                         </div>
+                        <div style={{height:"0.5px",background:"rgba(255,255,255,0.07)",marginBottom:4}}/>
                       </div>
-                      {editingPins&&(
-                        <div style={{marginBottom:14}}>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>Drag to reorder</div>
-                          <div style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",borderRadius:14,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",marginBottom:7,opacity:0.5}}>
-                            {renderTabIcon(fixedTab,18,false)}
-                            <span style={{fontSize:13,color:"rgba(255,255,255,0.4)",flex:1}}>{TABS.find(x=>x.id===fixedTab)?.label||fixedTab}</span>
-                            <Icon name="lock" size={13} color="rgba(255,255,255,0.2)"/>
+                      {[
+                        {label:"Overview",ids:["overview","roster","teams","attendance"]},
+                        {label:"Accountability",ids:["accountability","inbox","leaderboard","anvil"]},
+                        {label:"Culture & Faith",ids:["culture","fellowship","prayers","mindset"]},
+                        {label:"Tools",ids:["engagement","qr","goals","weights","ironroom"]},
+                        {label:"More",ids:["photos","injuries","habits","callouts","mcastles-post"]},
+                      ].filter(s=>s.ids.some(id=>TABS.find(t=>t.id===id))).map(section=>(
+                        <div key={section.label}>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,padding:"14px 16px 8px"}}>{section.label}</div>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,padding:"0 12px"}}>
+                            {section.ids.map(id=>{
+                              const t=TABS.find(x=>x.id===id);
+                              if(!t)return null;
+                              const col=ICON_COLORS[id]||"#aaa";
+                              const isActive=tab===id;
+                              const isFixed=id===fixedTab;
+                              const isPinned=isFixed||validPinned.includes(id);
+                              const canPin=!isPinned&&validPinned.length<3;
+                              return(
+                                <div key={id} style={{position:"relative"}}>
+                                  <button
+                                    onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}
+                                    style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"16px 8px 12px",borderRadius:16,background:isActive?col+"18":"rgba(255,255,255,0.04)",border:"1px solid "+(isActive?col+"55":"rgba(255,255,255,0.07)"),boxShadow:isActive?"0 0 16px "+col+"33":"none",cursor:"pointer",fontFamily:"Georgia,serif",boxSizing:"border-box"}}>
+                                    <div style={{width:46,height:46,borderRadius:14,background:col+"1c",border:"1px solid "+col+(isActive?"55":"2a"),display:"flex",alignItems:"center",justifyContent:"center",boxShadow:isActive?"0 0 14px "+col+"44":"none"}}>
+                                      <span style={{display:"flex",alignItems:"center",filter:isActive?"drop-shadow(0 0 6px "+col+"bb)":"none"}}>{renderTabIcon(id,22,isActive)}</span>
+                                    </div>
+                                    <span style={{fontSize:12,fontWeight:isActive?700:500,color:isActive?col:"rgba(255,255,255,0.65)",textAlign:"center",lineHeight:1.3}}>{t.label}</span>
+                                  </button>
+                                  <button
+                                    onClick={(e)=>{e.stopPropagation();if(!isFixed&&(isPinned||canPin))togglePin(id);}}
+                                    style={{position:"absolute",top:7,right:7,width:22,height:22,borderRadius:6,background:isPinned?col+"33":"rgba(255,255,255,0.07)",border:"1px solid "+(isPinned?col+"66":"rgba(255,255,255,0.12)"),display:"flex",alignItems:"center",justifyContent:"center",cursor:!isFixed&&(isPinned||canPin)?"pointer":"default",opacity:!isPinned&&!canPin&&!isFixed?0.2:1,padding:0}}>
+                                    {isFixed?<Icon name="lock" size={9} color="rgba(255,255,255,0.35)"/>:<span style={{fontSize:9,color:isPinned?col:"rgba(255,255,255,0.3)",fontWeight:800,lineHeight:1}}>{isPinned?"✓":"+"}</span>}
+                                  </button>
+                                </div>
+                              );
+                            })}
                           </div>
-                          {validPinned.map(id=>{
-                            const t=TABS.find(x=>x.id===id);
-                            const col=ICON_COLORS[id]||"#aaa";
-                            if(!t)return null;
-                            const isDragging=navDragId===id;
-                            return(
-                              <div key={id}
-                                onTouchStart={(e)=>{e.stopPropagation();navDragOrderRef.current=[...validPinned];navLastSwapY.current=e.touches[0].clientY;setNavDragId(id);}}
-                                onTouchMove={(e)=>{if(navDragId!==id)return;e.stopPropagation();const dy=e.touches[0].clientY-navLastSwapY.current;if(Math.abs(dy)<50)return;const dir=dy>0?1:-1;const arr=navDragOrderRef.current;const from=arr.indexOf(id);const to=from+dir;if(to>=0&&to<arr.length){[arr[from],arr[to]]=[arr[to],arr[from]];navLastSwapY.current+=dir*50;setPinnedTabs([...arr]);}}}
-                                onTouchEnd={(e)=>{e.stopPropagation();if(navDragOrderRef.current){try{localStorage.setItem("tf_pinned_coach_"+coachRole,JSON.stringify(navDragOrderRef.current));}catch(err){}navDragOrderRef.current=null;}setNavDragId(null);}}
-                                style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",borderRadius:14,background:isDragging?"rgba(255,255,255,0.13)":"rgba(255,255,255,0.07)",border:"1px solid "+(isDragging?col+"55":"rgba(255,255,255,0.1)"),marginBottom:7,transform:isDragging?"scale(1.025) translateY(-2px)":"scale(1) translateY(0)",boxShadow:isDragging?"0 10px 30px rgba(0,0,0,0.5)":"none",transition:isDragging?"none":"background 0.15s,border-color 0.15s,transform 0.18s,box-shadow 0.18s",touchAction:"none",userSelect:"none",WebkitUserSelect:"none"}}>
-                                {renderTabIcon(id,18,true)}
-                                <span style={{fontSize:13,color:"#fff",flex:1}}>{t.label}</span>
-                                <div style={{display:"flex",flexDirection:"column",gap:3,opacity:isDragging?0.9:0.35,transition:"opacity 0.15s"}}>
-                                  {[0,1,2].map(i=><div key={i} style={{width:18,height:1.5,borderRadius:1,background:"rgba(255,255,255,0.8)"}}/>)}
-                                </div>
-                              </div>
-                            );
-                          })}
-                          <div style={{height:"0.5px",background:"rgba(255,255,255,0.08)",margin:"10px 0 14px"}}/>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginBottom:10,lineHeight:1.5}}>Tap tiles below to add or remove</div>
                         </div>
-                      )}
-                      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-                        {(moreOrder.length?moreOrder.map(id=>TABS.find(t=>t.id===id)).filter(Boolean):TABS).filter(t=>editingPins||!PRIMARY.includes(t.id)).map(t=>{
-                          const isActive=tab===t.id;
-                          const isPinned=t.id===fixedTab||validPinned.includes(t.id);
-                          const col=ICON_COLORS[t.id]||"#E8720C";
-                          return(
-                            <button key={t.id}
-                              data-tab-id={t.id}
-                              ref={gridDragId===t.id?gridDragElemRef:null}
-                              onClick={()=>{
-                                if(gridDragId)return;
-                                if(editingPins){togglePin(t.id);return;}
-                                slideDirRef.current=0;setTab(t.id);setShowTabPicker(false);setEditingPins(false);
-                              }}
-                              onTouchStart={(e)=>{
-                                const startTouch=e.touches[0];
-                                gridLongPressRef.current=setTimeout(()=>{
-                                  if(navigator.vibrate)navigator.vibrate(20);
-                                  moreOrderRef.current=[...(moreOrder.length?moreOrder:TABS.map(x=>x.id))];
-                                  gridLastOverId.current=t.id;
-                                  setGridDragId(t.id);
-                                },480);
-                              }}
-                              onTouchMove={(e)=>{
-                                if(gridDragId!==t.id){clearTimeout(gridLongPressRef.current);return;}
-                                e.stopPropagation();e.preventDefault();
-                                if(gridDragElemRef.current){gridDragElemRef.current.style.transform="scale(1.12)";gridDragElemRef.current.style.zIndex="20";gridDragElemRef.current.style.boxShadow="0 12px 32px rgba(0,0,0,0.55)";}
-                                const el=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
-                                const btn=el?.closest("[data-tab-id]");
-                                const overId=btn?.dataset?.tabId;
-                                if(overId&&overId!==t.id&&overId!==gridLastOverId.current){
-                                  const arr=moreOrderRef.current;
-                                  const fi=arr.indexOf(t.id);const ti=arr.indexOf(overId);
-                                  if(fi!==-1&&ti!==-1){[arr[fi],arr[ti]]=[arr[ti],arr[fi]];setMoreOrder([...arr]);}
-                                  if(pinnedTabs.includes(t.id)&&pinnedTabs.includes(overId)){
-                                    setPinnedTabs(prev=>{const p=[...prev];const pf=p.indexOf(t.id);const pt=p.indexOf(overId);if(pf!==-1&&pt!==-1)[p[pf],p[pt]]=[p[pt],p[pf]];return p;});
-                                  }
-                                  gridLastOverId.current=overId;
-                                }
-                              }}
-                              onTouchEnd={()=>{
-                                clearTimeout(gridLongPressRef.current);
-                                if(gridDragElemRef.current){gridDragElemRef.current.style.transform="";gridDragElemRef.current.style.zIndex="";gridDragElemRef.current.style.boxShadow="";}
-                                setGridDragId(null);
-                                if(moreOrderRef.current.length){
-                                  try{localStorage.setItem("tf_more_order_coach_"+coachRole,JSON.stringify(moreOrderRef.current));}catch(err){}
-                                  if(pinnedTabs.length){try{localStorage.setItem("tf_pinned_coach_"+coachRole,JSON.stringify(pinnedTabs));}catch(err){}}
-                                }
-                              }}
-                              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"14px 8px 10px",borderRadius:16,position:"relative",
-                                background:gridDragId===t.id?"rgba(255,255,255,0.18)":isActive?"rgba(255,255,255,0.13)":(editingPins&&isPinned?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.05)"),
-                                border:"1px solid "+(isActive?"rgba(255,255,255,0.22)":(editingPins&&isPinned?col+"44":"rgba(255,255,255,0.07)")),
-                                boxShadow:isActive?"inset 0 1px 0 rgba(255,255,255,0.15)":"none",
-                                color:isActive?"#fff":"rgba(255,255,255,0.5)",fontSize:10,fontWeight:isActive?700:400,
-                                cursor:"pointer",fontFamily:"Georgia,serif",
-                                transition:gridDragId===t.id?"none":"transform 0.18s cubic-bezier(0.34,1.56,0.64,1)",
-                                animation:gridDragId&&gridDragId!==t.id?"tfJiggle 0.22s ease-in-out infinite alternate":"none",
-                                touchAction:"none",userSelect:"none",WebkitUserSelect:"none"}}>
-                              {editingPins&&(
-                                <div style={{position:"absolute",top:6,right:6,width:14,height:14,borderRadius:"50%",
-                                  background:t.id===fixedTab?"rgba(255,255,255,0.15)":isPinned?col:"transparent",
-                                  border:"1.5px solid "+(t.id===fixedTab?"rgba(255,255,255,0.2)":isPinned?col:"rgba(255,255,255,0.25)"),
-                                  display:"flex",alignItems:"center",justifyContent:"center"}}>
-                                  {t.id===fixedTab?<Icon name="lock" size={7} color="rgba(255,255,255,0.4)"/>:isPinned?<span style={{fontSize:7,color:"#fff",fontWeight:900,lineHeight:1}}>✓</span>:<span style={{fontSize:8,color:"rgba(255,255,255,0.4)",lineHeight:1}}>+</span>}
-                                </div>
-                              )}
-                              <span style={{filter:isActive?"drop-shadow(0 0 8px "+col+"cc)":"none",display:"flex",alignItems:"center",justifyContent:"center",height:22}}>{renderTabIcon(t.id,20,isActive,true)}</span>
-                              <span style={{textAlign:"center",lineHeight:1.3,wordBreak:"break-word",color:isActive?col:"rgba(255,255,255,0.5)"}}>{t.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      ))}
                     </div>
                   </div>
                 )}

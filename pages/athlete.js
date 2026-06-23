@@ -522,7 +522,6 @@ export default function Athlete(){
     if(insertErr){console.error("Attendance insert error:",insertErr);hError();return{status,time:timeStr,error:insertErr.message};}
     if(status==="early")hSuccess();else hError();
     let milestoneHit=null;
-    let newStreak=0;
     if(lb&&lb.length>0){
       const updates={};
       if(status==="early"){
@@ -530,7 +529,6 @@ export default function Athlete(){
         const oldEarly=lb[0].early_count||0;
         updates.early_count=oldEarly+1;
         updates.current_streak=oldStreak+1;
-        newStreak=updates.current_streak;
         if(updates.current_streak>(lb[0].best_streak||0))updates.best_streak=updates.current_streak;
         if(STREAK_MILESTONES.includes(updates.current_streak)&&!STREAK_MILESTONES.includes(oldStreak)){
           milestoneHit=MILESTONE_CONFIGS.streak[updates.current_streak]||null;
@@ -539,10 +537,9 @@ export default function Athlete(){
           milestoneHit=MILESTONE_CONFIGS.early[updates.early_count]||null;
         }
       }
-      else{updates.late_count=(lb[0].late_count||0)+1;updates.current_streak=0;newStreak=0;}
+      else{updates.late_count=(lb[0].late_count||0)+1;updates.current_streak=0;}
       await supabase.from("leaderboard").update(updates).eq("athlete_id",athlete.id);
     } else {
-      newStreak=status==="early"?1:0;
       if(status==="early"){
         if(STREAK_MILESTONES.includes(1))milestoneHit=MILESTONE_CONFIGS.streak[1]||null;
         if(!milestoneHit&&EARLY_MILESTONES.includes(1))milestoneHit=MILESTONE_CONFIGS.early[1]||null;
@@ -550,7 +547,6 @@ export default function Athlete(){
       await supabase.from("leaderboard").insert({athlete_id:athlete.id,early_count:status==="early"?1:0,late_count:status==="late"?1:0,current_streak:status==="early"?1:0,best_streak:status==="early"?1:0});
     }
     if(milestoneHit)hCelebrate();
-    setStreak(newStreak);
     return{status,time:timeStr,milestoneHit};
   };
 
@@ -1781,7 +1777,7 @@ export default function Athlete(){
         {/* ── LIQUID GLASS BOTTOM NAV ── */}
         {(()=>{
             const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"heart","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"compass","anvil":"anvil","mcastles":"crown","events":"star"};
-            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#C8D040","verse":"#4DC8F5","draft":"#FF7A2F","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#FFD700","prayer":"#9060E0","bracelets":"#C090F0","photos":"#44D9B0","notes":"#999","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#FF7A2F","mcastles":"#F080B0","events":"#D4AF37"};
+            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#C8D040","verse":"#4DC8F5","draft":"#44D9B0","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#FFD700","prayer":"#9060E0","bracelets":"#C090F0","photos":"#50D0B8","notes":"#888","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#E8720C","mcastles":"#D060C0","events":"#D4AF37"};
             const tabColor=isForge?"#E8720C":STEEL;
             const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id));
             const PRIMARY=["profile",...validPinned];
@@ -1861,44 +1857,17 @@ export default function Athlete(){
                 )}
 
                 {showTabPicker&&(
-                  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>{setShowTabPicker(false);setEditingPins(false);}}>
+                  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
                     <div style={{flex:1}}/>
                     <div style={{background:"rgba(10,10,18,0.97)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRadius:"28px 28px 0 0",border:"1px solid rgba(255,255,255,0.12)",borderBottom:"none",boxShadow:"0 -24px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.1)",maxHeight:"86vh",overflowY:"auto",paddingBottom:44}} onClick={e=>e.stopPropagation()}>
-                      {/* Handle + header */}
-                      <div style={{padding:"16px 16px 0",position:"sticky",top:0,background:"rgba(10,10,18,0.97)",zIndex:1,paddingTop:20}}>
+                      <div style={{padding:"20px 16px 0",position:"sticky",top:0,background:"rgba(10,10,18,0.97)",zIndex:1}}>
                         <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.2)",margin:"0 auto 16px"}}/>
-                        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:16}}>
-                          <div>
-                            <div style={{fontSize:17,fontWeight:800,color:"#fff",letterSpacing:"-0.01em"}}>All Tabs</div>
-                            <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:3}}>Tap to open · Pin up to 3 in your nav</div>
-                          </div>
-                          <button onClick={()=>{setShowTabPicker(false);setEditingPins(false);}} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer",lineHeight:1,width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
+                          <div style={{fontSize:17,fontWeight:800,color:"#fff"}}>All Tabs</div>
+                          <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer",lineHeight:1,width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0}}>✕</button>
                         </div>
-                        {/* Nav preview — what's currently pinned */}
-                        <div style={{display:"flex",gap:7,flexWrap:"wrap",paddingBottom:14,borderBottom:"0.5px solid rgba(255,255,255,0.07)"}}>
-                          <div style={{display:"flex",alignItems:"center",gap:6,padding:"5px 11px",borderRadius:20,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.1)"}}>
-                            <span style={{opacity:0.7,display:"flex",alignItems:"center"}}>{renderTabIcon("profile",13,false)}</span>
-                            <span style={{fontSize:11,color:"rgba(255,255,255,0.45)",fontWeight:500}}>Profile</span>
-                            <Icon name="lock" size={9} color="rgba(255,255,255,0.2)"/>
-                          </div>
-                          {validPinned.map(id=>{
-                            const t=TABS.find(x=>x.id===id);
-                            const col=ICON_COLORS[id]||"#aaa";
-                            if(!t)return null;
-                            return(
-                              <div key={id} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 9px 5px 11px",borderRadius:20,background:col+"18",border:"1px solid "+col+"44"}}>
-                                <span style={{display:"flex",alignItems:"center"}}>{renderTabIcon(id,13,true)}</span>
-                                <span style={{fontSize:11,color:col,fontWeight:600}}>{t.label}</span>
-                                <button onClick={(e)=>{e.stopPropagation();togglePin(id);}} style={{background:"transparent",border:"none",cursor:"pointer",padding:"0 0 0 2px",display:"flex",alignItems:"center",color:col+"aa",lineHeight:1,fontSize:13}}>✕</button>
-                              </div>
-                            );
-                          })}
-                          {validPinned.length<3&&Array.from({length:3-validPinned.length}).map((_,i)=>(
-                            <div key={i} style={{display:"flex",alignItems:"center",padding:"5px 12px",borderRadius:20,border:"1.5px dashed rgba(255,255,255,0.1)",fontSize:10,color:"rgba(255,255,255,0.18)",fontWeight:500}}>empty</div>
-                          ))}
-                        </div>
+                        <div style={{height:"0.5px",background:"rgba(255,255,255,0.07)",marginBottom:4}}/>
                       </div>
-                      {/* Grouped list */}
                       {[
                         {label:"Training",ids:["prs","weight","stretching","body"]},
                         {label:"Progress",ids:["attendance","leaderboard","anvil"]},
@@ -1906,33 +1875,34 @@ export default function Athlete(){
                         {label:"More",ids:["mcastles","events","photos","notes","habits","private"]},
                       ].map(section=>(
                         <div key={section.label}>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,padding:"14px 16px 6px"}}>{section.label}</div>
-                          {section.ids.map(id=>{
-                            const t=TABS.find(x=>x.id===id);
-                            if(!t)return null;
-                            const col=ICON_COLORS[id]||"#aaa";
-                            const isActive=tab===id;
-                            const isPinned=validPinned.includes(id);
-                            const canPin=!isPinned&&validPinned.length<3;
-                            return(
-                              <button key={id}
-                                onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);setEditingPins(false);}}
-                                style={{width:"100%",display:"flex",alignItems:"center",gap:13,padding:"10px 16px",background:isActive?"rgba(255,255,255,0.07)":"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",boxSizing:"border-box"}}>
-                                <div style={{width:40,height:40,borderRadius:13,background:col+"1c",border:"1px solid "+col+(isActive?"55":"2a"),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,boxShadow:isActive?"0 0 12px "+col+"44":"none"}}>
-                                  <span style={{display:"flex",alignItems:"center",filter:isActive?"drop-shadow(0 0 6px "+col+"bb)":"none"}}>{renderTabIcon(id,19,isActive)}</span>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,padding:"14px 16px 8px"}}>{section.label}</div>
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,padding:"0 12px"}}>
+                            {section.ids.map(id=>{
+                              const t=TABS.find(x=>x.id===id);
+                              if(!t)return null;
+                              const col=ICON_COLORS[id]||"#aaa";
+                              const isActive=tab===id;
+                              const isPinned=validPinned.includes(id);
+                              const canPin=!isPinned&&validPinned.length<3;
+                              return(
+                                <div key={id} style={{position:"relative"}}>
+                                  <button
+                                    onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}
+                                    style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"16px 8px 12px",borderRadius:16,background:isActive?col+"18":"rgba(255,255,255,0.04)",border:"1px solid "+(isActive?col+"55":"rgba(255,255,255,0.07)"),boxShadow:isActive?"0 0 16px "+col+"33":"none",cursor:"pointer",fontFamily:"Georgia,serif",boxSizing:"border-box"}}>
+                                    <div style={{width:46,height:46,borderRadius:14,background:col+"1c",border:"1px solid "+col+(isActive?"55":"2a"),display:"flex",alignItems:"center",justifyContent:"center",boxShadow:isActive?"0 0 14px "+col+"44":"none"}}>
+                                      <span style={{display:"flex",alignItems:"center",filter:isActive?"drop-shadow(0 0 6px "+col+"bb)":"none"}}>{renderTabIcon(id,22,isActive)}</span>
+                                    </div>
+                                    <span style={{fontSize:12,fontWeight:isActive?700:500,color:isActive?col:"rgba(255,255,255,0.65)",textAlign:"center",lineHeight:1.3}}>{t.label}</span>
+                                  </button>
+                                  <button
+                                    onClick={(e)=>{e.stopPropagation();if(isPinned||canPin)togglePin(id);}}
+                                    style={{position:"absolute",top:7,right:7,width:22,height:22,borderRadius:6,background:isPinned?col+"33":"rgba(255,255,255,0.07)",border:"1px solid "+(isPinned?col+"66":"rgba(255,255,255,0.12)"),display:"flex",alignItems:"center",justifyContent:"center",cursor:isPinned||canPin?"pointer":"default",opacity:!isPinned&&!canPin?0.2:1,padding:0}}>
+                                    <span style={{fontSize:9,color:isPinned?col:"rgba(255,255,255,0.3)",fontWeight:800,lineHeight:1}}>{isPinned?"✓":"+"}</span>
+                                  </button>
                                 </div>
-                                <div style={{flex:1,minWidth:0}}>
-                                  <div style={{fontSize:13,fontWeight:isActive?700:500,color:isActive?col:"#ddd",letterSpacing:"-0.01em"}}>{t.label}</div>
-                                </div>
-                                {isActive&&<div style={{width:5,height:5,borderRadius:"50%",background:col,flexShrink:0,boxShadow:"0 0 6px "+col}}/>}
-                                <button
-                                  onClick={(e)=>{e.stopPropagation();if(isPinned||canPin)togglePin(id);}}
-                                  style={{background:isPinned?col+"22":"rgba(255,255,255,0.05)",border:"1px solid "+(isPinned?col+"55":"rgba(255,255,255,0.12)"),borderRadius:8,padding:"5px 11px",cursor:isPinned||canPin?"pointer":"not-allowed",fontFamily:"Georgia,serif",flexShrink:0,opacity:!isPinned&&!canPin?0.25:1,transition:"all 0.15s"}}>
-                                  <span style={{fontSize:10,fontWeight:700,color:isPinned?col:"rgba(255,255,255,0.35)",letterSpacing:"0.04em"}}>{isPinned?"Pinned":"Pin"}</span>
-                                </button>
-                              </button>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
                       ))}
                     </div>
