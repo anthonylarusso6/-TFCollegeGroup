@@ -237,7 +237,6 @@ function BodySVG({view, partData, selected, onSelect}){
 
   if(view==="front") return(
     <svg viewBox="0 0 100 215" style={svgStyle}>
-      <rect width="100" height="215" fill="#111"/>
       {/* silhouette */}
       <ellipse cx="50" cy="13" rx="12" ry="13" fill={BODY}/>
       <rect x="42" y="24" width="16" height="9" rx="3" fill={BODY}/>
@@ -301,17 +300,16 @@ function BodySVG({view, partData, selected, onSelect}){
       <polygon points="24.9 194.7 27.8 164.9 28.2 160.4 26.1 154.3 24.9 157.6 22.4 161.6 20.8 167.8 22 188.2 20.8 195.5" {...mp("right-soleus")}/>
       <polygon points="35.5 158.4 35.9 162.4 35.9 166.9 35.1 172.2 35.1 176.7 32.2 182 30.6 187.3 26.9 194.7 27.3 187.8 28.2 180.4 28.6 175.5 29 169.8 29.8 164.1 30.2 158.8" {...mp("right-soleus")}/>
       {/* HANDS */}
-      <polygon points="0 100 1 107 3 113 8 115 14 113 17 107 15 100" {...mp("left-hand")}/>
-      <polygon points="85 100 82 107 84 113 90 115 96 113 99 107 100 100" {...mp("right-hand")}/>
+      <ellipse cx="9" cy="107" rx="9" ry="8" {...mp("left-hand")}/>
+      <ellipse cx="91" cy="107" rx="9" ry="8" {...mp("right-hand")}/>
       {/* ANKLES / FEET */}
-      <polygon points="21 196 19 204 22 211 28 214 34 212 36 205 35 197" {...mp("right-ankle")}/>
-      <polygon points="64 197 63 205 65 212 71 214 77 211 79 204 78 197" {...mp("left-ankle")}/>
+      <ellipse cx="39" cy="208" rx="11" ry="6" {...mp("right-ankle")}/>
+      <ellipse cx="61" cy="208" rx="11" ry="6" {...mp("left-ankle")}/>
     </svg>
   );
 
   return(
     <svg viewBox="0 0 100 215" style={svgStyle}>
-      <rect width="100" height="215" fill="#111"/>
       {/* silhouette */}
       <ellipse cx="50" cy="11" rx="11" ry="11" fill={BODY}/>
       <rect x="42" y="21" width="16" height="9" rx="3" fill={BODY}/>
@@ -375,11 +373,11 @@ function BodySVG({view, partData, selected, onSelect}){
       <polygon points="28.5 195.7 30.2 195.7 33.6 201.7 30.6 213 28.5 208 26.8 198.3" {...mp("left-soleus")}/>
       <polygon points="69.8 195.7 71.9 195.7 73.6 198.3 71.9 208 70.2 213 67.2 202.1" {...mp("right-soleus")}/>
       {/* HANDS */}
-      <polygon points="0 100 1 107 3 113 8 115 14 113 17 107 15 100" {...mp("left-hand")}/>
-      <polygon points="85 100 82 107 84 113 90 115 96 113 99 107 100 100" {...mp("right-hand")}/>
+      <ellipse cx="9" cy="107" rx="9" ry="8" {...mp("left-hand")}/>
+      <ellipse cx="91" cy="107" rx="9" ry="8" {...mp("right-hand")}/>
       {/* ANKLES / FEET */}
-      <polygon points="21 196 19 204 22 211 28 214 34 212 36 205 35 197" {...mp("right-ankle")}/>
-      <polygon points="64 197 63 205 65 212 71 214 77 211 79 204 78 197" {...mp("left-ankle")}/>
+      <ellipse cx="39" cy="208" rx="11" ry="6" {...mp("right-ankle")}/>
+      <ellipse cx="61" cy="208" rx="11" ry="6" {...mp("left-ankle")}/>
     </svg>
   );
 }
