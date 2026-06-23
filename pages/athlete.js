@@ -522,6 +522,7 @@ export default function Athlete(){
     if(insertErr){console.error("Attendance insert error:",insertErr);hError();return{status,time:timeStr,error:insertErr.message};}
     if(status==="early")hSuccess();else hError();
     let milestoneHit=null;
+    let newStreak=0;
     if(lb&&lb.length>0){
       const updates={};
       if(status==="early"){
@@ -529,6 +530,7 @@ export default function Athlete(){
         const oldEarly=lb[0].early_count||0;
         updates.early_count=oldEarly+1;
         updates.current_streak=oldStreak+1;
+        newStreak=updates.current_streak;
         if(updates.current_streak>(lb[0].best_streak||0))updates.best_streak=updates.current_streak;
         if(STREAK_MILESTONES.includes(updates.current_streak)&&!STREAK_MILESTONES.includes(oldStreak)){
           milestoneHit=MILESTONE_CONFIGS.streak[updates.current_streak]||null;
@@ -537,9 +539,10 @@ export default function Athlete(){
           milestoneHit=MILESTONE_CONFIGS.early[updates.early_count]||null;
         }
       }
-      else{updates.late_count=(lb[0].late_count||0)+1;updates.current_streak=0;}
+      else{updates.late_count=(lb[0].late_count||0)+1;updates.current_streak=0;newStreak=0;}
       await supabase.from("leaderboard").update(updates).eq("athlete_id",athlete.id);
     } else {
+      newStreak=status==="early"?1:0;
       if(status==="early"){
         if(STREAK_MILESTONES.includes(1))milestoneHit=MILESTONE_CONFIGS.streak[1]||null;
         if(!milestoneHit&&EARLY_MILESTONES.includes(1))milestoneHit=MILESTONE_CONFIGS.early[1]||null;
@@ -547,6 +550,7 @@ export default function Athlete(){
       await supabase.from("leaderboard").insert({athlete_id:athlete.id,early_count:status==="early"?1:0,late_count:status==="late"?1:0,current_streak:status==="early"?1:0,best_streak:status==="early"?1:0});
     }
     if(milestoneHit)hCelebrate();
+    setStreak(newStreak);
     return{status,time:timeStr,milestoneHit};
   };
 
@@ -1776,8 +1780,8 @@ export default function Athlete(){
         </div>
         {/* ── LIQUID GLASS BOTTOM NAV ── */}
         {(()=>{
-            const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"activity","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"mapPin","anvil":"anvil","mcastles":"crown","events":"calendar"};
-            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#F0C040","verse":"#4DC8F5","draft":"#FF7A2F","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#F0C040","prayer":"#B56EE8","bracelets":"#F080B0","photos":"#4DC8F5","notes":"#999","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#FF7A2F","mcastles":"#F080B0","events":"#D4AF37"};
+            const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"heart","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"compass","anvil":"anvil","mcastles":"crown","events":"star"};
+            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#C8D040","verse":"#4DC8F5","draft":"#FF7A2F","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#FFD700","prayer":"#9060E0","bracelets":"#C090F0","photos":"#44D9B0","notes":"#999","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#FF7A2F","mcastles":"#F080B0","events":"#D4AF37"};
             const tabColor=isForge?"#E8720C":STEEL;
             const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id));
             const PRIMARY=["profile",...validPinned];

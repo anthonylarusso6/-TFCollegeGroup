@@ -45,8 +45,12 @@ export default function CheckIn(){
   const doCheckin=async(athlete)=>{
     setSelected(athlete);
     try{
-      const{data:existing}=await supabase.from("attendance")
-        .select("*").eq("athlete_id",athlete.id).eq("date",today);
+      const[attRes,lbRes]=await Promise.all([
+        supabase.from("attendance").select("*").eq("athlete_id",athlete.id).eq("date",today),
+        supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id),
+      ]);
+      const existing=attRes.data;
+      const lb=lbRes.data;
       if(existing&&existing.length>0){
         hTap();
         setDone({already:true,status:existing[0].status,time:existing[0].time_logged,name:athlete.name});
@@ -57,6 +61,23 @@ export default function CheckIn(){
         athlete_id:athlete.id,date:today,day,status,time_logged:timeStr,
       });
       if(status==="early")hSuccess();else hError();
+      // Update leaderboard streak
+      if(lb&&lb.length>0){
+        const updates={};
+        if(status==="early"){
+          const oldStreak=lb[0].current_streak||0;
+          const oldEarly=lb[0].early_count||0;
+          updates.early_count=oldEarly+1;
+          updates.current_streak=oldStreak+1;
+          if(updates.current_streak>(lb[0].best_streak||0))updates.best_streak=updates.current_streak;
+        }else{
+          updates.late_count=(lb[0].late_count||0)+1;
+          updates.current_streak=0;
+        }
+        try{await supabase.from("leaderboard").update(updates).eq("athlete_id",athlete.id);}catch(e){}
+      }else{
+        try{await supabase.from("leaderboard").insert({athlete_id:athlete.id,early_count:status==="early"?1:0,late_count:status==="late"?1:0,current_streak:status==="early"?1:0,best_streak:status==="early"?1:0});}catch(e){}
+      }
       setDone({already:false,status,time:timeStr,name:athlete.name});
     }catch(e){
       setDone({already:false,status:isLate?"late":"early",time:timeStr,name:athlete.name});
