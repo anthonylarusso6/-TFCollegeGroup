@@ -36,7 +36,7 @@ export default function BraceletWall({athleteBracelet}){
               </div>
               <span style={{fontSize:11,color:"#555"}}>{b.ref}</span>
             </div>
-            <div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>&#x201C;{b.text}&#x201D;</div>
+            <div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>"{b.text}"</div>
           </div>
         );
       })}
