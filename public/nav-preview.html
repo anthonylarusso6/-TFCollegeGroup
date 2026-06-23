@@ -7,595 +7,326 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0a0a0a; font-family: Georgia, serif; color: #fff; padding: 24px 16px 60px; }
-  h1 { text-align: center; font-size: 18px; color: rgba(255,255,255,0.5); font-weight: 400; margin-bottom: 32px; letter-spacing: 0.04em; text-transform: uppercase; font-size: 11px; }
+  h1 { text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 400; margin-bottom: 32px; letter-spacing: 0.04em; text-transform: uppercase; }
 
   .options { display: flex; flex-direction: column; gap: 48px; }
   .option { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-  .option-label { font-size: 13px; color: rgba(255,255,255,0.35); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; }
+  .option-label { font-size: 11px; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
   .option-title { font-size: 20px; color: #fff; font-weight: 800; text-align: center; }
   .option-desc { font-size: 12px; color: rgba(255,255,255,0.35); text-align: center; max-width: 300px; line-height: 1.6; }
 
-  /* Phone frame */
-  .phone { width: 320px; background: rgba(10,10,18,0.97); border-radius: 28px; border: 1px solid rgba(255,255,255,0.12); overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.7); position: relative; }
+  .phone { width: 320px; background: rgba(10,10,18,0.97); border-radius: 28px; border: 1px solid rgba(255,255,255,0.12); overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.7); }
 
-  /* ── Shared bottom nav ── */
   .bottom-nav { display: flex; background: rgba(8,8,14,0.98); border-top: 0.5px solid rgba(255,255,255,0.08); padding: 8px 0 20px; }
-  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px 0; }
-  .nav-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-Content: center; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; }
   .nav-label { font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 0.02em; }
-  .nav-item.active .nav-label { color: #FF7A2F; }
   .nav-dot { width: 3px; height: 3px; border-radius: 50%; background: #FF7A2F; margin: 0 auto; }
 
-  /* ── Sheet container ── */
-  .sheet { padding-bottom: 0; }
   .sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); margin: 14px auto 0; }
-  .sheet-header { padding: 14px 16px 0; position: sticky; top: 0; background: rgba(10,10,18,0.97); z-index: 1; }
+  .sheet-header { padding: 14px 16px 0; }
   .sheet-title-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
   .sheet-title { font-size: 17px; font-weight: 800; color: #fff; }
-  .sheet-sub { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 3px; }
-  .close-btn { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); font-size: 13px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-  .divider { height: 0.5px; background: rgba(255,255,255,0.07); margin: 0 0 4px; }
+  .close-btn { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .divider { height: 0.5px; background: rgba(255,255,255,0.07); }
+  .section-label { font-size: 9px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; padding: 12px 16px 4px; }
 
-  /* ── SVG icons ── */
   svg { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 
-  /* ───────────────────────────────────────────────
-     OPTION 1  Fixed nav + simple list
-  ─────────────────────────────────────────────── */
-  .opt1-list { padding: 0 0 16px; }
-  .opt1-row { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border: none; background: transparent; width: 100%; cursor: pointer; text-align: left; }
-  .opt1-row.active { background: rgba(255,255,255,0.05); }
-  .opt1-icon { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .opt1-name { font-size: 14px; color: #ddd; font-family: Georgia, serif; flex: 1; }
-  .opt1-row.active .opt1-name { color: #FF7A2F; font-weight: 700; }
-  .opt1-section { font-size: 9px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; padding: 12px 16px 4px; font-family: Georgia, serif; }
+  /* Option 1 */
+  .o1-row { display: flex; align-items: center; gap: 12px; padding: 11px 16px; }
+  .o1-row.active { background: rgba(255,255,255,0.05); }
+  .o1-icon { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .o1-name { font-size: 14px; color: #ddd; flex: 1; }
+  .o1-row.active .o1-name { color: #FF7A2F; font-weight: 700; }
 
-  /* ───────────────────────────────────────────────
-     OPTION 2  2-column card grid
-  ─────────────────────────────────────────────── */
-  .opt2-section { font-size: 9px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; padding: 12px 16px 8px; font-family: Georgia, serif; }
-  .opt2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px; }
-  .opt2-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
-  .opt2-card.active { background: rgba(255,120,50,0.1); border-color: rgba(255,120,50,0.35); }
-  .opt2-card-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
-  .opt2-card-name { font-size: 11px; color: #ccc; font-family: Georgia, serif; text-align: center; line-height: 1.3; }
-  .opt2-card.active .opt2-card-name { color: #FF7A2F; font-weight: 700; }
+  /* Option 2 */
+  .o2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px; }
+  .o2-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .o2-card.active { background: rgba(255,120,50,0.1); border-color: rgba(255,120,50,0.35); }
+  .o2-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+  .o2-name { font-size: 11px; color: #ccc; text-align: center; line-height: 1.3; }
+  .o2-card.active .o2-name { color: #FF7A2F; font-weight: 700; }
 
-  /* ───────────────────────────────────────────────
-     OPTION 3  Full-screen page
-  ─────────────────────────────────────────────── */
-  .opt3-page { background: rgba(10,10,18,0.97); min-height: 420px; }
-  .opt3-topbar { padding: 16px 16px 0; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-  .opt3-back { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 15px; cursor: pointer; flex-shrink: 0; }
-  .opt3-pg-title { font-size: 20px; font-weight: 800; color: #fff; }
-  .opt3-search { margin: 0 16px 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 9px 13px; display: flex; align-items: center; gap: 9px; }
-  .opt3-search-text { font-size: 13px; color: rgba(255,255,255,0.25); font-family: Georgia, serif; }
-  .opt3-section { font-size: 9px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; padding: 10px 16px 6px; font-family: Georgia, serif; }
-  .opt3-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; }
-  .opt3-row.active { background: rgba(255,255,255,0.05); }
-  .opt3-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .opt3-name { font-size: 14px; color: #ddd; font-family: Georgia, serif; flex: 1; }
-  .opt3-row.active .opt3-name { color: #FF7A2F; font-weight: 700; }
-  .opt3-chev { color: rgba(255,255,255,0.2); font-size: 13px; }
+  /* Option 3 */
+  .o3-topbar { padding: 16px 16px 0; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .o3-back { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.5); font-size: 15px; flex-shrink: 0; }
+  .o3-search { margin: 0 16px 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 9px 13px; display: flex; align-items: center; gap: 9px; }
+  .o3-search-text { font-size: 13px; color: rgba(255,255,255,0.25); }
+  .o3-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+  .o3-row.active { background: rgba(255,255,255,0.05); }
+  .o3-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .o3-name { font-size: 14px; color: #ddd; flex: 1; }
+  .o3-row.active .o3-name { color: #FF7A2F; font-weight: 700; }
+  .o3-chev { color: rgba(255,255,255,0.2); font-size: 13px; }
 
-  /* ───────────────────────────────────────────────
-     OPTION 4  Collapsible groups
-  ─────────────────────────────────────────────── */
-  .opt4-group { border-bottom: 0.5px solid rgba(255,255,255,0.06); }
-  .opt4-group-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; cursor: pointer; }
-  .opt4-group-title { font-size: 13px; font-weight: 700; color: #fff; font-family: Georgia, serif; }
-  .opt4-group-meta { font-size: 10px; color: rgba(255,255,255,0.25); font-family: Georgia, serif; }
-  .opt4-group-arrow { font-size: 11px; color: rgba(255,255,255,0.3); transition: transform 0.2s; }
-  .opt4-group-arrow.open { transform: rotate(90deg); }
-  .opt4-items { padding: 0 0 6px; }
-  .opt4-row { display: flex; align-items: center; gap: 11px; padding: 9px 16px 9px 20px; cursor: pointer; }
-  .opt4-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .opt4-name { font-size: 13px; color: #ccc; font-family: Georgia, serif; flex: 1; }
+  /* Option 4 */
+  .o4-group { border-bottom: 0.5px solid rgba(255,255,255,0.06); }
+  .o4-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; }
+  .o4-title { font-size: 13px; font-weight: 700; color: #fff; }
+  .o4-meta { font-size: 10px; color: rgba(255,255,255,0.25); }
+  .o4-arrow { font-size: 12px; color: rgba(255,255,255,0.3); margin-left: 6px; }
+  .o4-row { display: flex; align-items: center; gap: 11px; padding: 9px 16px 9px 20px; }
+  .o4-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .o4-name { font-size: 13px; color: #ccc; flex: 1; }
 
-  /* ───────────────────────────────────────────────
-     OPTION 5  Recently used / smart order
-  ─────────────────────────────────────────────── */
-  .opt5-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.25); border-radius: 20px; padding: 3px 9px; font-size: 9px; color: #D4AF37; font-family: Georgia, serif; margin: 4px 16px 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-  .opt5-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; }
-  .opt5-row.active { background: rgba(255,255,255,0.05); }
-  .opt5-icon { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .opt5-name { font-size: 14px; color: #ddd; font-family: Georgia, serif; flex: 1; }
-  .opt5-row.active .opt5-name { color: #FF7A2F; font-weight: 700; }
-  .opt5-freq { font-size: 9px; color: rgba(255,255,255,0.2); font-family: Georgia, serif; }
-  .opt5-divider-label { font-size: 9px; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.1em; padding: 12px 16px 4px; font-family: Georgia, serif; font-weight: 700; }
+  /* Option 5 */
+  .o5-section { font-size: 9px; color: rgba(255,255,255,0.2); text-transform: uppercase; letter-spacing: 0.1em; padding: 12px 16px 4px; font-weight: 700; }
+  .o5-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+  .o5-row.active { background: rgba(255,255,255,0.05); }
+  .o5-icon { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .o5-name { font-size: 14px; color: #ddd; }
+  .o5-row.active .o5-name { color: #FF7A2F; font-weight: 700; }
+  .o5-freq { font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 1px; }
 </style>
 </head>
 <body>
-
 <h1>More Tab — 5 Options</h1>
-
 <div class="options">
 
-  <!-- ══════════════════════════════════════════
-       OPTION 1 — Fixed nav + simple list
-  ══════════════════════════════════════════ -->
+  <!-- OPTION 1 -->
   <div class="option">
     <div class="option-label">Option 1</div>
     <div class="option-title">Fixed Nav + Simple List</div>
-    <div class="option-desc">No pinning. Nav tabs are fixed. More just opens a plain scrollable list — nothing to manage.</div>
+    <div class="option-desc">No pinning. Nav tabs are fixed. More opens a plain scrollable list — nothing to manage.</div>
     <div class="phone">
-      <div class="sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-header">
-          <div class="sheet-title-row">
-            <div>
-              <div class="sheet-title">All Tabs</div>
-            </div>
-            <div class="close-btn">✕</div>
-          </div>
-          <div class="divider"></div>
-        </div>
-        <div class="opt1-list">
-          <div class="opt1-section">Training</div>
-          <div class="opt1-row active">
-            <div class="opt1-icon" style="background:rgba(255,122,47,0.15)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg>
-            </div>
-            <span class="opt1-name">PRs</span>
-          </div>
-          <div class="opt1-row">
-            <div class="opt1-icon" style="background:rgba(200,208,64,0.12)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8D040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></svg>
-            </div>
-            <span class="opt1-name">Weight</span>
-          </div>
-          <div class="opt1-row">
-            <div class="opt1-icon" style="background:rgba(58,158,90,0.12)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3A9E5A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            </div>
-            <span class="opt1-name">Stretching</span>
-          </div>
-          <div class="opt1-row">
-            <div class="opt1-icon" style="background:rgba(224,85,85,0.12)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E05555" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </div>
-            <span class="opt1-name">Body</span>
-          </div>
-          <div class="opt1-section">Progress</div>
-          <div class="opt1-row">
-            <div class="opt1-icon" style="background:rgba(123,110,232,0.12)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7B6EE8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-            </div>
-            <span class="opt1-name">Attendance</span>
-          </div>
-          <div class="opt1-row">
-            <div class="opt1-icon" style="background:rgba(255,215,0,0.1)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg>
-            </div>
-            <span class="opt1-name">Leaderboard</span>
-          </div>
-          <div class="opt1-section">Team & Faith</div>
-          <div class="opt1-row">
-            <div class="opt1-icon" style="background:rgba(144,168,192,0.12)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#90A8C0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <span class="opt1-name">My Group</span>
-          </div>
-          <div class="opt1-row">
-            <div class="opt1-icon" style="background:rgba(77,200,245,0.1)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4DC8F5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            </div>
-            <span class="opt1-name">Verse</span>
-          </div>
-        </div>
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title-row"><div class="sheet-title">All Tabs</div><div class="close-btn">✕</div></div>
+        <div class="divider"></div>
       </div>
-      <!-- Fixed bottom nav -->
+      <div class="section-label">Training</div>
+      <div class="o1-row active">
+        <div class="o1-icon" style="background:rgba(255,122,47,0.15)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg></div>
+        <span class="o1-name">PRs</span>
+      </div>
+      <div class="o1-row">
+        <div class="o1-icon" style="background:rgba(200,208,64,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8D040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></svg></div>
+        <span class="o1-name">Weight</span>
+      </div>
+      <div class="o1-row">
+        <div class="o1-icon" style="background:rgba(58,158,90,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3A9E5A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <span class="o1-name">Stretching</span>
+      </div>
+      <div class="o1-row">
+        <div class="o1-icon" style="background:rgba(224,85,85,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E05555" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+        <span class="o1-name">Body</span>
+      </div>
+      <div class="section-label">Progress</div>
+      <div class="o1-row">
+        <div class="o1-icon" style="background:rgba(123,110,232,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7B6EE8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+        <span class="o1-name">Attendance</span>
+      </div>
+      <div class="o1-row">
+        <div class="o1-icon" style="background:rgba(255,215,0,0.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg></div>
+        <span class="o1-name">Leaderboard</span>
+      </div>
+      <div class="section-label">Team & Faith</div>
+      <div class="o1-row">
+        <div class="o1-icon" style="background:rgba(144,168,192,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#90A8C0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <span class="o1-name">My Group</span>
+      </div>
+      <div class="o1-row">
+        <div class="o1-icon" style="background:rgba(77,200,245,0.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4DC8F5" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+        <span class="o1-name">Verse</span>
+      </div>
+      <div style="height:8px"></div>
       <div class="bottom-nav">
-        <div class="nav-item active">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></svg>
-          <span class="nav-label" style="color:#FF7A2F">Profile</span>
-          <div class="nav-dot"></div>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          <span class="nav-label">Attend.</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg>
-          <span class="nav-label">PRs</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg>
-          <span class="nav-label">Ranks</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-          <span class="nav-label">More</span>
-        </div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></svg><span class="nav-label">Profile</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="nav-label">Attend.</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg><span class="nav-label">PRs</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg><span class="nav-label">Ranks</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="nav-label">More</span></div>
       </div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       OPTION 2 — 2-column card grid
-  ══════════════════════════════════════════ -->
+  <!-- OPTION 2 -->
   <div class="option">
     <div class="option-label">Option 2</div>
     <div class="option-title">2-Column Card Grid</div>
     <div class="option-desc">Big icon cards in a grid — faster to scan, easier to tap. Group headers break it up.</div>
     <div class="phone">
-      <div class="sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-header">
-          <div class="sheet-title-row">
-            <div><div class="sheet-title">All Tabs</div></div>
-            <div class="close-btn">✕</div>
-          </div>
-          <div class="divider"></div>
-        </div>
-        <div class="opt2-section">Training</div>
-        <div class="opt2-grid">
-          <div class="opt2-card active">
-            <div class="opt2-card-icon" style="background:rgba(255,122,47,0.18)">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg>
-            </div>
-            <span class="opt2-card-name" style="color:#FF7A2F;font-weight:700">PRs</span>
-          </div>
-          <div class="opt2-card">
-            <div class="opt2-card-icon" style="background:rgba(200,208,64,0.12)">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8D040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></svg>
-            </div>
-            <span class="opt2-card-name">Weight</span>
-          </div>
-          <div class="opt2-card">
-            <div class="opt2-card-icon" style="background:rgba(58,158,90,0.12)">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3A9E5A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            </div>
-            <span class="opt2-card-name">Stretching</span>
-          </div>
-          <div class="opt2-card">
-            <div class="opt2-card-icon" style="background:rgba(224,85,85,0.12)">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E05555" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </div>
-            <span class="opt2-card-name">Body</span>
-          </div>
-        </div>
-        <div class="opt2-section" style="margin-top:4px">Progress</div>
-        <div class="opt2-grid">
-          <div class="opt2-card">
-            <div class="opt2-card-icon" style="background:rgba(123,110,232,0.12)">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B6EE8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-            </div>
-            <span class="opt2-card-name">Attendance</span>
-          </div>
-          <div class="opt2-card">
-            <div class="opt2-card-icon" style="background:rgba(255,215,0,0.1)">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg>
-            </div>
-            <span class="opt2-card-name">Leaderboard</span>
-          </div>
-          <div class="opt2-card">
-            <div class="opt2-card-icon" style="background:rgba(240,192,64,0.12)">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0C040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M5 20v-2.5h14V20M8 17.5v-3c0-2.2 1.8-4 4-4s4 1.8 4 4v3"/><path d="M11 10.5V7.5h2v3"/></svg>
-            </div>
-            <span class="opt2-card-name">Anvil</span>
-          </div>
-        </div>
-        <div style="height:16px"></div>
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title-row"><div class="sheet-title">All Tabs</div><div class="close-btn">✕</div></div>
+        <div class="divider"></div>
       </div>
+      <div class="section-label">Training</div>
+      <div class="o2-grid">
+        <div class="o2-card active"><div class="o2-icon" style="background:rgba(255,122,47,0.18)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg></div><span class="o2-name" style="color:#FF7A2F;font-weight:700">PRs</span></div>
+        <div class="o2-card"><div class="o2-icon" style="background:rgba(200,208,64,0.12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C8D040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></svg></div><span class="o2-name">Weight</span></div>
+        <div class="o2-card"><div class="o2-icon" style="background:rgba(58,158,90,0.12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3A9E5A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span class="o2-name">Stretching</span></div>
+        <div class="o2-card"><div class="o2-icon" style="background:rgba(224,85,85,0.12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E05555" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><span class="o2-name">Body</span></div>
+      </div>
+      <div class="section-label" style="margin-top:4px">Progress</div>
+      <div class="o2-grid">
+        <div class="o2-card"><div class="o2-icon" style="background:rgba(123,110,232,0.12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7B6EE8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><span class="o2-name">Attendance</span></div>
+        <div class="o2-card"><div class="o2-icon" style="background:rgba(255,215,0,0.1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg></div><span class="o2-name">Leaderboard</span></div>
+        <div class="o2-card"><div class="o2-icon" style="background:rgba(240,192,64,0.12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0C040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M5 20v-2.5h14V20M8 17.5v-3c0-2.2 1.8-4 4-4s4 1.8 4 4v3"/><path d="M11 10.5V7.5h2v3"/></svg></div><span class="o2-name">Anvil</span></div>
+        <div class="o2-card"><div class="o2-icon" style="background:rgba(144,168,192,0.12)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#90A8C0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><span class="o2-name">My Group</span></div>
+      </div>
+      <div style="height:12px"></div>
       <div class="bottom-nav">
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></svg>
-          <span class="nav-label">Profile</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          <span class="nav-label">Attend.</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg>
-          <span class="nav-label">PRs</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg>
-          <span class="nav-label">Ranks</span>
-        </div>
-        <div class="nav-item active">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-          <span class="nav-label" style="color:#FF7A2F">More</span>
-          <div class="nav-dot"></div>
-        </div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></svg><span class="nav-label">Profile</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="nav-label">Attend.</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg><span class="nav-label">PRs</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg><span class="nav-label">Ranks</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="nav-label">More</span></div>
       </div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       OPTION 3 — Full-screen page + search
-  ══════════════════════════════════════════ -->
+  <!-- OPTION 3 -->
   <div class="option">
     <div class="option-label">Option 3</div>
     <div class="option-title">Full-Screen Page + Search</div>
-    <div class="option-desc">Tapping "More" navigates to a full page. More breathing room and a search bar to find any tab instantly.</div>
+    <div class="option-desc">Tapping "More" navigates to a full page. More room and a search bar to find any tab instantly.</div>
     <div class="phone">
-      <div class="opt3-page">
-        <div class="opt3-topbar">
-          <div class="opt3-back">‹</div>
-          <div class="opt3-pg-title">All Tabs</div>
-        </div>
-        <div class="opt3-search">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <span class="opt3-search-text">Search tabs…</span>
-        </div>
-        <div class="opt3-section">Training</div>
-        <div class="opt3-row active">
-          <div class="opt3-icon" style="background:rgba(255,122,47,0.15)">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg>
-          </div>
-          <span class="opt3-name">PRs</span>
-          <span class="opt3-chev">›</span>
-        </div>
-        <div class="opt3-row">
-          <div class="opt3-icon" style="background:rgba(200,208,64,0.12)">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#C8D040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></svg>
-          </div>
-          <span class="opt3-name">Weight</span>
-          <span class="opt3-chev">›</span>
-        </div>
-        <div class="opt3-row">
-          <div class="opt3-icon" style="background:rgba(58,158,90,0.12)">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3A9E5A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
-          <span class="opt3-name">Stretching</span>
-          <span class="opt3-chev">›</span>
-        </div>
-        <div class="opt3-section">Progress</div>
-        <div class="opt3-row">
-          <div class="opt3-icon" style="background:rgba(123,110,232,0.12)">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7B6EE8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          </div>
-          <span class="opt3-name">Attendance</span>
-          <span class="opt3-chev">›</span>
-        </div>
-        <div class="opt3-row">
-          <div class="opt3-icon" style="background:rgba(255,215,0,0.1)">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg>
-          </div>
-          <span class="opt3-name">Leaderboard</span>
-          <span class="opt3-chev">›</span>
-        </div>
-        <div class="opt3-section">Team & Faith</div>
-        <div class="opt3-row">
-          <div class="opt3-icon" style="background:rgba(144,168,192,0.12)">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#90A8C0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <span class="opt3-name">My Group</span>
-          <span class="opt3-chev">›</span>
-        </div>
-        <div class="opt3-row">
-          <div class="opt3-icon" style="background:rgba(144,96,224,0.12)">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9060E0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M9 7l3-3 3 3M9 17l3 3 3-3M5 12h2M17 12h2"/></svg>
-          </div>
-          <span class="opt3-name">Prayer</span>
-          <span class="opt3-chev">›</span>
-        </div>
+      <div class="o3-topbar">
+        <div class="o3-back">‹</div>
+        <div style="font-size:20px;font-weight:800">All Tabs</div>
+      </div>
+      <div class="o3-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <span class="o3-search-text">Search tabs…</span>
+      </div>
+      <div class="section-label">Training</div>
+      <div class="o3-row active">
+        <div class="o3-icon" style="background:rgba(255,122,47,0.15)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg></div>
+        <span class="o3-name">PRs</span><span class="o3-chev">›</span>
+      </div>
+      <div class="o3-row">
+        <div class="o3-icon" style="background:rgba(200,208,64,0.12)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#C8D040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></svg></div>
+        <span class="o3-name">Weight</span><span class="o3-chev">›</span>
+      </div>
+      <div class="o3-row">
+        <div class="o3-icon" style="background:rgba(58,158,90,0.12)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#3A9E5A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <span class="o3-name">Stretching</span><span class="o3-chev">›</span>
+      </div>
+      <div class="section-label">Progress</div>
+      <div class="o3-row">
+        <div class="o3-icon" style="background:rgba(123,110,232,0.12)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7B6EE8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+        <span class="o3-name">Attendance</span><span class="o3-chev">›</span>
+      </div>
+      <div class="o3-row">
+        <div class="o3-icon" style="background:rgba(255,215,0,0.1)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg></div>
+        <span class="o3-name">Leaderboard</span><span class="o3-chev">›</span>
+      </div>
+      <div class="section-label">Team & Faith</div>
+      <div class="o3-row">
+        <div class="o3-icon" style="background:rgba(144,168,192,0.12)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#90A8C0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <span class="o3-name">My Group</span><span class="o3-chev">›</span>
+      </div>
+      <div class="o3-row">
+        <div class="o3-icon" style="background:rgba(144,96,224,0.12)"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#9060E0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M9 7l3-3 3 3M9 17l3 3 3-3M5 12h2M17 12h2"/></svg></div>
+        <span class="o3-name">Prayer</span><span class="o3-chev">›</span>
       </div>
       <div class="bottom-nav">
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></svg>
-          <span class="nav-label">Profile</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          <span class="nav-label">Attend.</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg>
-          <span class="nav-label">PRs</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg>
-          <span class="nav-label">Ranks</span>
-        </div>
-        <div class="nav-item active">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-          <span class="nav-label" style="color:#FF7A2F">More</span>
-          <div class="nav-dot"></div>
-        </div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></svg><span class="nav-label">Profile</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="nav-label">Attend.</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg><span class="nav-label">PRs</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg><span class="nav-label">Ranks</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="nav-label" style="color:#FF7A2F">More</span><div class="nav-dot"></div></div>
       </div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       OPTION 4 — Collapsible groups
-  ══════════════════════════════════════════ -->
+  <!-- OPTION 4 -->
   <div class="option">
     <div class="option-label">Option 4</div>
     <div class="option-title">Collapsible Groups</div>
-    <div class="option-desc">Tap a group header to expand or collapse it. Keeps the sheet tidy — focus on what you need.</div>
+    <div class="option-desc">Tap a group header to expand or collapse it. Opens clean — expand only what you need.</div>
     <div class="phone">
-      <div class="sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-header">
-          <div class="sheet-title-row">
-            <div><div class="sheet-title">All Tabs</div></div>
-            <div class="close-btn">✕</div>
-          </div>
-          <div class="divider"></div>
-        </div>
-        <!-- Training — open -->
-        <div class="opt4-group">
-          <div class="opt4-group-header">
-            <span class="opt4-group-title">Training</span>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span class="opt4-group-meta">4 tabs</span>
-              <span class="opt4-group-arrow open">›</span>
-            </div>
-          </div>
-          <div class="opt4-items">
-            <div class="opt4-row" style="background:rgba(255,255,255,0.05)">
-              <div class="opt4-icon" style="background:rgba(255,122,47,0.15)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg>
-              </div>
-              <span class="opt4-name" style="color:#FF7A2F;font-weight:700">PRs</span>
-            </div>
-            <div class="opt4-row">
-              <div class="opt4-icon" style="background:rgba(200,208,64,0.12)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8D040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></svg>
-              </div>
-              <span class="opt4-name">Weight</span>
-            </div>
-            <div class="opt4-row">
-              <div class="opt4-icon" style="background:rgba(58,158,90,0.12)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3A9E5A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-              </div>
-              <span class="opt4-name">Stretching</span>
-            </div>
-            <div class="opt4-row">
-              <div class="opt4-icon" style="background:rgba(224,85,85,0.12)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E05555" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              </div>
-              <span class="opt4-name">Body</span>
-            </div>
-          </div>
-        </div>
-        <!-- Progress — collapsed -->
-        <div class="opt4-group">
-          <div class="opt4-group-header">
-            <span class="opt4-group-title">Progress</span>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span class="opt4-group-meta">3 tabs</span>
-              <span class="opt4-group-arrow">›</span>
-            </div>
-          </div>
-        </div>
-        <!-- Team & Faith — collapsed -->
-        <div class="opt4-group">
-          <div class="opt4-group-header">
-            <span class="opt4-group-title">Team & Faith</span>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span class="opt4-group-meta">4 tabs</span>
-              <span class="opt4-group-arrow">›</span>
-            </div>
-          </div>
-        </div>
-        <!-- More — collapsed -->
-        <div class="opt4-group">
-          <div class="opt4-group-header">
-            <span class="opt4-group-title">More</span>
-            <div style="display:flex;align-items:center;gap:8px">
-              <span class="opt4-group-meta">6 tabs</span>
-              <span class="opt4-group-arrow">›</span>
-            </div>
-          </div>
-        </div>
-        <div style="height:16px"></div>
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title-row"><div class="sheet-title">All Tabs</div><div class="close-btn">✕</div></div>
+        <div class="divider"></div>
       </div>
+      <!-- Training open -->
+      <div class="o4-group">
+        <div class="o4-header">
+          <span class="o4-title">Training</span>
+          <div style="display:flex;align-items:center"><span class="o4-meta">4 tabs</span><span class="o4-arrow" style="transform:rotate(90deg);margin-left:6px">›</span></div>
+        </div>
+        <div class="o4-row" style="background:rgba(255,255,255,0.05)">
+          <div class="o4-icon" style="background:rgba(255,122,47,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg></div>
+          <span class="o4-name" style="color:#FF7A2F;font-weight:700">PRs</span>
+        </div>
+        <div class="o4-row"><div class="o4-icon" style="background:rgba(200,208,64,0.12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8D040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></svg></div><span class="o4-name">Weight</span></div>
+        <div class="o4-row"><div class="o4-icon" style="background:rgba(58,158,90,0.12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3A9E5A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span class="o4-name">Stretching</span></div>
+        <div class="o4-row"><div class="o4-icon" style="background:rgba(224,85,85,0.12)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E05555" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><span class="o4-name">Body</span></div>
+      </div>
+      <!-- Progress collapsed -->
+      <div class="o4-group">
+        <div class="o4-header"><span class="o4-title">Progress</span><div style="display:flex;align-items:center"><span class="o4-meta">3 tabs</span><span class="o4-arrow" style="margin-left:6px">›</span></div></div>
+      </div>
+      <!-- Team & Faith collapsed -->
+      <div class="o4-group">
+        <div class="o4-header"><span class="o4-title">Team & Faith</span><div style="display:flex;align-items:center"><span class="o4-meta">4 tabs</span><span class="o4-arrow" style="margin-left:6px">›</span></div></div>
+      </div>
+      <!-- More collapsed -->
+      <div class="o4-group">
+        <div class="o4-header"><span class="o4-title">More</span><div style="display:flex;align-items:center"><span class="o4-meta">6 tabs</span><span class="o4-arrow" style="margin-left:6px">›</span></div></div>
+      </div>
+      <div style="height:12px"></div>
       <div class="bottom-nav">
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></svg>
-          <span class="nav-label">Profile</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          <span class="nav-label">Attend.</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg>
-          <span class="nav-label">PRs</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg>
-          <span class="nav-label">Ranks</span>
-        </div>
-        <div class="nav-item active">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-          <span class="nav-label" style="color:#FF7A2F">More</span>
-          <div class="nav-dot"></div>
-        </div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></svg><span class="nav-label">Profile</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="nav-label">Attend.</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg><span class="nav-label">PRs</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg><span class="nav-label">Ranks</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="nav-label">More</span></div>
       </div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════
-       OPTION 5 — Smart recently used
-  ══════════════════════════════════════════ -->
+  <!-- OPTION 5 -->
   <div class="option">
     <div class="option-label">Option 5</div>
     <div class="option-title">Smart Order — Recent First</div>
     <div class="option-desc">No groups, no categories. The tabs you use most float to the top automatically. Zero setup.</div>
     <div class="phone">
-      <div class="sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-header">
-          <div class="sheet-title-row">
-            <div><div class="sheet-title">All Tabs</div></div>
-            <div class="close-btn">✕</div>
-          </div>
-          <div class="divider"></div>
-        </div>
-        <div class="opt5-divider-label">Recently used</div>
-        <div class="opt5-row active">
-          <div class="opt5-icon" style="background:rgba(255,122,47,0.15)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg>
-          </div>
-          <div style="flex:1"><div class="opt5-name" style="color:#FF7A2F;font-weight:700">PRs</div><div class="opt5-freq">Used today</div></div>
-        </div>
-        <div class="opt5-row">
-          <div class="opt5-icon" style="background:rgba(123,110,232,0.12)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7B6EE8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          </div>
-          <div style="flex:1"><div class="opt5-name">Attendance</div><div class="opt5-freq">Used yesterday</div></div>
-        </div>
-        <div class="opt5-row">
-          <div class="opt5-icon" style="background:rgba(255,215,0,0.1)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg>
-          </div>
-          <div style="flex:1"><div class="opt5-name">Leaderboard</div><div class="opt5-freq">2 days ago</div></div>
-        </div>
-        <div class="opt5-row">
-          <div class="opt5-icon" style="background:rgba(200,208,64,0.12)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8D040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></svg>
-          </div>
-          <div style="flex:1"><div class="opt5-name">Weight</div><div class="opt5-freq">3 days ago</div></div>
-        </div>
-        <div class="opt5-divider-label" style="margin-top:4px">Everything else</div>
-        <div class="opt5-row">
-          <div class="opt5-icon" style="background:rgba(58,158,90,0.12)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3A9E5A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
-          <div style="flex:1"><div class="opt5-name">Stretching</div></div>
-        </div>
-        <div class="opt5-row">
-          <div class="opt5-icon" style="background:rgba(224,85,85,0.12)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E05555" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          </div>
-          <div style="flex:1"><div class="opt5-name">Body</div></div>
-        </div>
-        <div class="opt5-row">
-          <div class="opt5-icon" style="background:rgba(144,168,192,0.12)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#90A8C0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <div style="flex:1"><div class="opt5-name">My Group</div></div>
-        </div>
-        <div style="height:16px"></div>
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title-row"><div class="sheet-title">All Tabs</div><div class="close-btn">✕</div></div>
+        <div class="divider"></div>
       </div>
+      <div class="o5-section">Recently used</div>
+      <div class="o5-row active">
+        <div class="o5-icon" style="background:rgba(255,122,47,0.15)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg></div>
+        <div style="flex:1"><div class="o5-name" style="color:#FF7A2F;font-weight:700">PRs</div><div class="o5-freq">Used today</div></div>
+      </div>
+      <div class="o5-row">
+        <div class="o5-icon" style="background:rgba(123,110,232,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7B6EE8" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+        <div style="flex:1"><div class="o5-name">Attendance</div><div class="o5-freq">Used yesterday</div></div>
+      </div>
+      <div class="o5-row">
+        <div class="o5-icon" style="background:rgba(255,215,0,0.1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg></div>
+        <div style="flex:1"><div class="o5-name">Leaderboard</div><div class="o5-freq">2 days ago</div></div>
+      </div>
+      <div class="o5-row">
+        <div class="o5-icon" style="background:rgba(200,208,64,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8D040" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></svg></div>
+        <div style="flex:1"><div class="o5-name">Weight</div><div class="o5-freq">3 days ago</div></div>
+      </div>
+      <div class="o5-section">Everything else</div>
+      <div class="o5-row">
+        <div class="o5-icon" style="background:rgba(58,158,90,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3A9E5A" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div style="flex:1"><div class="o5-name">Stretching</div></div>
+      </div>
+      <div class="o5-row">
+        <div class="o5-icon" style="background:rgba(224,85,85,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E05555" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+        <div style="flex:1"><div class="o5-name">Body</div></div>
+      </div>
+      <div class="o5-row">
+        <div class="o5-icon" style="background:rgba(144,168,192,0.12)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#90A8C0" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div style="flex:1"><div class="o5-name">My Group</div></div>
+      </div>
+      <div style="height:16px"></div>
       <div class="bottom-nav">
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></svg>
-          <span class="nav-label">Profile</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          <span class="nav-label">Attend.</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg>
-          <span class="nav-label">PRs</span>
-        </div>
-        <div class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg>
-          <span class="nav-label">Ranks</span>
-        </div>
-        <div class="nav-item active">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-          <span class="nav-label" style="color:#FF7A2F">More</span>
-          <div class="nav-dot"></div>
-        </div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></svg><span class="nav-label">Profile</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="nav-label">Attend.</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></svg><span class="nav-label">PRs</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M17 5H7a2 2 0 0 0-2 2v4a8 8 0 0 0 14 0V7a2 2 0 0 0-2-2z"/><path d="M5 9H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2M19 9h2a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2"/></svg><span class="nav-label">Ranks</span></div>
+        <div class="nav-item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF7A2F" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="nav-label" style="color:#FF7A2F">More</span><div class="nav-dot"></div></div>
       </div>
     </div>
   </div>
