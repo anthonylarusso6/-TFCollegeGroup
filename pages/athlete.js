@@ -498,6 +498,14 @@ export default function Athlete(){
   };
 
   const doCheckin=async(athlete)=>{
+    // Returning athlete: logging in puts them back on the active roster
+    if(athlete.status&&athlete.status!=="active"){
+      try{
+        await supabase.from("athletes").update({status:"active"}).eq("id",athlete.id);
+        setSelectedAthlete(prev=>prev&&prev.id===athlete.id?{...prev,status:"active"}:prev);
+        setAthletes(prev=>prev.map(x=>x.id===athlete.id?{...x,status:"active"}:x));
+      }catch(e){}
+    }
     const now=new Date();
     const estTime=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
     const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",timeZone:"America/New_York"});
