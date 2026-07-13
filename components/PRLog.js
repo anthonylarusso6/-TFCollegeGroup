@@ -603,6 +603,34 @@ export default function PRLog({athleteId,gender}){
                       );
                     }
 
+                    // ── BAND ONLY (banded bodyweight — pick band + complete) ──
+                    if(itype==="band"){
+                      const done=bwDone[lift.name];
+                      return(
+                        <div>
+                          {bandPicker("Band Resistance")}
+                          <div style={{display:"flex",alignItems:"center",gap:10}}>
+                            <div style={{flex:1,padding:"10px 14px",borderRadius:10,
+                              background:done?"#091510":"#0a0a0a",
+                              border:"1px solid "+(done?GREEN+"44":"#1e1e1e"),
+                              fontSize:12,color:done?GREEN+"99":selBand?selBand.hex:"#333",fontStyle:"italic",
+                              transition:"all 0.2s"}}>
+                              {done?"All sets complete":selBand?selBand.label+" band selected":"Pick your band"}
+                            </div>
+                            <button onClick={()=>setBwDone(p=>({...p,[lift.name]:!p[lift.name]}))}
+                              style={{padding:"11px 16px",borderRadius:10,border:"none",
+                                background:done?"#1E6B3A":"#1a1a1a",
+                                color:done?"#fff":"#444",
+                                fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",
+                                whiteSpace:"nowrap",transition:"all 0.15s",
+                                boxShadow:done?"0 2px 8px #1E6B3A44":"none"}}>
+                              {done?"✓ Done":"Mark Done"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     // ── MEDICINE BALL ────────────────────────────────
                     if(itype==="mb"){
                       return(
