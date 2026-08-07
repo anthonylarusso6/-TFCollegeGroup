@@ -261,7 +261,7 @@ export default function Coach(){
     try{
     const[{data:aths},{data:att},{data:inb},{data:anv},{data:lb},{data:ann}]=await Promise.all([
       supabase.from("athletes").select("*").order("name"),
-      supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200),
+      supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(1000),
       supabase.from("inbox").select("*,athletes(name)").eq("done",false).order("created_at",{ascending:false}),
       supabase.from("anvil").select("*").order("created_at",{ascending:false}),
       supabase.from("leaderboard").select("*,athletes(name)").order("early_count",{ascending:false}),
@@ -1606,7 +1606,7 @@ export default function Coach(){
                 <div style={{background:"#111",padding:"16px 18px"}}>
                 {attendance.filter(r=>r.date===attDate).length>0&&(
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:12}}>
-                    {[{l:"Early",v:attendance.filter(r=>r.date===attDate&&r.status==="early").length,c:GREEN,bg:GREEN+"22"},{l:"Late",v:attendance.filter(r=>r.date===attDate&&r.status==="late").length,c:RED,bg:RED+"22"},{l:"Absent",v:athletes.filter(a=>a.status==="active").length-attendance.filter(r=>r.date===attDate).length,c:"#888",bg:"#1a1a1a"}].map(s=>(
+                    {[{l:"Early",v:attendance.filter(r=>r.date===attDate&&r.status==="early").length,c:GREEN,bg:GREEN+"22"},{l:"Late",v:attendance.filter(r=>r.date===attDate&&r.status==="late").length,c:RED,bg:RED+"22"},{l:"Absent",v:athletes.filter(a=>a.status==="active"&&!attendance.some(r=>r.date===attDate&&r.athlete_id===a.id)).length,c:"#888",bg:"#1a1a1a"}].map(s=>(
                       <div key={s.l} style={{background:s.bg,borderRadius:10,padding:"10px",textAlign:"center",border:"0.5px solid #252525"}}>
                         <div style={{fontSize:18,fontWeight:700,color:s.c}}>{s.v}</div>
                         <div style={{fontSize:11,color:"#666"}}>{s.l}</div>
@@ -1644,7 +1644,7 @@ export default function Coach(){
                             const day=new Date(attDate+"T12:00:00").toLocaleDateString("en-US",{weekday:"short"});
                             if(rec){await supabase.from("attendance").update({status:"early",time_logged:timeStr}).eq("id",rec.id);}
                             else{await supabase.from("attendance").insert({athlete_id:a.id,date:attDate,status:"early",time_logged:timeStr,day});}
-                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200);
+                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(1000);
                             if(data)setAttendance(data);
                           }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid "+GREEN,background:rec?.status==="early"?GREEN:"transparent",color:rec?.status==="early"?"#fff":GREEN,cursor:"pointer",fontFamily:"Georgia,serif"}}>Early</button>
                           <button onClick={async()=>{
@@ -1653,7 +1653,7 @@ export default function Coach(){
                             const day=new Date(attDate+"T12:00:00").toLocaleDateString("en-US",{weekday:"short"});
                             if(rec){await supabase.from("attendance").update({status:"late",time_logged:timeStr}).eq("id",rec.id);}
                             else{await supabase.from("attendance").insert({athlete_id:a.id,date:attDate,status:"late",time_logged:timeStr,day});}
-                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200);
+                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(1000);
                             if(data)setAttendance(data);
                           }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid "+RED,background:rec?.status==="late"?RED:"transparent",color:rec?.status==="late"?"#fff":RED,cursor:"pointer",fontFamily:"Georgia,serif"}}>Late</button>
                           <button onClick={async()=>{
@@ -1662,12 +1662,12 @@ export default function Coach(){
                             const day=new Date(attDate+"T12:00:00").toLocaleDateString("en-US",{weekday:"short"});
                             if(rec){await supabase.from("attendance").update({status:"excused",time_logged:timeStr}).eq("id",rec.id);}
                             else{await supabase.from("attendance").insert({athlete_id:a.id,date:attDate,status:"excused",time_logged:timeStr,day});}
-                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200);
+                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(1000);
                             if(data)setAttendance(data);
                           }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid #854F0B",background:rec?.status==="excused"?"#854F0B":"transparent",color:rec?.status==="excused"?"#fff":"#854F0B",cursor:"pointer",fontFamily:"Georgia,serif"}}>Excused</button>
                           {rec&&<button onClick={async()=>{
                             await supabase.from("attendance").delete().eq("id",rec.id);
-                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(200);
+                            const{data}=await supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(1000);
                             if(data)setAttendance(data);
                           }} style={{fontSize:11,padding:"3px 8px",borderRadius:6,border:"0.5px solid #ddd",background:"transparent",color:"#aaa",cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>}
                         </div>
@@ -2160,7 +2160,7 @@ export default function Coach(){
                 </div>
               </div>
               {(()=>{
-                const todayRecs=attendance.filter(r=>r.date===attDate);
+                const todayRecs=attendance.filter(r=>r.date===estTodayStr);
                 const early=todayRecs.filter(r=>r.status==="early").length;
                 const late=todayRecs.filter(r=>r.status==="late").length;
                 const total=athletes.filter(a=>a.status==="active").length;
@@ -2214,7 +2214,7 @@ export default function Coach(){
                 {qrType==="checkin"?"tfcollegegroup.com/checkin":"tfcollegegroup.com/athlete"}
               </div>
               {(()=>{
-                const todayRecs=attendance.filter(r=>r.date===attDate);
+                const todayRecs=attendance.filter(r=>r.date===estTodayStr);
                 const early=todayRecs.filter(r=>r.status==="early").length;
                 const late=todayRecs.filter(r=>r.status==="late").length;
                 return early+late>0?(
@@ -2512,25 +2512,25 @@ export default function Coach(){
                     {inj.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #1e1e1e",borderTop:"3px solid "+RED}}>
                         <div style={{display:"flex",alignItems:"center",gap:7,fontSize:13,fontWeight:600,color:RED,marginBottom:10}}><Icon name="alertTriangle" size={14} color={RED}/>Injury flags · {inj.length}</div>
-                        {inj.map((item,i)=><InboxItem key={i} item={item} color={RED} bg="#1a0808" type="injury" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"inj-"+item.id)} genLoading={genLoading} loadKey={"inj-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
+                        {inj.map((item,i)=><InboxItem key={item.id} item={item} color={RED} bg="#1a0808" type="injury" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"inj-"+item.id)} genLoading={genLoading} loadKey={"inj-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
                       </div>
                     )}
                     {msgs.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #1e1e1e",borderTop:"3px solid "+PUR}}>
                         <div style={{display:"flex",alignItems:"center",gap:7,fontSize:13,fontWeight:600,color:PUR,marginBottom:10}}><Icon name="chat" size={14} color={PUR}/>Messages · {msgs.length}</div>
-                        {msgs.map((item,i)=><InboxItem key={i} item={item} color={PUR} bg="#13122a" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"msg-"+item.id)} genLoading={genLoading} loadKey={"msg-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
+                        {msgs.map((item,i)=><InboxItem key={item.id} item={item} color={PUR} bg="#13122a" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"msg-"+item.id)} genLoading={genLoading} loadKey={"msg-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
                       </div>
                     )}
                     {prays.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #1e1e1e",borderTop:"3px solid "+GREEN}}>
                         <div style={{display:"flex",alignItems:"center",gap:7,fontSize:13,fontWeight:600,color:GREEN,marginBottom:10}}><Icon name="pray" size={14} color={GREEN}/>Prayer requests · {prays.length}</div>
-                        {prays.map((item,i)=><InboxItem key={i} item={item} color={GREEN} bg="#0d1a10" type="prayer" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"pry-"+item.id)} genLoading={genLoading} loadKey={"pry-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
+                        {prays.map((item,i)=><InboxItem key={item.id} item={item} color={GREEN} bg="#0d1a10" type="prayer" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"pry-"+item.id)} genLoading={genLoading} loadKey={"pry-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
                       </div>
                     )}
                     {other.length>0&&(
                       <div style={{background:"#111",borderRadius:12,padding:"1.25rem",border:"0.5px solid #1e1e1e"}}>
                         <div style={{fontSize:13,fontWeight:600,color:"#666",marginBottom:10}}>Other · {other.length}</div>
-                        {other.map((item,i)=><InboxItem key={i} item={item} color="#888" bg="#1a1a1a" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"oth-"+item.id)} genLoading={genLoading} loadKey={"oth-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
+                        {other.map((item,i)=><InboxItem key={item.id} item={item} color="#888" bg="#1a1a1a" type="message" onReply={replyToInbox} onGenerate={(prompt,cb)=>generateReply(prompt,cb,"oth-"+item.id)} genLoading={genLoading} loadKey={"oth-"+item.id} onArchive={archiveItem} onPriority={priorityItem} athletes={athletes} isNew={inboxNewIds.has(item.id)}/>)}
                       </div>
                     )}
                     {filtered.length===0&&(
@@ -3045,10 +3045,13 @@ export default function Coach(){
             const computeHabitStreak=(map)=>{
               let s=0;
               const c=new Date(estNow);
+              const complete=(row)=>row&&row.water&&row.nutrition&&row.sleep!=null&&row.sleep>0;
+              const todayKey=c.getFullYear()+"-"+String(c.getMonth()+1).padStart(2,"0")+"-"+String(c.getDate()).padStart(2,"0");
+              // If today isn't logged yet, don't zero the streak — start counting from yesterday.
+              if(!complete(map[todayKey]))c.setDate(c.getDate()-1);
               while(true){
                 const k=c.getFullYear()+"-"+String(c.getMonth()+1).padStart(2,"0")+"-"+String(c.getDate()).padStart(2,"0");
-                const row=map[k];
-                if(!(row&&row.water&&row.nutrition&&row.sleep!=null&&row.sleep>0))break;
+                if(!complete(map[k]))break;
                 s++;c.setDate(c.getDate()-1);
               }
               return s;

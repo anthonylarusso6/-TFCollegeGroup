@@ -28,7 +28,8 @@ export default function AthleteLeaderboard({athleteId}){
       const now=new Date();
       const estNow=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
       const weekStart=new Date(estNow);
-      weekStart.setDate(estNow.getDate()-estNow.getDay()+1);
+      // Days back to this week's Monday. On Sunday (getDay()===0) that's 6 days back, not -1.
+      weekStart.setDate(estNow.getDate()-((estNow.getDay()+6)%7));
       weekStart.setHours(0,0,0,0);
 
       // Calculate stats per athlete
@@ -66,7 +67,13 @@ export default function AthleteLeaderboard({athleteId}){
           if(diffDays<=4){streak++;}else{best=Math.max(best,streak);streak=1;}
         }
         best=Math.max(best,streak);
-        current=streak;
+        // Current streak only counts if the most recent early date is recent (<=4 days ago EST).
+        // Class days are never more than 3 days apart (Fri→Mon), so a larger gap means a
+        // class day has been missed since — the current streak is broken (best is unaffected).
+        const lastDate=new Date(sorted[sorted.length-1]+"T12:00:00");
+        const estMid=new Date(estNow.getFullYear(),estNow.getMonth(),estNow.getDate(),12,0,0);
+        const gap=Math.round((estMid-lastDate)/(1000*60*60*24));
+        current=gap<=4?streak:0;
         return{current,best};
       };
 

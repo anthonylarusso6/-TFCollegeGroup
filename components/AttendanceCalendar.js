@@ -9,13 +9,14 @@ export default function AttendanceCalendar({athleteId}){
   const GREEN="#1E6B3A",RED="#C0392B",GOLD="#D4AF37";
 
   useEffect(()=>{
+    if(!athleteId)return;
     (async()=>{
       try{
         const{data}=await supabase.from("attendance").select("*").eq("athlete_id",athleteId).order("date",{ascending:true});
         setRecords(data||[]);
       }catch(e){setRecords([]);}
     })();
-  },[]);
+  },[athleteId]);
 
   const totalEarly=records.filter(r=>r.status==="early").length;
   const totalLate=records.filter(r=>r.status==="late").length;
@@ -28,6 +29,9 @@ export default function AttendanceCalendar({athleteId}){
   const startRef=earliestRec<now?earliestRec:now;
   const START=new Date(startRef.getFullYear(),startRef.getMonth(),1);
   const END=new Date(2026,9,1); // October 2026 (covers full Sep season)
+  // Today's date key in EST — used to flag future days by calendar date (not clock time)
+  const _estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const todayEStr=_estNow.getFullYear()+"-"+String(_estNow.getMonth()+1).padStart(2,"0")+"-"+String(_estNow.getDate()).padStart(2,"0");
   const allMonths=[];
   let cur=new Date(START);
   while(cur<=END){
@@ -36,14 +40,13 @@ export default function AttendanceCalendar({athleteId}){
     const monthName=cur.toLocaleString("default",{month:"long"});
     const monthKey=`${year}-${String(month+1).padStart(2,"0")}`;
     const daysInMonth=new Date(year,month+1,0).getDate();
-    const today=new Date();
     const days=[];
     for(let d=1;d<=daysInMonth;d++){
       const dateStr=`${monthKey}-${String(d).padStart(2,"0")}`;
       const dow=new Date(year,month,d,12,0,0).getDay();
       const isClassDay=[1,2,4,5].includes(dow);
       const localDateStr=`${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-      const isFuture=new Date(localDateStr+"T12:00:00")>today;
+      const isFuture=localDateStr>todayEStr;
       days.push({dateStr,day:d,isClassDay,isFuture,status:byDate[dateStr]||null});
     }
     const mEarly=days.filter(d=>d.status==="early").length;

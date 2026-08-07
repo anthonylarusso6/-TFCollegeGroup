@@ -288,6 +288,13 @@ export default function PRLog({athleteId,gender}){
     if(!ll.length)return null;
     return Math.max(...ll.map(l=>parseFloat(l.weight)||0));
   };
+  // Best estimated 1RM to date — used for the "NEW PR!" badge so it matches the
+  // dashboard's e1RM-based PR definition (not the max raw weight).
+  const getOrmPR=(liftName)=>{
+    const ll=logs[liftName]||[];
+    if(!ll.length)return null;
+    return Math.max(...ll.map(l=>epley(parseFloat(l.weight)||0,parseInt(l.reps)||1)));
+  };
   const getLast=(liftName)=>(logs[liftName]||[])[0]?.weight||null;
 
   // ── Dashboard computed ─────────────────────────────────────
@@ -478,6 +485,7 @@ export default function PRLog({athleteId,gender}){
           {todayLifts.map((lift,i)=>{
             const tc=TIER_COLORS[lift.tier]||TIER_COLORS[1];
             const pr=getPR(lift.name);
+            const ormPR=getOrmPR(lift.name);
             const last=getLast(lift.name);
             const inp=inputs[lift.name]||{weight:"",reps:""};
             const isSaving=saving===lift.name;
@@ -774,7 +782,7 @@ export default function PRLog({athleteId,gender}){
                             {repsInput}
                             <div>{logBtn(!inp.weight)}</div>
                           </div>
-                          {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#444",marginTop:6,padding:"5px",background:"#0a0a0a",borderRadius:7,border:"0.5px solid #1a1a1a"}}>est. 1RM: <span style={{color:GOLD,fontWeight:800}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>{pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&<span style={{marginLeft:8,background:GOLD,color:"#000",padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>}</div>}
+                          {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#444",marginTop:6,padding:"5px",background:"#0a0a0a",borderRadius:7,border:"0.5px solid #1a1a1a"}}>est. 1RM: <span style={{color:GOLD,fontWeight:800}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>{ormPR&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>ormPR&&<span style={{marginLeft:8,background:GOLD,color:"#000",padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>}</div>}
                         </div>
                       );
                     }
@@ -837,7 +845,7 @@ export default function PRLog({athleteId,gender}){
                                 {repsInput}
                                 <div>{logBtn(!inp.weight)}</div>
                               </div>
-                              {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#444",marginTop:6,padding:"5px",background:"#0a0a0a",borderRadius:7,border:"0.5px solid #1a1a1a"}}>est. 1RM: <span style={{color:GOLD,fontWeight:800}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>{pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&<span style={{marginLeft:8,background:GOLD,color:"#000",padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>}</div>}
+                              {inp.weight&&inp.reps&&<div style={{textAlign:"center",fontSize:11,color:"#444",marginTop:6,padding:"5px",background:"#0a0a0a",borderRadius:7,border:"0.5px solid #1a1a1a"}}>est. 1RM: <span style={{color:GOLD,fontWeight:800}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>{ormPR&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>ormPR&&<span style={{marginLeft:8,background:GOLD,color:"#000",padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>}</div>}
                             </div>
                           ):(
                             <div>
@@ -881,7 +889,7 @@ export default function PRLog({athleteId,gender}){
                               {inp.weight&&inp.reps&&(
                                 <div style={{textAlign:"center",fontSize:11,color:"#444",marginTop:8,padding:"6px",background:"#0a0a0a",borderRadius:8,border:"0.5px solid #1a1a1a"}}>
                                   est. 1RM: <span style={{color:GOLD,fontWeight:800}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>
-                                  {pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&
+                                  {ormPR&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>ormPR&&
                                     <span style={{marginLeft:8,background:GOLD,color:"#000",padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
                                   }
                                 </div>
@@ -967,7 +975,7 @@ export default function PRLog({athleteId,gender}){
                         {inp.weight&&inp.reps&&(
                           <div style={{textAlign:"center",fontSize:11,color:"#444",marginTop:8,padding:"6px",background:"#0a0a0a",borderRadius:8,border:"0.5px solid #1a1a1a"}}>
                             est. 1RM: <span style={{color:GOLD,fontWeight:800}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>
-                            {pr&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>pr&&
+                            {ormPR&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>ormPR&&
                               <span style={{marginLeft:8,background:GOLD,color:"#000",padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
                             }
                           </div>
@@ -1162,7 +1170,8 @@ export default function PRLog({athleteId,gender}){
                     const rel=!vert&&!excl?relStrength[name]:null;
                     const rank=catId&&catRanks[catId];
                     const allOrms=(logs[name]||[]).map(e=>epley(parseFloat(e.weight)||0,parseInt(e.reps)||1));
-                    const delta=allOrms.length>1?pr.orm-allOrms[1]:null;
+                    // Recent change = most-recent session vs the one before it (logs are date-desc)
+                    const delta=allOrms.length>1?allOrms[0]-allOrms[1]:null;
                     return(
                       <div key={name} onClick={()=>setSelLift(isSel?null:name)}
                         style={{padding:"12px",background:isSel?"#1a1914":"#111",borderRadius:12,

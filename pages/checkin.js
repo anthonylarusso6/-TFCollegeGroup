@@ -21,6 +21,7 @@ export default function CheckIn(){
   const[search,setSearch]=useState("");
   const[selected,setSelected]=useState(null);
   const[done,setDone]=useState(null);
+  const[err,setErr]=useState(null);
   const[loading,setLoading]=useState(true);
 
   useEffect(()=>{
@@ -57,9 +58,10 @@ export default function CheckIn(){
         return;
       }
       const status=isLate?"late":"early";
-      await supabase.from("attendance").insert({
+      const{error:insErr}=await supabase.from("attendance").insert({
         athlete_id:athlete.id,date:today,day,status,time_logged:timeStr,
       });
+      if(insErr){hError();setErr({name:athlete.name});return;}
       if(status==="early")hSuccess();else hError();
       // Update leaderboard streak
       if(lb&&lb.length>0){
@@ -80,9 +82,29 @@ export default function CheckIn(){
       }
       setDone({already:false,status,time:timeStr,name:athlete.name});
     }catch(e){
-      setDone({already:false,status:isLate?"late":"early",time:timeStr,name:athlete.name});
+      hError();setErr({name:athlete?.name});
     }
   };
+
+  // Failure screen — the check-in did NOT save
+  if(err){
+    return(
+      <>
+        <Head><title>Check-in failed</title></Head>
+        <div style={{minHeight:"100vh",background:BG_GRAD,fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",textAlign:"center",color:"#fff"}}>
+          <div style={{width:100,height:100,borderRadius:"50%",background:RED+"1c",border:"2px solid "+RED+"66",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20,boxShadow:"0 0 40px "+RED+"44"}}>
+            <Icon name="clock" size={46} color={RED}/>
+          </div>
+          <div style={{fontSize:24,fontWeight:900,color:RED,marginBottom:8,letterSpacing:"-0.02em"}}>Check-in didn't go through</div>
+          {err.name&&<div style={{fontSize:17,fontWeight:700,color:"#fff",marginBottom:5}}>{err.name}</div>}
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.45)",marginBottom:26,lineHeight:1.6,maxWidth:300}}>Your check-in was <strong>not</strong> saved. Check your connection and tap your name again.</div>
+          <button onClick={()=>{setErr(null);setSelected(null);setSearch("");}} style={{display:"flex",alignItems:"center",gap:7,padding:"12px 26px",borderRadius:24,border:"1px solid rgba(255,255,255,0.12)",background:"rgba(255,255,255,0.05)",color:"rgba(255,255,255,0.7)",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+            Try again
+          </button>
+        </div>
+      </>
+    );
+  }
 
   // Success screen
   if(done){

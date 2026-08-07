@@ -25,7 +25,7 @@ const VIOLATIONS=[
   {label:"Other",icon:"list",crunches:30},
 ];
 
-export default function Accountability({athletes}){
+export default function Accountability({athletes=[]}){
   const[callouts,setCallouts]=useState([]);
   const[selectedAthlete,setSelectedAthlete]=useState(null);
   const[violation,setViolation]=useState(null);
@@ -45,28 +45,50 @@ export default function Accountability({athletes}){
 
   const submitLog=async()=>{
     setLoading(true);
-    hSuccess();
     const vLabel=violation?.label==="Other"?otherText:violation?.label;
     const baseCrunches=violation?.crunches||30;
     const crunches=type==="selfreport"?25*count:baseCrunches*count;
-    await supabase.from("callouts").insert({athlete_id:selectedAthlete.id,violation:vLabel,count,type,crunches});
-    const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",selectedAthlete.id);
-    if(lb&&lb.length>0){
-      await supabase.from("leaderboard").update({callout_count:(lb[0].callout_count||0)+count}).eq("athlete_id",selectedAthlete.id);
-    }else{
-      await supabase.from("leaderboard").insert({athlete_id:selectedAthlete.id,callout_count:count});
+    try{
+      const{error:insErr}=await supabase.from("callouts").insert({athlete_id:selectedAthlete.id,violation:vLabel,count,type,crunches});
+      if(insErr)throw insErr;
+      try{
+        const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",selectedAthlete.id);
+        if(lb&&lb.length>0){
+          await supabase.from("leaderboard").update({callout_count:(lb[0].callout_count||0)+count}).eq("athlete_id",selectedAthlete.id);
+        }else{
+          await supabase.from("leaderboard").insert({athlete_id:selectedAthlete.id,callout_count:count});
+        }
+      }catch(e){}
+      hSuccess();
+      await loadCallouts();
+      setSaved(true);setLoading(false);
+      setTimeout(()=>{
+        setSaved(false);setStep("athlete");setSelectedAthlete(null);
+        setViolation(null);setOtherText("");setCount(1);setType("calledout");
+      },2000);
+    }catch(e){
+      setLoading(false);
+      if(typeof window!=="undefined")alert("Couldn't save the callout — check your connection and try again.");
     }
-    await loadCallouts();
-    setSaved(true);setLoading(false);
-    setTimeout(()=>{
-      setSaved(false);setStep("athlete");setSelectedAthlete(null);
-      setViolation(null);setOtherText("");setCount(1);setType("calledout");
-    },2000);
   };
 
   const deleteCallout=async(id)=>{
-    await supabase.from("callouts").delete().eq("id",id);
-    setCallouts(p=>p.filter(c=>c.id!==id));
+    const row=callouts.find(c=>c.id===id);
+    try{
+      const{error}=await supabase.from("callouts").delete().eq("id",id);
+      if(error)throw error;
+      // Keep leaderboard.callout_count in sync with the deleted row (never below 0)
+      if(row?.athlete_id){
+        try{
+          const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",row.athlete_id);
+          if(lb&&lb.length>0){
+            const next=Math.max(0,(lb[0].callout_count||0)-(row.count||0));
+            await supabase.from("leaderboard").update({callout_count:next}).eq("athlete_id",row.athlete_id);
+          }
+        }catch(e){}
+      }
+      setCallouts(p=>p.filter(c=>c.id!==id));
+    }catch(e){}
   };
 
   const _estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));

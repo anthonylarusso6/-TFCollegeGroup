@@ -47,11 +47,10 @@ export default function Callout(){
   };
 
   const submitLog=async()=>{
-    hSuccess();
     const vLabel=violation==="Other"?otherText:violation;
     const crunches=type==="selfreport"?25*count:30*count;
     try{
-      await supabase.from("callouts").insert({
+      const{error:insErr}=await supabase.from("callouts").insert({
         athlete_id:selected.id,
         violation:vLabel,
         count,
@@ -59,6 +58,8 @@ export default function Callout(){
         crunches,
         logged_at:new Date().toISOString(),
       });
+      if(insErr)throw insErr;
+      hSuccess();
       try{
         const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",selected.id);
         if(lb&&lb.length>0){
@@ -78,7 +79,7 @@ export default function Callout(){
         }catch(e2){}
       }
     }catch(e){
-      setDone(true);
+      if(typeof window!=="undefined")alert("Couldn't save the callout — check your connection and try again.");
     }
   };
 

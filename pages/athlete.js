@@ -635,8 +635,10 @@ export default function Athlete(){
         await loadDraft();
         // Also refresh athlete data to get latest group_idx
         if(athleteIdRef.current){
-          const{data}=await supabase.from("athletes").select("*").eq("id",athleteIdRef.current).single();
-          if(data)setSelectedAthlete(data);
+          try{
+            const{data}=await supabase.from("athletes").select("*").eq("id",athleteIdRef.current).maybeSingle();
+            if(data)setSelectedAthlete(data);
+          }catch(e){}
         }
       },5000);
       return()=>clearInterval(pollRef.current);
@@ -646,8 +648,11 @@ export default function Athlete(){
 
   const sendFeedback=async()=>{
     if(!feedbackText.trim())return;
-    try{await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"message",message:feedbackText});}catch(e){console.error("Feedback send:",e);}
-    setFeedbackSent(true);
+    try{
+      const{error}=await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"message",message:feedbackText});
+      if(error)throw error;
+      setFeedbackSent(true);
+    }catch(e){console.error("Feedback send:",e);}
   };
 
   const sendPrayer=async()=>{
@@ -663,10 +668,12 @@ export default function Athlete(){
     if(!injuryText.trim()&&painLevel===0)return;
     const fullMsg=(painLevel>0?"Pain level: "+painLevel+"/10. ":"")+injuryText.trim();
     try{
-      await supabase.from("athletes").update({injury:true,injury_note:fullMsg}).eq("id",selectedAthlete.id);
-      await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"injury",message:fullMsg});
+      const{error:ue}=await supabase.from("athletes").update({injury:true,injury_note:fullMsg}).eq("id",selectedAthlete.id);
+      if(ue)throw ue;
+      const{error:ie}=await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"injury",message:fullMsg});
+      if(ie)throw ie;
+      setInjurySent(true);
     }catch(e){console.error("Injury send:",e);}
-    setInjurySent(true);
   };
 
   const bracelet=BRACELETS.find(b=>b.ref===selectedAthlete?.bracelet);
@@ -991,6 +998,7 @@ export default function Athlete(){
       touchStartRef.current=null;
       if(Math.abs(dx)<52||Math.abs(dx)<Math.abs(dy)*1.5)return;
       const idx=PRIMARY_NAV.indexOf(tab);
+      if(idx<0)return; // current tab isn't in the primary swipe nav (opened from More) — don't hijack the swipe
       if(dx>0&&idx<PRIMARY_NAV.length-1){slideDirRef.current=1;setTab(PRIMARY_NAV[idx+1]);}
       else if(dx<0&&idx>0){slideDirRef.current=-1;setTab(PRIMARY_NAV[idx-1]);}
     };

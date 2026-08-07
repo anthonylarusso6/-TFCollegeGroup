@@ -299,8 +299,8 @@ function BodySVG({view, partData, selected, onSelect}){
       <polygon points="72.7 195.1 69.8 159.2 65.3 158.4 64.1 162.4 64.1 165.3 65.7 177.1" {...mp("left-soleus")}/>
       <polygon points="24.9 194.7 27.8 164.9 28.2 160.4 26.1 154.3 24.9 157.6 22.4 161.6 20.8 167.8 22 188.2 20.8 195.5" {...mp("right-soleus")}/>
       <polygon points="35.5 158.4 35.9 162.4 35.9 166.9 35.1 172.2 35.1 176.7 32.2 182 30.6 187.3 26.9 194.7 27.3 187.8 28.2 180.4 28.6 175.5 29 169.8 29.8 164.1 30.2 158.8" {...mp("right-soleus")}/>
-      {/* HANDS */}
-      <g {...mp("left-hand")}>
+      {/* HANDS — front view: athlete's right is on screen-left (mirror) */}
+      <g {...mp("right-hand")}>
         <rect x="2.5" y="109" width="13" height="8" rx="3"/>
         <rect x="3" y="101" width="2.5" height="9" rx="1.5"/>
         <rect x="6.5" y="100" width="2.5" height="9.5" rx="1.5"/>
@@ -308,7 +308,7 @@ function BodySVG({view, partData, selected, onSelect}){
         <rect x="13" y="102" width="2" height="8" rx="1.5"/>
         <rect x="0.5" y="110" width="2" height="5" rx="1.5"/>
       </g>
-      <g {...mp("right-hand")}>
+      <g {...mp("left-hand")}>
         <rect x="84.5" y="109" width="13" height="8" rx="3"/>
         <rect x="84.5" y="102" width="2" height="8" rx="1.5"/>
         <rect x="87.5" y="100" width="2.5" height="9.5" rx="1.5"/>
@@ -407,11 +407,11 @@ function BodySVG({view, partData, selected, onSelect}){
         <rect x="94.5" y="101" width="2.5" height="9" rx="1.5"/>
         <rect x="97.5" y="110" width="2" height="5" rx="1.5"/>
       </g>
-      {/* ANKLES / FEET */}
-      <g {...mp("right-ankle")}>
+      {/* ANKLES / FEET — back view: athlete's left is on screen-left */}
+      <g {...mp("left-ankle")}>
         <path d="M46 204 C46 201 41 200 36 200 C29 200 23 202 21 207 C20 210 22 213 27 213 C32 214 42 213 46 211 C48 210 48 207 46 204 Z"/>
       </g>
-      <g {...mp("left-ankle")}>
+      <g {...mp("right-ankle")}>
         <path d="M54 204 C54 201 59 200 64 200 C71 200 77 202 79 207 C80 210 78 213 73 213 C68 214 58 213 54 211 C52 210 52 207 54 204 Z"/>
       </g>
     </svg>
@@ -462,13 +462,19 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
     const now=new Date().toISOString();
     const msg=JSON.stringify({status:pStatus,pain:pPain,description:pDesc.trim(),updatedAt:now});
     try{
-      const{error:de}=await supabase.from("announcements").delete()
-        .eq("type","body_injury").eq("day",String(athleteId)).eq("week_label",selected);
-      if(de)throw de;
-      const{error:ie}=await supabase.from("announcements").insert({
+      // Insert the new record FIRST, then remove older ones — so a failed write never
+      // wipes the athlete's existing entry for this muscle.
+      const{data:ins,error:ie}=await supabase.from("announcements").insert({
         type:"body_injury",day:String(athleteId),week_label:selected,message:msg,active:true,
-      });
+      }).select("id");
       if(ie)throw ie;
+      const newId=ins&&ins[0]?ins[0].id:null;
+      try{
+        let del=supabase.from("announcements").delete()
+          .eq("type","body_injury").eq("day",String(athleteId)).eq("week_label",selected);
+        if(newId)del=del.neq("id",newId);
+        await del;
+      }catch(e2){}
       setPartData(prev=>({...prev,[selected]:{status:pStatus,pain:pPain,description:pDesc.trim(),updatedAt:now}}));
       if(notifyCoach&&pStatus!=="good"){
         const zoneName=MUSCLE_NAMES[selected]||selected;
