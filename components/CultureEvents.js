@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { nowEST } from "../lib/dates";
 import { SkeletonList } from "./Skeleton";
 import EmptyState from "./EmptyState";
 import Icon from "./Icon";
@@ -79,7 +80,7 @@ export default function CultureEvents({athletes=[]}){
   const parseEventPrompt=async()=>{
     if(!promptText.trim())return;
     setParsing(true);setParseErr(false);
-    const today=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const today=nowEST();
     const yyyy=today.getFullYear(),mm=String(today.getMonth()+1).padStart(2,"0"),dd=String(today.getDate()).padStart(2,"0");
     try{
       const res=await fetch("/api/ai-task",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:`Today is ${yyyy}-${mm}-${dd}. Parse this event description and return ONLY a JSON object with these keys: name (string), date (YYYY-MM-DD string or ""), time (readable string like "3:00 PM" or ""), location (string or ""), notes (any extra details or ""). No markdown, no explanation, just the JSON.\n\nEvent: "${promptText.trim()}"`})});
@@ -156,7 +157,7 @@ export default function CultureEvents({athletes=[]}){
     if(!dateStr)return null;
     // Compare EST calendar dates (midnight to midnight) so the count isn't off by one
     // from parsing "YYYY-MM-DD" as UTC while "now" is local.
-    const est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const est=nowEST();
     const today=new Date(est.getFullYear(),est.getMonth(),est.getDate());
     const parts=String(dateStr).split("-").map(Number);
     if(parts.length!==3||parts.some(isNaN))return null;

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { isFemale } from "../lib/teams";
+import { nowEST } from "../lib/dates";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import ProgramUpload from "../components/ProgramUpload";
 import Head from "next/head";
@@ -121,7 +122,7 @@ export default function Coach(){
   const[newGender,setNewGender]=useState("");
   const[newRole,setNewRole]=useState("iron");
   const[genLoading,setGenLoading]=useState(null);
-  const[attDate,setAttDate]=useState((()=>{const e=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));return e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0");})());
+  const[attDate,setAttDate]=useState((()=>{const e=nowEST();return e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0");})());
   const[attRecords,setAttRecords]=useState(null);
   const[weightSort,setWeightSort]=useState("change");
   const[weightData,setWeightData]=useState(null);
@@ -298,7 +299,7 @@ export default function Coach(){
 
   const loadMusicVotes=async()=>{
     try{
-      const _d=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+      const _d=nowEST();
       const _ds=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
       const{data}=await supabase.from("announcements").select("message").eq("type","music_vote").eq("week_label",_ds);
       if(data){
@@ -438,7 +439,7 @@ export default function Coach(){
   const loadHabitLogs=async()=>{
     setHabitLoading(true);
     try{
-      const est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+      const est=nowEST();
       const oldest=new Date(est);
       oldest.setDate(est.getDate()-30);
       const oldestStr=oldest.getFullYear()+"-"+String(oldest.getMonth()+1).padStart(2,"0")+"-"+String(oldest.getDate()).padStart(2,"0");
@@ -1118,7 +1119,7 @@ export default function Coach(){
                 ))}
               </div>
               {(()=>{
-                const _e=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+                const _e=nowEST();
                 const _dow=_e.getDay();
                 const GENRES=[{id:"rock",label:"Rock",emoji:"🎸"},{id:"wgt",label:"White Girl Throwbacks",emoji:"💅"},{id:"rap",label:"Rap / Hip-Hop",emoji:"🎤"},{id:"country",label:"Country",emoji:"🤠"},{id:"pop",label:"Pop",emoji:"🎵"},{id:"mcastle",label:"MCASTLES SECRET PICK",emoji:"🍑🚀"}];
                 if(_dow===1||_dow===5)return(
@@ -3036,7 +3037,7 @@ export default function Coach(){
           })()}
 
           {tab==="habits"&&(()=>{
-            const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+            const estNow=nowEST();
             const todayHab=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
             const getLast7=()=>{
               const days=[];
@@ -3194,7 +3195,7 @@ export default function Coach(){
 
           {tab==="callouts"&&(()=>{
             const logDate=(ts)=>{if(!ts)return"";const d=new Date(ts);const e=new Date(d.toLocaleString("en-US",{timeZone:"America/New_York"}));return e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0");};
-            const estToday=(()=>{const n=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");})();
+            const estToday=(()=>{const n=nowEST();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");})();
             const sendBroadcast=async()=>{
               if(broadcastSending||!broadcastTitle.trim())return;
               setBroadcastSending(true);setBroadcastResult(null);

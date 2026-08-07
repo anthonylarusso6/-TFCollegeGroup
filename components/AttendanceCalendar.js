@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { nowEST } from "../lib/dates";
 
 
 export default function AttendanceCalendar({athleteId}){
@@ -30,7 +31,7 @@ export default function AttendanceCalendar({athleteId}){
   const START=new Date(startRef.getFullYear(),startRef.getMonth(),1);
   const END=new Date(2026,9,1); // October 2026 (covers full Sep season)
   // Today's date key in EST — used to flag future days by calendar date (not clock time)
-  const _estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const _estNow=nowEST();
   const todayEStr=_estNow.getFullYear()+"-"+String(_estNow.getMonth()+1).padStart(2,"0")+"-"+String(_estNow.getDate()).padStart(2,"0");
   const allMonths=[];
   let cur=new Date(START);

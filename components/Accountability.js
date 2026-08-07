@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { nowEST } from "../lib/dates";
 import Icon from "./Icon";
 import { hTap, hSuccess } from "../lib/haptics";
 
@@ -91,7 +92,7 @@ export default function Accountability({athletes=[]}){
     }catch(e){}
   };
 
-  const _estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const _estNow=nowEST();
   const _todayEST=_estNow.getFullYear()+"-"+String(_estNow.getMonth()+1).padStart(2,"0")+"-"+String(_estNow.getDate()).padStart(2,"0");
   const todayCallouts=callouts.filter(c=>{const d=new Date(new Date(c.logged_at).toLocaleString("en-US",{timeZone:"America/New_York"}));return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")===_todayEST;});
   const totalCrunchesToday=todayCallouts.reduce((sum,c)=>sum+(c.crunches||0),0);

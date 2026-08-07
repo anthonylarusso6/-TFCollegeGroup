@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { nowEST } from "../lib/dates";
 import { GREEN, RED, GOLD, ORANGE } from "../lib/constants";
 import { SkeletonList } from "./Skeleton";
 import EmptyState from "./EmptyState";
 
 function daysUntil(dateStr){
   if(!dateStr)return null;
-  const est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const est=nowEST();
   const target=new Date(dateStr+"T00:00:00");
   return Math.ceil((target-est)/(1000*60*60*24));
 }

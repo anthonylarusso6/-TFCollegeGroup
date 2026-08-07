@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { BG, RED, GREEN, GOLD, STEEL, ORANGE, PUR } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 import { isFemale as computeFemale } from "../lib/teams";
+import { nowEST } from "../lib/dates";
 import Icon from "./Icon";
 import { Skeleton, SkeletonList } from "./Skeleton";
 import { hSuccess } from "../lib/haptics";
@@ -140,7 +141,7 @@ const piColor=(score)=>{
 };
 
 export default function PRLog({athleteId,gender}){
-  const _estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const _estNow=nowEST();
   const today=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][_estNow.getDay()];
   const defaultDay=DAYS.includes(today)?today:"Mon";
   const[view,setView]=useState("log");
@@ -252,7 +253,7 @@ export default function PRLog({athleteId,gender}){
     const inp=inputs[liftName]||{};
     if(!inp.weight)return;
     setSaving(liftName);
-    const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const estNow=nowEST();
     const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
     const tierNum=typeof tier==="number"?tier:3; // "circuit"/"guns_and_glory" → 3
     const entry={
@@ -267,7 +268,7 @@ export default function PRLog({athleteId,gender}){
       setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);hSuccess();
       // Nudge athlete to log weight if they haven't today
       try{
-        const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+        const estNow=nowEST();
         const todayStr=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
         const{data:wLog}=await supabase.from("weight_log").select("id").eq("athlete_id",athleteId).eq("date",todayStr).maybeSingle();
         if(!wLog){

@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { nowEST } from "../lib/dates";
 
 
 export default function GoalsCountdown({athlete}){
   const GREEN="#1E6B3A",PUR="#534AB7",GOLD="#D4AF37",BG="#0f0f0f";
   const[deadline,setDeadline]=useState(athlete?.goal_deadline||"");
   const[saving,setSaving]=useState(false);
-  const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+  const estNow=nowEST();
   const daysLeft=deadline?Math.max(0,Math.ceil((new Date(deadline.slice(0,10)+"T23:59:59")-estNow)/(1000*60*60*24))):null;
   const save=async()=>{
     setSaving(true);

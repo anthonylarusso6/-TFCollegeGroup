@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
+import { nowEST } from "../lib/dates";
 import Icon from "../components/Icon";
 
 const GOLD="#D4AF37";
@@ -114,7 +115,7 @@ export default function Landing(){
         }
       }catch(e){}
       try{
-        const estNow=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+        const estNow=nowEST();
         const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
         const{count}=await supabase.from("attendance").select("id",{count:"exact",head:true}).eq("date",today).eq("status","early");
         if(count)setTodayAttendance(count);

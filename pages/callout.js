@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
+import { nowEST } from "../lib/dates";
 import Icon from "../components/Icon";
 import { hTap, hSuccess } from "../lib/haptics";
 
@@ -22,7 +23,7 @@ const VIOLATIONS=[
   {label:"Other",icon:"⚠️",crunches:30},
 ];
 
-const estToday=()=>{const n=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");};
+const estToday=()=>{const n=nowEST();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0");};
 const logDate=(ts)=>{if(!ts)return"";const d=new Date(ts);const e=new Date(d.toLocaleString("en-US",{timeZone:"America/New_York"}));return e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0");};
 
 export default function Callout(){

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { getTier, BRACELETS } from "../lib/teams";
+import { nowEST } from "../lib/dates";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import WeightTracker from "../components/WeightTracker";
 import AthleteLeaderboard from "../components/AthleteLeaderboard";
@@ -275,7 +276,7 @@ export default function Athlete(){
   // Check if athlete already logged weight today (only matters on Mon/Fri weigh-in days)
   useEffect(()=>{
     if(!selectedAthlete)return;
-    const est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const est=nowEST();
     const dow=est.getDay();
     if(dow!==1&&dow!==5){setWeightLoggedToday(true);return;}
     const today=est.getFullYear()+"-"+String(est.getMonth()+1).padStart(2,"0")+"-"+String(est.getDate()).padStart(2,"0");
@@ -344,7 +345,7 @@ export default function Athlete(){
     }catch(e){}
     try{const{data:lbRow}=await supabase.from("leaderboard").select("*").eq("athlete_id",athleteId).single();if(lbRow)setAthleteLb(lbRow);}catch(e){}
     try{
-      const _vd=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+      const _vd=nowEST();
       const _ds=`${_vd.getFullYear()}-${String(_vd.getMonth()+1).padStart(2,'0')}-${String(_vd.getDate()).padStart(2,'0')}`;
       const{data:vt}=await supabase.from("announcements").select("message").eq("type","music_vote").eq("week_label",_ds).eq("day",athleteId).order("created_at",{ascending:false}).limit(1).maybeSingle();
       if(vt)setMyVote(vt.message);
@@ -353,7 +354,7 @@ export default function Athlete(){
 
   const submitVote=async(genre)=>{
     setMyVote(genre);
-    const _d=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const _d=nowEST();
     const dateStr=`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
     try{
       await supabase.from("announcements").delete().eq("type","music_vote").eq("week_label",dateStr).eq("day",selectedAthlete.id);
@@ -1024,7 +1025,7 @@ export default function Athlete(){
 
             {tab==="profile"&&(
               <div>
-                {(()=>{const _est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><Icon name="zap" size={22} color="rgba(255,255,255,0.6)"/></div>);})()}
+                {(()=>{const _est=nowEST();const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><Icon name="zap" size={22} color="rgba(255,255,255,0.6)"/></div>);})()}
                 {weightLoggedToday===false&&(
                   <div onClick={()=>{slideDirRef.current=0;setTab("weight");}} style={{background:"linear-gradient(135deg,#1a3a1a,#0e240e)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
                     <div>
@@ -1116,7 +1117,7 @@ export default function Athlete(){
                 <DailyWord announcement={announcement}/>
                 <ClassCountdown/>
                 {(()=>{
-                  const _e=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+                  const _e=nowEST();
                   const _dow=_e.getDay();
                   const GENRES=[{id:"rock",label:"Rock",emoji:"🎸"},{id:"wgt",label:"White Girl Throwbacks",emoji:"💅"},{id:"rap",label:"Rap / Hip-Hop",emoji:"🎤"},{id:"country",label:"Country",emoji:"🤠"},{id:"pop",label:"Pop",emoji:"🎵"},{id:"mcastle",label:"MCASTLES SECRET PICK",emoji:"🍑🚀"}];
                   if(_dow===1||_dow===5)return(
@@ -1161,7 +1162,7 @@ export default function Athlete(){
                 {/* Day schedule — always shows */}
                 {(()=>{
                   const _days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-                  const _day=_days[new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"})).getDay()];
+                  const _day=_days[nowEST().getDay()];
                   const _classDays=["Mon","Tue","Thu","Fri"];
                   const _isClassDay=_classDays.includes(_day);
                   if(!_isClassDay) return(
