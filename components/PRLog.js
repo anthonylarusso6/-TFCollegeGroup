@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BG, RED, GREEN, GOLD, STEEL, ORANGE, PUR } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { isFemale as computeFemale } from "../lib/teams";
 import Icon from "./Icon";
 import { Skeleton, SkeletonList } from "./Skeleton";
 import { hSuccess } from "../lib/haptics";
@@ -298,7 +299,7 @@ export default function PRLog({athleteId,gender}){
   const getLast=(liftName)=>(logs[liftName]||[])[0]?.weight||null;
 
   // ── Dashboard computed ─────────────────────────────────────
-  const isFemale=gender==="female"||gender==="Female"||gender==="F"||gender==="f"||gender==="woman"||gender==="Woman";
+  const isFemale=computeFemale(gender);
   const CATS=isFemale?CATS_F:CATS_M;
   const genderLabel=isFemale?"Women's":"Men's";
 

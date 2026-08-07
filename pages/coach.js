@@ -1,6 +1,7 @@
 // v1776642403
 import { useState, useEffect, useRef } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
+import { isFemale } from "../lib/teams";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import ProgramUpload from "../components/ProgramUpload";
 import Head from "next/head";
@@ -1862,7 +1863,7 @@ export default function Coach(){
               if(cats[2].keywords.some(k=>n.includes(k)))return "pull";
               return null;
             };
-            const isF=(g)=>{const v=(g||"").toLowerCase();return v==="female"||v==="f"||v==="woman";};
+            const isF=isFemale;
             // Build per-athlete best estimated 1RM per lift
             const byAthlete={};
             prLogs.forEach(r=>{
@@ -2928,8 +2929,7 @@ export default function Coach(){
               {id:"pull",label:"Pull",emoji:"🤜"},
               {id:"hinge",label:"Hinge",emoji:"⛓️"},
             ];
-            const _isFem=(g)=>{const v=(g||"").toLowerCase();return v==="female"||v==="f"||v==="woman";};
-            const filteredAthletes=athletes.filter(a=>a.status==="active"&&(ironRoomGender==="M"?!_isFem(a.gender):_isFem(a.gender)));
+            const filteredAthletes=athletes.filter(a=>a.status==="active"&&(ironRoomGender==="M"?!isFemale(a.gender):isFemale(a.gender)));
             const athMap={};
             filteredAthletes.forEach(a=>{athMap[a.id]=a;});
             // Build best est1RM per athlete per category

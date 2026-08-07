@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { BG, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
+import { getTier, BRACELETS } from "../lib/teams";
 import { supabase } from "../lib/supabase";
 import { SkeletonList } from "./Skeleton";
 
@@ -44,28 +45,6 @@ const playDraftCompleteSound=()=>{
 };
 
 const COLORS=["#534AB7","#C0392B","#1E6B3A","#D4AF37","#E8720C","#1A4F8A"];
-const BRACELETS=[
-  {color:"Light orange",ref:"Proverbs 3:5",text:"Trust in the Lord with all your heart.",hex:"#F5A623"},
-  {color:"Dark orange",ref:"Psalm 46:10",text:"Be still, and know that I am God.",hex:"#D4581A"},
-  {color:"Yellow",ref:"Genesis 1:3",text:"And God said, let there be light.",hex:"#E8C84A"},
-  {color:"Light blue",ref:"1 Peter 5:7",text:"Cast all your anxiety on him.",hex:"#5BBFEA"},
-  {color:"Dark blue",ref:"1 John 3:1",text:"See what great love the Father has lavished on us.",hex:"#1A4F8A"},
-  {color:"Red",ref:"Philippians 4:13",text:"I can do all things through Christ who strengthens me.",hex:"#C0392B"},
-  {color:"Pink",ref:"1 Corinthians 13:13",text:"The greatest of these is love.",hex:"#E87AAC"},
-  {color:"Dark purple",ref:"Matthew 11:28",text:"Come to me, all who are weary.",hex:"#5B2D8E"},
-  {color:"Light purple",ref:"John 14:6",text:"I am the way and the truth and the life.",hex:"#9B59B6"},
-  {color:"Dark green",ref:"Joshua 1:9",text:"Be strong and courageous.",hex:"#1E6B3A"},
-  {color:"Light green",ref:"Psalm 27:1",text:"The Lord is my light and my salvation.",hex:"#58B368"},
-  {color:"Teal",ref:"Jeremiah 29:11",text:"Plans to prosper you and not to harm you.",hex:"#1A9E8F"},
-];
-
-const getTier=(idx,n)=>{
-  if(n<=2)return idx===0?1:2;
-  if(n===3)return idx<2?1:2;
-  if(n===4)return idx<2?1:idx===2?2:3;
-  return idx<2?1:idx<4?2:3;
-};
-
 const makeSnake=(n,rounds)=>{
   const out=[];
   for(let r=0;r<rounds;r++){
