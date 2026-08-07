@@ -3,7 +3,13 @@ import { supabase } from "../lib/supabase";
 import { SkeletonList } from "./Skeleton";
 
 const GC=["#534AB7","#C0392B","#1E6B3A","#D4AF37","#E8720C","#1A4F8A"];
-const getTier=(i,n)=>i<2?1:i===2?2:3;
+// Mirror Draft.js so the tier shown/written here matches what the draft assigns
+const getTier=(idx,n)=>{
+  if(n<=2)return idx===0?1:2;
+  if(n===3)return idx<2?1:2;
+  if(n===4)return idx<2?1:idx===2?2:3;
+  return idx<2?1:idx<4?2:3;
+};
 const TIER_LABEL={1:"Tier 1",2:"Tier 2",3:"Tier 3"};
 
 const BRACELETS=[
@@ -109,14 +115,23 @@ export default function TeamsView({athletes=[]}){
         if(err)throw err;
         if(inserted){draftIdRef.current=inserted.id;setDraftId(inserted.id);}
       }
+      const assigned=new Set();
       for(let i=0;i<groupCount;i++){
         for(const name of(groupsArr[i]||[])){
+          assigned.add(name);
           const ath=athletes.find(a=>a.name===name);
           if(ath){
-            const updates={role:leadersArr[i]===name?"forge":"iron",group_idx:i};
+            const updates={role:leadersArr[i]===name?"forge":"iron",group_idx:i,tier:getTier(i,groupCount)};
             if(leadersArr[i]===name&&braceletsArr[i])updates.bracelet=braceletsArr[i].ref;
             try{await supabase.from("athletes").update(updates).eq("id",ath.id);}catch(ae){console.error("Athlete update:",ae);}
           }
+        }
+      }
+      // Reset anyone who was previously in a group but is no longer assigned (e.g. after
+      // shrinking the group count) so they don't keep a stale group_idx/tier/role.
+      for(const a of athletes){
+        if(a.group_idx!=null&&!assigned.has(a.name)){
+          try{await supabase.from("athletes").update({role:"iron",group_idx:null,tier:null,bracelet:null}).eq("id",a.id);}catch(ae){console.error("Orphan reset:",ae);}
         }
       }
       setSaved(true);setTimeout(()=>setSaved(false),3000);

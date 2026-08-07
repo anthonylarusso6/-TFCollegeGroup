@@ -159,7 +159,7 @@ export default function AthleteLeaderboard({athleteId}){
           </div>
           {/* Attendance % */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-            <div style={{fontSize:10,color:"#555"}}>Attendance rate</div>
+            <div style={{fontSize:10,color:"#555"}}>Early %</div>
             <div style={{fontSize:11,fontWeight:700,color:myRow.attPct>=80?GREEN:myRow.attPct>=50?ORANGE:RED}}>{myRow.attPct}%</div>
           </div>
           <div style={{height:4,background:"#222",borderRadius:2,overflow:"hidden"}}>

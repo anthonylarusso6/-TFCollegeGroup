@@ -545,7 +545,8 @@ export default function Coach(){
 
   const addAthlete=async()=>{
     if(!newName.trim())return;
-    const{data}=await supabase.from("athletes").insert({name:newName.trim(),sport:newSport.trim(),gender:newGender,role:newRole,status:"active"}).select();
+    const{data,error}=await supabase.from("athletes").insert({name:newName.trim(),sport:newSport.trim(),gender:newGender,role:newRole,status:"active"}).select();
+    if(error){if(typeof window!=="undefined")alert("Couldn't add athlete: "+error.message);return;}
     if(data)setAthletes(p=>[...p,data[0]]);
     setNewName("");setNewSport("");setNewGender("");setNewRole("iron");
   };
@@ -2927,7 +2928,8 @@ export default function Coach(){
               {id:"pull",label:"Pull",emoji:"🤜"},
               {id:"hinge",label:"Hinge",emoji:"⛓️"},
             ];
-            const filteredAthletes=athletes.filter(a=>a.status==="active"&&(ironRoomGender==="M"?a.gender==="M":a.gender==="F"));
+            const _isFem=(g)=>{const v=(g||"").toLowerCase();return v==="female"||v==="f"||v==="woman";};
+            const filteredAthletes=athletes.filter(a=>a.status==="active"&&(ironRoomGender==="M"?!_isFem(a.gender):_isFem(a.gender)));
             const athMap={};
             filteredAthletes.forEach(a=>{athMap[a.id]=a;});
             // Build best est1RM per athlete per category

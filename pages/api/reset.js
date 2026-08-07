@@ -9,8 +9,10 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
+  // Secret is overridable via env so it can be rotated without a code change.
   const { secret } = req.body;
-  if (secret !== 'TFCG2025RESET') {
+  const RESET_SECRET = process.env.RESET_SECRET || 'TFCG2025RESET';
+  if (secret !== RESET_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

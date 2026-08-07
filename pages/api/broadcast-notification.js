@@ -6,9 +6,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+// Only allow same-origin relative deep links (no absolute/protocol-relative URLs)
+// so a notification can never deep-link a device somewhere off-site.
+const safeUrl = (u) =>
+  typeof u === "string" && u.startsWith("/") && !u.startsWith("//") ? u : "/athlete";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
-  const { title, body, url } = req.body || {};
+  const { title, body } = req.body || {};
+  const url = safeUrl(req.body?.url);
   if (!title) return res.status(400).json({ error: "title required" });
 
   try {

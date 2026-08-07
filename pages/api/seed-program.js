@@ -62,8 +62,11 @@ const NEW_PROGRAM = {
 export default async function handler(req, res) {
   if (req.method !== "GET") return res.status(405).end();
 
-  const auth = req.headers.authorization;
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // This route OVERWRITES the active program, so it must fail closed: no configured
+  // secret means it's disabled (nothing in the app calls it). Prevents an accidental
+  // crawl/prefetch from wiping the live program.
+  const secret = process.env.CRON_SECRET || process.env.SEED_SECRET;
+  if (!secret || req.headers.authorization !== `Bearer ${secret}`) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 

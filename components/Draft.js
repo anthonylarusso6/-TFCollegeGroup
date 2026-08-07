@@ -680,7 +680,7 @@ export default function Draft({athletes=[]}){
                           <div style={{fontSize:10,fontWeight:700,color:col,textTransform:"uppercase",letterSpacing:"0.06em"}}>G{i+1}</div>
                           {isCurrent&&<div style={{fontSize:8,color:col,fontWeight:700,letterSpacing:"0.06em"}}>▶</div>}
                         </div>
-                        <div style={{fontSize:9,color:"#3a3a3a"}}>{members.length-1}/{picksPerGroup-1}</div>
+                        <div style={{fontSize:9,color:"#3a3a3a"}}>{members.length-1}/{picksPerGroup}</div>
                       </div>
                       <div style={{fontSize:11,fontWeight:600,color:isCurrent?col:"#999",marginBottom:4,paddingLeft:12}}>⚒ {leaders[i]||"—"}</div>
                       {members.slice(1).filter(n=>n!==leaders[i]).map(n=>(

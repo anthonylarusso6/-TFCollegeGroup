@@ -154,7 +154,14 @@ export default function CultureEvents({athletes=[]}){
 
   const daysUntil=(dateStr)=>{
     if(!dateStr)return null;
-    return Math.ceil((new Date(dateStr)-new Date())/(1000*60*60*24));
+    // Compare EST calendar dates (midnight to midnight) so the count isn't off by one
+    // from parsing "YYYY-MM-DD" as UTC while "now" is local.
+    const est=new Date(new Date().toLocaleString("en-US",{timeZone:"America/New_York"}));
+    const today=new Date(est.getFullYear(),est.getMonth(),est.getDate());
+    const parts=String(dateStr).split("-").map(Number);
+    if(parts.length!==3||parts.some(isNaN))return null;
+    const target=new Date(parts[0],parts[1]-1,parts[2]);
+    return Math.round((target-today)/(1000*60*60*24));
   };
 
   const activeTemplate=templates.find(t=>t.id===msgType)||templates[0];
