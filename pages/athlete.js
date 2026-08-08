@@ -31,32 +31,6 @@ import { supabase } from "../lib/supabase";
 const LC=["#534AB7","#0F6E56","#854F0B","#993556"];
 const LB=["#EEEDFE","#E1F5EE","#FAEEDA","#FBEAF0"];
 
-const playPickSound=()=>{
-  try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    [[523,0],[659,0.12],[784,0.24],[1047,0.38]].forEach(([freq,t])=>{
-      const o=ctx.createOscillator();const g=ctx.createGain();
-      o.connect(g);g.connect(ctx.destination);
-      o.type="sine";o.frequency.setValueAtTime(freq,ctx.currentTime+t);
-      g.gain.setValueAtTime(0.25,ctx.currentTime+t);
-      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.35);
-      o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+0.35);
-    });
-  }catch(e){}
-};
-
-const playTickSound=()=>{
-  try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const o=ctx.createOscillator();const g=ctx.createGain();
-    o.connect(g);g.connect(ctx.destination);
-    o.type="square";o.frequency.setValueAtTime(880,ctx.currentTime);
-    g.gain.setValueAtTime(0.08,ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.07);
-    o.start(ctx.currentTime);o.stop(ctx.currentTime+0.07);
-  }catch(e){}
-};
-
 const CUTOFFS={Mon:{h:9,m:0},Tue:{h:9,m:30},Thu:{h:9,m:30},Fri:{h:9,m:0}};
 const CLASS_DAYS=["Mon","Tue","Thu","Fri"];
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -66,33 +40,6 @@ const TIER_COLORS={
   2:{bg:"#E1F5EE",border:"#0F6E56",color:"#085041",label:"Tier 2"},
   3:{bg:"#FAEEDA",border:"#854F0B",color:"#633806",label:"Tier 3"},
 };
-
-// Correct snake order: [0,1,2,3, 3,2,1,0, 0,1,2,3, ...]
-const snakeSeq=(total,numGroups=4)=>{
-  const seq=[];
-  for(let r=0;seq.length<total;r++){
-    const row=Array.from({length:numGroups},(_,i)=>i);
-    seq.push(...(r%2===0?row:[...row].reverse()));
-  }
-  return seq.slice(0,total);
-};
-
-function CountdownPicker({onTimeout}){
-  const[timeLeft,setTimeLeft]=useState(10);
-  useEffect(()=>{
-    if(timeLeft<=0){onTimeout();return;}
-    if(timeLeft<=3)playTickSound();
-    const t=setTimeout(()=>setTimeLeft(p=>p-1),1000);
-    return()=>clearTimeout(t);
-  },[timeLeft,onTimeout]);
-  const urgent=timeLeft<=3;
-  return(
-    <div style={{background:urgent?"#3d0a0a":"#1a0808",borderRadius:12,padding:"8px 14px",textAlign:"center",border:"1px solid "+(urgent?"#C0392B88":"#C0392B44"),minWidth:64,flexShrink:0}}>
-      <div style={{fontSize:32,fontWeight:900,color:urgent?"#ff6b6b":"#C0392B",lineHeight:1}}>{timeLeft}</div>
-      <div style={{fontSize:9,color:urgent?"#ff6b6b88":"#66222280",marginTop:2,textTransform:"uppercase",letterSpacing:"0.06em"}}>{urgent?"auto":"sec"}</div>
-    </div>
-  );
-}
 
 // ── Body Weight Tracker ─────────────────────────────────────────
 export default function Athlete(){
@@ -154,13 +101,11 @@ export default function Athlete(){
   const[milestone,setMilestone]=useState(null);
   const[myVote,setMyVote]=useState(null);
   const[groupmeLink,setGroupmeLink]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
-  const[draft,setDraft]=useState(null);
   const[weightLoggedToday,setWeightLoggedToday]=useState(null);
   const[notifCard,setNotifCard]=useState("unknown"); // unknown | idle | enabled | denied | unsupported | ios-browser
   const[notifLoading,setNotifLoading]=useState(false);
   const pollRef=useRef(null);
   const athleteIdRef=useRef(null);
-  const isPickingRef=useRef(false);
   const touchStartRef=useRef(null);
   const slideDirRef=useRef(0);
 
@@ -327,13 +272,6 @@ export default function Athlete(){
     setNotifLoading(false);
   };
 
-  const loadDraft=async()=>{
-    try{
-      const{data}=await supabase.from("draft").select("*").order("created_at",{ascending:false}).limit(1);
-      if(data&&data.length>0)setDraft(data[0]);
-      else setDraft(null);
-    }catch(e){}
-  };
 
   const loadAttendance=async(athleteId)=>{
     try{
@@ -462,7 +400,6 @@ export default function Athlete(){
     // Load supporting data in parallel while Face ID is scanning
     const loads=Promise.all([
       loadAttendance(a.id),
-      loadDraft(),
       (async()=>{try{const{data}=await supabase.from("athletes").select("*").eq("id",a.id).single();if(data)setSelectedAthlete(data);}catch(e){}})(),
     ]);
 
@@ -513,10 +450,8 @@ export default function Athlete(){
 
   useEffect(()=>{
     if(screen==="profile"){
-      // Always poll draft so group updates automatically after draft ends
+      // Poll the athlete row so group assignment updates automatically after the coach sets it
       pollRef.current=setInterval(async()=>{
-        await loadDraft();
-        // Also refresh athlete data to get latest group_idx
         if(athleteIdRef.current){
           try{
             const{data}=await supabase.from("athletes").select("*").eq("id",athleteIdRef.current).maybeSingle();
@@ -886,89 +821,14 @@ export default function Athlete(){
       else if(dx<0&&idx>0){slideDirRef.current=-1;setTab(PRIMARY_NAV[idx-1]);}
     };
 
+    // Group info is driven entirely by the athlete record. Coach assigns groups
+    // manually in the coach Teams tab, which writes group_idx / role / tier / bracelet.
     const myGroupIdx=selectedAthlete.group_idx;
-    const draftLeaders=draft?.leaders||[];
-    const draftGroups=draft?.groups||[];
-    const draftBracelets=draft?.bracelets||[];
-    const draftPhase=draft?.phase;
-    const myLeaderIdx=isForge?draftLeaders.indexOf(selectedAthlete.name):-1;
-    // For Forge leaders, use their leader index; for Iron, use group_idx
-    const effectiveGroupIdx=isForge&&myLeaderIdx>=0?myLeaderIdx:myGroupIdx;
-    const myLeader=effectiveGroupIdx!=null?draftLeaders[effectiveGroupIdx]:null;
-    const myGroup=effectiveGroupIdx!=null?draftGroups[effectiveGroupIdx]:null;
-    const myBracelet=effectiveGroupIdx!=null?BRACELETS.find(b=>b.ref===draftBracelets[effectiveGroupIdx]?.ref):null;
     const myTier=selectedAthlete?.tier||null;
-    const takenBracelets=(draftBracelets||[]).filter(Boolean).map(b=>b?.ref);
-    const myBraceletPicked=myLeaderIdx>=0?draftBracelets[myLeaderIdx]:null;
-
-    const nonLeaders=(athletes||[]).filter(a=>!draftLeaders.includes(a.name)).map(a=>a.name);
-    const allPicked=(draftGroups||[]).flat();
-    // Exclude leaders from pickIdx so snake order starts at 0 (leaders occupy groups[i][0])
-    const pickedNonLeaders=allPicked.filter(n=>!draftLeaders.includes(n));
-    const available=nonLeaders.filter(n=>!allPicked.includes(n));
-    const totalPicks=nonLeaders.length;
-    const numLeaders=draftLeaders.filter(Boolean).length||4;
-    // +1 because leader occupies slot 0 in each group array
-    const MAX_PICKS_PER_GROUP=numLeaders>0&&nonLeaders.length>0?Math.ceil(nonLeaders.length/numLeaders)+1:5;
-    const pickSeq=snakeSeq(totalPicks,numLeaders);
-    const pickIdx=pickedNonLeaders.length;
-    const currentPickerIdx=pickSeq[pickIdx]??0;
-    const isMyTurn=myLeaderIdx===currentPickerIdx&&draftPhase==="draft";
-    const draftComplete=draftPhase==="locked"||(available.length===0&&draftPhase==="draft");
-
-    const pickBracelet=async(b)=>{
-      if(myLeaderIdx<0||myBraceletPicked)return;
-      const nb=[...(draftBracelets||Array(numLeaders).fill(null))];
-      nb[myLeaderIdx]=b;
-      await supabase.from("draft").update({bracelets:nb}).eq("id",draft.id);
-      const allPicked=nb.slice(0,numLeaders).every(Boolean);
-      if(allPicked){
-        await supabase.from("draft").update({phase:"draft"}).eq("id",draft.id);
-      }
-      await loadDraft();
-    };
-
-    const pickAthlete=async(name)=>{
-      if(!isMyTurn||isPickingRef.current)return;
-      isPickingRef.current=true;
-      playPickSound();
-      try{
-        // Re-read latest draft state from DB to guard against concurrent picks
-        const{data:latest}=await supabase.from("draft").select("*").eq("id",draft.id).single();
-        if(!latest||latest.phase==="locked"){await loadDraft();return;}
-        const latestGroups=(latest.groups||[]).map(g=>[...g]);
-        if(latestGroups[myLeaderIdx]&&latestGroups[myLeaderIdx].includes(name)){await loadDraft();return;}
-        if(latestGroups[myLeaderIdx]&&latestGroups[myLeaderIdx].length>=MAX_PICKS_PER_GROUP){await loadDraft();return;}
-        latestGroups[myLeaderIdx]=latestGroups[myLeaderIdx]||[];
-        latestGroups[myLeaderIdx].push(name);
-        const latestAllPicked=latestGroups.flat();
-        const latestPickedNL=latestAllPicked.filter(n=>!draftLeaders.includes(n));
-        const newPickIdx=latestPickedNL.length;
-        const latestNonLeaders=nonLeaders.filter(n=>!latestAllPicked.includes(n));
-        const done=newPickIdx>=pickSeq.length||latestNonLeaders.length===0;
-        await supabase.from("draft").update({
-          groups:latestGroups,
-          phase:done?"locked":"draft",
-          locked:done,
-        }).eq("id",draft.id);
-        if(done){
-          for(let i=0;i<latestGroups.length;i++){
-            for(const n of latestGroups[i]){
-              const ath=athletes.find(a=>a.name===n);
-              if(ath){
-                try{await supabase.from("athletes").update({group_idx:i,tier:getTier(i,numLeaders)}).eq("id",ath.id);}catch(e){}
-              }
-            }
-            const leader=athletes.find(a=>a.name===draftLeaders[i]);
-            if(leader){
-              try{await supabase.from("athletes").update({group_idx:i,tier:getTier(i,numLeaders),bracelet:draftBracelets[i]?.ref}).eq("id",leader.id);}catch(e){}
-            }
-          }
-        }
-        await loadDraft();
-      }catch(e){console.error("pickAthlete:",e);}
-      finally{isPickingRef.current=false;}
-    };
+    const groupmates=myGroupIdx!=null?(athletes||[]).filter(a=>a.group_idx===myGroupIdx):[];
+    const myGroupLeader=groupmates.find(a=>a.role==="forge")||null;
+    const myBraceletRef=selectedAthlete?.bracelet||myGroupLeader?.bracelet||null;
+    const myBracelet=myBraceletRef?BRACELETS.find(b=>b.ref===myBraceletRef):null;
 
     return(
       <>
@@ -1389,7 +1249,7 @@ export default function Athlete(){
 
             {tab==="mygroup"&&(
               <div>
-                {(!draft||(myGroupIdx==null&&myLeaderIdx<0))?(
+                {myGroupIdx==null?(
                   <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+STEEL+"33"}}>
                     <div style={{background:"linear-gradient(140deg,"+STEEL+"30,"+STEEL+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
                       <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+","+STEEL+"44,transparent)"}}/>
@@ -1399,107 +1259,86 @@ export default function Athlete(){
                         <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+STEEL+"44,"+STEEL+"22)",border:"1px solid "+STEEL+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+STEEL+"33"}}>⏳</div>
                         <div>
                           <div style={{fontSize:8,color:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Your Group</div>
-                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Waiting on the Draft</div>
-                          <div style={{fontSize:11,color:"#666",marginTop:1}}>You'll appear here once you've been picked</div>
+                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Not assigned yet</div>
+                          <div style={{fontSize:11,color:"#666",marginTop:1}}>Coach will place you in a group soon</div>
                         </div>
                       </div>
-                    </div>
-                    <div style={{background:"#111",padding:"16px 18px"}}>
-                      <div style={{fontSize:14,color:"#fff",marginBottom:draftPhase==="draft"?12:0}}>
-                        {draftPhase==="bracelet"?"Leaders are picking bracelets...":draftPhase==="draft"?"Draft is live — waiting to be picked...":"Draft pending..."}
-                      </div>
-                      {/* Show athlete's name so they know they're in the pool */}
-                      {draftPhase==="draft"&&(
-                        <div style={{background:"#1a1a1a",borderRadius:10,padding:"12px 16px",border:"1px solid #333",display:"flex",alignItems:"center",gap:12}}>
-                          <div style={{width:36,height:36,borderRadius:"50%",background:isForge?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
-                            {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
-                          </div>
-                          <div>
-                            <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{selectedAthlete?.name}</div>
-                            <div style={{fontSize:11,color:"#555"}}>In the draft pool — waiting to be picked</div>
-                          </div>
-                          <div style={{marginLeft:"auto",width:10,height:10,borderRadius:"50%",background:GREEN,boxShadow:"0 0 8px "+GREEN}}/>
-                        </div>
-                      )}
                     </div>
                   </div>
-                ):(
-                  <div>
-                    {myLeader&&(()=>{
-                      const gc=myBracelet?.hex||LC[effectiveGroupIdx%LC.length]||PUR;
-                      const leaderAth=athletes.find(a=>a.name===myLeader);
-                      const amLeader=myLeaderIdx>=0;
-                      return(
-                        <div>
-                          {/* Group identity card */}
-                          <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",border:"1px solid "+gc+"44",boxShadow:"0 8px 32px "+gc+"18"}}>
-                            <div style={{height:3,background:"linear-gradient(90deg,"+gc+","+gc+"44,transparent)"}}/>
-                            <div style={{background:"linear-gradient(140deg,"+gc+"22,"+gc+"06,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
-                              <div style={{position:"absolute",bottom:-10,right:-4,fontSize:80,opacity:0.05,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒</div>
-                              <div style={{fontSize:9,color:gc,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:14}}>
-                                {amLeader?"You&#39;re Leading This Group":"Your Group"}
-                              </div>
-                              {/* Leader row */}
-                              <div style={{display:"flex",alignItems:"center",gap:14}}>
-                                <div style={{width:64,height:64,borderRadius:"50%",border:"2px solid "+gc,overflow:"hidden",flexShrink:0,background:"#222",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:700,color:gc,boxShadow:"0 0 24px "+gc+"44"}}>
-                                  {leaderAth?.photo_url?<img src={leaderAth.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(myLeader||"?")[0]}
-                                </div>
-                                <div style={{flex:1}}>
-                                  <div style={{fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>{myLeader}</div>
-                                  <div style={{fontSize:11,color:"#666",marginTop:3}}>{amLeader?"Group Leader · That&#39;s you":"Group Leader"}</div>
-                                  {myTier&&(
-                                    <div style={{marginTop:6}}>
-                                      <span style={{fontSize:10,background:gc+"22",color:gc,padding:"3px 10px",borderRadius:20,fontWeight:700,border:"0.5px solid "+gc+"44"}}>Tier {myTier}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            {/* Scripture */}
-                            {myBracelet&&(
-                              <div style={{background:"#111",padding:"14px 18px",borderTop:"0.5px solid #1a1a1a"}}>
-                                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                                  <div style={{width:10,height:10,borderRadius:"50%",background:gc,boxShadow:"0 0 8px "+gc+"88",flexShrink:0}}/>
-                                  <span style={{fontSize:10,fontWeight:700,color:gc,textTransform:"uppercase",letterSpacing:"0.07em"}}>{myBracelet.color} — {myBracelet.ref}</span>
-                                </div>
-                                <div style={{fontSize:14,color:"#ddd",fontStyle:"italic",lineHeight:1.8,fontFamily:"Georgia,serif",padding:"10px 14px",background:gc+"0D",borderRadius:10,borderLeft:"2px solid "+gc}}>
-                                  &#8220;{myBracelet.text}&#8221;
-                                </div>
-                              </div>
-                            )}
+                ):(()=>{
+                  const gc=myBracelet?.hex||LC[myGroupIdx%LC.length]||PUR;
+                  const leaderName=myGroupLeader?.name||null;
+                  const amLeader=selectedAthlete?.role==="forge";
+                  return(
+                    <div>
+                      {/* Group identity card */}
+                      <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",border:"1px solid "+gc+"44",boxShadow:"0 8px 32px "+gc+"18"}}>
+                        <div style={{height:3,background:"linear-gradient(90deg,"+gc+","+gc+"44,transparent)"}}/>
+                        <div style={{background:"linear-gradient(140deg,"+gc+"22,"+gc+"06,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
+                          <div style={{position:"absolute",bottom:-10,right:-4,fontSize:80,opacity:0.05,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒</div>
+                          <div style={{fontSize:9,color:gc,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:14}}>
+                            {amLeader?"You're Leading This Group":"Your Group"}
                           </div>
-
-                          {/* Teammates grid */}
-                          {myGroup&&myGroup.length>0&&(
-                            <div style={{background:"#0e0e0e",borderRadius:16,overflow:"hidden",border:"0.5px solid #1e1e1e",marginBottom:12}}>
-                              <div style={{padding:"12px 16px",borderBottom:"0.5px solid #1a1a1a",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                                <div style={{fontSize:11,fontWeight:700,color:"#666",textTransform:"uppercase",letterSpacing:"0.1em"}}>Teammates</div>
-                                <div style={{fontSize:10,color:"#444"}}>{myGroup.length} member{myGroup.length!==1?"s":""}</div>
+                          {/* Leader row */}
+                          {leaderName&&(
+                            <div style={{display:"flex",alignItems:"center",gap:14}}>
+                              <div style={{width:64,height:64,borderRadius:"50%",border:"2px solid "+gc,overflow:"hidden",flexShrink:0,background:"#222",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:700,color:gc,boxShadow:"0 0 24px "+gc+"44"}}>
+                                {myGroupLeader?.photo_url?<img src={myGroupLeader.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(leaderName||"?")[0]}
                               </div>
-                              <div style={{padding:"10px 12px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                                {myGroup.map((name,i)=>{
-                                  const ath=athletes.find(a=>a.name===name);
-                                  const isMe=name===selectedAthlete?.name;
-                                  return(
-                                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:isMe?gc+"18":"#151515",borderRadius:12,border:"0.5px solid "+(isMe?gc+"44":"#222")}}>
-                                      <div style={{width:38,height:38,borderRadius:"50%",background:isMe?gc+"33":"#222",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:isMe?gc:"#555",flexShrink:0,overflow:"hidden",border:"1.5px solid "+(isMe?gc:"#2a2a2a")}}>
-                                        {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(name||"?")[0]}
-                                      </div>
-                                      <div style={{minWidth:0}}>
-                                        <div style={{fontSize:12,fontWeight:isMe?700:500,color:isMe?gc:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{name.split(" ")[0]}</div>
-                                        {isMe&&<div style={{fontSize:9,color:gc+"88",marginTop:1}}>you</div>}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
+                              <div style={{flex:1}}>
+                                <div style={{fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>{leaderName}</div>
+                                <div style={{fontSize:11,color:"#666",marginTop:3}}>{amLeader?"Group Leader · That's you":"Group Leader"}</div>
+                                {myTier&&(
+                                  <div style={{marginTop:6}}>
+                                    <span style={{fontSize:10,background:gc+"22",color:gc,padding:"3px 10px",borderRadius:20,fontWeight:700,border:"0.5px solid "+gc+"44"}}>Tier {myTier}</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           )}
                         </div>
-                      );
-                    })()}
-                  </div>
-                )}
+                        {/* Scripture */}
+                        {myBracelet&&(
+                          <div style={{background:"#111",padding:"14px 18px",borderTop:"0.5px solid #1a1a1a"}}>
+                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                              <div style={{width:10,height:10,borderRadius:"50%",background:gc,boxShadow:"0 0 8px "+gc+"88",flexShrink:0}}/>
+                              <span style={{fontSize:10,fontWeight:700,color:gc,textTransform:"uppercase",letterSpacing:"0.07em"}}>{myBracelet.color} — {myBracelet.ref}</span>
+                            </div>
+                            <div style={{fontSize:14,color:"#ddd",fontStyle:"italic",lineHeight:1.8,fontFamily:"Georgia,serif",padding:"10px 14px",background:gc+"0D",borderRadius:10,borderLeft:"2px solid "+gc}}>
+                              &#8220;{myBracelet.text}&#8221;
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Teammates grid */}
+                      {groupmates.length>0&&(
+                        <div style={{background:"#0e0e0e",borderRadius:16,overflow:"hidden",border:"0.5px solid #1e1e1e",marginBottom:12}}>
+                          <div style={{padding:"12px 16px",borderBottom:"0.5px solid #1a1a1a",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                            <div style={{fontSize:11,fontWeight:700,color:"#666",textTransform:"uppercase",letterSpacing:"0.1em"}}>Teammates</div>
+                            <div style={{fontSize:10,color:"#444"}}>{groupmates.length} member{groupmates.length!==1?"s":""}</div>
+                          </div>
+                          <div style={{padding:"10px 12px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                            {groupmates.map((ath,i)=>{
+                              const isMe=ath.id===selectedAthlete?.id;
+                              return(
+                                <div key={ath.id||i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:isMe?gc+"18":"#151515",borderRadius:12,border:"0.5px solid "+(isMe?gc+"44":"#222")}}>
+                                  <div style={{width:38,height:38,borderRadius:"50%",background:isMe?gc+"33":"#222",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:isMe?gc:"#555",flexShrink:0,overflow:"hidden",border:"1.5px solid "+(isMe?gc:"#2a2a2a")}}>
+                                    {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(ath.name||"?")[0]}
+                                  </div>
+                                  <div style={{minWidth:0}}>
+                                    <div style={{fontSize:12,fontWeight:isMe?700:500,color:isMe?gc:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(ath.name||"").split(" ")[0]}</div>
+                                    {isMe&&<div style={{fontSize:9,color:gc+"88",marginTop:1}}>you</div>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
