@@ -394,7 +394,7 @@ export default function Athlete(){
     setGoalSaved({});setGoalText({});setMyVote(null);
     setTab("profile");setEditingPins(false);slideDirRef.current=0;
     try{const s=localStorage.getItem("tf_pinned_"+a.id);setPinnedTabs(s?JSON.parse(s):["prs","attendance","weight"]);}catch(e){setPinnedTabs(["prs","attendance","weight"]);}
-    const defaultOrder=["profile","mcastles","events","verse","attendance","mygroup","anvil","weight","body","prs","stretching","leaderboard","prayer","bracelets","photos","notes","habits","private"];
+    const defaultOrder=["profile","mcastles","events","verse","notes","attendance","mygroup","anvil","weight","body","prs","stretching","leaderboard","prayer","bracelets","photos","habits","private"];
     try{const storedOrder=localStorage.getItem("tf_more_order_"+a.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});const newTabs=defaultOrder.filter(id=>!seen.has(id));const fullOrder=[...initOrder,...newTabs];setMoreOrder(fullOrder);moreOrderRef.current=fullOrder;}catch(e){setMoreOrder(defaultOrder);moreOrderRef.current=defaultOrder;}
 
     // Load supporting data in parallel while Face ID is scanning
@@ -800,7 +800,7 @@ export default function Athlete(){
       {id:"prayer",label:"Prayer"},
       {id:"bracelets",label:"Bracelets"},
       {id:"photos",label:"Photos"},
-      {id:"notes",label:"Notes"},
+      {id:"notes",label:"Study Notes"},
       {id:"habits",label:"Habits"},
       {id:"private",label:"Private"},
     ];
@@ -1515,7 +1515,7 @@ export default function Athlete(){
         {/* ── LIQUID GLASS BOTTOM NAV ── */}
         {(()=>{
             const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"heart","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"compass","anvil":"anvil","mcastles":"crown","events":"star"};
-            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#C8D040","verse":"#4DC8F5","draft":"#44D9B0","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#FFD700","prayer":"#9060E0","bracelets":"#C090F0","photos":"#50D0B8","notes":"#888","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#E8720C","mcastles":"#D060C0","events":"#D4AF37"};
+            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#C8D040","verse":"#4DC8F5","draft":"#44D9B0","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#FFD700","prayer":"#9060E0","bracelets":"#C090F0","photos":"#50D0B8","notes":"#E8B84A","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#E8720C","mcastles":"#D060C0","events":"#D4AF37"};
             const tabColor=isForge?"#E8720C":STEEL;
             const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id));
             const PRIMARY=["profile",...validPinned];
