@@ -9,6 +9,10 @@ import IronRoomTab from "../components/IronRoomTab";
 import CoachHabitsTab from "../components/CoachHabitsTab";
 import CalloutsTab from "../components/CalloutsTab";
 import InjuriesTab from "../components/InjuriesTab";
+import PrayersTab from "../components/PrayersTab";
+import PhotosTab from "../components/PhotosTab";
+import EngagementTab from "../components/EngagementTab";
+import MCastlesPostTab from "../components/MCastlesPostTab";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import Accountability from "../components/Accountability";
@@ -22,64 +26,6 @@ import TeamsView from "../components/TeamsView";
 
 const COACH_PIN="1803";
 
-function DriveLinksManager(){
-  const[links,setLinks]=useState([]);
-  const[title,setTitle]=useState("");
-  const[url,setUrl]=useState("");
-  const[desc,setDesc]=useState("");
-  const[saving,setSaving]=useState(false);
-  const[saved,setSaved]=useState(false);
-
-  useEffect(()=>{
-    (async()=>{
-      try{const{data}=await supabase.from("announcements").select("*").eq("type","drive_link").eq("active",true).order("created_at",{ascending:false});setLinks(data||[]);}catch(e){}
-    })();
-  },[]);
-
-  const addLink=async()=>{
-    if(!title.trim()||!url.trim())return;
-    setSaving(true);
-    try{
-      const{data}=await supabase.from("announcements").insert({
-        type:"drive_link",active:true,
-        message:JSON.stringify({title,url,description:desc})
-      }).select().single();
-      if(data)setLinks(p=>[data,...p]);
-    }catch(e){}
-    setTitle("");setUrl("");setDesc("");setSaving(false);setSaved(true);
-    setTimeout(()=>setSaved(false),2000);
-  };
-
-  const removeLink=async(id)=>{
-    try{await supabase.from("announcements").update({active:false}).eq("id",id);}catch(e){}
-    setLinks(p=>p.filter(l=>l.id!==id));
-  };
-
-  return(
-    <div>
-      {links.map((l,i)=>{
-        const data=JSON.parse(l.message||"{}");
-        return(
-          <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#141414",borderRadius:10,marginBottom:8,border:"0.5px solid #252525"}}>
-            <div style={{fontSize:20}}>📄</div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:600,color:"#ddd",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{data.title}</div>
-              {data.description&&<div style={{fontSize:11,color:"#666"}}>{data.description}</div>}
-            </div>
-            <a href={data.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4285f4",textDecoration:"none",fontFamily:"Georgia,serif",padding:"4px 8px",border:"0.5px solid #4285f4",borderRadius:6}}>Open</a>
-            <button onClick={()=>removeLink(l.id)} style={{fontSize:11,color:RED,background:"transparent",border:"0.5px solid "+RED+"44",borderRadius:6,padding:"4px 8px",cursor:"pointer",fontFamily:"Georgia,serif"}}>Remove</button>
-          </div>
-        );
-      })}
-      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Document title (e.g. Summer Program Poster)" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #222",fontSize:12,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",marginBottom:6,boxSizing:"border-box"}}/>
-      <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="Google Drive link" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #222",fontSize:12,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",marginBottom:6,boxSizing:"border-box"}}/>
-      <input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Short description (optional)" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #222",fontSize:12,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",marginBottom:8,boxSizing:"border-box"}}/>
-      <button onClick={addLink} disabled={!title.trim()||!url.trim()||saving} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:title&&url?"#4285f4":"#e0e0e0",color:title&&url?"#fff":"#aaa",fontSize:13,fontWeight:600,cursor:title&&url?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
-        {saved?"✓ Added!":saving?"Saving...":"Add document →"}
-      </button>
-    </div>
-  );
-}
 
 
 
@@ -143,12 +89,8 @@ export default function Coach(){
   const[rosterSearch,setRosterSearch]=useState("");
   const[rosterStatus,setRosterStatus]=useState("active");
   const[rosterExpanded,setRosterExpanded]=useState(null);
-  const[coachPrayers,setCoachPrayers]=useState([]);
-  const[prayedFor,setPrayedFor]=useState({});
   const[weightLogs,setWeightLogs]=useState([]);
   const[prLogs,setPrLogs]=useState([]);
-  const[engAthletes,setEngAthletes]=useState([]);
-  const[uploadingPhoto,setUploadingPhoto]=useState(null);
   const[qrDataUrl,setQrDataUrl]=useState("");
   const[qrType,setQrType]=useState("checkin");
   const[qrFullscreen,setQrFullscreen]=useState(false);
@@ -163,21 +105,6 @@ export default function Coach(){
   const[modalData,setModalData]=useState(null);
   const[modalLoading,setModalLoading]=useState(false);
   const[musicVotes,setMusicVotes]=useState(null);
-  const[mcCurrentPhoto,setMcCurrentPhoto]=useState(null);
-  const[mcCaption,setMcCaption]=useState("");
-  const[mcWeek,setMcWeek]=useState("");
-  const[mcUploading,setMcUploading]=useState(false);
-  const[mcError,setMcError]=useState("");
-  const[mcFile,setMcFile]=useState(null);
-  const[mcPreview,setMcPreview]=useState(null);
-  const[mcSuccess,setMcSuccess]=useState(false);
-  const[gpCaption,setGpCaption]=useState("");
-  const[gpFile,setGpFile]=useState(null);
-  const[gpPreview,setGpPreview]=useState(null);
-  const[gpUploading,setGpUploading]=useState(false);
-  const[gpError,setGpError]=useState("");
-  const[gpSuccess,setGpSuccess]=useState(false);
-  const[gpPhotos,setGpPhotos]=useState([]);
   const[groupmeLink,setGroupmeLink]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
   const[groupmeLinkInput,setGroupmeLinkInput]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
   const[groupmeLinkSaving,setGroupmeLinkSaving]=useState(false);
@@ -225,10 +152,6 @@ export default function Coach(){
     });
   },[tab,qrType]);
 
-  useEffect(()=>{
-    if(tab==="mcastles-post")loadMcPhoto();
-  },[tab]);
-
   const loadAll=async()=>{
     setLoading(true);
     try{
@@ -258,14 +181,11 @@ export default function Coach(){
     }catch(e){console.error("loadAll error:",e);}
     setLoading(false);
     // Load secondary data independently — won't block main load
-    try{const{data}=await supabase.from("inbox").select("*,athletes(name)").eq("type","prayer").order("created_at",{ascending:false});if(data)setCoachPrayers(data);}catch(e){}
     try{const{data}=await supabase.from("weight_log").select("*").order("date",{ascending:false});if(data)setWeightLogs(data);}catch(e){}
     try{const{data}=await supabase.from("pr_log").select("*").order("date",{ascending:false});if(data)setPrLogs(data);}catch(e){}
     try{const{data}=await supabase.from("announcements").select("day,message").eq("type","anvil_prize").eq("active",true);if(data){const m={};data.forEach(r=>{try{m[r.day]=JSON.parse(r.message);}catch(e){}});setAnvilPrizes(m);}}catch(e){}
-    try{const{data}=await supabase.from("athletes").select("id,name,photo_url,athletic_goal,character_goal,mindset_note_1,mindset_note_2,mindset_note_3,mindset_note_4,mindset_note_5,mindset_note_6").eq("status","active").order("name");if(data)setEngAthletes(data);}catch(e){}
     await loadMusicVotes();
     await loadGroupmeLink();
-    try{const{data}=await supabase.from("announcements").select("*").eq("type","group_photo").eq("active",true).order("created_at",{ascending:false}).limit(30);if(data)setGpPhotos(data);}catch(e){}
   };
 
   const loadMusicVotes=async()=>{
@@ -281,68 +201,6 @@ export default function Coach(){
     }catch(e){}
   };
 
-  const loadMcPhoto=async()=>{
-    try{
-      const{data}=await supabase.from("announcements").select("*").eq("type","mcastles").order("created_at",{ascending:false}).limit(1).maybeSingle();
-      if(data){setMcCurrentPhoto(data);setMcCaption(data.message||"");setMcWeek(data.week_label||"");}
-    }catch(e){}
-  };
-
-  const loadGroupPhotos=async()=>{
-    try{const{data}=await supabase.from("announcements").select("*").eq("type","group_photo").eq("active",true).order("created_at",{ascending:false}).limit(30);if(data)setGpPhotos(data);}catch(e){}
-  };
-
-  const uploadGroupPhoto=async(file)=>{
-    return new Promise((resolve,reject)=>{
-      const reader=new FileReader();
-      reader.onerror=()=>reject(new Error("Could not read file"));
-      reader.onload=ev=>{
-        const img=new Image();
-        img.onerror=()=>reject(new Error("Could not decode image"));
-        img.onload=()=>{
-          // Keep full resolution up to 4000px — high quality for download
-          const MAX=4000;
-          const scale=Math.min(1,MAX/Math.max(img.width,img.height));
-          const canvas=document.createElement("canvas");
-          canvas.width=Math.round(img.width*scale);
-          canvas.height=Math.round(img.height*scale);
-          canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
-          canvas.toBlob(async blob=>{
-            try{
-              const fileName=`group_${Date.now()}.jpg`;
-              const{error:upErr}=await supabase.storage.from("athlete-photos").upload(fileName,blob,{contentType:"image/jpeg",upsert:true});
-              if(upErr){reject(upErr);return;}
-              const{data:{publicUrl}}=supabase.storage.from("athlete-photos").getPublicUrl(fileName);
-              resolve(publicUrl);
-            }catch(e){reject(e);}
-          },"image/jpeg",0.96);
-        };
-        img.src=ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const postGroupPhoto=async()=>{
-    if(!gpFile){setGpError("Select a photo first.");return;}
-    setGpUploading(true);setGpError("");
-    try{
-      const url=await uploadGroupPhoto(gpFile);
-      const{error}=await supabase.from("announcements").insert({type:"group_photo",day:url,message:gpCaption.trim(),active:true});
-      if(error){setGpError("Post failed: "+error.message);setGpUploading(false);return;}
-      await loadGroupPhotos();
-      setGpFile(null);setGpPreview(null);setGpCaption("");
-      setGpSuccess(true);setTimeout(()=>setGpSuccess(false),3000);
-    }catch(e){setGpError("Post failed: "+e.message);}
-    setGpUploading(false);
-  };
-
-  const deleteGroupPhoto=async(id)=>{
-    try{
-      await supabase.from("announcements").update({active:false}).eq("id",id);
-      setGpPhotos(prev=>prev.filter(p=>p.id!==id));
-    }catch(e){}
-  };
 
   const loadGroupmeLink=async()=>{
     try{
@@ -365,55 +223,6 @@ export default function Coach(){
     setGroupmeLinkSaving(false);
   };
 
-  const uploadMotivationalPhoto=async(file)=>{
-    return new Promise((resolve,reject)=>{
-      const reader=new FileReader();
-      reader.onerror=()=>reject(new Error("Could not read file"));
-      reader.onload=ev=>{
-        const img=new Image();
-        img.onerror=()=>reject(new Error("Could not decode image"));
-        img.onload=()=>{
-          const MAX=900;
-          const scale=Math.min(1,MAX/Math.max(img.width,img.height));
-          const canvas=document.createElement("canvas");
-          canvas.width=Math.round(img.width*scale);
-          canvas.height=Math.round(img.height*scale);
-          canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
-          canvas.toBlob(async blob=>{
-            try{
-              const fileName=`motivational_${Date.now()}.jpg`;
-              const{error:upErr}=await supabase.storage.from("athlete-photos").upload(fileName,blob,{contentType:"image/jpeg",upsert:true});
-              if(upErr){reject(upErr);return;}
-              const{data:{publicUrl}}=supabase.storage.from("athlete-photos").getPublicUrl(fileName);
-              resolve(publicUrl);
-            }catch(e){reject(e);}
-          },"image/jpeg",0.85);
-        };
-        img.src=ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const postMcPhoto=async(file)=>{
-    setMcUploading(true);setMcError("");setMcSuccess(false);
-    try{
-      let photoUrl=mcCurrentPhoto?.day||null;
-      if(file){photoUrl=await uploadMotivationalPhoto(file);}
-      if(!photoUrl&&!mcCaption.trim()){setMcError("Add a photo or caption first.");setMcUploading(false);return;}
-      const{error:insErr}=await supabase.from("announcements").insert({
-        message:mcCaption.trim(),
-        week_label:mcWeek.trim(),
-        day:photoUrl,
-        type:"mcastles",
-        active:false
-      });
-      if(insErr){setMcError("Save failed: "+insErr.message);setMcUploading(false);return;}
-      await loadMcPhoto();
-      setMcCaption("");setMcWeek("");setMcFile(null);setMcPreview(null);setMcSuccess(true);
-    }catch(e){setMcError("Error: "+e.message);}
-    setMcUploading(false);
-  };
 
   const callAI=async(prompt)=>{
     const res=await fetch("/api/ai-task",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
@@ -1587,40 +1396,7 @@ export default function Coach(){
 {tab==="mindset"&&<MindsetMonday/>}
 {tab==="culture"&&<CultureEvents athletes={athletes}/>}
 
-          {tab==="prayers"&&(
-            <div>
-              <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
-                <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="pray" size={66} color="#fff"/></div>
-                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
-                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>🙏</div>
-                    <div>
-                      <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Athletes</div>
-                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Prayer Requests</div>
-                      <div style={{fontSize:11,color:"#666",marginTop:1}}>{coachPrayers.length} request{coachPrayers.length!==1?"s":""} from your athletes</div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{background:"#111",padding:"0 18px"}}>
-                  {coachPrayers.length===0&&<div style={{fontSize:13,color:"#555",textAlign:"center",padding:"1.5rem 0"}}>No prayer requests yet.</div>}
-                  {coachPrayers.map((p,i)=>(
-                    <div key={i} style={{padding:"14px 0",borderBottom:i<coachPrayers.length-1?"0.5px solid #1e1e1e":"none",borderLeft:"3px solid "+(prayedFor[p.id]?GREEN:PUR),paddingLeft:12,opacity:prayedFor[p.id]?0.6:1}}>
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-                        <div style={{fontSize:11,fontWeight:700,color:PUR,textTransform:"uppercase",letterSpacing:"0.06em"}}>{p.anonymous?"Anonymous":p.athletes?.name||"Athlete"}</div>
-                        <div style={{fontSize:11,color:"#555"}}>{new Date(p.created_at).toLocaleDateString()}</div>
-                      </div>
-                      <div style={{fontSize:13,color:"#ccc",lineHeight:1.7,fontStyle:"italic",marginBottom:10}}>"{p.message}"</div>
-                      <button onClick={()=>setPrayedFor(prev=>({...prev,[p.id]:true}))} style={{padding:"6px 14px",borderRadius:8,border:"none",background:prayedFor[p.id]?GREEN+"22":PUR,color:prayedFor[p.id]?GREEN:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                        {prayedFor[p.id]?"✓ Prayed for":"Mark as prayed →"}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+            {tab==="prayers"&&<PrayersTab/>}
 
           {tab==="weights"&&(
             <div>
@@ -1874,152 +1650,7 @@ export default function Coach(){
             );
           })()}
 
-          {tab==="photos"&&(
-            <div>
-              {/* ── Post group photos ── */}
-              <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
-                <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="camera" size={66} color="#fff"/></div>
-                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
-                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📸</div>
-                    <div>
-                      <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Group Feed</div>
-                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Post Photos</div>
-                      <div style={{fontSize:11,color:"#666",marginTop:1}}>Athletes see these in their Photos tab</div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{background:"#111",padding:"16px 18px"}}>
-                  <label style={{display:"block",marginBottom:10,cursor:"pointer"}}>
-                    <div style={{borderRadius:12,overflow:"hidden",border:"1.5px dashed "+PUR+"55",background:"#0d0d0d",
-                      minHeight:110,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-                      {gpPreview?(
-                        <img src={gpPreview} style={{width:"100%",maxHeight:220,objectFit:"cover",display:"block"}} alt=""/>
-                      ):(
-                        <div style={{textAlign:"center",padding:"1.5rem"}}>
-                          <div style={{marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="camera" size={28} color="rgba(255,255,255,0.4)"/></div>
-                          <div style={{fontSize:12,color:"#555"}}>Tap to choose photo</div>
-                        </div>
-                      )}
-                    </div>
-                    <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
-                      const file=e.target.files[0];
-                      if(!file)return;
-                      setGpFile(file);
-                      const reader=new FileReader();
-                      reader.onload=ev=>setGpPreview(ev.target.result);
-                      reader.readAsDataURL(file);
-                    }}/>
-                  </label>
-                  <input value={gpCaption} onChange={e=>setGpCaption(e.target.value)}
-                    placeholder="Caption (optional)..."
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #252525",
-                      background:"#0d0d0d",color:"#fff",fontSize:13,fontFamily:"Georgia,serif",
-                      marginBottom:10,boxSizing:"border-box"}}/>
-                  {gpError&&<div style={{fontSize:12,color:RED,marginBottom:8}}>{gpError}</div>}
-                  <button onClick={postGroupPhoto} disabled={gpUploading||!gpFile}
-                    style={{width:"100%",padding:"12px",borderRadius:10,border:"none",
-                      background:gpUploading||!gpFile?"#252525":"linear-gradient(135deg,"+PUR+","+PUR+"cc)",
-                      color:gpUploading||!gpFile?"#555":"#fff",fontSize:13,fontWeight:700,
-                      cursor:gpUploading||!gpFile?"not-allowed":"pointer",fontFamily:"Georgia,serif"}}>
-                    {gpSuccess?"✓ Posted!":gpUploading?"Uploading...":"Post to athletes →"}
-                  </button>
-                  {gpPhotos.length>0&&(
-                    <div style={{marginTop:16}}>
-                      <div style={{fontSize:11,color:"#444",marginBottom:8}}>Posted ({gpPhotos.length}) · tap × to remove</div>
-                      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-                        {gpPhotos.map((p,i)=>(
-                          <div key={i} style={{position:"relative",borderRadius:8,overflow:"hidden",aspectRatio:"1",background:"#1a1a1a"}}>
-                            <img src={p.day} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>
-                            <button onClick={()=>deleteGroupPhoto(p.id)}
-                              style={{position:"absolute",top:3,right:3,width:20,height:20,borderRadius:"50%",
-                                border:"none",background:"rgba(0,0,0,0.75)",color:RED,cursor:"pointer",
-                                fontSize:13,fontWeight:900,lineHeight:1,padding:0,display:"flex",
-                                alignItems:"center",justifyContent:"center"}}>×</button>
-                            {p.message&&(
-                              <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"2px 4px",
-                                background:"rgba(0,0,0,0.6)",fontSize:8,color:"#ddd",
-                                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.message}</div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ── Google Drive documents ── */}
-              <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid #4285f433"}}>
-                <div style={{background:"linear-gradient(140deg,#4285f430,#4285f410,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#4285f4,#4285f444,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="fileText" size={66} color="#fff"/></div>
-                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,#4285f412,transparent 70%)",pointerEvents:"none"}}/>
-                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,#4285f444,#4285f422)",border:"1px solid #4285f444",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px #4285f433"}}>📁</div>
-                    <div>
-                      <div style={{fontSize:8,color:"#4285f4",textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Documents</div>
-                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Google Drive</div>
-                      <div style={{fontSize:11,color:"#666",marginTop:1}}>Share docs, programs, or posters with athletes</div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{background:"#111",padding:"16px 18px"}}>
-                  <div style={{background:"#0a1520",borderRadius:8,padding:"10px 12px",marginBottom:12,border:"0.5px solid #4285f422"}}>
-                    <div style={{fontSize:11,color:"#4285f4",fontWeight:600,marginBottom:4}}>How to share from Google Drive:</div>
-                    <div style={{fontSize:11,color:"#777",lineHeight:2}}>1. Open doc in Google Drive &nbsp; 2. Share → Anyone with link &nbsp; 3. Paste below</div>
-                  </div>
-                  <DriveLinksManager/>
-                </div>
-              </div>
-
-              {/* ── Athlete profile photos ── */}
-              <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+STEEL+"33"}}>
-                <div style={{background:"linear-gradient(140deg,"+STEEL+"30,"+STEEL+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+","+STEEL+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="profile" size={66} color="#fff"/></div>
-                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+STEEL+"12,transparent 70%)",pointerEvents:"none"}}/>
-                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+STEEL+"44,"+STEEL+"22)",border:"1px solid "+STEEL+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+STEEL+"33"}}>👤</div>
-                    <div>
-                      <div style={{fontSize:8,color:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Profile Photos</div>
-                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Athlete Headshots</div>
-                      <div style={{fontSize:11,color:"#666",marginTop:1}}>Used on profile cards, leaderboards, etc.</div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{background:"#111",padding:"16px 18px"}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                    {athletes.filter(a=>a.status==="active").map((a,i)=>(
-                      <div key={i} style={{background:"#1a1a1a",borderRadius:12,padding:"1rem",border:"0.5px solid #252525",textAlign:"center"}}>
-                        <div style={{width:64,height:64,borderRadius:"50%",background:STEEL,margin:"0 auto 8px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"#fff"}}>
-                          {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={ev=>{ev.target.style.display="none";}} alt=""/>:a.name[0]}
-                        </div>
-                        <div style={{fontSize:12,fontWeight:500,color:"#ddd",marginBottom:8}}>{a.name}</div>
-                        <label style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid "+ORANGE,background:ORANGE+"18",fontSize:11,cursor:"pointer",color:ORANGE,display:"inline-block",fontWeight:600}}>
-                          {uploadingPhoto===a.id?"Saving...":a.photo_url?"Change":"Add Photo"}
-                          <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={async e=>{
-                            const file=e.target.files[0];
-                            if(!file)return;
-                            setUploadingPhoto(a.id);
-                            try{
-                              const publicUrl=await uploadAthletePhoto(a.id,file);
-                              const{error}=await supabase.from("athletes").update({photo_url:publicUrl}).eq("id",a.id);
-                              if(error){alert("Error saving photo: "+error.message);}
-                              else{setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:publicUrl}:x));}
-                            }catch(err){alert("Error saving photo: "+err.message);}
-                            setUploadingPhoto(null);
-                          }}/>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+            {tab==="photos"&&<PhotosTab athletes={athletes} setAthletes={setAthletes} uploadAthletePhoto={uploadAthletePhoto}/>}
 
           {tab==="qr"&&(
             <div>
@@ -2130,46 +1761,7 @@ export default function Coach(){
             </div>
           )}
 
-          {tab==="engagement"&&(
-            <div>
-              <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
-                <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="barChart" size={66} color="#fff"/></div>
-                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
-                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📊</div>
-                    <div>
-                      <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>App Usage</div>
-                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Athlete Engagement</div>
-                      <div style={{fontSize:11,color:"#666",marginTop:1}}>Goals, notes, and photos</div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{background:"#111",padding:"16px 18px"}}>
-                  <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:8,marginBottom:8,padding:"0 4px"}}>
-                    <div style={{fontSize:11,fontWeight:500,color:"#555",textTransform:"uppercase",letterSpacing:"0.04em"}}>Athlete</div>
-                    <div style={{fontSize:11,fontWeight:500,color:"#555",textTransform:"uppercase",letterSpacing:"0.04em",textAlign:"center"}}>Goals</div>
-                    <div style={{fontSize:11,fontWeight:500,color:"#555",textTransform:"uppercase",letterSpacing:"0.04em",textAlign:"center"}}>Notes</div>
-                    <div style={{fontSize:11,fontWeight:500,color:"#555",textTransform:"uppercase",letterSpacing:"0.04em",textAlign:"center"}}>Photo</div>
-                  </div>
-                  {engAthletes.map((a,i)=>{
-                    const hasGoal=!!(a.athletic_goal||a.character_goal);
-                    const noteCount=[1,2,3,4,5,6].filter(n=>a["mindset_note_"+n]).length;
-                    const hasPhoto=!!a.photo_url;
-                    return(
-                      <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:8,padding:"10px 4px",borderBottom:i<engAthletes.length-1?"0.5px solid #1e1e1e":"none",alignItems:"center"}}>
-                        <div style={{fontSize:13,fontWeight:500,color:"#ddd"}}>{a.name}</div>
-                        <div style={{textAlign:"center",fontSize:14}}>{hasGoal?"✅":"⬜"}</div>
-                        <div style={{textAlign:"center"}}><span style={{fontSize:12,fontWeight:600,color:noteCount>0?PUR:"#333"}}>{noteCount}</span></div>
-                        <div style={{textAlign:"center",fontSize:14}}>{hasPhoto?"📸":"⬜"}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
+            {tab==="engagement"&&<EngagementTab/>}
 
 
           {tab==="anvil"&&(()=>{
@@ -2628,88 +2220,7 @@ export default function Coach(){
             </div>
           )}
 
-          {tab==="mcastles-post"&&(
-            <div>
-              {/* Hero banner */}
-              <div style={{borderRadius:16,marginBottom:14,overflow:"hidden",border:"1px solid "+ORANGE+"44",position:"relative"}}>
-                <div style={{background:"linear-gradient(140deg,#1a0800,#0f0600)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+ORANGE+","+GOLD+",transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none"}}>🍑</div>
-                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                    <div style={{width:52,height:52,borderRadius:14,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0,boxShadow:"0 0 20px "+ORANGE+"33"}}>🍑🚀</div>
-                    <div>
-                      <div style={{fontSize:9,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.22em",fontWeight:900,marginBottom:2}}>MCASTLES</div>
-                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Photo of the Week</div>
-                      <div style={{fontSize:11,color:"#555",marginTop:1}}>Upload · Motivate · Inspire</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Currently live */}
-              {mcCurrentPhoto&&(
-                <div style={{background:"#111",borderRadius:14,padding:"14px",marginBottom:14,border:"0.5px solid #1e1e1e"}}>
-                  <div style={{fontSize:10,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.15em",fontWeight:700,marginBottom:8}}>Currently Live</div>
-                  {mcCurrentPhoto.week_label&&<div style={{fontSize:11,color:"#777",marginBottom:6}}>{mcCurrentPhoto.week_label}</div>}
-                  {mcCurrentPhoto.day&&<img src={mcCurrentPhoto.day} alt="Current motivational" style={{width:"100%",borderRadius:10,marginBottom:8,display:"block"}}/>}
-                  {mcCurrentPhoto.message&&<div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>&ldquo;{mcCurrentPhoto.message}&rdquo;</div>}
-                </div>
-              )}
-
-              {/* Post form */}
-              <div style={{background:"#111",borderRadius:14,padding:"16px",border:"0.5px solid "+ORANGE+"33"}}>
-                <div style={{fontSize:12,fontWeight:700,color:ORANGE,marginBottom:14,textTransform:"uppercase",letterSpacing:"0.1em"}}>Post New Photo of the Week</div>
-
-                {/* Photo picker */}
-                <div style={{marginBottom:12}}>
-                  <div style={{fontSize:11,color:"#666",marginBottom:6}}>Photo</div>
-                  <label style={{display:"block",cursor:"pointer"}}>
-                    <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
-                      const f=e.target.files?.[0];
-                      if(!f)return;
-                      setMcFile(f);
-                      setMcPreview(URL.createObjectURL(f));
-                      setMcSuccess(false);setMcError("");
-                    }}/>
-                    {mcPreview?(
-                      <div style={{position:"relative"}}>
-                        <img src={mcPreview} style={{width:"100%",borderRadius:10,maxHeight:200,objectFit:"cover",display:"block"}}/>
-                        <div style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,0.7)",borderRadius:6,padding:"3px 8px",fontSize:11,color:ORANGE}}>tap to change</div>
-                      </div>
-                    ):(
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"18px",borderRadius:10,border:"1px dashed "+ORANGE+"55",background:"#0f0600",color:ORANGE,fontSize:13,fontWeight:600}}>
-                        📸 Tap to choose photo
-                      </div>
-                    )}
-                  </label>
-                </div>
-
-                {/* Week label */}
-                <div style={{marginBottom:10}}>
-                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Week label</div>
-                  <input value={mcWeek} onChange={e=>setMcWeek(e.target.value)} placeholder='e.g. "Week 3 — May 2026"'
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",fontSize:13,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
-                </div>
-
-                {/* Caption */}
-                <div style={{marginBottom:14}}>
-                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Caption / message</div>
-                  <textarea value={mcCaption} onChange={e=>setMcCaption(e.target.value)} placeholder="Write something motivational..." rows={3}
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",fontSize:13,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}/>
-                </div>
-
-                {mcError&&<div style={{fontSize:12,color:RED,marginBottom:10,padding:"8px 10px",background:"#1a0808",borderRadius:6,border:"0.5px solid "+RED+"33"}}>{mcError}</div>}
-                {mcSuccess&&<div style={{fontSize:12,color:GREEN,marginBottom:10,padding:"8px 10px",background:"#081a0d",borderRadius:6,border:"0.5px solid "+GREEN+"33"}}>✓ Posted! Athletes can see it now.</div>}
-
-                <button
-                  disabled={mcUploading||(!mcFile&&!mcCaption.trim())}
-                  onClick={()=>postMcPhoto(mcFile||null)}
-                  style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:mcUploading?"#333":ORANGE,color:"#fff",fontSize:15,fontWeight:800,cursor:mcUploading?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:(mcUploading||(!mcFile&&!mcCaption.trim()))?0.5:1,letterSpacing:"0.02em"}}>
-                  {mcUploading?"⏳ Posting...":"🍑🚀 Post Photo of the Week"}
-                </button>
-              </div>
-            </div>
-          )}
+            {tab==="mcastles-post"&&<MCastlesPostTab/>}
             {tab==="injuries"&&<InjuriesTab athletes={athletes}/>}
 
             {tab==="ironroom"&&<IronRoomTab athletes={athletes}/>}
