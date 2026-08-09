@@ -51,7 +51,6 @@ export default function Coach(){
   const[showTabPicker,setShowTabPicker]=useState(false);
   const[pinnedTabs,setPinnedTabs]=useState(["roster","inbox","attendance"]);
   const[editingPins,setEditingPins]=useState(false);
-  const[navDragId,setNavDragId]=useState(null);
   const navDragOrderRef=useRef(null);
   const navLastSwapY=useRef(0);
   const[jiggleMode,setJiggleMode]=useState(false);
@@ -63,7 +62,6 @@ export default function Coach(){
   const jiggleDragElemRef=useRef(null);
   const[moreOrder,setMoreOrder]=useState([]);
   const moreOrderRef=useRef([]);
-  const[gridDragId,setGridDragId]=useState(null);
   const gridDragElemRef=useRef(null);
   const gridLongPressRef=useRef(null);
   const gridLastOverId=useRef(null);
@@ -81,21 +79,13 @@ export default function Coach(){
   const[newGender,setNewGender]=useState("");
   const[newRole,setNewRole]=useState("iron");
   const[genLoading,setGenLoading]=useState(null);
-  const[attRecords,setAttRecords]=useState(null);
-  const[weightSort,setWeightSort]=useState("change");
-  const[weightData,setWeightData]=useState(null);
   const[goalReviews,setGoalReviews]=useState({});
-  const[inboxFilter,setInboxFilter]=useState("all");
-  const[inboxAthFilter,setInboxAthFilter]=useState("");
   // Read/unread layer — tracks which inbox items the coach has already seen.
   // Persisted per-coach in localStorage; new items glow + show a NEW badge until viewed.
   const inboxSeenRef=useRef(null);
   const[inboxNewIds,setInboxNewIds]=useState(()=>new Set());
   const[weightLogs,setWeightLogs]=useState([]);
   const[prLogs,setPrLogs]=useState([]);
-  const[recapOpen,setRecapOpen]=useState(false);
-  const[recapData,setRecapData]=useState(null);
-  const[recapLoading,setRecapLoading]=useState(false);
   const[modalAth,setModalAth]=useState(null);
   const[modalData,setModalData]=useState(null);
   const[modalLoading,setModalLoading]=useState(false);
@@ -286,27 +276,6 @@ export default function Coach(){
       await supabase.from("announcements").insert({type:"general",message:announcement,week_label:"This week",active:true});
     }
     await loadAll();
-  };
-
-  const loadRecap=async()=>{
-    setRecapLoading(true);
-    try{
-      const now=new Date();
-      const est=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
-      const day=est.getDay();
-      const monday=new Date(est);
-      monday.setDate(est.getDate()-(day===0?6:day-1));
-      monday.setHours(0,0,0,0);
-      const monStr=monday.getFullYear()+"-"+String(monday.getMonth()+1).padStart(2,"0")+"-"+String(monday.getDate()).padStart(2,"0");
-      const todayStr=est.getFullYear()+"-"+String(est.getMonth()+1).padStart(2,"0")+"-"+String(est.getDate()).padStart(2,"0");
-      const[{data:weekAtt},{data:lbRows},{data:weekInbox}]=await Promise.all([
-        supabase.from("attendance").select("*,athletes(name)").gte("date",monStr).lte("date",todayStr),
-        supabase.from("leaderboard").select("*,athletes(name)").order("current_streak",{ascending:false}),
-        supabase.from("inbox").select("*,athletes(name)").eq("done",false).gte("created_at",new Date(monday.getTime()+(now.getTime()-est.getTime())).toISOString()),
-      ]);
-      setRecapData({weekAtt:weekAtt||[],lbRows:lbRows||[],weekInbox:weekInbox||[]});
-    }catch(e){console.error("Recap load:",e);}
-    setRecapLoading(false);
   };
 
   const openAthleteModal=async(ath)=>{
