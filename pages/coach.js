@@ -285,7 +285,7 @@ export default function Coach(){
     try{
       const[{data:att},{data:lbRow},{data:msgs},{data:wt},{data:anv}]=await Promise.all([
         supabase.from("attendance").select("*").eq("athlete_id",ath.id).order("date",{ascending:false}).limit(20),
-        supabase.from("leaderboard").select("*").eq("athlete_id",ath.id).single(),
+        supabase.from("leaderboard").select("*").eq("athlete_id",ath.id).maybeSingle(),
         supabase.from("inbox").select("*").eq("athlete_id",ath.id).order("created_at",{ascending:false}).limit(8),
         supabase.from("weight_log").select("*").eq("athlete_id",ath.id).order("date",{ascending:false}).limit(6),
         supabase.from("anvil").select("*").eq("athlete_name",ath.name).order("created_at",{ascending:false}),

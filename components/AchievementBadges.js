@@ -10,7 +10,7 @@ export default function AchievementBadges({athlete}){
   useEffect(()=>{
     if(!athlete?.id)return;
     (async()=>{
-      try{const{data}=await supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id).single();setLb(data||{});}catch(e){setLb({});}
+      try{const{data}=await supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id).maybeSingle();setLb(data||{});}catch(e){setLb({});}
       try{const{data}=await supabase.from("anvil").select("*");setMyAnvils((data||[]).filter(a=>a.athlete_name===athlete.name));}catch(e){}
     })();
   },[athlete?.id]);

@@ -281,7 +281,7 @@ export default function Athlete(){
       if(data){for(const rec of data){if(rec.status==="early")s++;else break;}}
       setStreak(s);
     }catch(e){}
-    try{const{data:lbRow}=await supabase.from("leaderboard").select("*").eq("athlete_id",athleteId).single();if(lbRow)setAthleteLb(lbRow);}catch(e){}
+    try{const{data:lbRow}=await supabase.from("leaderboard").select("*").eq("athlete_id",athleteId).maybeSingle();if(lbRow)setAthleteLb(lbRow);}catch(e){}
     try{
       const _vd=nowEST();
       const _ds=`${_vd.getFullYear()}-${String(_vd.getMonth()+1).padStart(2,'0')}-${String(_vd.getDate()).padStart(2,'0')}`;
@@ -400,7 +400,7 @@ export default function Athlete(){
     // Load supporting data in parallel while Face ID is scanning
     const loads=Promise.all([
       loadAttendance(a.id),
-      (async()=>{try{const{data}=await supabase.from("athletes").select("*").eq("id",a.id).single();if(data)setSelectedAthlete(data);}catch(e){}})(),
+      (async()=>{try{const{data}=await supabase.from("athletes").select("*").eq("id",a.id).maybeSingle();if(data)setSelectedAthlete(data);}catch(e){}})(),
     ]);
 
     if(bioPromise){
