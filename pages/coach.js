@@ -49,6 +49,9 @@ export default function Coach(){
   const[pinError,setPinError]=useState("");
   const[tab,setTab]=useState(coachRole==="kevin"?"roster":"overview");
   const[showTabPicker,setShowTabPicker]=useState(false);
+  const[themeMode,setThemeMode]=useState("dark");
+  useEffect(()=>{try{setThemeMode(localStorage.getItem("tf_theme")==="light"?"light":"dark");}catch(e){}},[]);
+  const toggleTheme=()=>{setThemeMode(prev=>{const next=prev==="dark"?"light":"dark";try{localStorage.setItem("tf_theme",next);}catch(e){}if(typeof document!=="undefined")document.documentElement.setAttribute("data-theme",next==="light"?"light":"");return next;});};
   const[pinnedTabs,setPinnedTabs]=useState(["roster","inbox","attendance"]);
   const[editingPins,setEditingPins]=useState(false);
   const navDragOrderRef=useRef(null);
@@ -872,6 +875,21 @@ export default function Coach(){
                       <div style={{position:"sticky",top:0,background:"rgba(10,10,18,0.98)",padding:"18px 16px 12px",zIndex:1,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"0.5px solid rgba(255,255,255,0.08)"}}>
                         <div style={{fontSize:17,fontWeight:900,color:"#fff",letterSpacing:"-0.01em"}}>All Tabs</div>
                         <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)",fontSize:14,cursor:"pointer",width:30,height:30,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>✕</button>
+                      </div>
+                      {/* Appearance: light / dark */}
+                      <div style={{padding:"12px 16px 4px"}}>
+                        <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>Appearance</div>
+                        <div style={{display:"flex",gap:6,background:"#131313",borderRadius:12,padding:4,border:"1px solid #222"}}>
+                          {[{m:"dark",label:"🌙 Dark"},{m:"light",label:"☀️ Light"}].map(o=>{
+                            const on=themeMode===o.m;
+                            return(
+                              <button key={o.m} onClick={()=>{if(themeMode!==o.m)toggleTheme();}}
+                                style={{flex:1,padding:"9px",borderRadius:9,border:"none",background:on?"#E8720C":"transparent",color:on?"#fff":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:on?800:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                                {o.label}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                       {SECTIONS.map(section=>(
                         <div key={section.label} style={{marginTop:6}}>

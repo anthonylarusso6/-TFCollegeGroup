@@ -16,6 +16,12 @@ export default function App({ Component, pageProps }) {
       navigator.serviceWorker.register("/sw.js").catch(()=>{});
     }
 
+    // Apply saved light/dark preference (default dark)
+    try{
+      const savedTheme=localStorage.getItem("tf_theme");
+      if(savedTheme==="light")document.documentElement.setAttribute("data-theme","light");
+    }catch(e){}
+
     return()=>window.removeEventListener("unhandledrejection", handler);
   },[]);
 

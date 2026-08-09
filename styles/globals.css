@@ -168,3 +168,81 @@ select option {
   100% { opacity: 1; transform: translateY(0); }
 }
 .tf-fade-up { animation: tfFadeUp 0.4s ease both; }
+
+/* ══════════════════════════════════════════════════════════════
+   LIGHT MODE  —  html[data-theme="light"]
+   Mirrors the dark attribute-selector system above, mapping the app's
+   hardcoded dark inline colors to a clean light palette. Scoped under
+   html[data-theme="light"] so it overrides the always-on dark rules.
+   Accent colors (orange/gold/green/purple/red) are left untouched.
+   ══════════════════════════════════════════════════════════════ */
+html[data-theme="light"],
+html[data-theme="light"] body { background:#eceef2 !important; color:#16191f; }
+
+/* App shell gradients → soft light */
+html[data-theme="light"] [style*="linear-gradient(160deg,#06060f"],
+html[data-theme="light"] [style*="linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)"] { background:#eceef2 !important; }
+html[data-theme="light"] [style*="linear-gradient(180deg,#0e0e1c"] { background:linear-gradient(180deg,#ffffff,#f3f4f7) !important; }
+
+/* Card / surface backgrounds → white & light greys */
+html[data-theme="light"] [style*="background:#080808"] { background:#eceef2 !important; }
+html[data-theme="light"] [style*="background:#0a0a0a"] { background:#f6f7f9 !important; }
+html[data-theme="light"] [style*="background:#0d0d0d"] { background:#ffffff !important; }
+html[data-theme="light"] [style*="background:#0e0e0e"] { background:#ffffff !important; }
+html[data-theme="light"] [style*="background:#0f0f0f"] { background:#f6f7f9 !important; }
+html[data-theme="light"] [style*="background:#111"]    { background:#ffffff !important; }
+html[data-theme="light"] [style*="background:#131313"] { background:#ffffff !important; }
+html[data-theme="light"] [style*="background:#141414"] { background:#f4f5f8 !important; }
+html[data-theme="light"] [style*="background:#151515"] { background:#f4f5f8 !important; }
+html[data-theme="light"] [style*="background:#1a1a1a"] { background:#eef0f4 !important; }
+html[data-theme="light"] [style*="background:#1e1e1e"] { background:#e7e9ee !important; }
+html[data-theme="light"] [style*="background:#222"]    { background:#e7e9ee !important; }
+/* Glass whites used as surfaces → subtle dark tint on light */
+html[data-theme="light"] [style*="background:rgba(255,255,255,0.04"],
+html[data-theme="light"] [style*="background:rgba(255,255,255,0.045"],
+html[data-theme="light"] [style*="background:rgba(255,255,255,0.05"],
+html[data-theme="light"] [style*="background:rgba(255,255,255,0.06"],
+html[data-theme="light"] [style*="background:rgba(255,255,255,0.07"] { background:rgba(0,0,0,0.04) !important; }
+/* Translucent nav/drawer/sheet chrome → light frosted */
+html[data-theme="light"] [style*="rgba(8,8,14"] { background:rgba(255,255,255,0.9) !important; }
+html[data-theme="light"] [style*="rgba(10,10,18"] { background:rgba(250,250,252,0.98) !important; }
+
+/* Borders → light grey */
+html[data-theme="light"] [style*="solid #252525"] { border-color:rgba(0,0,0,0.12) !important; }
+html[data-theme="light"] [style*="solid #2a2a2a"] { border-color:rgba(0,0,0,0.12) !important; }
+html[data-theme="light"] [style*="solid #1e1e1e"] { border-color:rgba(0,0,0,0.10) !important; }
+html[data-theme="light"] [style*="solid #1a1a1a"] { border-color:rgba(0,0,0,0.08) !important; }
+html[data-theme="light"] [style*="solid #141414"] { border-color:rgba(0,0,0,0.07) !important; }
+html[data-theme="light"] [style*="solid #333"]    { border-color:rgba(0,0,0,0.16) !important; }
+html[data-theme="light"] [style*="solid #222"]    { border-color:rgba(0,0,0,0.11) !important; }
+html[data-theme="light"] [style*="solid rgba(255,255,255,0.08"],
+html[data-theme="light"] [style*="solid rgba(255,255,255,0.1"],
+html[data-theme="light"] [style*="solid rgba(255,255,255,0.12"],
+html[data-theme="light"] [style*="solid rgba(255,255,255,0.15"] { border-color:rgba(0,0,0,0.12) !important; }
+
+/* Neutral text greys → readable dark greys (accents untouched) */
+html[data-theme="light"] [style*="color:#fff"]  { color:#16191f !important; }
+html[data-theme="light"] [style*="color:#ddd"]  { color:#2a2f37 !important; }
+html[data-theme="light"] [style*="color:#ccc"]  { color:#333941 !important; }
+html[data-theme="light"] [style*="color:#bbb"]  { color:#3c424b !important; }
+html[data-theme="light"] [style*="color:#aaa"]  { color:#4a505a !important; }
+html[data-theme="light"] [style*="color:#999"]  { color:#5b626c !important; }
+html[data-theme="light"] [style*="color:#888"]  { color:#646b75 !important; }
+html[data-theme="light"] [style*="color:#777"]  { color:#6d747e !important; }
+html[data-theme="light"] [style*="color:#666"]  { color:#767d87 !important; }
+html[data-theme="light"] [style*="color:#555"]  { color:#828994 !important; }
+html[data-theme="light"] [style*="color:rgba(255,255,255,0.7"],
+html[data-theme="light"] [style*="color:rgba(255,255,255,0.6"],
+html[data-theme="light"] [style*="color:rgba(255,255,255,0.5"] { color:rgba(0,0,0,0.66) !important; }
+html[data-theme="light"] [style*="color:rgba(255,255,255,0.4"],
+html[data-theme="light"] [style*="color:rgba(255,255,255,0.3"],
+html[data-theme="light"] [style*="color:rgba(255,255,255,0.2"] { color:rgba(0,0,0,0.5) !important; }
+
+/* Form controls → light */
+html[data-theme="light"] input:not([type="range"]):not([type="file"]):not([type="color"]):not([type="checkbox"]):not([type="radio"]),
+html[data-theme="light"] textarea,
+html[data-theme="light"] select {
+  background:#ffffff !important; border-color:rgba(0,0,0,0.15) !important; color:#16191f !important;
+}
+html[data-theme="light"] select option { background:#ffffff; color:#16191f; }
+html[data-theme="light"] ::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.18); }
