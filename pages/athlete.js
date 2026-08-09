@@ -64,6 +64,9 @@ export default function Athlete(){
   const[bioRegistering,setBioRegistering]=useState(false);
   const[bioRegResult,setBioRegResult]=useState(null);
   const[showTabPicker,setShowTabPicker]=useState(false);
+  const[themeMode,setThemeMode]=useState("dark");
+  useEffect(()=>{try{setThemeMode(localStorage.getItem("tf_theme")==="light"?"light":"dark");}catch(e){}},[]);
+  const toggleTheme=()=>setThemeMode(prev=>{const next=prev==="dark"?"light":"dark";try{localStorage.setItem("tf_theme",next);}catch(e){}if(typeof document!=="undefined")document.documentElement.setAttribute("data-theme",next==="light"?"light":"");return next;});
   const[pinnedTabs,setPinnedTabs]=useState(["prs","attendance","weight"]);
   const[editingPins,setEditingPins]=useState(false);
   const[navDragId,setNavDragId]=useState(null);
@@ -1613,56 +1616,58 @@ export default function Athlete(){
                 )}
 
                 {showTabPicker&&(
-                  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
-                    <div style={{flex:1}}/>
-                    <div style={{background:"rgba(10,10,18,0.97)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRadius:"28px 28px 0 0",border:"1px solid rgba(255,255,255,0.12)",borderBottom:"none",boxShadow:"0 -24px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.1)",maxHeight:"86vh",overflowY:"auto",paddingBottom:44}} onClick={e=>e.stopPropagation()}>
-                      <div style={{padding:"20px 16px 0",position:"sticky",top:0,background:"rgba(10,10,18,0.97)",zIndex:1}}>
-                        <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.2)",margin:"0 auto 16px"}}/>
-                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-                          <div style={{fontSize:17,fontWeight:800,color:"#fff"}}>All Tabs</div>
-                          <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer",lineHeight:1,width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0}}>✕</button>
+                  <>
+                  <style>{`@keyframes tfDrawerIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
+                  <div onClick={()=>setShowTabPicker(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.62)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",zIndex:9999,display:"flex"}}>
+                    <div onClick={e=>e.stopPropagation()} style={{width:"min(84vw,300px)",height:"100%",overflowY:"auto",background:"rgba(10,10,18,0.98)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRight:"1px solid rgba(255,255,255,0.12)",boxShadow:"24px 0 60px rgba(0,0,0,0.7)",paddingBottom:40,animation:"tfDrawerIn 0.26s cubic-bezier(0.22,1,0.36,1)",WebkitOverflowScrolling:"touch"}}>
+                      <div style={{position:"sticky",top:0,background:"rgba(10,10,18,0.98)",padding:"18px 16px 12px",zIndex:1,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"0.5px solid rgba(255,255,255,0.08)"}}>
+                        <div style={{fontSize:17,fontWeight:900,color:"#fff",letterSpacing:"-0.01em"}}>All Tabs</div>
+                        <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)",fontSize:14,cursor:"pointer",width:30,height:30,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>✕</button>
+                      </div>
+                      {/* Appearance: light / dark */}
+                      <div style={{padding:"12px 16px 4px"}}>
+                        <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>Appearance</div>
+                        <div style={{display:"flex",gap:6,background:"#131313",borderRadius:12,padding:4,border:"1px solid #222"}}>
+                          {[{m:"dark",label:"🌙 Dark"},{m:"light",label:"☀️ Light"}].map(o=>{
+                            const on=themeMode===o.m;
+                            return(
+                              <button key={o.m} onClick={()=>{if(themeMode!==o.m)toggleTheme();}}
+                                style={{flex:1,padding:"9px",borderRadius:9,border:"none",background:on?"#E8720C":"transparent",color:on?"#fff":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:on?800:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                                {o.label}
+                              </button>
+                            );
+                          })}
                         </div>
-                        <div style={{height:"0.5px",background:"rgba(255,255,255,0.07)",marginBottom:4}}/>
                       </div>
                       {[
+                        {label:"Home",ids:["profile"]},
                         {label:"Training",ids:["prs","weight","stretching","body"]},
                         {label:"Progress",ids:["attendance","leaderboard","anvil"]},
                         {label:"Team & Faith",ids:["mygroup","verse","prayer","bracelets"]},
                         {label:"More",ids:["mcastles","events","photos","notes","habits","private"]},
                       ].map(section=>(
-                        <div key={section.label}>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,padding:"14px 16px 8px"}}>{section.label}</div>
-                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,padding:"0 12px"}}>
-                            {section.ids.map(id=>{
-                              const t=TABS.find(x=>x.id===id);
-                              if(!t)return null;
-                              const col=ICON_COLORS[id]||"#aaa";
-                              const isActive=tab===id;
-                              const isPinned=validPinned.includes(id);
-                              const canPin=!isPinned&&validPinned.length<3;
-                              return(
-                                <div key={id} style={{position:"relative"}}>
-                                  <button
-                                    onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}
-                                    style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"16px 8px 12px",borderRadius:16,background:isActive?col+"18":"rgba(255,255,255,0.04)",border:"1px solid "+(isActive?col+"55":"rgba(255,255,255,0.07)"),boxShadow:isActive?"0 0 16px "+col+"33":"none",cursor:"pointer",fontFamily:"Georgia,serif",boxSizing:"border-box"}}>
-                                    <div style={{width:46,height:46,borderRadius:14,background:col+"1c",border:"1px solid "+col+(isActive?"55":"2a"),display:"flex",alignItems:"center",justifyContent:"center",boxShadow:isActive?"0 0 14px "+col+"44":"none"}}>
-                                      <span style={{display:"flex",alignItems:"center",filter:isActive?"drop-shadow(0 0 6px "+col+"bb)":"none"}}>{renderTabIcon(id,22,isActive)}</span>
-                                    </div>
-                                    <span style={{fontSize:12,fontWeight:isActive?700:500,color:isActive?col:"rgba(255,255,255,0.65)",textAlign:"center",lineHeight:1.3}}>{t.label}</span>
-                                  </button>
-                                  <button
-                                    onClick={(e)=>{e.stopPropagation();if(isPinned||canPin)togglePin(id);}}
-                                    style={{position:"absolute",top:7,right:7,width:22,height:22,borderRadius:6,background:isPinned?col+"33":"rgba(255,255,255,0.07)",border:"1px solid "+(isPinned?col+"66":"rgba(255,255,255,0.12)"),display:"flex",alignItems:"center",justifyContent:"center",cursor:isPinned||canPin?"pointer":"default",opacity:!isPinned&&!canPin?0.2:1,padding:0}}>
-                                    <span style={{fontSize:9,color:isPinned?col:"rgba(255,255,255,0.3)",fontWeight:800,lineHeight:1}}>{isPinned?"✓":"+"}</span>
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
+                        <div key={section.label} style={{marginTop:6}}>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,padding:"12px 18px 6px"}}>{section.label}</div>
+                          {section.ids.map(id=>{
+                            const t=TABS.find(x=>x.id===id);
+                            if(!t)return null;
+                            const col=ICON_COLORS[id]||"#aaa";
+                            const active=tab===id;
+                            const pinned=validPinned.includes(id);
+                            return(
+                              <button key={id} onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}
+                                style={{width:"100%",display:"flex",alignItems:"center",gap:13,padding:"12px 18px",background:active?col+"1f":"transparent",borderLeft:"3px solid "+(active?col:"transparent"),borderTop:"none",borderRight:"none",borderBottom:"none",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",transition:"background 0.12s"}}>
+                                <span style={{width:24,height:24,borderRadius:8,background:active?col+"22":"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{renderTabIcon(id,17,active)}</span>
+                                <span style={{fontSize:14.5,fontWeight:active?800:500,color:active?col:"rgba(255,255,255,0.72)",letterSpacing:active?"0.01em":"0"}}>{t.label}</span>
+                                {pinned&&<span title="On the bottom bar" style={{marginLeft:"auto",fontSize:9,color:active?col:"rgba(255,255,255,0.3)",flexShrink:0}}>● bar</span>}
+                              </button>
+                            );
+                          })}
                         </div>
                       ))}
                     </div>
                   </div>
+                  </>
                 )}
               </>
             );
