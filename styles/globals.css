@@ -177,15 +177,14 @@ select option {
    Accent colors (orange/gold/green/purple/red) are left untouched.
    ══════════════════════════════════════════════════════════════ */
 html[data-theme="light"],
-html[data-theme="light"] body { background:#eceef2 !important; color:#16191f; }
+html[data-theme="light"] body { background:#e4e7ee !important; color:#0e1116; }
 
 /* App shell gradients → soft light */
-html[data-theme="light"] [style*="linear-gradient(160deg,#06060f"],
-html[data-theme="light"] [style*="linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)"] { background:#eceef2 !important; }
+html[data-theme="light"] [style*="linear-gradient(160deg,#06060f"] { background:#e4e7ee !important; }
 html[data-theme="light"] [style*="linear-gradient(180deg,#0e0e1c"] { background:linear-gradient(180deg,#ffffff,#f3f4f7) !important; }
 html[data-theme="light"] [style*="linear-gradient(180deg,#0e0600"] { background:linear-gradient(180deg,#ffffff,#f3f4f7) !important; }
 html[data-theme="light"] [style*="linear-gradient(160deg,#080808"],
-html[data-theme="light"] [style*="linear-gradient(160deg,#1f1700"] { background:#eceef2 !important; }
+html[data-theme="light"] [style*="linear-gradient(160deg,#1f1700"] { background:#e4e7ee !important; }
 
 /* Gradient CARDS → light. Most accent-tinted cards end in a dark base
    (…,#0d0d0d) or …,#131313) / …,#0e0e0e)); flat text was flipped to dark,
@@ -204,7 +203,7 @@ html[data-theme="light"] [style*="linear-gradient(135deg,#0d1f0f"],
 html[data-theme="light"] [style*="linear-gradient(135deg,#1a3a1a"] { background:linear-gradient(140deg,#e9f7ee,#f4fbf6) !important; }
 
 /* Card / surface backgrounds → white & light greys */
-html[data-theme="light"] [style*="background:#080808"] { background:#eceef2 !important; }
+html[data-theme="light"] [style*="background:#080808"] { background:#e4e7ee !important; }
 html[data-theme="light"] [style*="background:#0a0a0a"] { background:#f6f7f9 !important; }
 html[data-theme="light"] [style*="background:#0d0d0d"] { background:#ffffff !important; }
 html[data-theme="light"] [style*="background:#0e0e0e"] { background:#ffffff !important; }
@@ -245,13 +244,13 @@ html[data-theme="light"] [style*="solid rgba(255, 255, 255,"] { border-color:rgb
 html[data-theme="light"] [style*="color:#fff"]  { color:#16191f !important; }
 html[data-theme="light"] [style*="color:#ddd"]  { color:#2a2f37 !important; }
 html[data-theme="light"] [style*="color:#ccc"]  { color:#333941 !important; }
-html[data-theme="light"] [style*="color:#bbb"]  { color:#3c424b !important; }
-html[data-theme="light"] [style*="color:#aaa"]  { color:#4a505a !important; }
-html[data-theme="light"] [style*="color:#999"]  { color:#5b626c !important; }
-html[data-theme="light"] [style*="color:#888"]  { color:#646b75 !important; }
-html[data-theme="light"] [style*="color:#777"]  { color:#6d747e !important; }
-html[data-theme="light"] [style*="color:#666"]  { color:#767d87 !important; }
-html[data-theme="light"] [style*="color:#555"]  { color:#828994 !important; }
+html[data-theme="light"] [style*="color:#bbb"]  { color:#333941 !important; }
+html[data-theme="light"] [style*="color:#aaa"]  { color:#3c424b !important; }
+html[data-theme="light"] [style*="color:#999"]  { color:#464c56 !important; }
+html[data-theme="light"] [style*="color:#888"]  { color:#4e545e !important; }
+html[data-theme="light"] [style*="color:#777"]  { color:#565c66 !important; }
+html[data-theme="light"] [style*="color:#666"]  { color:#5b626c !important; }
+html[data-theme="light"] [style*="color:#555"]  { color:#646b75 !important; }
 html[data-theme="light"] [style*="color:rgba(255,255,255,0.7"],
 html[data-theme="light"] [style*="color:rgba(255,255,255,0.6"],
 html[data-theme="light"] [style*="color:rgba(255,255,255,0.5"] { color:rgba(0,0,0,0.66) !important; }
@@ -286,7 +285,7 @@ html[data-theme="light"] [style*="rgb(14, 14, 14)"],
 html[data-theme="light"] [style*="rgb(17, 17, 17)"],
 html[data-theme="light"] [style*="rgb(19, 19, 19)"] { background:linear-gradient(140deg,#f6f8fb,#ffffff) !important; }
 /* Solid neutral surfaces (anchored so they don't clobber borders) */
-html[data-theme="light"] [style*="background: rgb(8, 8, 8)"]    { background:#eceef2 !important; }
+html[data-theme="light"] [style*="background: rgb(8, 8, 8)"]    { background:#e4e7ee !important; }
 html[data-theme="light"] [style*="background: rgb(10, 10, 10)"] { background:#f6f7f9 !important; }
 html[data-theme="light"] [style*="background: rgb(15, 15, 15)"] { background:#f6f7f9 !important; }
 html[data-theme="light"] [style*="background: rgb(20, 20, 20)"] { background:#f4f5f8 !important; }
@@ -298,7 +297,7 @@ html[data-theme="light"] [style*="background: rgb(34, 34, 34)"] { background:#e7
 /* App-shell & header gradients */
 html[data-theme="light"] [style*="linear-gradient(160deg, rgb(6, 6, 15)"],
 html[data-theme="light"] [style*="linear-gradient(160deg, rgb(8, 8, 8)"],
-html[data-theme="light"] [style*="linear-gradient(160deg, rgb(31, 23, 0)"] { background:#eceef2 !important; }
+html[data-theme="light"] [style*="linear-gradient(160deg, rgb(31, 23, 0)"] { background:#e4e7ee !important; }
 /* NOTE: the browser DROPS the default 180deg angle when it reserializes a
    client-set gradient, so #0e0e1c/#0e0600 headers become "linear-gradient(rgb(...))"
    with no angle. Match the angle-less form. */
@@ -338,11 +337,11 @@ html[data-theme="light"] [style*="color: rgb(221, 221, 221)"] { color:#2a2f37 !i
 html[data-theme="light"] [style*="color: rgb(204, 204, 204)"] { color:#333941 !important; }
 html[data-theme="light"] [style*="color: rgb(187, 187, 187)"] { color:#3c424b !important; }
 html[data-theme="light"] [style*="color: rgb(170, 170, 170)"] { color:#4a505a !important; }
-html[data-theme="light"] [style*="color: rgb(153, 153, 153)"] { color:#5b626c !important; }
-html[data-theme="light"] [style*="color: rgb(136, 136, 136)"] { color:#646b75 !important; }
-html[data-theme="light"] [style*="color: rgb(119, 119, 119)"] { color:#6d747e !important; }
-html[data-theme="light"] [style*="color: rgb(102, 102, 102)"] { color:#767d87 !important; }
-html[data-theme="light"] [style*="color: rgb(85, 85, 85)"]    { color:#828994 !important; }
+html[data-theme="light"] [style*="color: rgb(153, 153, 153)"] { color:#464c56 !important; }
+html[data-theme="light"] [style*="color: rgb(136, 136, 136)"] { color:#4e545e !important; }
+html[data-theme="light"] [style*="color: rgb(119, 119, 119)"] { color:#565c66 !important; }
+html[data-theme="light"] [style*="color: rgb(102, 102, 102)"] { color:#5b626c !important; }
+html[data-theme="light"] [style*="color: rgb(85, 85, 85)"]    { color:#646b75 !important; }
 html[data-theme="light"] [style*="color: rgb(68, 68, 68)"]    { color:#969ca6 !important; }
 /* ALL translucent-white text → readable dark, regardless of the exact alpha.
    The trailing comma marks it as an rgba() (has an alpha channel), so this
@@ -350,7 +349,7 @@ html[data-theme="light"] [style*="color: rgb(68, 68, 68)"]    { color:#969ca6 !i
    whack-a-mole of exact values that left odd opacities invisible on light.
    Both the client-serialized (spaces) and server-rendered (no spaces) forms. */
 html[data-theme="light"] [style*="color: rgba(255, 255, 255,"],
-html[data-theme="light"] [style*="color:rgba(255,255,255,"] { color:rgba(0,0,0,0.62) !important; }
+html[data-theme="light"] [style*="color:rgba(255,255,255,"] { color:rgba(0,0,0,0.72) !important; }
 
 /* ─────────────────────────────────────────────────────────────────
    ACCENT COLOR — keep the palette vivid on light.
@@ -365,19 +364,19 @@ html[data-theme="light"] [style*="color:rgba(255,255,255,"] { color:rgba(0,0,0,0
    GREEN 30,107,58 · PUR 83,74,183 · STEEL 112,128,144
    ───────────────────────────────────────────────────────────────── */
 /* (a) solid accent tint backgrounds → deeper */
-html[data-theme="light"] [style*="background: rgba(212, 175, 55,"] { background:rgba(212,175,55,0.22) !important; }
-html[data-theme="light"] [style*="background: rgba(232, 114, 12,"]  { background:rgba(232,114,12,0.16) !important; }
-html[data-theme="light"] [style*="background: rgba(192, 57, 43,"]   { background:rgba(192,57,43,0.15) !important; }
-html[data-theme="light"] [style*="background: rgba(30, 107, 58,"]   { background:rgba(30,107,58,0.18) !important; }
-html[data-theme="light"] [style*="background: rgba(83, 74, 183,"]   { background:rgba(83,74,183,0.16) !important; }
-html[data-theme="light"] [style*="background: rgba(112, 128, 144,"] { background:rgba(112,128,144,0.18) !important; }
+html[data-theme="light"] [style*="background: rgba(212, 175, 55,"] { background:rgba(212,175,55,0.28) !important; }
+html[data-theme="light"] [style*="background: rgba(232, 114, 12,"]  { background:rgba(232,114,12,0.22) !important; }
+html[data-theme="light"] [style*="background: rgba(192, 57, 43,"]   { background:rgba(192,57,43,0.20) !important; }
+html[data-theme="light"] [style*="background: rgba(30, 107, 58,"]   { background:rgba(30,107,58,0.24) !important; }
+html[data-theme="light"] [style*="background: rgba(83, 74, 183,"]   { background:rgba(83,74,183,0.22) !important; }
+html[data-theme="light"] [style*="background: rgba(112, 128, 144,"] { background:rgba(112,128,144,0.24) !important; }
 /* (b) accent borders → real colored edges */
-html[data-theme="light"] [style*="solid rgba(212, 175, 55,"] { border-color:rgba(212,175,55,0.6) !important; }
-html[data-theme="light"] [style*="solid rgba(232, 114, 12,"]  { border-color:rgba(232,114,12,0.55) !important; }
-html[data-theme="light"] [style*="solid rgba(192, 57, 43,"]   { border-color:rgba(192,57,43,0.5) !important; }
-html[data-theme="light"] [style*="solid rgba(30, 107, 58,"]   { border-color:rgba(30,107,58,0.5) !important; }
-html[data-theme="light"] [style*="solid rgba(83, 74, 183,"]   { border-color:rgba(83,74,183,0.5) !important; }
-html[data-theme="light"] [style*="solid rgba(112, 128, 144,"] { border-color:rgba(112,128,144,0.5) !important; }
+html[data-theme="light"] [style*="solid rgba(212, 175, 55,"] { border-color:rgba(212,175,55,0.72) !important; }
+html[data-theme="light"] [style*="solid rgba(232, 114, 12,"]  { border-color:rgba(232,114,12,0.7) !important; }
+html[data-theme="light"] [style*="solid rgba(192, 57, 43,"]   { border-color:rgba(192,57,43,0.68) !important; }
+html[data-theme="light"] [style*="solid rgba(30, 107, 58,"]   { border-color:rgba(30,107,58,0.68) !important; }
+html[data-theme="light"] [style*="solid rgba(83, 74, 183,"]   { border-color:rgba(83,74,183,0.68) !important; }
+html[data-theme="light"] [style*="solid rgba(112, 128, 144,"] { border-color:rgba(112,128,144,0.66) !important; }
 /* (c) accent gradient cards → light tint of the hue instead of near-white.
    Placed AFTER the generic rgb(13,13,13) rule so these win by source order. */
 html[data-theme="light"] [style*="linear-gradient(140deg, rgba(212, 175, 55"],
@@ -409,5 +408,5 @@ html[data-theme="light"] [style*="rgb(13, 13, 13)"],
 html[data-theme="light"] [style*="rgb(14, 14, 14)"],
 html[data-theme="light"] [style*="rgb(17, 17, 17)"],
 html[data-theme="light"] [style*="rgb(19, 19, 19)"] {
-  box-shadow: 0 1px 2px rgba(16,24,40,0.04), 0 6px 20px rgba(16,24,40,0.07) !important;
+  box-shadow: 0 1px 3px rgba(16,24,40,0.07), 0 10px 28px rgba(16,24,40,0.12) !important;
 }
