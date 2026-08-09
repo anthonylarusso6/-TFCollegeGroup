@@ -297,8 +297,11 @@ html[data-theme="light"] [style*="background: rgb(34, 34, 34)"] { background:#e7
 html[data-theme="light"] [style*="linear-gradient(160deg, rgb(6, 6, 15)"],
 html[data-theme="light"] [style*="linear-gradient(160deg, rgb(8, 8, 8)"],
 html[data-theme="light"] [style*="linear-gradient(160deg, rgb(31, 23, 0)"] { background:#eceef2 !important; }
-html[data-theme="light"] [style*="linear-gradient(180deg, rgb(14, 14, 28)"],
-html[data-theme="light"] [style*="linear-gradient(180deg, rgb(14, 6, 0)"] { background:linear-gradient(180deg,#ffffff,#f3f4f7) !important; }
+/* NOTE: the browser DROPS the default 180deg angle when it reserializes a
+   client-set gradient, so #0e0e1c/#0e0600 headers become "linear-gradient(rgb(...))"
+   with no angle. Match the angle-less form. */
+html[data-theme="light"] [style*="linear-gradient(rgb(14, 14, 28)"],
+html[data-theme="light"] [style*="linear-gradient(rgb(14, 6, 0)"] { background:linear-gradient(180deg,#ffffff,#f3f4f7) !important; }
 
 /* Green success/status gradient cards → soft light green */
 html[data-theme="light"] [style*="rgb(3, 18, 8)"],
@@ -343,9 +346,10 @@ html[data-theme="light"] [style*="color: rgb(119, 119, 119)"] { color:#6d747e !i
 html[data-theme="light"] [style*="color: rgb(102, 102, 102)"] { color:#767d87 !important; }
 html[data-theme="light"] [style*="color: rgb(85, 85, 85)"]    { color:#828994 !important; }
 html[data-theme="light"] [style*="color: rgb(68, 68, 68)"]    { color:#969ca6 !important; }
-html[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.7)"],
-html[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.6)"],
-html[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.5)"] { color:rgba(0,0,0,0.66) !important; }
-html[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.4)"],
-html[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.3)"],
-html[data-theme="light"] [style*="color: rgba(255, 255, 255, 0.2)"] { color:rgba(0,0,0,0.5) !important; }
+/* ALL translucent-white text → readable dark, regardless of the exact alpha.
+   The trailing comma marks it as an rgba() (has an alpha channel), so this
+   catches 0.08, 0.15, 0.25, 0.38, 0.45 … in one rule instead of the
+   whack-a-mole of exact values that left odd opacities invisible on light.
+   Both the client-serialized (spaces) and server-rendered (no spaces) forms. */
+html[data-theme="light"] [style*="color: rgba(255, 255, 255,"],
+html[data-theme="light"] [style*="color:rgba(255,255,255,"] { color:rgba(0,0,0,0.62) !important; }
