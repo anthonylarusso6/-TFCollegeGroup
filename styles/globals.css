@@ -462,3 +462,28 @@ html[data-theme="light"] [style*="background: rgba(0, 0, 0, 0.3)"] { background:
 html[data-theme="light"] .tfVideoHero h1 { color:#fff !important; }
 html[data-theme="light"] .tfVideoHero .he { color:rgba(255,255,255,0.72) !important; }
 html[data-theme="light"] .tfVideoHero .ff { color:rgba(255,255,255,0.85) !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   ATHLETE SIDE — dark card gradients not covered elsewhere.
+   Same treatment as the coach side: map each to a light surface (neutral
+   white / hue tint) so text is readable. Matched by the gradient's first
+   color, both hex (SSR) and client-serialized rgb forms. */
+/* Athlete list card — neutral */
+html[data-theme="light"] [style*="linear-gradient(135deg,#0c0c10"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgb(12, 12, 16)"] { background:linear-gradient(140deg,#f6f8fb,#ffffff) !important; }
+/* Athlete list card — Forge (red) */
+html[data-theme="light"] [style*="linear-gradient(135deg,#130808"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgb(19, 8, 8)"] { background:linear-gradient(140deg,#fbeceb,#fff5f4) !important; }
+/* "This Week" announcement (amber) */
+html[data-theme="light"] [style*="linear-gradient(135deg,#0e0900"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgb(14, 9, 0)"] { background:linear-gradient(140deg,#faf3dd,#fffdf6) !important; }
+/* "This Week's Anvil" (gold) */
+html[data-theme="light"] [style*="linear-gradient(135deg,#130e00"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgb(19, 14, 0)"] { background:linear-gradient(140deg,#faf3dd,#fffdf6) !important; }
+/* Athlete card borders → light hue edges */
+html[data-theme="light"] [style*="solid #151820"],
+html[data-theme="light"] [style*="solid rgb(21, 24, 32)"] { border-color:rgba(0,0,0,0.14) !important; }
+html[data-theme="light"] [style*="solid #2a0808"],
+html[data-theme="light"] [style*="solid rgb(42, 8, 8)"],
+html[data-theme="light"] [style*="solid #3a0808"],
+html[data-theme="light"] [style*="solid rgb(58, 8, 8)"] { border-color:rgba(192,57,43,0.5) !important; }
