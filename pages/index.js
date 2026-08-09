@@ -261,11 +261,11 @@ export default function Landing(){
 
           {/* Hero */}
           <div style={{textAlign:"center",paddingTop:28,marginBottom:6}}>
-            <div style={{width:168,margin:"0 auto 18px",boxShadow:"0 0 60px "+ORANGE+"33,0 20px 50px rgba(0,0,0,0.6)",border:"1px solid "+ORANGE+"33",borderRadius:20,overflow:"hidden"}}>
-              <img src="/poster.png" alt="TF College Group" style={{width:"100%",height:"auto",display:"block"}}/>
+            <div style={{width:132,height:132,margin:"0 auto 14px",boxShadow:"0 0 60px "+ORANGE+"33,0 20px 50px rgba(0,0,0,0.4)",border:"1px solid "+ORANGE+"33",borderRadius:28,overflow:"hidden",background:"#fff"}}>
+              <img src="/icon.png" alt="TF College Group logo" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
             </div>
-            <div style={{fontSize:10,color:"rgba(255,255,255,0.32)",textTransform:"uppercase",letterSpacing:"0.28em",marginBottom:10}}>Triple F · College Group</div>
-            <h1 style={{fontSize:30,fontWeight:800,color:"#fff",margin:"0 0 10px",letterSpacing:"-0.02em",lineHeight:1.05}}>TF College Group</h1>
+            <div style={{fontSize:10,color:"rgba(255,255,255,0.32)",textTransform:"uppercase",letterSpacing:"0.28em",marginBottom:10}}>Triple F Sports</div>
+            <h1 style={{fontSize:32,fontWeight:800,color:"#fff",margin:"0 0 10px",letterSpacing:"-0.02em",lineHeight:1.05}}>College Group</h1>
             <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:9,fontSize:11,color:"rgba(255,255,255,0.42)",letterSpacing:"0.04em"}}>
               <span>Faith</span><span style={{color:ORANGE,opacity:0.7}}>·</span><span>Family</span><span style={{color:ORANGE,opacity:0.7}}>·</span><span>Fitness</span>
             </div>
