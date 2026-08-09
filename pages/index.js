@@ -40,7 +40,7 @@ const PROGRAM_DAYS=[
 export default function Landing(){
   const[qrDataUrl,setQrDataUrl]=useState("");
   const[qrFullscreen,setQrFullscreen]=useState(false);
-  const[qrUnlocked,setQrUnlocked]=useState(()=>typeof window!=="undefined"&&sessionStorage.getItem("qr_unlocked")==="1");
+  const[qrUnlocked,setQrUnlocked]=useState(false);
   const[qrPinModal,setQrPinModal]=useState(false);
   const[qrPin,setQrPin]=useState("");
   const[qrPinError,setQrPinError]=useState(false);
@@ -55,10 +55,18 @@ export default function Landing(){
   const[weekProgress,setWeekProgress]=useState(null);
   const[classCount,setClassCount]=useState(null);
   const[photo,setPhoto]=useState(null);
-  const[notifGranted,setNotifGranted]=useState(typeof window!=="undefined"&&"Notification" in window&&Notification.permission==="granted"&&localStorage.getItem("notif_disabled")!=="true");
+  const[notifGranted,setNotifGranted]=useState(false);
   const[groupmeLink,setGroupmeLink]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
   const[themeMode,setThemeMode]=useState("dark");
-  useEffect(()=>{try{setThemeMode(localStorage.getItem("tf_theme")==="light"?"light":"dark");}catch(e){}},[]);
+  // `mounted` gates client-only values so the first client render matches the
+  // server render (no hydration mismatch); real values apply after mount.
+  const[mounted,setMounted]=useState(false);
+  useEffect(()=>{
+    setMounted(true);
+    try{setThemeMode(localStorage.getItem("tf_theme")==="light"?"light":"dark");}catch(e){}
+    try{if(sessionStorage.getItem("qr_unlocked")==="1")setQrUnlocked(true);}catch(e){}
+    try{if("Notification" in window&&Notification.permission==="granted"&&localStorage.getItem("notif_disabled")!=="true")setNotifGranted(true);}catch(e){}
+  },[]);
   const toggleTheme=()=>setThemeMode(prev=>{const next=prev==="dark"?"light":"dark";try{localStorage.setItem("tf_theme",next);}catch(e){}if(typeof document!=="undefined")document.documentElement.setAttribute("data-theme",next==="light"?"light":"");return next;});
 
   useEffect(()=>{
@@ -105,7 +113,7 @@ export default function Landing(){
 
     // Load data
     const loadData=async()=>{
-      try{const{count}=await supabase.from("athletes").select("id",{count:"exact",head:true}).eq("status","active");if(count)setAthleteCount(count);}catch(e){}
+      try{const{count}=await supabase.from("athletes").select("id",{count:"exact",head:true}).eq("status","active");if(count!=null)setAthleteCount(count);}catch(e){}
       try{
         const{data:anvData}=await supabase.from("anvil").select("*").order("created_at",{ascending:false}).limit(1);
         if(anvData&&anvData[0]){
@@ -121,7 +129,7 @@ export default function Landing(){
         const estNow=nowEST();
         const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
         const{count}=await supabase.from("attendance").select("id",{count:"exact",head:true}).eq("date",today).eq("status","early");
-        if(count)setTodayAttendance(count);
+        if(count!=null)setTodayAttendance(count);
       }catch(e){}
       try{
         const{data}=await supabase.from("attendance").select("date");
@@ -214,11 +222,11 @@ export default function Landing(){
     }
   };
 
-  const estTime=(typeof window!=="undefined"&&time)?new Date(time.toLocaleString("en-US",{timeZone:"America/New_York"})):new Date();
-  const day=typeof window!=="undefined"?["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][estTime.getDay()]:"Mon";
-  const isClassDay=typeof window!=="undefined"&&["Mon","Tue","Thu","Fri"].includes(day);
+  const estTime=(mounted&&time)?new Date(time.toLocaleString("en-US",{timeZone:"America/New_York"})):new Date();
+  const day=mounted?["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][estTime.getDay()]:"Mon";
+  const isClassDay=mounted&&["Mon","Tue","Thu","Fri"].includes(day);
   const isMonFri=typeof window!=="undefined"&&(day==="Mon"||day==="Fri");
-  const todayQuote=QUOTES[new Date().getDate()%QUOTES.length];
+  const todayQuote=QUOTES[(mounted?new Date().getDate():0)%QUOTES.length];
 
   // ── Glass design tokens ──
   const glass={background:"rgba(255,255,255,0.045)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:18,boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"};
@@ -568,7 +576,7 @@ export default function Landing(){
                 {t:"The heart of man plans his way, but the Lord establishes his steps.",r:"Proverbs 16:9"},
                 {t:"For God gave us a spirit not of fear but of power and love and self-control.",r:"2 Timothy 1:7"},
               ];
-              const v=VERSES[new Date().getDate()%VERSES.length];
+              const v=VERSES[(mounted?new Date().getDate():0)%VERSES.length];
               return(
                 <div>
                   <div style={{fontSize:14,color:"rgba(255,255,255,0.88)",fontStyle:"italic",lineHeight:1.8,marginBottom:11}}>"{v.t}"</div>
