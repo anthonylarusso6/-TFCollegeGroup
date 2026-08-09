@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
+// useLayoutEffect warns during SSR; fall back to useEffect on the server.
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { getTier, BRACELETS } from "../lib/teams";
 import { nowEST } from "../lib/dates";
@@ -108,6 +110,22 @@ export default function Athlete(){
   const athleteIdRef=useRef(null);
   const touchStartRef=useRef(null);
   const slideDirRef=useRef(0);
+  // Remember scroll position per tab so switching away and back returns you
+  // to where you were instead of jumping to the top (home/profile view).
+  const tabScrollRef=useRef({});
+  useEffect(()=>{
+    if(screen!=="profile")return;
+    const onScroll=()=>{tabScrollRef.current[tab]=window.scrollY;};
+    window.addEventListener("scroll",onScroll,{passive:true});
+    return()=>window.removeEventListener("scroll",onScroll);
+  },[tab,screen]);
+  useIsoLayoutEffect(()=>{
+    if(screen!=="profile")return;
+    window.scrollTo(0,tabScrollRef.current[tab]||0);
+    const r1=requestAnimationFrame(()=>window.scrollTo(0,tabScrollRef.current[tab]||0));
+    const t1=setTimeout(()=>window.scrollTo(0,tabScrollRef.current[tab]||0),60);
+    return()=>{cancelAnimationFrame(r1);clearTimeout(t1);};
+  },[tab,screen]);
 
   useEffect(()=>{loadData();},[]);
 
