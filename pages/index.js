@@ -57,6 +57,9 @@ export default function Landing(){
   const[photo,setPhoto]=useState(null);
   const[notifGranted,setNotifGranted]=useState(typeof window!=="undefined"&&"Notification" in window&&Notification.permission==="granted"&&localStorage.getItem("notif_disabled")!=="true");
   const[groupmeLink,setGroupmeLink]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
+  const[themeMode,setThemeMode]=useState("dark");
+  useEffect(()=>{try{setThemeMode(localStorage.getItem("tf_theme")==="light"?"light":"dark");}catch(e){}},[]);
+  const toggleTheme=()=>setThemeMode(prev=>{const next=prev==="dark"?"light":"dark";try{localStorage.setItem("tf_theme",next);}catch(e){}if(typeof document!=="undefined")document.documentElement.setAttribute("data-theme",next==="light"?"light":"");return next;});
 
   useEffect(()=>{
     import("qrcode").then(QRCode=>{
@@ -243,7 +246,12 @@ export default function Landing(){
 
         {/* Top bar */}
         <div style={{position:"relative",zIndex:1,padding:"16px 20px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
-          <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",letterSpacing:"0.12em",textTransform:"uppercase"}}>tfcollegegroup.com</div>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <button onClick={toggleTheme} suppressHydrationWarning aria-label="Toggle light or dark mode" style={{display:"flex",alignItems:"center",gap:5,padding:"5px 11px",borderRadius:20,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.7)",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>
+              <span>{themeMode==="light"?"☀️":"🌙"}</span>{themeMode==="light"?"Light":"Dark"}
+            </button>
+            <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",letterSpacing:"0.12em",textTransform:"uppercase"}}>tfcollegegroup.com</div>
+          </div>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             {weather&&(
               <div style={{fontSize:12,color:"rgba(255,255,255,0.55)",display:"flex",alignItems:"center",gap:4}}>
