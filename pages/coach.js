@@ -52,6 +52,7 @@ export default function Coach(){
   const[themeMode,setThemeMode]=useState("dark");
   useEffect(()=>{try{setThemeMode(localStorage.getItem("tf_theme")==="light"?"light":"dark");}catch(e){}},[]);
   const toggleTheme=()=>{setThemeMode(prev=>{const next=prev==="dark"?"light":"dark";try{localStorage.setItem("tf_theme",next);}catch(e){}if(typeof document!=="undefined")document.documentElement.setAttribute("data-theme",next==="light"?"light":"");return next;});};
+  const isLight=themeMode==="light";
   const[pinnedTabs,setPinnedTabs]=useState(["roster","inbox","attendance"]);
   const[editingPins,setEditingPins]=useState(false);
   const navDragOrderRef=useRef(null);
@@ -563,7 +564,7 @@ export default function Coach(){
           {/* Step 2 — PIN entry / create */}
           {pinStep!=="select"&&(
             <>
-              <button onClick={()=>{setPinStep("select");setPin("");setPinError("");setSelectedCoach(null);}} style={{position:"absolute",top:20,left:20,background:"#111",border:"0.5px solid #1e1e1e",color:"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia, serif",padding:"6px 14px",borderRadius:10}}>← Back</button>
+              <button onClick={()=>{setPinStep("select");setPin("");setPinError("");setSelectedCoach(null);}} style={{position:"absolute",top:20,left:20,background:isLight?"#ffffff":"#111",border:isLight?"0.5px solid rgba(0,0,0,0.18)":"0.5px solid #1e1e1e",color:isLight?"#16191f":"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia, serif",padding:"6px 14px",borderRadius:10}}>← Back</button>
               {(() => {
                 const c=coaches.find(x=>x.id===selectedCoach);
                 return(
@@ -573,8 +574,8 @@ export default function Coach(){
                   </div>
                 );
               })()}
-              <div style={{fontSize:22,fontWeight:900,color:"#fff",marginBottom:4,letterSpacing:"-0.01em",textTransform:"uppercase"}}>{coaches.find(x=>x.id===selectedCoach)?.name}</div>
-              <div style={{fontSize:12,color:"#555",marginBottom:20,letterSpacing:"0.04em"}}>
+              <div style={{fontSize:22,fontWeight:900,color:isLight?"#16191f":"#fff",marginBottom:4,letterSpacing:"-0.01em",textTransform:"uppercase"}}>{coaches.find(x=>x.id===selectedCoach)?.name}</div>
+              <div style={{fontSize:12,color:isLight?"#646b75":"#555",marginBottom:20,letterSpacing:"0.04em"}}>
                 {pinStep==="create"?"Create your 4-digit PIN":pinStep==="confirm"?"Confirm your PIN":"Enter your PIN"}
               </div>
 
@@ -583,10 +584,10 @@ export default function Coach(){
                 <button onClick={()=>authenticateWithBiometric()}
                   style={{marginBottom:20,display:"flex",alignItems:"center",gap:10,padding:"13px 24px",
                     borderRadius:14,border:"1px solid "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"44",
-                    background:(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"12",
-                    color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",
-                    letterSpacing:"0.02em",margin:"0 auto 20px",boxShadow:"0 0 20px "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"22"}}>
-                  <Icon name="faceId" size={22} color="#fff"/>
+                    background:isLight?"#ffffff":(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"12",
+                    color:isLight?"#16191f":"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",
+                    letterSpacing:"0.02em",margin:"0 auto 20px",boxShadow:isLight?"0 1px 4px rgba(0,0,0,0.10)":"0 0 20px "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"22"}}>
+                  <Icon name="faceId" size={22} color={isLight?"#16191f":"#fff"}/>
                   <span>Use {getBioLabel()}</span>
                 </button>
               )}
@@ -666,13 +667,13 @@ export default function Coach(){
               />
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
                 {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
-                  <button key={i} onClick={()=>{handlePinKey(k);pinRef.current&&pinRef.current.focus();}} style={{padding:"14px 8px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":"#1a1a1a"),background:k===null?"transparent":k==="⌫"?"#141414":"#111",fontSize:20,fontWeight:300,cursor:k===null?"default":"pointer",color:k==="⌫"?"#555":"#e0e0e0",fontFamily:"sans-serif",transition:"background 0.1s"}}>
+                  <button key={i} onClick={()=>{handlePinKey(k);pinRef.current&&pinRef.current.focus();}} style={{padding:"14px 8px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":isLight?"rgba(0,0,0,0.22)":"#1a1a1a"),background:k===null?"transparent":isLight?(k==="⌫"?"#eef0f4":"#ffffff"):(k==="⌫"?"#141414":"#111"),fontSize:20,fontWeight:300,cursor:k===null?"default":"pointer",color:k==="⌫"?(isLight?"#767d87":"#555"):(isLight?"#16191f":"#e0e0e0"),fontFamily:"sans-serif",transition:"background 0.1s",boxShadow:k===null?"none":isLight?"0 1px 3px rgba(0,0,0,0.08)":"none"}}>
                     {k===null?"":k}
                   </button>
                 ))}
               </div>
-              <div style={{marginTop:10,fontSize:10,color:"#2a2a2a",textAlign:"center",letterSpacing:"0.04em"}}>Tap keypad or type on keyboard</div>
-              {bioCredId&&<button onClick={()=>{try{localStorage.removeItem("tf_bio_coach_"+selectedCoach);}catch(e){}setBioCredId(null);}} style={{marginTop:12,background:"transparent",border:"none",color:"#2a2a2a",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>Reset saved passkey</button>}
+              <div style={{marginTop:10,fontSize:10,color:isLight?"#8a909a":"#2a2a2a",textAlign:"center",letterSpacing:"0.04em"}}>Tap keypad or type on keyboard</div>
+              {bioCredId&&<button onClick={()=>{try{localStorage.removeItem("tf_bio_coach_"+selectedCoach);}catch(e){}setBioCredId(null);}} style={{marginTop:12,background:"transparent",border:"none",color:isLight?"#8a909a":"#2a2a2a",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>Reset saved passkey</button>}
               {pinError&&<div style={{marginTop:12,fontSize:12,color:"#ff5555",padding:"8px 16px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
             </>
             )}
