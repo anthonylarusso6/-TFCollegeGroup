@@ -410,3 +410,47 @@ html[data-theme="light"] [style*="rgb(17, 17, 17)"],
 html[data-theme="light"] [style*="rgb(19, 19, 19)"] {
   box-shadow: 0 1px 3px rgba(16,24,40,0.07), 0 10px 28px rgba(16,24,40,0.12) !important;
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   DARK TINTED SURFACES (faith/culture hero cards, "completed" boxes,
+   warning banners). These are very dark tints of an accent hue
+   (#1f1700 gold, #150d2a purple, #0a160a green, #1a0808 red…) used as
+   solid card backgrounds — not caught by the neutral or gradient rules.
+   Map each to a light tint of the SAME hue so the card keeps its color
+   identity and its text stays readable. Both hex (SSR) & rgb (client). */
+/* Gold / amber */
+html[data-theme="light"] [style*="background:#1f1700"],
+html[data-theme="light"] [style*="background:#1a1600"],
+html[data-theme="light"] [style*="background:#1a1200"],
+html[data-theme="light"] [style*="background:#1a0f00"],
+html[data-theme="light"] [style*="background: rgb(31, 23, 0)"],
+html[data-theme="light"] [style*="background: rgb(26, 22, 0)"],
+html[data-theme="light"] [style*="background: rgb(26, 18, 0)"],
+html[data-theme="light"] [style*="background: rgb(26, 15, 0)"] { background:#faf3dd !important; }
+/* Purple */
+html[data-theme="light"] [style*="background:#150d2a"],
+html[data-theme="light"] [style*="background:#13122a"],
+html[data-theme="light"] [style*="background:#0d0b1c"],
+html[data-theme="light"] [style*="background: rgb(21, 13, 42)"],
+html[data-theme="light"] [style*="background: rgb(19, 18, 42)"],
+html[data-theme="light"] [style*="background: rgb(13, 11, 28)"] { background:#edecf9 !important; }
+/* Green */
+html[data-theme="light"] [style*="background:#0a160a"],
+html[data-theme="light"] [style*="background:#091510"],
+html[data-theme="light"] [style*="background:#0d1a10"],
+html[data-theme="light"] [style*="background: rgb(10, 22, 10)"],
+html[data-theme="light"] [style*="background: rgb(9, 21, 16)"],
+html[data-theme="light"] [style*="background: rgb(13, 26, 16)"] { background:#e7f4ec !important; }
+/* Red */
+html[data-theme="light"] [style*="background:#1a0808"],
+html[data-theme="light"] [style*="background:#1a0505"],
+html[data-theme="light"] [style*="background: rgb(26, 8, 8)"],
+html[data-theme="light"] [style*="background: rgb(26, 5, 5)"] { background:#fbeceb !important; }
+
+/* Iron Room "ACTIVE PROGRAM" banner — dark gold gradient → light gold */
+html[data-theme="light"] [style*="linear-gradient(135deg,#1a1400"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgb(26, 20, 0)"] { background:linear-gradient(135deg,rgba(212,175,55,0.22),rgba(212,175,55,0.08),#ffffff) !important; }
+/* Fellowship verse box — dark overlay (used only here) → light panel so the
+   verse reads on the light card instead of a muddy dark box */
+html[data-theme="light"] [style*="background:rgba(0,0,0,0.3)"],
+html[data-theme="light"] [style*="background: rgba(0, 0, 0, 0.3)"] { background:rgba(255,255,255,0.6) !important; }
