@@ -456,3 +456,9 @@ html[data-theme="light"] [style*="linear-gradient(135deg, rgb(26, 20, 0)"] { bac
    verse reads on the light card instead of a muddy dark box */
 html[data-theme="light"] [style*="background:rgba(0,0,0,0.3)"],
 html[data-theme="light"] [style*="background: rgba(0, 0, 0, 0.3)"] { background:rgba(255,255,255,0.6) !important; }
+
+/* Front-page video hero — text sits on a dark video overlay in BOTH themes,
+   so keep it light even in light mode (don't let the neutral-flip darken it). */
+html[data-theme="light"] .tfVideoHero h1 { color:#fff !important; }
+html[data-theme="light"] .tfVideoHero .he { color:rgba(255,255,255,0.72) !important; }
+html[data-theme="light"] .tfVideoHero .ff { color:rgba(255,255,255,0.85) !important; }

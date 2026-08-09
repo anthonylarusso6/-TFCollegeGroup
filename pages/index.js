@@ -259,15 +259,21 @@ export default function Landing(){
 
         <div style={{position:"relative",zIndex:1,maxWidth:480,margin:"0 auto",padding:"0 18px 3rem",opacity:loaded?1:0,transform:loaded?"none":"translateY(16px)",transition:"opacity 0.7s ease,transform 0.7s ease"}}>
 
-          {/* Hero */}
-          <div style={{textAlign:"center",paddingTop:28,marginBottom:6}}>
-            <div style={{width:132,height:132,margin:"0 auto 14px",boxShadow:"0 0 60px "+ORANGE+"33,0 20px 50px rgba(0,0,0,0.4)",border:"1px solid "+ORANGE+"33",borderRadius:28,overflow:"hidden",background:"#fff"}}>
-              <img src="/icon.png" alt="TF College Group logo" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-            </div>
-            <div style={{fontSize:10,color:"rgba(255,255,255,0.32)",textTransform:"uppercase",letterSpacing:"0.28em",marginBottom:10}}>Triple F Sports</div>
-            <h1 style={{fontSize:32,fontWeight:800,color:"#fff",margin:"0 0 10px",letterSpacing:"-0.02em",lineHeight:1.05}}>College Group</h1>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:9,fontSize:11,color:"rgba(255,255,255,0.42)",letterSpacing:"0.04em"}}>
-              <span>Faith</span><span style={{color:ORANGE,opacity:0.7}}>·</span><span>Family</span><span style={{color:ORANGE,opacity:0.7}}>·</span><span>Fitness</span>
+          {/* Hero — video background with TF logo + College Group overlaid */}
+          <div className="tfVideoHero" style={{position:"relative",width:"100%",aspectRatio:"4 / 5",borderRadius:24,overflow:"hidden",border:"1px solid "+ORANGE+"33",boxShadow:"0 0 60px "+ORANGE+"22,0 20px 50px rgba(0,0,0,0.5)",marginTop:20,marginBottom:8}}>
+            <video src="/home-hero.mp4" autoPlay loop muted playsInline preload="auto"
+              style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+            {/* Legibility overlay — always dark behind the text, both themes */}
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(0,0,0,0.28) 0%,rgba(0,0,0,0.15) 45%,rgba(0,0,0,0.62) 100%)",pointerEvents:"none"}}/>
+            <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:11,padding:20,textAlign:"center"}}>
+              <div style={{width:96,height:96,borderRadius:22,overflow:"hidden",background:"#fff",border:"1px solid rgba(232,114,12,0.45)",boxShadow:"0 0 40px rgba(232,114,12,0.35),0 8px 24px rgba(0,0,0,0.4)"}}>
+                <img src="/icon.png" alt="TF College Group logo" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+              </div>
+              <div className="he" style={{fontSize:10,color:"rgba(255,255,255,0.72)",textTransform:"uppercase",letterSpacing:"0.28em",textShadow:"0 1px 10px rgba(0,0,0,0.6)"}}>Triple F Sports</div>
+              <h1 style={{fontSize:34,fontWeight:800,color:"#fff",margin:0,letterSpacing:"-0.02em",lineHeight:1.05,textShadow:"0 2px 22px rgba(0,0,0,0.7)"}}>College Group</h1>
+              <div className="ff" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:9,fontSize:11,color:"rgba(255,255,255,0.85)",letterSpacing:"0.04em",textShadow:"0 1px 10px rgba(0,0,0,0.6)"}}>
+                <span>Faith</span><span style={{color:ORANGE}}>·</span><span>Family</span><span style={{color:ORANGE}}>·</span><span>Fitness</span>
+              </div>
             </div>
           </div>
 
