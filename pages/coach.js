@@ -852,9 +852,9 @@ export default function Coach(){
                       );
                     })}
                     <button onClick={()=>{setShowTabPicker(true);setEditingPins(false);}}
-                      style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:showTabPicker?"rgba(255,255,255,0.11)":"transparent",border:"none",borderRadius:22,color:"rgba(255,255,255,0.38)",fontSize:9,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
-                      <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:20,opacity:0.6}}><Icon name="menu" size={19} color="#aaa"/></span>
-                      <span>More</span>
+                      style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:showTabPicker?"#E8720C":"#E8720C22",border:"1px solid #E8720C66",borderRadius:22,color:showTabPicker?"#fff":"#F0A050",fontSize:10,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:showTabPicker?"0 0 16px #E8720C88":"0 0 10px #E8720C33"}}>
+                      <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:20}}><Icon name="menu" size={21} color={showTabPicker?"#fff":"#F0A050"}/></span>
+                      <span style={{letterSpacing:"0.04em"}}>All Tabs</span>
                     </button>
                   </div>
                 </div>
