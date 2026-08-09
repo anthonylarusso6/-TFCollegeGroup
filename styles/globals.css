@@ -183,6 +183,25 @@ html[data-theme="light"] body { background:#eceef2 !important; color:#16191f; }
 html[data-theme="light"] [style*="linear-gradient(160deg,#06060f"],
 html[data-theme="light"] [style*="linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)"] { background:#eceef2 !important; }
 html[data-theme="light"] [style*="linear-gradient(180deg,#0e0e1c"] { background:linear-gradient(180deg,#ffffff,#f3f4f7) !important; }
+html[data-theme="light"] [style*="linear-gradient(180deg,#0e0600"] { background:linear-gradient(180deg,#ffffff,#f3f4f7) !important; }
+html[data-theme="light"] [style*="linear-gradient(160deg,#080808"],
+html[data-theme="light"] [style*="linear-gradient(160deg,#1f1700"] { background:#eceef2 !important; }
+
+/* Gradient CARDS → light. Most accent-tinted cards end in a dark base
+   (…,#0d0d0d) or …,#131313) / …,#0e0e0e)); flat text was flipped to dark,
+   so the card must go light or the text is invisible. Map every dark gradient
+   base to a soft light card gradient so the card still reads as a surface. */
+html[data-theme="light"] [style*=",#0d0d0d)"],
+html[data-theme="light"] [style*=", #0d0d0d)"],
+html[data-theme="light"] [style*=",#131313)"],
+html[data-theme="light"] [style*=",#0e0e0e)"],
+html[data-theme="light"] [style*="#0e0e0e,#131313"] { background:linear-gradient(140deg,#f6f8fb,#ffffff) !important; }
+/* Green success/status gradient cards → soft light green */
+html[data-theme="light"] [style*="linear-gradient(135deg,#031208"],
+html[data-theme="light"] [style*="linear-gradient(135deg,#051a0a"],
+html[data-theme="light"] [style*="linear-gradient(135deg,#0a2a0a"],
+html[data-theme="light"] [style*="linear-gradient(135deg,#0d1f0f"],
+html[data-theme="light"] [style*="linear-gradient(135deg,#1a3a1a"] { background:linear-gradient(140deg,#e9f7ee,#f4fbf6) !important; }
 
 /* Card / surface backgrounds → white & light greys */
 html[data-theme="light"] [style*="background:#080808"] { background:#eceef2 !important; }
