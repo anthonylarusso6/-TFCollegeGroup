@@ -421,10 +421,12 @@ html[data-theme="light"] [style*="rgb(19, 19, 19)"] {
 /* Gold / amber */
 html[data-theme="light"] [style*="background:#1f1700"],
 html[data-theme="light"] [style*="background:#1a1600"],
+html[data-theme="light"] [style*="background:#1a1500"],
 html[data-theme="light"] [style*="background:#1a1200"],
 html[data-theme="light"] [style*="background:#1a0f00"],
 html[data-theme="light"] [style*="background: rgb(31, 23, 0)"],
 html[data-theme="light"] [style*="background: rgb(26, 22, 0)"],
+html[data-theme="light"] [style*="background: rgb(26, 21, 0)"],
 html[data-theme="light"] [style*="background: rgb(26, 18, 0)"],
 html[data-theme="light"] [style*="background: rgb(26, 15, 0)"] { background:#faf3dd !important; }
 /* Purple */

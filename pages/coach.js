@@ -1,5 +1,7 @@
 // v1776642403
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
+// useLayoutEffect warns during SSR; fall back to useEffect on the server.
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { isFemale } from "../lib/teams";
 import { nowEST } from "../lib/dates";
@@ -100,6 +102,24 @@ export default function Coach(){
   const[pendingNav,setPendingNav]=useState(null);
   const touchStartRef=useRef(null);
   const slideDirRef=useRef(0);
+  // Remember scroll position per tab so switching away and back returns you
+  // to where you were instead of jumping to the top.
+  const tabScrollRef=useRef({});
+  useEffect(()=>{
+    if(!authed)return;
+    const onScroll=()=>{tabScrollRef.current[tab]=window.scrollY;};
+    window.addEventListener("scroll",onScroll,{passive:true});
+    return()=>window.removeEventListener("scroll",onScroll);
+  },[tab,authed]);
+  useIsoLayoutEffect(()=>{
+    if(!authed)return;
+    const y=tabScrollRef.current[tab]||0;
+    // Restore after the new tab's content lands (data can load a frame late).
+    window.scrollTo(0,y);
+    const r1=requestAnimationFrame(()=>window.scrollTo(0,tabScrollRef.current[tab]||0));
+    const t1=setTimeout(()=>window.scrollTo(0,tabScrollRef.current[tab]||0),60);
+    return()=>{cancelAnimationFrame(r1);clearTimeout(t1);};
+  },[tab,authed]);
 
   useEffect(()=>{if(authed)loadAll();},[authed]);
 
