@@ -228,18 +228,18 @@ html[data-theme="light"] [style*="rgba(10,10,18"] { background:rgba(250,250,252,
 
 /* Borders → light grey. Kept visible (not hairline) so white cards read as
    distinct panels against the light-grey page instead of floating. */
-html[data-theme="light"] [style*="solid #252525"] { border-color:rgba(0,0,0,0.16) !important; }
-html[data-theme="light"] [style*="solid #2a2a2a"] { border-color:rgba(0,0,0,0.16) !important; }
-html[data-theme="light"] [style*="solid #1e1e1e"] { border-color:rgba(0,0,0,0.15) !important; }
-html[data-theme="light"] [style*="solid #1a1a1a"] { border-color:rgba(0,0,0,0.14) !important; }
-html[data-theme="light"] [style*="solid #141414"] { border-color:rgba(0,0,0,0.13) !important; }
-html[data-theme="light"] [style*="solid #333"]    { border-color:rgba(0,0,0,0.18) !important; }
-html[data-theme="light"] [style*="solid #222"]    { border-color:rgba(0,0,0,0.16) !important; }
+html[data-theme="light"] [style*="solid #252525"] { border-color:rgba(0,0,0,0.20) !important; }
+html[data-theme="light"] [style*="solid #2a2a2a"] { border-color:rgba(0,0,0,0.20) !important; }
+html[data-theme="light"] [style*="solid #1e1e1e"] { border-color:rgba(0,0,0,0.18) !important; }
+html[data-theme="light"] [style*="solid #1a1a1a"] { border-color:rgba(0,0,0,0.17) !important; }
+html[data-theme="light"] [style*="solid #141414"] { border-color:rgba(0,0,0,0.16) !important; }
+html[data-theme="light"] [style*="solid #333"]    { border-color:rgba(0,0,0,0.22) !important; }
+html[data-theme="light"] [style*="solid #222"]    { border-color:rgba(0,0,0,0.20) !important; }
 /* ALL translucent-white borders → visible light-grey, any opacity, any side.
    border-color has no effect on sides with border-style:none, so this is safe
    for one-sided borders too. Covers client (spaces) and server (no spaces). */
 html[data-theme="light"] [style*="solid rgba(255,255,255,"],
-html[data-theme="light"] [style*="solid rgba(255, 255, 255,"] { border-color:rgba(0,0,0,0.15) !important; }
+html[data-theme="light"] [style*="solid rgba(255, 255, 255,"] { border-color:rgba(0,0,0,0.18) !important; }
 
 /* Neutral text greys → readable dark greys (accents untouched) */
 html[data-theme="light"] [style*="color:#fff"]  { color:#16191f !important; }
@@ -323,13 +323,13 @@ html[data-theme="light"] [style*="rgba(8, 8, 14"]   { background:rgba(255,255,25
 html[data-theme="light"] [style*="rgba(10, 10, 18"] { background:rgba(250,250,252,0.98) !important; }
 
 /* Borders → light grey */
-html[data-theme="light"] [style*="solid rgb(37, 37, 37)"] { border-color:rgba(0,0,0,0.16) !important; }
-html[data-theme="light"] [style*="solid rgb(42, 42, 42)"] { border-color:rgba(0,0,0,0.16) !important; }
-html[data-theme="light"] [style*="solid rgb(30, 30, 30)"] { border-color:rgba(0,0,0,0.15) !important; }
-html[data-theme="light"] [style*="solid rgb(26, 26, 26)"] { border-color:rgba(0,0,0,0.14) !important; }
-html[data-theme="light"] [style*="solid rgb(20, 20, 20)"] { border-color:rgba(0,0,0,0.13) !important; }
-html[data-theme="light"] [style*="solid rgb(51, 51, 51)"] { border-color:rgba(0,0,0,0.18) !important; }
-html[data-theme="light"] [style*="solid rgb(34, 34, 34)"] { border-color:rgba(0,0,0,0.16) !important; }
+html[data-theme="light"] [style*="solid rgb(37, 37, 37)"] { border-color:rgba(0,0,0,0.20) !important; }
+html[data-theme="light"] [style*="solid rgb(42, 42, 42)"] { border-color:rgba(0,0,0,0.20) !important; }
+html[data-theme="light"] [style*="solid rgb(30, 30, 30)"] { border-color:rgba(0,0,0,0.18) !important; }
+html[data-theme="light"] [style*="solid rgb(26, 26, 26)"] { border-color:rgba(0,0,0,0.17) !important; }
+html[data-theme="light"] [style*="solid rgb(20, 20, 20)"] { border-color:rgba(0,0,0,0.16) !important; }
+html[data-theme="light"] [style*="solid rgb(51, 51, 51)"] { border-color:rgba(0,0,0,0.22) !important; }
+html[data-theme="light"] [style*="solid rgb(34, 34, 34)"] { border-color:rgba(0,0,0,0.20) !important; }
 
 /* Neutral text greys (accents untouched) */
 html[data-theme="light"] [style*="color: rgb(255, 255, 255)"] { color:#16191f !important; }
@@ -351,3 +351,44 @@ html[data-theme="light"] [style*="color: rgb(68, 68, 68)"]    { color:#969ca6 !i
    Both the client-serialized (spaces) and server-rendered (no spaces) forms. */
 html[data-theme="light"] [style*="color: rgba(255, 255, 255,"],
 html[data-theme="light"] [style*="color:rgba(255,255,255,"] { color:rgba(0,0,0,0.62) !important; }
+
+/* ─────────────────────────────────────────────────────────────────
+   ACCENT COLOR — keep the palette vivid on light.
+   Translucent accents (e.g. GREEN+"22") read rich over black but wash
+   out over the light-grey page, and the generic dark-base gradient rule
+   above flattens accent cards to near-white. For each fixed palette hue
+   we (a) deepen its solid tint background, (b) deepen its border so the
+   colored panels have a real colored edge, and (c) restore a light TINT
+   (not white) for its gradient cards — so "the things that have color"
+   keep their color. Matched by the accent's rgb (any alpha).
+   GOLD 212,175,55 · ORANGE 232,114,12 · RED 192,57,43
+   GREEN 30,107,58 · PUR 83,74,183 · STEEL 112,128,144
+   ───────────────────────────────────────────────────────────────── */
+/* (a) solid accent tint backgrounds → deeper */
+html[data-theme="light"] [style*="background: rgba(212, 175, 55,"] { background:rgba(212,175,55,0.22) !important; }
+html[data-theme="light"] [style*="background: rgba(232, 114, 12,"]  { background:rgba(232,114,12,0.16) !important; }
+html[data-theme="light"] [style*="background: rgba(192, 57, 43,"]   { background:rgba(192,57,43,0.15) !important; }
+html[data-theme="light"] [style*="background: rgba(30, 107, 58,"]   { background:rgba(30,107,58,0.18) !important; }
+html[data-theme="light"] [style*="background: rgba(83, 74, 183,"]   { background:rgba(83,74,183,0.16) !important; }
+html[data-theme="light"] [style*="background: rgba(112, 128, 144,"] { background:rgba(112,128,144,0.18) !important; }
+/* (b) accent borders → real colored edges */
+html[data-theme="light"] [style*="solid rgba(212, 175, 55,"] { border-color:rgba(212,175,55,0.6) !important; }
+html[data-theme="light"] [style*="solid rgba(232, 114, 12,"]  { border-color:rgba(232,114,12,0.55) !important; }
+html[data-theme="light"] [style*="solid rgba(192, 57, 43,"]   { border-color:rgba(192,57,43,0.5) !important; }
+html[data-theme="light"] [style*="solid rgba(30, 107, 58,"]   { border-color:rgba(30,107,58,0.5) !important; }
+html[data-theme="light"] [style*="solid rgba(83, 74, 183,"]   { border-color:rgba(83,74,183,0.5) !important; }
+html[data-theme="light"] [style*="solid rgba(112, 128, 144,"] { border-color:rgba(112,128,144,0.5) !important; }
+/* (c) accent gradient cards → light tint of the hue instead of near-white.
+   Placed AFTER the generic rgb(13,13,13) rule so these win by source order. */
+html[data-theme="light"] [style*="linear-gradient(140deg, rgba(212, 175, 55"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgba(212, 175, 55"] { background:linear-gradient(140deg,rgba(212,175,55,0.26),rgba(212,175,55,0.10),#ffffff) !important; }
+html[data-theme="light"] [style*="linear-gradient(140deg, rgba(232, 114, 12"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgba(232, 114, 12"] { background:linear-gradient(140deg,rgba(232,114,12,0.20),rgba(232,114,12,0.07),#ffffff) !important; }
+html[data-theme="light"] [style*="linear-gradient(140deg, rgba(192, 57, 43"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgba(192, 57, 43"] { background:linear-gradient(140deg,rgba(192,57,43,0.18),rgba(192,57,43,0.06),#ffffff) !important; }
+html[data-theme="light"] [style*="linear-gradient(140deg, rgba(30, 107, 58"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgba(30, 107, 58"] { background:linear-gradient(140deg,rgba(30,107,58,0.20),rgba(30,107,58,0.07),#ffffff) !important; }
+html[data-theme="light"] [style*="linear-gradient(140deg, rgba(83, 74, 183"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgba(83, 74, 183"] { background:linear-gradient(140deg,rgba(83,74,183,0.20),rgba(83,74,183,0.07),#ffffff) !important; }
+html[data-theme="light"] [style*="linear-gradient(140deg, rgba(112, 128, 144"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgba(112, 128, 144"] { background:linear-gradient(140deg,rgba(112,128,144,0.22),rgba(112,128,144,0.08),#ffffff) !important; }
