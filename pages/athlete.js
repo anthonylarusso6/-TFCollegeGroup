@@ -67,6 +67,7 @@ export default function Athlete(){
   const[themeMode,setThemeMode]=useState("dark");
   useEffect(()=>{try{setThemeMode(localStorage.getItem("tf_theme")==="light"?"light":"dark");}catch(e){}},[]);
   const toggleTheme=()=>setThemeMode(prev=>{const next=prev==="dark"?"light":"dark";try{localStorage.setItem("tf_theme",next);}catch(e){}if(typeof document!=="undefined")document.documentElement.setAttribute("data-theme",next==="light"?"light":"");return next;});
+  const isLight=themeMode==="light";
   const[pinnedTabs,setPinnedTabs]=useState(["prs","attendance","weight"]);
   const[editingPins,setEditingPins]=useState(false);
   const[navDragId,setNavDragId]=useState(null);
@@ -728,7 +729,7 @@ export default function Athlete(){
                   if(k===null)return;
                   if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
                   if(pin.length<4)setPin(p=>p+String(k));
-                }} style={{padding:"20px 8px",borderRadius:14,border:"0.5px solid "+(k===null?"transparent":"#222"),background:k===null?"transparent":k==="⌫"?"#161616":"#131313",fontSize:26,fontWeight:500,cursor:k===null?"default":"pointer",color:k==="⌫"?"#666":"#ebebeb",fontFamily:"sans-serif",transition:"background 0.1s",lineHeight:1}}>
+                }} style={{padding:"20px 8px",borderRadius:14,border:"0.5px solid "+(k===null?"transparent":isLight?"rgba(0,0,0,0.22)":"#222"),background:k===null?"transparent":isLight?(k==="⌫"?"#eef0f4":"#ffffff"):(k==="⌫"?"#161616":"#131313"),fontSize:26,fontWeight:500,cursor:k===null?"default":"pointer",color:k==="⌫"?(isLight?"#767d87":"#666"):(isLight?"#16191f":"#ebebeb"),fontFamily:"sans-serif",transition:"background 0.1s",lineHeight:1,boxShadow:k===null?"none":isLight?"0 1px 3px rgba(0,0,0,0.08)":"none"}}>
                   {k===null?"":k}
                 </button>
               ))}

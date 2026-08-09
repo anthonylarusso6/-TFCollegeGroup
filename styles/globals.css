@@ -487,3 +487,11 @@ html[data-theme="light"] [style*="solid #2a0808"],
 html[data-theme="light"] [style*="solid rgb(42, 8, 8)"],
 html[data-theme="light"] [style*="solid #3a0808"],
 html[data-theme="light"] [style*="solid rgb(58, 8, 8)"] { border-color:rgba(192,57,43,0.5) !important; }
+
+/* Athlete Events (amber) + MCastles (orange) dark gradient cards */
+html[data-theme="light"] [style*="linear-gradient(145deg,#1a1200"],
+html[data-theme="light"] [style*="linear-gradient(145deg, rgb(26, 18, 0)"] { background:linear-gradient(140deg,#faf3dd,#fffdf6) !important; }
+html[data-theme="light"] [style*="linear-gradient(140deg,#1a0800"],
+html[data-theme="light"] [style*="linear-gradient(140deg, rgb(26, 8, 0)"],
+html[data-theme="light"] [style*="linear-gradient(135deg,#130800"],
+html[data-theme="light"] [style*="linear-gradient(135deg, rgb(19, 8, 0)"] { background:linear-gradient(140deg,rgba(232,114,12,0.16),#fff7f0) !important; }
