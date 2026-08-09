@@ -715,17 +715,17 @@ export default function Coach(){
       <Head><title>Coach Dashboard — TF College Group</title></Head>
       <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",minHeight:"100vh"}}>
 
-        <div style={{background:"linear-gradient(180deg,#0e0e1c 0%,#0a0a14 100%)",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
+        <div style={{background:isLight?"linear-gradient(180deg,#ffffff,#f3f4f7)":"linear-gradient(180deg,#0e0e1c 0%,#0a0a14 100%)",borderBottom:isLight?"1px solid rgba(0,0,0,0.10)":"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(232,114,12,0.9),rgba(192,57,43,0.8),transparent)"}}/>
           <div style={{position:"absolute",top:-40,right:-40,width:200,height:200,borderRadius:"50%",background:"rgba(232,114,12,0.05)",filter:"blur(50px)",pointerEvents:"none"}}/>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
             <div>
-              <div style={{fontSize:18,fontWeight:900,color:"#fff",letterSpacing:"-0.01em",textTransform:"uppercase"}}>TF College Group</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":"rgba(255,255,255,0.2)"}}>{isClassDay?"Class day":"No class"}</span></div>
+              <div style={{fontSize:18,fontWeight:900,color:isLight?"#16191f":"#fff",letterSpacing:"-0.01em",textTransform:"uppercase"}}>TF College Group</div>
+              <div style={{fontSize:11,color:isLight?"rgba(0,0,0,0.55)":"rgba(255,255,255,0.3)",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":(isLight?"rgba(0,0,0,0.4)":"rgba(255,255,255,0.2)")}}>{isClassDay?"Class day":"No class"}</span></div>
             </div>
             <div style={{textAlign:"right"}}>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
-              <button onClick={()=>setAuthed(false)} style={{fontSize:10,color:"rgba(255,255,255,0.2)",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.04em"}}>Sign out</button>
+              <div style={{fontSize:11,color:isLight?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.25)",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
+              <button onClick={()=>setAuthed(false)} style={{fontSize:10,color:isLight?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.2)",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.04em"}}>Sign out</button>
             </div>
           </div>
         </div>

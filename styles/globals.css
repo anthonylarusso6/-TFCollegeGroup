@@ -226,18 +226,20 @@ html[data-theme="light"] [style*="background:rgba(255,255,255,0.07"] { backgroun
 html[data-theme="light"] [style*="rgba(8,8,14"] { background:rgba(255,255,255,0.9) !important; }
 html[data-theme="light"] [style*="rgba(10,10,18"] { background:rgba(250,250,252,0.98) !important; }
 
-/* Borders → light grey */
-html[data-theme="light"] [style*="solid #252525"] { border-color:rgba(0,0,0,0.12) !important; }
-html[data-theme="light"] [style*="solid #2a2a2a"] { border-color:rgba(0,0,0,0.12) !important; }
-html[data-theme="light"] [style*="solid #1e1e1e"] { border-color:rgba(0,0,0,0.10) !important; }
-html[data-theme="light"] [style*="solid #1a1a1a"] { border-color:rgba(0,0,0,0.08) !important; }
-html[data-theme="light"] [style*="solid #141414"] { border-color:rgba(0,0,0,0.07) !important; }
-html[data-theme="light"] [style*="solid #333"]    { border-color:rgba(0,0,0,0.16) !important; }
-html[data-theme="light"] [style*="solid #222"]    { border-color:rgba(0,0,0,0.11) !important; }
-html[data-theme="light"] [style*="solid rgba(255,255,255,0.08"],
-html[data-theme="light"] [style*="solid rgba(255,255,255,0.1"],
-html[data-theme="light"] [style*="solid rgba(255,255,255,0.12"],
-html[data-theme="light"] [style*="solid rgba(255,255,255,0.15"] { border-color:rgba(0,0,0,0.12) !important; }
+/* Borders → light grey. Kept visible (not hairline) so white cards read as
+   distinct panels against the light-grey page instead of floating. */
+html[data-theme="light"] [style*="solid #252525"] { border-color:rgba(0,0,0,0.16) !important; }
+html[data-theme="light"] [style*="solid #2a2a2a"] { border-color:rgba(0,0,0,0.16) !important; }
+html[data-theme="light"] [style*="solid #1e1e1e"] { border-color:rgba(0,0,0,0.15) !important; }
+html[data-theme="light"] [style*="solid #1a1a1a"] { border-color:rgba(0,0,0,0.14) !important; }
+html[data-theme="light"] [style*="solid #141414"] { border-color:rgba(0,0,0,0.13) !important; }
+html[data-theme="light"] [style*="solid #333"]    { border-color:rgba(0,0,0,0.18) !important; }
+html[data-theme="light"] [style*="solid #222"]    { border-color:rgba(0,0,0,0.16) !important; }
+/* ALL translucent-white borders → visible light-grey, any opacity, any side.
+   border-color has no effect on sides with border-style:none, so this is safe
+   for one-sided borders too. Covers client (spaces) and server (no spaces). */
+html[data-theme="light"] [style*="solid rgba(255,255,255,"],
+html[data-theme="light"] [style*="solid rgba(255, 255, 255,"] { border-color:rgba(0,0,0,0.15) !important; }
 
 /* Neutral text greys → readable dark greys (accents untouched) */
 html[data-theme="light"] [style*="color:#fff"]  { color:#16191f !important; }
@@ -321,17 +323,13 @@ html[data-theme="light"] [style*="rgba(8, 8, 14"]   { background:rgba(255,255,25
 html[data-theme="light"] [style*="rgba(10, 10, 18"] { background:rgba(250,250,252,0.98) !important; }
 
 /* Borders → light grey */
-html[data-theme="light"] [style*="solid rgb(37, 37, 37)"] { border-color:rgba(0,0,0,0.12) !important; }
-html[data-theme="light"] [style*="solid rgb(42, 42, 42)"] { border-color:rgba(0,0,0,0.12) !important; }
-html[data-theme="light"] [style*="solid rgb(30, 30, 30)"] { border-color:rgba(0,0,0,0.10) !important; }
-html[data-theme="light"] [style*="solid rgb(26, 26, 26)"] { border-color:rgba(0,0,0,0.08) !important; }
-html[data-theme="light"] [style*="solid rgb(20, 20, 20)"] { border-color:rgba(0,0,0,0.07) !important; }
-html[data-theme="light"] [style*="solid rgb(51, 51, 51)"] { border-color:rgba(0,0,0,0.16) !important; }
-html[data-theme="light"] [style*="solid rgb(34, 34, 34)"] { border-color:rgba(0,0,0,0.11) !important; }
-html[data-theme="light"] [style*="solid rgba(255, 255, 255, 0.08)"],
-html[data-theme="light"] [style*="solid rgba(255, 255, 255, 0.1)"],
-html[data-theme="light"] [style*="solid rgba(255, 255, 255, 0.12)"],
-html[data-theme="light"] [style*="solid rgba(255, 255, 255, 0.15)"] { border-color:rgba(0,0,0,0.12) !important; }
+html[data-theme="light"] [style*="solid rgb(37, 37, 37)"] { border-color:rgba(0,0,0,0.16) !important; }
+html[data-theme="light"] [style*="solid rgb(42, 42, 42)"] { border-color:rgba(0,0,0,0.16) !important; }
+html[data-theme="light"] [style*="solid rgb(30, 30, 30)"] { border-color:rgba(0,0,0,0.15) !important; }
+html[data-theme="light"] [style*="solid rgb(26, 26, 26)"] { border-color:rgba(0,0,0,0.14) !important; }
+html[data-theme="light"] [style*="solid rgb(20, 20, 20)"] { border-color:rgba(0,0,0,0.13) !important; }
+html[data-theme="light"] [style*="solid rgb(51, 51, 51)"] { border-color:rgba(0,0,0,0.18) !important; }
+html[data-theme="light"] [style*="solid rgb(34, 34, 34)"] { border-color:rgba(0,0,0,0.16) !important; }
 
 /* Neutral text greys (accents untouched) */
 html[data-theme="light"] [style*="color: rgb(255, 255, 255)"] { color:#16191f !important; }
