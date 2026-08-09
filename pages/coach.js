@@ -773,139 +773,55 @@ export default function Coach(){
             {tab==="callouts"&&<CalloutsTab/>}
           </ErrorBoundary>
         </div>
-        {/* ── LIQUID GLASS BOTTOM NAV ── */}
+        {/* ── SIDE TAB NAV (drawer) ── */}
         {(()=>{
             const ICON_MAP={"overview":"barChart","teams":"grid","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"heart","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","injuries":"alertTriangle","habits":"droplet","callouts":"zap","anvil":"anvil","mcastles-post":"crown"};
             const ICON_COLORS={"overview":"#FF7A2F","teams":"#60A8D0","roster":"#8CB4D5","attendance":"#7B6EE8","accountability":"#3A9E5A","anvil":"#F0C040","inbox":"#B56EE8","leaderboard":"#FFD700","goals":"#44D9B0","fellowship":"#A080D0","mindset":"#4DC8F5","culture":"#E8720C","prayers":"#FF80A8","weights":"#C8D040","photos":"#50D0B8","engagement":"#FF5A9D","qr":"#80C0D8","mcastles-post":"#D060C0","ironroom":"#E05555","injuries":"#FF8060","habits":"#20BEA8","callouts":"#FFC040"};
-            const fixedTab=coachRole==="kevin"?"roster":"overview";
-            const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id)&&id!==fixedTab);
-            const PRIMARY=[fixedTab,...validPinned];
-            const togglePin=(id)=>{
-              if(id===fixedTab)return;
-              const next=validPinned.includes(id)?validPinned.filter(p=>p!==id):(validPinned.length<3?[...validPinned,id]:validPinned);
-              setPinnedTabs(next);
-              try{localStorage.setItem("tf_pinned_coach_"+coachRole,JSON.stringify(next));}catch(e){}
-            };
-            const renderTabIcon=(id,size,isActive,grid=false)=>{const n=ICON_MAP[id];const col=ICON_COLORS[id]||"#aaa";const op=isActive?1:grid?0.65:0.55;if(n)return <span style={{opacity:op,display:"flex",alignItems:"center"}}><Icon name={n} size={size} color={col}/></span>;return <span style={{fontSize:size,lineHeight:1,opacity:op}}>{col}</span>;};
+            const SECTIONS=[
+              {label:"Overview",ids:["overview","roster","teams","attendance"]},
+              {label:"Accountability",ids:["accountability","inbox","leaderboard","anvil"]},
+              {label:"Culture & Faith",ids:["culture","fellowship","prayers","mindset"]},
+              {label:"Tools",ids:["engagement","qr","goals","weights","ironroom"]},
+              {label:"More",ids:["photos","injuries","habits","callouts","mcastles-post"]},
+            ].map(s=>({...s,ids:s.ids.filter(id=>TABS.find(t=>t.id===id))})).filter(s=>s.ids.length>0);
+            const renderIcon=(id,size,active)=>{const n=ICON_MAP[id];const col=ICON_COLORS[id]||"#aaa";return n?<span style={{display:"flex",alignItems:"center",opacity:active?1:0.75}}><Icon name={n} size={size} color={col}/></span>:<span style={{fontSize:size}}>{col}</span>;};
+            const current=TABS.find(t=>t.id===tab);
+            const curCol=ICON_COLORS[tab]||"#E8720C";
             return(
               <>
-                <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:680,zIndex:1000,fontFamily:"Georgia,serif"}}>
-                  <div style={{background:"rgba(8,8,14,0.88)",backdropFilter:"blur(48px) saturate(220%)",WebkitBackdropFilter:"blur(48px) saturate(220%)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:28,boxShadow:"0 20px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.12)",display:"flex",alignItems:"stretch",padding:"6px 4px 6px",position:"relative"}}>
-                    {(()=>{const n=PRIMARY.length+1;const activeIdx=PRIMARY.indexOf(tab);if(activeIdx<0||jiggleMode)return null;const col=ICON_COLORS[tab]||"#E8720C";return <div style={{position:"absolute",bottom:6,left:`calc(4px + ${activeIdx} * (100% - 8px) / ${n})`,width:`calc((100% - 8px) / ${n})`,height:2,borderRadius:2,background:col,boxShadow:`0 0 8px ${col}99`,transition:"left 0.32s cubic-bezier(0.22,1,0.36,1),background 0.2s",pointerEvents:"none",zIndex:0}}/>})()}
-                    {PRIMARY.map(id=>{
-                      const t=TABS.find(x=>x.id===id);
-                      if(!t)return null;
-                      const isActive=tab===id;
-                      const col=ICON_COLORS[id]||"#E8720C";
-                      const cnt=id==="inbox"&&inboxCount>0?inboxCount:0;
-                      const isJiggling=jiggleMode&&id!==fixedTab&&jiggleDragId!==id;
-                      const isDragging=jiggleDragId===id;
-                      return(
-                        <button key={id}
-                          ref={isDragging?jiggleDragElemRef:null}
-                          onClick={()=>{if(jiggleMode)return;hTap();slideDirRef.current=0;setTab(id);}}
-                          onTouchStart={(e)=>{
-                            if(id===fixedTab)return;
-                            const startX=e.touches[0].clientX;
-                            longPressNavRef.current=setTimeout(()=>{
-                              if(navigator.vibrate)navigator.vibrate(20);
-                              jiggleDragOrderRef.current=[...validPinned];
-                              jiggleDragStartX.current=startX;
-                              jiggleLastSwapX.current=startX;
-                              setJiggleDragId(id);
-                              setJiggleMode(true);
-                            },480);
-                          }}
-                          onTouchMove={(e)=>{
-                            if(!jiggleMode){clearTimeout(longPressNavRef.current);return;}
-                            if(jiggleDragId!==id)return;
-                            e.stopPropagation();
-                            const cx=e.touches[0].clientX;
-                            if(jiggleDragElemRef.current){jiggleDragElemRef.current.style.transform=`translateX(${cx-jiggleDragStartX.current}px) scale(1.14)`;}
-                            const dx=cx-jiggleLastSwapX.current;
-                            if(Math.abs(dx)<50)return;
-                            const dir=dx>0?1:-1;
-                            const arr=jiggleDragOrderRef.current;
-                            const from=arr.indexOf(id);
-                            const to=from+dir;
-                            if(to>=0&&to<arr.length){[arr[from],arr[to]]=[arr[to],arr[from]];jiggleLastSwapX.current+=dir*50;jiggleDragStartX.current+=dir*50;setPinnedTabs([...arr]);}
-                          }}
-                          onTouchEnd={()=>{
-                            clearTimeout(longPressNavRef.current);
-                            if(jiggleDragElemRef.current)jiggleDragElemRef.current.style.transform="";
-                            setJiggleDragId(null);
-                            if(jiggleDragOrderRef.current){try{localStorage.setItem("tf_pinned_coach_"+coachRole,JSON.stringify(jiggleDragOrderRef.current));}catch(err){}jiggleDragOrderRef.current=null;}
-                          }}
-                          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive&&!jiggleMode?"rgba(255,255,255,0.11)":"transparent",border:"none",borderRadius:22,fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:isDragging?"none":"transform 0.18s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:isDragging?"0 12px 32px rgba(0,0,0,0.55)":isActive&&!jiggleMode?"inset 0 1px 0 rgba(255,255,255,0.18)":"none",animation:isJiggling?"tfJiggle 0.22s ease-in-out infinite alternate":"none",position:"relative",zIndex:isDragging?10:1,userSelect:"none",WebkitUserSelect:"none",touchAction:jiggleMode?"none":"auto"}}>
-                          <span style={{filter:isActive&&!jiggleMode?"drop-shadow(0 0 10px "+col+"dd)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,19,isActive)}</span>
-                          <span style={{letterSpacing:"0.02em",color:isActive&&!jiggleMode?col:"rgba(255,255,255,0.38)"}}>{t.label}</span>
-                          {cnt>0&&!jiggleMode&&<div style={{position:"absolute",top:4,right:"50%",transform:"translateX(6px)",background:"#E8720C",color:"#fff",fontSize:7,fontWeight:900,minWidth:14,height:14,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px"}}>{cnt}</div>}
-                        </button>
-                      );
-                    })}
-                    <button onClick={()=>{setShowTabPicker(true);setEditingPins(false);}}
-                      style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:"transparent",border:"none",borderRadius:22,color:"rgba(255,255,255,0.38)",fontSize:9,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
-                      <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:20,opacity:0.55}}><Icon name="menu" size={19} color="#aaa"/></span>
-                      <span>More</span>
-                    </button>
-                  </div>
-                </div>
+                <style>{`@keyframes tfDrawerIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
+                {/* Floating "you are here" + menu button */}
+                <button onClick={()=>setShowTabPicker(true)} style={{position:"fixed",bottom:18,left:16,zIndex:1000,display:"flex",alignItems:"center",gap:9,padding:"10px 16px 10px 12px",borderRadius:26,border:"1px solid rgba(255,255,255,0.15)",background:"rgba(8,8,14,0.9)",backdropFilter:"blur(40px) saturate(200%)",WebkitBackdropFilter:"blur(40px) saturate(200%)",boxShadow:"0 12px 40px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.12)",cursor:"pointer",fontFamily:"Georgia,serif",maxWidth:"calc(100% - 32px)"}}>
+                  <Icon name="menu" size={20} color="#fff"/>
+                  <span style={{width:22,height:22,borderRadius:7,background:curCol+"22",border:"1px solid "+curCol+"55",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{renderIcon(tab,14,true)}</span>
+                  <span style={{fontSize:13,fontWeight:700,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{current?.label||"Menu"}</span>
+                </button>
 
-                {jiggleMode&&(
-                  <div style={{position:"fixed",bottom:100,left:"50%",transform:"translateX(-50%)",zIndex:1002}}>
-                    <button onClick={()=>{setJiggleMode(false);setJiggleDragId(null);if(jiggleDragElemRef.current)jiggleDragElemRef.current.style.transform="";}} style={{background:"rgba(255,255,255,0.92)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",color:"#000",fontSize:13,fontWeight:800,padding:"9px 28px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 4px 20px rgba(0,0,0,0.35)",letterSpacing:"0.04em"}}>Done</button>
-                  </div>
-                )}
-
+                {/* Left slide-in tab drawer */}
                 {showTabPicker&&(
-                  <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",backdropFilter:"blur(14px)",WebkitBackdropFilter:"blur(14px)",zIndex:9999,display:"flex",flexDirection:"column"}} onClick={()=>setShowTabPicker(false)}>
-                    <div style={{flex:1}}/>
-                    <div style={{background:"rgba(10,10,18,0.97)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRadius:"28px 28px 0 0",border:"1px solid rgba(255,255,255,0.12)",borderBottom:"none",boxShadow:"0 -24px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.1)",maxHeight:"86vh",overflowY:"auto",paddingBottom:44}} onClick={e=>e.stopPropagation()}>
-                      <div style={{padding:"20px 16px 0",position:"sticky",top:0,background:"rgba(10,10,18,0.97)",zIndex:1}}>
-                        <div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,0.2)",margin:"0 auto 16px"}}/>
-                        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
-                          <div style={{fontSize:17,fontWeight:800,color:"#fff"}}>All Tabs</div>
-                          <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:15,cursor:"pointer",lineHeight:1,width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0}}>✕</button>
-                        </div>
-                        <div style={{height:"0.5px",background:"rgba(255,255,255,0.07)",marginBottom:4}}/>
+                  <div onClick={()=>setShowTabPicker(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.62)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",zIndex:9999,display:"flex"}}>
+                    <div onClick={e=>e.stopPropagation()} style={{width:"min(84vw,300px)",height:"100%",overflowY:"auto",background:"rgba(10,10,18,0.98)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRight:"1px solid rgba(255,255,255,0.12)",boxShadow:"24px 0 60px rgba(0,0,0,0.7)",paddingBottom:40,animation:"tfDrawerIn 0.26s cubic-bezier(0.22,1,0.36,1)",WebkitOverflowScrolling:"touch"}}>
+                      <div style={{position:"sticky",top:0,background:"rgba(10,10,18,0.98)",padding:"18px 16px 12px",zIndex:1,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"0.5px solid rgba(255,255,255,0.08)"}}>
+                        <div style={{fontSize:17,fontWeight:900,color:"#fff",letterSpacing:"-0.01em"}}>Menu</div>
+                        <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)",fontSize:14,cursor:"pointer",width:30,height:30,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>✕</button>
                       </div>
-                      {[
-                        {label:"Overview",ids:["overview","roster","teams","attendance"]},
-                        {label:"Accountability",ids:["accountability","inbox","leaderboard","anvil"]},
-                        {label:"Culture & Faith",ids:["culture","fellowship","prayers","mindset"]},
-                        {label:"Tools",ids:["engagement","qr","goals","weights","ironroom"]},
-                        {label:"More",ids:["photos","injuries","habits","callouts","mcastles-post"]},
-                      ].filter(s=>s.ids.some(id=>TABS.find(t=>t.id===id))).map(section=>(
-                        <div key={section.label}>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,padding:"14px 16px 8px"}}>{section.label}</div>
-                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,padding:"0 12px"}}>
-                            {section.ids.map(id=>{
-                              const t=TABS.find(x=>x.id===id);
-                              if(!t)return null;
-                              const col=ICON_COLORS[id]||"#aaa";
-                              const isActive=tab===id;
-                              const isFixed=id===fixedTab;
-                              const isPinned=isFixed||validPinned.includes(id);
-                              const canPin=!isPinned&&validPinned.length<3;
-                              return(
-                                <div key={id} style={{position:"relative"}}>
-                                  <button
-                                    onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}
-                                    style={{width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:8,padding:"16px 8px 12px",borderRadius:16,background:isActive?col+"18":"rgba(255,255,255,0.04)",border:"1px solid "+(isActive?col+"55":"rgba(255,255,255,0.07)"),boxShadow:isActive?"0 0 16px "+col+"33":"none",cursor:"pointer",fontFamily:"Georgia,serif",boxSizing:"border-box"}}>
-                                    <div style={{width:46,height:46,borderRadius:14,background:col+"1c",border:"1px solid "+col+(isActive?"55":"2a"),display:"flex",alignItems:"center",justifyContent:"center",boxShadow:isActive?"0 0 14px "+col+"44":"none"}}>
-                                      <span style={{display:"flex",alignItems:"center",filter:isActive?"drop-shadow(0 0 6px "+col+"bb)":"none"}}>{renderTabIcon(id,22,isActive)}</span>
-                                    </div>
-                                    <span style={{fontSize:12,fontWeight:isActive?700:500,color:isActive?col:"rgba(255,255,255,0.65)",textAlign:"center",lineHeight:1.3}}>{t.label}</span>
-                                  </button>
-                                  <button
-                                    onClick={(e)=>{e.stopPropagation();if(!isFixed&&(isPinned||canPin))togglePin(id);}}
-                                    style={{position:"absolute",top:7,right:7,width:22,height:22,borderRadius:6,background:isPinned?col+"33":"rgba(255,255,255,0.07)",border:"1px solid "+(isPinned?col+"66":"rgba(255,255,255,0.12)"),display:"flex",alignItems:"center",justifyContent:"center",cursor:!isFixed&&(isPinned||canPin)?"pointer":"default",opacity:!isPinned&&!canPin&&!isFixed?0.2:1,padding:0}}>
-                                    {isFixed?<Icon name="lock" size={9} color="rgba(255,255,255,0.35)"/>:<span style={{fontSize:9,color:isPinned?col:"rgba(255,255,255,0.3)",fontWeight:800,lineHeight:1}}>{isPinned?"✓":"+"}</span>}
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
+                      {SECTIONS.map(section=>(
+                        <div key={section.label} style={{marginTop:6}}>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,padding:"12px 18px 6px"}}>{section.label}</div>
+                          {section.ids.map(id=>{
+                            const t=TABS.find(x=>x.id===id);
+                            if(!t)return null;
+                            const col=ICON_COLORS[id]||"#aaa";
+                            const active=tab===id;
+                            return(
+                              <button key={id} onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}
+                                style={{width:"100%",display:"flex",alignItems:"center",gap:13,padding:"12px 18px",background:active?col+"1f":"transparent",borderLeft:"3px solid "+(active?col:"transparent"),borderTop:"none",borderRight:"none",borderBottom:"none",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",transition:"background 0.12s"}}>
+                                <span style={{width:24,height:24,borderRadius:8,background:active?col+"22":"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{renderIcon(id,17,active)}</span>
+                                <span style={{fontSize:14.5,fontWeight:active?800:500,color:active?col:"rgba(255,255,255,0.72)",letterSpacing:active?"0.01em":"0"}}>{t.label}</span>
+                                {active&&<span style={{marginLeft:"auto",width:7,height:7,borderRadius:"50%",background:col,boxShadow:"0 0 8px "+col,flexShrink:0}}/>}
+                              </button>
+                            );
+                          })}
                         </div>
                       ))}
                     </div>
