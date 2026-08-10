@@ -58,7 +58,7 @@ export default function AnvilTab({ athletes=[], anvil=[], setAnvil, anvilPrizes=
                 <div style={{width:40,height:40,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,margin:"0 auto 4px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:500,color:"#fff",border:isSelected?"2px solid "+GOLD:"none"}}>
                   {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
                 </div>
-                <div style={{fontSize:10,fontWeight:500,color:isSelected?GOLD:"#aaa",lineHeight:1.2}}>{a.name.split(" ")[0]}</div>
+                <div style={{fontSize:10,fontWeight:500,color:isSelected?GOLD:"#aaa",lineHeight:1.2}}>{(a.name||"").split(" ")[0]}</div>
                 {timesWon>0&&<div style={{fontSize:9,color:GOLD}}>⚒ ×{timesWon}</div>}
                 {isSelected&&<div style={{position:"absolute",top:3,right:3,fontSize:12}}>⭐</div>}
               </button>
@@ -125,7 +125,7 @@ export default function AnvilTab({ athletes=[], anvil=[], setAnvil, anvilPrizes=
                 <div style={{width:22,height:22,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",fontWeight:500,flexShrink:0}}>
                   {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
                 </div>
-                <span style={{fontSize:12,color:"#ddd"}}>{a.name.split(" ")[0]}</span>
+                <span style={{fontSize:12,color:"#ddd"}}>{(a.name||"").split(" ")[0]}</span>
               </div>
             ))}
           </div>

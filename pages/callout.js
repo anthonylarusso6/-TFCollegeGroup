@@ -211,7 +211,7 @@ export default function Callout(){
                       <div style={{width:50,height:50,borderRadius:"50%",background:avatarColor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:"#fff",margin:"0 auto 10px",overflow:"hidden",boxShadow:"0 0 18px "+avatarColor+"44"}}>
                         {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>{e.target.style.display="none";}} alt=""/>:a.name[0]}
                       </div>
-                      <div style={{fontSize:13,fontWeight:700,color:"#fff",lineHeight:1.2}}>{a.name.split(" ")[0]}</div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#fff",lineHeight:1.2}}>{(a.name||"").split(" ")[0]}</div>
                       <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginTop:3}}>{a.sport||""}</div>
                       {todayCount>0&&(
                         <div style={{position:"absolute",top:8,right:8,minWidth:20,height:20,borderRadius:10,background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,color:"#fff",fontWeight:800,padding:"0 5px"}}>

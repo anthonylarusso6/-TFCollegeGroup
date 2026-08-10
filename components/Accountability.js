@@ -193,7 +193,7 @@ export default function Accountability({athletes=[]}){
                     <div style={{width:38,height:38,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:"#fff",margin:"0 auto 6px",overflow:"hidden",flexShrink:0}}>
                       {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
                     </div>
-                    <div style={{fontSize:11,fontWeight:600,color:"#ddd",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name.split(" ")[0]}</div>
+                    <div style={{fontSize:11,fontWeight:600,color:"#ddd",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(a.name||"").split(" ")[0]}</div>
                     {todayCrunches>0&&<div style={{fontSize:9,color:RED,marginTop:2,fontWeight:700}}>{todayCrunches}</div>}
                     {todayCount>0&&<div style={{position:"absolute",top:5,right:5,width:16,height:16,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#fff",fontWeight:700}}>{todayCount}</div>}
                   </button>

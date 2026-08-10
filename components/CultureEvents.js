@@ -223,7 +223,7 @@ export default function CultureEvents({athletes=[]}){
                           <div style={{width:26,height:26,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,margin:"0 auto 4px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:500,color:"#fff"}}>
                             {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
                           </div>
-                          <div style={{fontSize:10,color:isIn?GREEN:"#888",fontWeight:isIn?600:400}}>{a.name.split(" ")[0]}</div>
+                          <div style={{fontSize:10,color:isIn?GREEN:"#888",fontWeight:isIn?600:400}}>{(a.name||"").split(" ")[0]}</div>
                         </button>
                       );
                     })}

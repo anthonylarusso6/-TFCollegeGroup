@@ -62,7 +62,7 @@ export default function GoalsTab({ athletes, goalReviews, setGoalReviews, genLoa
 
                   {!hasGoal&&(
                     <div style={{background:"#1a0808",borderRadius:8,padding:"8px 12px",marginBottom:10,border:"0.5px solid "+RED+"33"}}>
-                      <div style={{fontSize:12,color:RED}}>⚠ No goals set yet — follow up with {a.name.split(" ")[0]}</div>
+                      <div style={{fontSize:12,color:RED}}>⚠ No goals set yet — follow up with {(a.name||"").split(" ")[0]}</div>
                     </div>
                   )}
 

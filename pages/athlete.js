@@ -658,7 +658,7 @@ export default function Athlete(){
 
         {/* Name */}
         <div style={{fontSize:26,fontWeight:900,color:"#fff",marginBottom:5,letterSpacing:"-0.02em",textTransform:"uppercase"}}>
-          {!selectedAthlete?.pin?selectedAthlete?.name.split(" ")[0]:pinStep==="confirm"?"Confirm PIN":selectedAthlete?.name.split(" ")[0]}
+          {!selectedAthlete?.pin?(selectedAthlete?.name||"").split(" ")[0]:pinStep==="confirm"?"Confirm PIN":(selectedAthlete?.name||"").split(" ")[0]}
         </div>
         <div style={{fontSize:12,color:"#555",marginBottom:28,letterSpacing:"0.05em"}}>
           {!selectedAthlete?.pin?"Create a 4-digit PIN":pinStep==="confirm"?"Enter the same 4 digits":"Enter your PIN to check in"}

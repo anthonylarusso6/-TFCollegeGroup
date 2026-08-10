@@ -327,7 +327,7 @@ export default function TeamsView({athletes=[]}){
                 <div style={{width:22,height:22,borderRadius:"50%",background:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#888",flexShrink:0,overflow:"hidden"}}>
                   {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
                 </div>
-                <span style={{fontSize:12,color:"#888"}}>{a.name.split(" ")[0]}</span>
+                <span style={{fontSize:12,color:"#888"}}>{(a.name||"").split(" ")[0]}</span>
               </div>
             ))}
           </div>
@@ -409,7 +409,7 @@ export default function TeamsView({athletes=[]}){
                       <div style={{width:20,height:20,borderRadius:"50%",background:isLeader?color:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
                         {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:name[0]}
                       </div>
-                      <span style={{fontSize:12,color:isLeader?color:"#ccc",fontWeight:isLeader?700:400}}>{name.split(" ")[0]}</span>
+                      <span style={{fontSize:12,color:isLeader?color:"#ccc",fontWeight:isLeader?700:400}}>{(name||"").split(" ")[0]}</span>
                       <button onClick={()=>removeFromGroup(name,i)} style={{background:"transparent",border:"none",cursor:"pointer",padding:"0 4px 0 2px",fontSize:13,color:"#333",lineHeight:1}}>×</button>
                     </div>
                   );
@@ -423,7 +423,7 @@ export default function TeamsView({athletes=[]}){
                 <div style={{fontSize:10,color:"#444",marginBottom:6}}>Quick add:</div>
                 <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
                   {unassigned.map(a=>(
-                    <button key={a.id} onClick={()=>addToGroup(a.name,i)} style={{fontSize:10,padding:"3px 8px",borderRadius:10,border:"0.5px solid "+color+"44",background:"transparent",color:color+"99",cursor:"pointer",fontFamily:"Georgia,serif"}}>+ {a.name.split(" ")[0]}</button>
+                    <button key={a.id} onClick={()=>addToGroup(a.name,i)} style={{fontSize:10,padding:"3px 8px",borderRadius:10,border:"0.5px solid "+color+"44",background:"transparent",color:color+"99",cursor:"pointer",fontFamily:"Georgia,serif"}}>+ {(a.name||"").split(" ")[0]}</button>
                   ))}
                 </div>
               </div>
