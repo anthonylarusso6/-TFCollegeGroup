@@ -6,6 +6,7 @@ const PATHS = {
   scale:       <><path d="M12 3v18M4 21h16M5 9c0 0 2 5 7 5s7-5 7-5"/></>,
   barbell:     <><path d="M6 8v8M4 9v6M18 8v8M20 9v6M6 12h12"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="9" width="4" height="6" rx="1"/></>,
   menu:        <><path d="M4 6h16M4 12h16M4 18h16"/></>,
+  gift:        <><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8C12 8 12 3 8.5 3 6.6 3 6.6 6 8.5 6 12 6 12 8 12 8zM12 8C12 8 12 3 15.5 3 17.4 3 17.4 6 15.5 6 12 6 12 8 12 8z"/></>,
   // People
   person:      <><circle cx="12" cy="8" r="4"/><path d="M4 20v-1a8 8 0 0 1 16 0v1"/></>,
   users:       <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
