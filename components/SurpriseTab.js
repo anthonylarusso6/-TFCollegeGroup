@@ -13,6 +13,7 @@ const SIGNOFF = "— Coach Ant";
 
 export default function SurpriseTab({ athleteName }) {
   const [open, setOpen] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const first = (athleteName || "").split(" ")[0];
 
   if (!open) {
@@ -57,20 +58,49 @@ export default function SurpriseTab({ athleteName }) {
       </div>
 
       <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", borderRadius: 16, overflow: "hidden", border: "1px solid " + ORANGE + "33", background: "#000", boxShadow: "0 0 50px " + ORANGE + "22, 0 16px 40px rgba(0,0,0,0.5)", marginBottom: 16 }}>
-        <iframe
-          title="A message from Coach"
-          src={"https://drive.google.com/file/d/" + VIDEO_ID + "/preview"}
-          allow="autoplay; fullscreen"
-          allowFullScreen
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
-        />
+        {playing ? (
+          <iframe
+            title="A message from Coach"
+            src={"https://drive.google.com/file/d/" + VIDEO_ID + "/preview"}
+            allow="autoplay; fullscreen"
+            allowFullScreen
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
+          />
+        ) : (
+          <button
+            onClick={() => setPlaying(true)}
+            aria-label="Play the thank-you video"
+            style={{
+              position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", cursor: "pointer", padding: 18,
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, textAlign: "center", fontFamily: "Georgia,serif",
+              background: "radial-gradient(125% 90% at 50% 26%, rgba(232,114,12,0.46) 0%, rgba(212,175,55,0.16) 34%, rgba(18,9,0,0.98) 78%)",
+            }}
+          >
+            <span style={{ position: "absolute", top: 12, left: 15, fontSize: 15, opacity: 0.7 }}>✨</span>
+            <span style={{ position: "absolute", top: 18, right: 18, fontSize: 12, opacity: 0.55 }}>✨</span>
+            <span style={{ position: "absolute", bottom: 14, left: 22, fontSize: 12, opacity: 0.5 }}>✨</span>
+            <span style={{ position: "absolute", bottom: 18, right: 20, fontSize: 14, opacity: 0.6 }}>🎁</span>
+            <div style={{ width: 42, height: 42, borderRadius: 12, overflow: "hidden", background: "#fff", border: "1px solid " + GOLD + "66", marginBottom: 2 }}>
+              <img src="/icon.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            </div>
+            <div style={{ fontSize: 10, letterSpacing: "0.3em", textTransform: "uppercase", color: "#fdf6ec", opacity: 0.82 }}>TF College Group</div>
+            <div style={{ fontSize: "clamp(30px,9vw,46px)", fontWeight: 800, color: GOLD, letterSpacing: "0.02em", lineHeight: 1, textShadow: "0 2px 22px rgba(0,0,0,0.55)" }}>THANK YOU</div>
+            <div style={{ fontSize: 13, color: "#fdf6ec", opacity: 0.92 }}>{first ? first + ", this one’s for you" : "This one’s for you"}</div>
+            <div className="tf-pulse-glow" style={{ marginTop: 8, width: 58, height: 58, borderRadius: "50%", background: "rgba(255,255,255,0.14)", border: "1.5px solid " + GOLD, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 23, color: "#fdf6ec", marginLeft: 4, lineHeight: 1 }}>▶</span>
+            </div>
+            <div style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(255,244,230,0.72)", marginTop: 1 }}>Tap to play</div>
+          </button>
+        )}
       </div>
-      <div style={{ fontSize: 11, color: "#666", textAlign: "center", marginBottom: 12 }}>Tap ▶ in the player if it doesn’t start on its own · turn your sound up 🔊</div>
-      <a
-        href={"https://drive.google.com/file/d/" + VIDEO_ID + "/view"}
-        target="_blank" rel="noopener noreferrer"
-        style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", padding: "13px", borderRadius: 14, textDecoration: "none", background: "linear-gradient(135deg," + PINK + "," + ORANGE + ")", color: "#fff", fontSize: 14.5, fontWeight: 800, fontFamily: "Georgia,serif", letterSpacing: "0.03em", boxShadow: "0 6px 24px " + PINK + "44", marginBottom: 18 }}
-      >▶ Watch the video</a>
+      {playing && <div style={{ fontSize: 11, color: "#666", textAlign: "center", marginBottom: 12 }}>Tap ▶ in the player if it doesn’t start on its own · turn your sound up 🔊</div>}
+      {playing && (
+        <a
+          href={"https://drive.google.com/file/d/" + VIDEO_ID + "/view"}
+          target="_blank" rel="noopener noreferrer"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", padding: "13px", borderRadius: 14, textDecoration: "none", background: "linear-gradient(135deg," + PINK + "," + ORANGE + ")", color: "#fff", fontSize: 14.5, fontWeight: 800, fontFamily: "Georgia,serif", letterSpacing: "0.03em", boxShadow: "0 6px 24px " + PINK + "44", marginBottom: 18 }}
+        >▶ Not playing? Watch it here</a>
+      )}
 
       <div style={{ background: "#111", borderRadius: 16, padding: "20px 20px 18px", border: "1px solid " + GOLD + "33", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,transparent," + GOLD + "," + ORANGE + ",transparent)" }} />
