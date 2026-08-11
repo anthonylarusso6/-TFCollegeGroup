@@ -24,6 +24,7 @@ import MCastlesTab from "../components/MCastlesTab";
 import AthleteEventsTab from "../components/AthleteEventsTab";
 import SurpriseTab from "../components/SurpriseTab";
 import Achievements from "../components/Achievements";
+import SeasonRecap from "../components/SeasonRecap";
 import InjuryBodyMap from "../components/InjuryBodyMap";
 import HabitsTab from "../components/HabitsTab";
 import Icon from "../components/Icon";
@@ -826,6 +827,7 @@ export default function Athlete(){
       {id:"mygroup",label:"My Group"},
       {id:"anvil",label:"Anvil"},
       {id:"badges",label:"Badges"},
+      {id:"recap",label:"My Season"},
       {id:"weight",label:"Weight"},
       {id:"body",label:"Injury"},
       {id:"prs",label:"Iron Room"},
@@ -1398,6 +1400,7 @@ export default function Athlete(){
 
             {tab==="anvil"&&<AnvilHistory athleteId={selectedAthlete?.id} athleteName={selectedAthlete?.name}/>}
             {tab==="badges"&&<Achievements athleteId={selectedAthlete?.id} athleteName={selectedAthlete?.name}/>}
+            {tab==="recap"&&<SeasonRecap athleteId={selectedAthlete?.id} athleteName={selectedAthlete?.name} photoUrl={selectedAthlete?.photo_url}/>}
 
             {tab==="photos"&&<GroupPhotos/>}
 
@@ -1551,8 +1554,8 @@ export default function Athlete(){
         </div>
         {/* ── LIQUID GLASS BOTTOM NAV ── */}
         {(()=>{
-            const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"heart","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"compass","anvil":"anvil","mcastles":"crown","events":"star","surprise":"gift","badges":"medal"};
-            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#C8D040","verse":"#4DC8F5","draft":"#44D9B0","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#FFD700","prayer":"#9060E0","bracelets":"#C090F0","photos":"#50D0B8","notes":"#E8B84A","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#E8720C","mcastles":"#D060C0","events":"#D4AF37","surprise":"#E8478C","badges":"#D4AF37"};
+            const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"heart","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"compass","anvil":"anvil","mcastles":"crown","events":"star","surprise":"gift","badges":"medal","recap":"award"};
+            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#C8D040","verse":"#4DC8F5","draft":"#44D9B0","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#FFD700","prayer":"#9060E0","bracelets":"#C090F0","photos":"#50D0B8","notes":"#E8B84A","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#E8720C","mcastles":"#D060C0","events":"#D4AF37","surprise":"#E8478C","badges":"#D4AF37","recap":"#E8720C"};
             const tabColor=isForge?"#E8720C":STEEL;
             const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id));
             const PRIMARY=["profile",...validPinned];
@@ -1658,7 +1661,7 @@ export default function Athlete(){
                       {[
                         {label:"Home",ids:["profile"]},
                         {label:"Training",ids:["prs","weight","stretching","body"]},
-                        {label:"Progress",ids:["attendance","leaderboard","anvil","badges"]},
+                        {label:"Progress",ids:["attendance","leaderboard","anvil","badges","recap"]},
                         {label:"Team & Faith",ids:["mygroup","verse","prayer","bracelets"]},
                         {label:"More",ids:["surprise","mcastles","events","photos","notes","habits","private"]},
                       ].map(section=>(
