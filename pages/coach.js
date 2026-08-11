@@ -417,11 +417,22 @@ export default function Coach(){
     const fallbackCoach=cid||selectedCoach||"ant";
     try{
       const challenge=crypto.getRandomValues(new Uint8Array(32));
+      // When a specific coach is chosen, target THEIR passkey so iOS shows a
+      // direct Face ID prompt instead of a passkey picker. For "Quick Sign In"
+      // (no coach chosen) leave it empty so any stored passkey can be used.
+      let allowCredentials=[];
+      const targetCoach=cid||selectedCoach;
+      if(targetCoach){
+        try{
+          const raw=localStorage.getItem("tf_bio_coach_"+targetCoach);
+          if(raw){const credB=Uint8Array.from(atob(JSON.parse(raw).credId),ch=>ch.charCodeAt(0));allowCredentials=[{type:"public-key",id:credB,transports:["internal"]}];}
+        }catch(e){}
+      }
       const assertion=await navigator.credentials.get({
         publicKey:{
           challenge,
           rpId:window.location.hostname,
-          allowCredentials:[],
+          allowCredentials,
           userVerification:"required",
           timeout:60000,
           hints:["client-device"], // prefer platform authenticator (Face ID → iCloud Keychain)

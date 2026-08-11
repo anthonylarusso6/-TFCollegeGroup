@@ -420,18 +420,17 @@ export default function Athlete(){
     const defaultOrder=["profile","mcastles","events","verse","notes","attendance","mygroup","anvil","weight","body","prs","stretching","leaderboard","prayer","bracelets","photos","habits","private"];
     try{const storedOrder=localStorage.getItem("tf_more_order_"+a.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});const newTabs=defaultOrder.filter(id=>!seen.has(id));const fullOrder=[...initOrder,...newTabs];setMoreOrder(fullOrder);moreOrderRef.current=fullOrder;}catch(e){setMoreOrder(defaultOrder);moreOrderRef.current=defaultOrder;}
 
-    // Load supporting data in parallel while Face ID is scanning
-    const loads=Promise.all([
+    // Show the PIN pad immediately as the base layer so it's already there if
+    // Face ID is cancelled or unavailable (no awaited jump — matches coach).
+    // If Face ID succeeds, authenticateWithBiometric navigates away over the top.
+    setScreen("login");
+
+    // Load supporting data in the background while Face ID is scanning.
+    Promise.all([
       loadAttendance(a.id),
       (async()=>{try{const{data}=await supabase.from("athletes").select("*").eq("id",a.id).maybeSingle();if(data)setSelectedAthlete(data);}catch(e){}})(),
-    ]);
-
-    if(bioPromise){
-      const handled=await bioPromise;
-      if(handled){await loads;return;}
-    }
-    setScreen("login");
-    await loads;
+    ]).catch(()=>{});
+    if(bioPromise)bioPromise.catch(()=>{});
   };
 
   const submitPin=async()=>{
