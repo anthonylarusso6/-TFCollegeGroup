@@ -202,7 +202,7 @@ export default function Coach(){
 
 
   const callAI=async(prompt)=>{
-    const res=await fetch("/api/ai-task",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
+    const res=await fetch("/api/ai-task",{method:"POST",headers:{"Content-Type":"application/json","x-app-secret":process.env.NEXT_PUBLIC_APP_ACTION_SECRET||""},body:JSON.stringify({prompt})});
     const data=await res.json();
     return data.text||"";
   };

@@ -28,7 +28,7 @@ export default function CalloutsTab(){
               if(broadcastSending||!broadcastTitle.trim())return;
               setBroadcastSending(true);setBroadcastResult(null);
               try{
-                const r=await fetch("/api/broadcast-notification",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:broadcastTitle.trim(),body:broadcastBody.trim(),url:"/athlete"})});
+                const r=await fetch("/api/broadcast-notification",{method:"POST",headers:{"Content-Type":"application/json","x-app-secret":process.env.NEXT_PUBLIC_APP_ACTION_SECRET||""},body:JSON.stringify({title:broadcastTitle.trim(),body:broadcastBody.trim(),url:"/athlete"})});
                 const d=await r.json();
                 setBroadcastResult(d.error?"Error: "+d.error:"Sent to "+d.sent+" athlete"+(d.sent!==1?"s":"")+(d.failed>0?" ("+d.failed+" failed)":""));
                 if(!d.error){setBroadcastTitle("");setBroadcastBody("");}

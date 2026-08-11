@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import webpush from "../../lib/webpush";
+import { actionSecretOk } from "../../lib/apiGuard";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -12,9 +13,12 @@ const safeUrl = (u) =>
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
-  const { athleteId, title, body } = req.body || {};
+  if (!actionSecretOk(req)) return res.status(401).json({ error: "unauthorized" });
+  const { athleteId } = req.body || {};
   const url = safeUrl(req.body?.url);
-  if (!athleteId || !title) return res.status(400).json({ error: "Missing fields" });
+  if (!athleteId || !req.body?.title) return res.status(400).json({ error: "Missing fields" });
+  const title = String(req.body.title).slice(0, 120);
+  const body = String(req.body?.body || "").slice(0, 500);
 
   try {
     const { data } = await supabase.from("announcements")

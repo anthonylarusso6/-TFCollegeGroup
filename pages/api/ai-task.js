@@ -1,5 +1,8 @@
+import { actionSecretOk } from "../../lib/apiGuard";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
+  if (!actionSecretOk(req)) return res.status(401).json({ error: "unauthorized" });
   const { prompt } = req.body || {};
   if (!prompt) return res.status(400).json({ error: "prompt required" });
   if (typeof prompt !== "string" || prompt.length > 8000)

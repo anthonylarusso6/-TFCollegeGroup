@@ -83,7 +83,7 @@ export default function CultureEvents({athletes=[]}){
     const today=nowEST();
     const yyyy=today.getFullYear(),mm=String(today.getMonth()+1).padStart(2,"0"),dd=String(today.getDate()).padStart(2,"0");
     try{
-      const res=await fetch("/api/ai-task",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt:`Today is ${yyyy}-${mm}-${dd}. Parse this event description and return ONLY a JSON object with these keys: name (string), date (YYYY-MM-DD string or ""), time (readable string like "3:00 PM" or ""), location (string or ""), notes (any extra details or ""). No markdown, no explanation, just the JSON.\n\nEvent: "${promptText.trim()}"`})});
+      const res=await fetch("/api/ai-task",{method:"POST",headers:{"Content-Type":"application/json","x-app-secret":process.env.NEXT_PUBLIC_APP_ACTION_SECRET||""},body:JSON.stringify({prompt:`Today is ${yyyy}-${mm}-${dd}. Parse this event description and return ONLY a JSON object with these keys: name (string), date (YYYY-MM-DD string or ""), time (readable string like "3:00 PM" or ""), location (string or ""), notes (any extra details or ""). No markdown, no explanation, just the JSON.\n\nEvent: "${promptText.trim()}"`})});
       const d=await res.json();
       const txt=(d.text||"").trim();
       const match=txt.match(/\{[\s\S]*\}/);

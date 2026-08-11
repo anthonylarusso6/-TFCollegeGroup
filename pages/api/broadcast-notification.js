@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import webpush from "../../lib/webpush";
+import { actionSecretOk } from "../../lib/apiGuard";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -13,9 +14,12 @@ const safeUrl = (u) =>
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
-  const { title, body } = req.body || {};
+  if (!actionSecretOk(req)) return res.status(401).json({ error: "unauthorized" });
+  const rawTitle = req.body?.title;
+  if (!rawTitle || typeof rawTitle !== "string") return res.status(400).json({ error: "title required" });
+  const title = rawTitle.slice(0, 120);
+  const body = String(req.body?.body || "").slice(0, 500);
   const url = safeUrl(req.body?.url);
-  if (!title) return res.status(400).json({ error: "title required" });
 
   try {
     const { data: subs } = await supabase
