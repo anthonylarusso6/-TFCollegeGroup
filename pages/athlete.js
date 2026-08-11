@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 // useLayoutEffect warns during SSR; fall back to useEffect on the server.
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
-import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
+import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE, ATHLETE_SAFE_COLS } from "../lib/constants";
 import { getTier, BRACELETS } from "../lib/teams";
 import { nowEST } from "../lib/dates";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -137,12 +137,12 @@ export default function Athlete(){
   const loadData=async()=>{
     setLoading(true);
     try{
-      const{data:aths,error:athErr}=await supabase.from("athletes").select("*").in("status",["active","sleeping"]).order("name");
+      const{data:aths,error:athErr}=await supabase.from("athletes").select(ATHLETE_SAFE_COLS).in("status",["active","sleeping"]).order("name");
       if(athErr)console.error("Athletes error:",athErr);
       if(aths&&aths.length>0){
         setAthletes(aths);
       }else{
-        const{data:allAths}=await supabase.from("athletes").select("*").order("name");
+        const{data:allAths}=await supabase.from("athletes").select(ATHLETE_SAFE_COLS).order("name");
         if(allAths)setAthletes(allAths.filter(a=>a.status!=="archived"));
       }
     }catch(e){console.error("Athletes fetch failed:",e);}
@@ -439,7 +439,13 @@ export default function Athlete(){
 
   const submitPin=async()=>{
     if(pin.length<4)return;
-    const saved=selectedAthlete.pin;
+    // The roster list no longer carries pins (privacy), so fetch this athlete's
+    // pin at login time if it isn't loaded yet — undefined must NOT be treated
+    // as "no pin set" or it would silently overwrite an existing pin.
+    let saved=selectedAthlete.pin;
+    if(saved===undefined){
+      try{const{data}=await supabase.from("athletes").select("pin").eq("id",selectedAthlete.id).maybeSingle();saved=data?(data.pin??null):null;}catch(e){saved=null;}
+    }
     if(!saved||saved===""||saved===null){
       if(pinStep==="enter"){setPinConfirm(pin);setPin("");setPinStep("confirm");setPinError("");}
       else{

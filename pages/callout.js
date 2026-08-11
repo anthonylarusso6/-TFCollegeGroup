@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
+import { ATHLETE_SAFE_COLS } from "../lib/constants";
 import { nowEST } from "../lib/dates";
 import Icon from "../components/Icon";
 import { hTap, hSuccess } from "../lib/haptics";
@@ -42,7 +43,7 @@ export default function Callout(){
   useEffect(()=>{loadAthletes();},[]);
 
   const loadAthletes=async()=>{
-    try{const{data}=await supabase.from("athletes").select("*").eq("status","active").order("name");if(data)setAthletes(data);}catch(e){}
+    try{const{data}=await supabase.from("athletes").select(ATHLETE_SAFE_COLS).eq("status","active").order("name");if(data)setAthletes(data);}catch(e){}
     try{const{data:logs}=await supabase.from("callouts").select("*,athletes(name)").order("logged_at",{ascending:false}).limit(50);if(logs)setLog(logs);}catch(e){}
     setLoading(false);
   };
