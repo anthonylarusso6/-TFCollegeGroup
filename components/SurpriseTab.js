@@ -65,7 +65,12 @@ export default function SurpriseTab({ athleteName }) {
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
         />
       </div>
-      <div style={{ fontSize: 11, color: "#666", textAlign: "center", marginBottom: 18 }}>Tap ▶ in the player if it doesn’t start on its own · turn your sound up 🔊</div>
+      <div style={{ fontSize: 11, color: "#666", textAlign: "center", marginBottom: 12 }}>Tap ▶ in the player if it doesn’t start on its own · turn your sound up 🔊</div>
+      <a
+        href={"https://drive.google.com/file/d/" + VIDEO_ID + "/view"}
+        target="_blank" rel="noopener noreferrer"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", padding: "13px", borderRadius: 14, textDecoration: "none", background: "linear-gradient(135deg," + PINK + "," + ORANGE + ")", color: "#fff", fontSize: 14.5, fontWeight: 800, fontFamily: "Georgia,serif", letterSpacing: "0.03em", boxShadow: "0 6px 24px " + PINK + "44", marginBottom: 18 }}
+      >▶ Watch the video</a>
 
       <div style={{ background: "#111", borderRadius: 16, padding: "20px 20px 18px", border: "1px solid " + GOLD + "33", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,transparent," + GOLD + "," + ORANGE + ",transparent)" }} />
