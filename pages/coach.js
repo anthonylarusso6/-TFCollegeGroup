@@ -653,58 +653,14 @@ export default function Coach(){
               <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:16}}>
                 {[0,1,2,3].map(i=>{const cc=coaches.find(x=>x.id===selectedCoach)?.color||GOLD;return(<div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+cc+(i<pin.length?"":"44"),background:i<pin.length?cc:"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 10px "+cc+"88":"none"}}/>);})}
               </div>
-              {/* Hidden keyboard input */}
-              <input
-                ref={pinRef}
-                autoFocus
-                type="tel"
-                inputMode="numeric"
-                maxLength={4}
-                value={pin}
-                onChange={e=>{
-                  const val=e.target.value.replace(/[^0-9]/g,"").slice(0,4);
-                  setPin(val);
-                  if(val.length===4){handlePinKey(null);setPin(val);/* route through handlePinKey by rebuilding */
-                    const offerBio=(nav)=>{
-                      if(bioAvail&&!bioCredId){setPendingNav(nav);setShowBioOffer(true);setPin("");}
-                      else{setPin("");completeCoachAuth(nav.role,nav.tab);}
-                    };
-                    if(pinStep==="enter"){
-                      if(selectedCoach==="ant"){
-                        if(val===COACH_PIN)offerBio({role:"ant",tab:"overview"});
-                        else{setPinError("Wrong PIN. Try again.");setPin("");}
-                      }else if(selectedCoach==="kevin"){
-                        const kp=getKevinPin();
-                        if(kp&&val===kp)offerBio({role:"kevin",tab:"roster"});
-                        else{setPinError("Wrong PIN. Try again.");setPin("");}
-                      }else if(selectedCoach==="mcastles"){
-                        const mcp=getMCastlesPin();
-                        if(mcp&&val===mcp)offerBio({role:"mcastles",tab:"overview"});
-                        else{setPinError("Wrong PIN. Try again.");setPin("");}
-                      }
-                    }else if(pinStep==="create"){
-                      setPinConfirm(val);setPinStep("confirm");setPin("");
-                    }else if(pinStep==="confirm"){
-                      if(selectedCoach==="mcastles"){
-                        if(val===pinConfirm){saveMCastlesPin(val);offerBio({role:"mcastles",tab:"overview"});}
-                        else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
-                      }else{
-                        if(val===pinConfirm){saveKevinPin(val);offerBio({role:"kevin",tab:"roster"});}
-                        else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
-                      }
-                    }
-                  }
-                }}
-                style={{position:"fixed",top:-100,left:-100,width:1,height:1,opacity:0,pointerEvents:"none"}}
-              />
               <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
                 {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
-                  <button key={i} onClick={()=>{handlePinKey(k);pinRef.current&&pinRef.current.focus();}} style={{padding:"14px 8px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":isLight?"rgba(0,0,0,0.22)":"#1a1a1a"),background:k===null?"transparent":isLight?(k==="⌫"?"#eef0f4":"#ffffff"):(k==="⌫"?"#141414":"#111"),fontSize:20,fontWeight:300,cursor:k===null?"default":"pointer",color:k==="⌫"?(isLight?"#767d87":"#555"):(isLight?"#16191f":"#e0e0e0"),fontFamily:"sans-serif",transition:"background 0.1s",boxShadow:k===null?"none":isLight?"0 1px 3px rgba(0,0,0,0.08)":"none"}}>
+                  <button key={i} onClick={()=>handlePinKey(k)} style={{padding:"14px 8px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":isLight?"rgba(0,0,0,0.22)":"#1a1a1a"),background:k===null?"transparent":isLight?(k==="⌫"?"#eef0f4":"#ffffff"):(k==="⌫"?"#141414":"#111"),fontSize:20,fontWeight:300,cursor:k===null?"default":"pointer",color:k==="⌫"?(isLight?"#767d87":"#555"):(isLight?"#16191f":"#e0e0e0"),fontFamily:"sans-serif",transition:"background 0.1s",boxShadow:k===null?"none":isLight?"0 1px 3px rgba(0,0,0,0.08)":"none"}}>
                     {k===null?"":k}
                   </button>
                 ))}
               </div>
-              <div style={{marginTop:10,fontSize:10,color:isLight?"#8a909a":"#2a2a2a",textAlign:"center",letterSpacing:"0.04em"}}>Tap keypad or type on keyboard</div>
+              <div style={{marginTop:10,fontSize:10,color:isLight?"#8a909a":"#2a2a2a",textAlign:"center",letterSpacing:"0.04em"}}>Tap to enter your PIN</div>
               {bioCredId&&<button onClick={()=>{try{localStorage.removeItem("tf_bio_coach_"+selectedCoach);}catch(e){}setBioCredId(null);}} style={{marginTop:12,background:"transparent",border:"none",color:isLight?"#8a909a":"#2a2a2a",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>Reset saved passkey</button>}
               {pinError&&<div style={{marginTop:12,fontSize:12,color:"#ff5555",padding:"8px 16px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
             </>
