@@ -483,6 +483,7 @@ export default function Coach(){
             userVerification:"required",
             residentKey:"required",
           },
+          hints:["client-device"], // bias to the built-in authenticator (Apple Passwords), not Google/cross-device
           timeout:60000,
         }
       });

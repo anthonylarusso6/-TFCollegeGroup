@@ -199,6 +199,7 @@ export default function Athlete(){
           rpId:stored.rpId||window.location.hostname,
           allowCredentials:[{type:"public-key",id:credIdBytes,transports:["internal"]}],
           userVerification:"required",
+          hints:["client-device"], // prefer the on-device Face ID / Apple Passwords authenticator
           timeout:60000,
         }
       });
@@ -226,7 +227,10 @@ export default function Athlete(){
             displayName:selectedAthlete.name,
           },
           pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
-          authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"preferred"},
+          // platform + client-device hint keeps this on the built-in authenticator
+          // (Face ID → Apple Passwords / iCloud Keychain), not Google or a cross-device passkey.
+          authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"required"},
+          hints:["client-device"],
           timeout:60000,
         }
       });
