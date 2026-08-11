@@ -99,6 +99,7 @@ export default function Coach(){
   const[bioAvail,setBioAvail]=useState(false);
   const[bioCredId,setBioCredId]=useState(null);
   const[showBioOffer,setShowBioOffer]=useState(false);
+  const[bioSetupMsg,setBioSetupMsg]=useState("");
   const[pendingNav,setPendingNav]=useState(null);
   const touchStartRef=useRef(null);
   const slideDirRef=useRef(0);
@@ -417,22 +418,15 @@ export default function Coach(){
     const fallbackCoach=cid||selectedCoach||"ant";
     try{
       const challenge=crypto.getRandomValues(new Uint8Array(32));
-      // When a specific coach is chosen, target THEIR passkey so iOS shows a
-      // direct Face ID prompt instead of a passkey picker. For "Quick Sign In"
-      // (no coach chosen) leave it empty so any stored passkey can be used.
-      let allowCredentials=[];
-      const targetCoach=cid||selectedCoach;
-      if(targetCoach){
-        try{
-          const raw=localStorage.getItem("tf_bio_coach_"+targetCoach);
-          if(raw){const credB=Uint8Array.from(atob(JSON.parse(raw).credId),ch=>ch.charCodeAt(0));allowCredentials=[{type:"public-key",id:credB,transports:["internal"]}];}
-        }catch(e){}
-      }
+      // Discoverable flow: let Apple present ANY valid passkey for this site
+      // (resolved back to the right coach below). This is immune to a stale
+      // stored credId — the previous "target one credId" approach broke when
+      // the saved passkey lived in Google instead of Apple.
       const assertion=await navigator.credentials.get({
         publicKey:{
           challenge,
           rpId:window.location.hostname,
-          allowCredentials,
+          allowCredentials:[],
           userVerification:"required",
           timeout:60000,
           hints:["client-device"], // prefer platform authenticator (Face ID → iCloud Keychain)
@@ -493,6 +487,35 @@ export default function Coach(){
     }catch(e){}
     const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
     completeCoachAuth(nav?.role||"ant",nav?.tab||"overview");
+  };
+
+  // Direct (re)enrollment from the PIN screen — creates a fresh Apple passkey
+  // in one tap and reports exactly what happens, so a stale/Google passkey can
+  // always be replaced without the obscure reset dance.
+  const setupCoachBiometric=async()=>{
+    if(!selectedCoach)return;
+    const c=coaches.find(x=>x.id===selectedCoach);
+    setBioSetupMsg("Opening Face ID…");
+    try{
+      const challenge=crypto.getRandomValues(new Uint8Array(32));
+      const credential=await navigator.credentials.create({
+        publicKey:{
+          challenge,
+          rp:{name:"TF College Group",id:window.location.hostname},
+          user:{id:new TextEncoder().encode("coach_"+selectedCoach),name:c?.name||selectedCoach,displayName:c?.name||selectedCoach},
+          pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+          authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"required"},
+          hints:["client-device"],
+          timeout:60000,
+        }
+      });
+      const credId=btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+      localStorage.setItem("tf_bio_coach_"+selectedCoach,JSON.stringify({credId,rpId:window.location.hostname}));
+      setBioCredId(credId);
+      setBioSetupMsg("✓ Face ID enabled — saved to Apple Passwords. Tap “Use Face ID” to test it.");
+    }catch(e){
+      setBioSetupMsg("Couldn’t set up Face ID ("+(e?.name||"error")+"). Make sure Face ID is on and, in iOS Settings → General → AutoFill & Passwords, iCloud Passwords & Keychain is turned on.");
+    }
   };
 
   function handlePinKey(k){
@@ -661,7 +684,13 @@ export default function Coach(){
                 ))}
               </div>
               <div style={{marginTop:10,fontSize:10,color:isLight?"#8a909a":"#2a2a2a",textAlign:"center",letterSpacing:"0.04em"}}>Tap to enter your PIN</div>
-              {bioCredId&&<button onClick={()=>{try{localStorage.removeItem("tf_bio_coach_"+selectedCoach);}catch(e){}setBioCredId(null);}} style={{marginTop:12,background:"transparent",border:"none",color:isLight?"#8a909a":"#2a2a2a",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>Reset saved passkey</button>}
+              {bioAvail&&(
+                <button onClick={setupCoachBiometric} style={{marginTop:14,display:"block",width:"100%",maxWidth:300,margin:"14px auto 0",padding:"11px",borderRadius:12,border:"1px solid "+(isLight?"rgba(0,0,0,0.15)":"rgba(255,255,255,0.14)"),background:isLight?"#ffffff":"rgba(255,255,255,0.05)",color:isLight?"#16191f":"#ddd",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>
+                  {bioCredId?"Re-enable Face ID (save to Apple)":"Set up Face ID on this device"}
+                </button>
+              )}
+              {bioSetupMsg&&<div style={{marginTop:10,fontSize:11,color:bioSetupMsg.startsWith("✓")?"#3AD17A":(bioSetupMsg.startsWith("Opening")?(isLight?"#8a909a":"#888"):"#E8720C"),textAlign:"center",lineHeight:1.5,maxWidth:320,margin:"10px auto 0"}}>{bioSetupMsg}</div>}
+              {bioCredId&&<button onClick={()=>{try{localStorage.removeItem("tf_bio_coach_"+selectedCoach);}catch(e){}setBioCredId(null);setBioSetupMsg("");}} style={{marginTop:12,background:"transparent",border:"none",color:isLight?"#8a909a":"#2a2a2a",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>Reset saved passkey</button>}
               {pinError&&<div style={{marginTop:12,fontSize:12,color:"#ff5555",padding:"8px 16px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
             </>
             )}
