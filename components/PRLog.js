@@ -528,8 +528,36 @@ export default function PRLog({athleteId,gender}){
             const isSaved=saved===lift.name;
             const liftHistory=logs[lift.name]||[];
             const isExpanded=expanded===lift.name;
+            const done=sessionDone.has(activeDay+"|"+lift.name)||!!bwDone[lift.name];
+            // On PR pace? (live, before logging) — the card ignites gold.
+            const ormNow=inp.weight&&inp.reps?epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1):0;
+            const hot=!done&&lift.inputType!=="bodyweight"&&((pr&&parseFloat(inp.weight||0)>pr)||(ormPR&&ormNow>ormPR));
+
+            // ── COLLAPSED DONE CARD — keeps the list clean ──
+            if(done){
+              const le=liftHistory[0];
+              const isBw=!!bwDone[lift.name];
+              return(
+                <div key={i} className="tf-fade-up" style={{background:"linear-gradient(165deg,#10160f,#0c110b)",borderRadius:16,marginBottom:12,border:"0.5px solid rgba(52,209,122,0.28)",borderLeft:"4px solid "+GREEN,overflow:"hidden",boxShadow:"0 4px 14px rgba(0,0,0,0.3)",animationDelay:(i*0.03)+"s"}}>
+                  <div style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{width:34,height:34,borderRadius:"50%",flexShrink:0,background:"rgba(52,209,122,0.14)",border:"1px solid "+GREEN+"88",display:"flex",alignItems:"center",justifyContent:"center",color:GREEN,fontSize:16}}>✓</div>
+                    <div style={{minWidth:0,flex:1}}>
+                      <div style={{fontSize:15,fontWeight:800,color:"#dff3e7",letterSpacing:"-0.01em"}}>{lift.name}</div>
+                      <div style={{fontSize:11.5,color:"#7fae90",marginTop:1}}>{isBw?"Sets complete":le?le.weight+" × "+(le.reps||1)+(isVert(lift.name)?" in":" lbs"):"Logged"}</div>
+                    </div>
+                    <button onClick={()=>{if(isBw){setBwDone(p=>({...p,[lift.name]:false}));}else{setSessionDone(s=>{const n=new Set(s);n.delete(activeDay+"|"+lift.name);return n;});}}}
+                      style={{flexShrink:0,fontSize:11,fontWeight:600,color:"#8a8578",border:"1px solid #2a2a2a",borderRadius:9,padding:"7px 13px",background:"transparent",cursor:"pointer",fontFamily:"Georgia,serif"}}>Edit</button>
+                  </div>
+                </div>
+              );
+            }
             return(
-              <div key={i} style={{background:"#111",borderRadius:16,marginBottom:12,border:"0.5px solid #1e1e1e",overflow:"hidden",borderLeft:"4px solid "+tc.border,boxShadow:"0 4px 16px rgba(0,0,0,0.35)"}}>
+              <div key={i} className="tf-fade-up" style={{position:"relative",background:"#111",borderRadius:16,marginBottom:12,overflow:"hidden",animationDelay:(i*0.03)+"s",
+                border:"0.5px solid "+(hot?GOLD+"88":"#1e1e1e"),
+                borderLeft:"4px solid "+(hot?GOLD:tc.border),
+                boxShadow:hot?"0 0 26px "+GOLD+"33,0 4px 16px rgba(0,0,0,0.4)":"0 4px 16px rgba(0,0,0,0.35)",
+                transition:"box-shadow 0.3s,border-color 0.3s"}}>
+                {hot&&<div style={{position:"absolute",top:0,right:0,zIndex:1,background:"linear-gradient(135deg,#f0d477,"+GOLD+")",color:"#241a00",fontSize:9,fontWeight:800,letterSpacing:"0.08em",textTransform:"uppercase",padding:"4px 11px",borderBottomLeftRadius:12}}>🔥 PR pace</div>}
                 <div style={{padding:"16px 16px 14px"}}>
                   <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
                     <div style={{flex:1,minWidth:0,paddingRight:8}}>
