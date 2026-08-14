@@ -43,10 +43,10 @@ export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
     if (!athleteId) return;
     let alive = true;
     (async () => {
-      const out = { sessions: 0, early: 0, late: 0, bestStreak: 0, prs: 0, anvilWins: 0, totalLbs: 0, rankPct: null };
+      const out = { sessions: 0, early: 0, late: 0, bestStreak: 0, prs: 0, anvilWins: 0, totalLbs: 0, rankPct: null, cells: [] };
       try {
-        const { data } = await supabase.from("attendance").select("status,date").eq("athlete_id", athleteId).gte("date", SEASON_START);
-        if (data) { out.sessions = data.length; out.early = data.filter(r => r.status === "early").length; out.late = data.filter(r => r.status === "late").length; }
+        const { data } = await supabase.from("attendance").select("status,date").eq("athlete_id", athleteId).gte("date", SEASON_START).order("date", { ascending: true });
+        if (data) { out.sessions = data.length; out.early = data.filter(r => r.status === "early").length; out.late = data.filter(r => r.status === "late").length; out.cells = data.map(r => r.status); }
       } catch (e) {}
       try {
         const { data } = await supabase.from("leaderboard").select("best_streak").eq("athlete_id", athleteId).maybeSingle();
@@ -142,6 +142,22 @@ export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
             </div>
           ))}
         </div>
+
+        {/* Season at a glance — one cell per session */}
+        {s.cells && s.cells.length > 0 && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 9, color: INK, opacity: 0.6, letterSpacing: "0.14em", textTransform: "uppercase", textAlign: "center", marginBottom: 7 }}>Your season, session by session</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>
+              {s.cells.map((st, i) => (
+                <span key={i} title={st} style={{ width: 12, height: 12, borderRadius: 3, background: st === "early" ? GOLD : st === "late" ? ORANGE : "rgba(255,255,255,0.18)", boxShadow: st === "early" ? "0 0 6px " + GOLD + "66" : "none" }} />
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 14, justifyContent: "center", marginTop: 8, fontSize: 9, color: INK, opacity: 0.6 }}>
+              <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: GOLD, marginRight: 4, verticalAlign: "middle" }} />Early</span>
+              <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: ORANGE, marginRight: 4, verticalAlign: "middle" }} />Late</span>
+            </div>
+          </div>
+        )}
 
         {/* Rank line */}
         {s.rankPct != null && s.rankPct > 0 && (
