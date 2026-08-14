@@ -581,7 +581,7 @@ export default function PRLog({athleteId,gender}){
                     const logBtn=(disabled)=>(
                       <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={disabled||isSaving}
                         style={{padding:"14px 20px",borderRadius:12,border:"none",
-                          background:!disabled?(isSaved?"linear-gradient(135deg,#2FA869,#1E6B3A)":"linear-gradient(135deg,"+tc.color+","+tc.border+")"):"#181818",
+                          background:!disabled?(isSaved?"linear-gradient(135deg,#2FA869,#1E6B3A)":"linear-gradient(135deg,"+tc.color+","+tc.border+")"):"#1a1a1a",
                           color:!disabled?"#fff":"#3a3a3a",fontSize:14,fontWeight:800,
                           cursor:!disabled?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:68,letterSpacing:"0.02em",
                           boxShadow:!disabled&&!isSaved?"0 4px 14px "+tc.border+"66":"none",
@@ -1006,39 +1006,39 @@ export default function PRLog({athleteId,gender}){
                     // ── STANDARD WEIGHT + REPS (default) ────────────
                     return(
                       <div>
-                        <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
-                          <div style={{flex:1}}>
-                            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-                              <div style={{fontSize:9.5,color:"#999",textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>Weight (lbs)</div>
-                              <button onClick={()=>toggleBW(lift.name)}
-                                style={{fontSize:9.5,padding:"4px 9px",borderRadius:7,
-                                  border:"1px solid "+(inp.bw?GREEN+"66":"#2a2a2a"),
-                                  background:inp.bw?GREEN+"22":"#0d0d0d",
-                                  color:inp.bw?GREEN:"#888",cursor:"pointer",
-                                  fontFamily:"Georgia,serif",fontWeight:inp.bw?700:500}}>
-                                ⚖️ BW{latestBW?" ("+latestBW+")":""}
-                              </button>
-                            </div>
-                            <div style={{display:"flex",gap:5}}>
-                              {!inp.bw&&stepBtn(()=>bump(lift.name,"weight",-1,5),"−")}
-                              <input type="number" inputMode="decimal"
-                                value={inp.weight||""}
-                                readOnly={!!inp.bw}
-                                onChange={e=>!inp.bw&&setInput(lift.name,"weight",e.target.value)}
-                                placeholder={inp.bw&&!latestBW?"Log weight first":last?`Last: ${last}`:"0"}
-                                style={{flex:1,minWidth:0,padding:"13px 6px",borderRadius:11,
-                                  border:"1px solid "+(inp.bw?GREEN+"66":"#2a2a2a"),
-                                  fontSize:18,fontFamily:"Georgia,serif",textAlign:"center",
-                                  background:inp.bw?"#091510":"#0d0d0d",
-                                  color:inp.bw?GREEN:"#fff",
-                                  boxSizing:"border-box",fontWeight:800}}/>
-                              {!inp.bw&&stepBtn(()=>bump(lift.name,"weight",1,5),"+")}
-                            </div>
+                        {/* Weight — full width so the steppers never push off-screen */}
+                        <div>
+                          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
+                            <div style={{fontSize:9.5,color:"#999",textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>Weight (lbs)</div>
+                            <button onClick={()=>toggleBW(lift.name)}
+                              style={{fontSize:9.5,padding:"4px 9px",borderRadius:7,
+                                border:"1px solid "+(inp.bw?GREEN+"66":"#2a2a2a"),
+                                background:inp.bw?GREEN+"22":"#0d0d0d",
+                                color:inp.bw?GREEN:"#888",cursor:"pointer",
+                                fontFamily:"Georgia,serif",fontWeight:inp.bw?700:500}}>
+                              ⚖️ BW{latestBW?" ("+latestBW+")":""}
+                            </button>
                           </div>
-                          {repsInput}
+                          <div style={{display:"flex",gap:6}}>
+                            {!inp.bw&&stepBtn(()=>bump(lift.name,"weight",-1,5),"−")}
+                            <input type="number" inputMode="decimal"
+                              value={inp.weight||""}
+                              readOnly={!!inp.bw}
+                              onChange={e=>!inp.bw&&setInput(lift.name,"weight",e.target.value)}
+                              placeholder={inp.bw&&!latestBW?"Log weight first":last?`Last: ${last}`:"0"}
+                              style={{flex:1,minWidth:0,padding:"14px 8px",borderRadius:11,
+                                border:"1px solid "+(inp.bw?GREEN+"66":"#2a2a2a"),
+                                fontSize:19,fontFamily:"Georgia,serif",textAlign:"center",
+                                background:inp.bw?"#091510":"#0d0d0d",
+                                color:inp.bw?GREEN:"#fff",
+                                boxSizing:"border-box",fontWeight:800}}/>
+                            {!inp.bw&&stepBtn(()=>bump(lift.name,"weight",1,5),"+")}
+                          </div>
                         </div>
+                        {/* Reps — its own full-width row */}
+                        <div style={{marginTop:12}}>{repsInput}</div>
                         <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
-                          style={{width:"100%",marginTop:11,padding:"15px",borderRadius:12,border:"none",background:!inp.weight?"#181818":(isSaved?"linear-gradient(135deg,#2FA869,#1E6B3A)":"linear-gradient(135deg,"+tc.color+","+tc.border+")"),color:!inp.weight?"#3a3a3a":"#fff",fontSize:15,fontWeight:800,letterSpacing:"0.04em",cursor:!inp.weight?"not-allowed":"pointer",fontFamily:"Georgia,serif",boxShadow:inp.weight&&!isSaved?"0 5px 18px "+tc.border+"55":"none",transition:"all 0.15s"}}>
+                          style={{width:"100%",marginTop:13,padding:"15px",borderRadius:12,border:"none",background:!inp.weight?"#1a1a1a":(isSaved?"linear-gradient(135deg,#2FA869,#1E6B3A)":"linear-gradient(135deg,"+tc.color+","+tc.border+")"),color:!inp.weight?"#3a3a3a":"#fff",fontSize:15,fontWeight:800,letterSpacing:"0.04em",cursor:!inp.weight?"not-allowed":"pointer",fontFamily:"Georgia,serif",boxShadow:inp.weight&&!isSaved?"0 5px 18px "+tc.border+"55":"none",transition:"all 0.15s"}}>
                           {isSaved?"✓ Logged":isSaving?"…":"Log this set"}
                         </button>
                         {inp.weight&&inp.reps&&(
