@@ -477,7 +477,7 @@ export default function PRLog({athleteId,gender}){
                 <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,position:"relative"}}>
                   <div style={{minWidth:0}}>
                     <div style={{fontSize:10,letterSpacing:"0.22em",textTransform:"uppercase",color:GOLD,fontWeight:700}}>Today's Session</div>
-                    <div style={{fontSize:26,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",lineHeight:1,marginTop:5}}>{DAY_LABELS[activeDay]}</div>
+                    <div style={{fontSize:26,fontWeight:800,color:"#fdf6ec",letterSpacing:"-0.02em",lineHeight:1,marginTop:5}}>{DAY_LABELS[activeDay]}</div>
                     {phase&&<div style={{fontSize:12,color:"#a89a86",marginTop:6}}>⚡ {phase}</div>}
                   </div>
                   <div style={{position:"relative",width:70,height:70,flexShrink:0}}>
@@ -487,7 +487,7 @@ export default function PRLog({athleteId,gender}){
                       <defs><linearGradient id="irGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={ORANGE}/><stop offset="1" stopColor={GOLD}/></linearGradient></defs>
                     </svg>
                     <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",lineHeight:1}}>
-                      <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>{doneCount}/{todayLifts.length}</div>
+                      <div style={{fontSize:18,fontWeight:900,color:"#fdf6ec"}}>{doneCount}/{todayLifts.length}</div>
                       <div style={{fontSize:8,color:"#a89a86",textTransform:"uppercase",letterSpacing:"0.1em",marginTop:2}}>logged</div>
                     </div>
                   </div>
@@ -590,7 +590,7 @@ export default function PRLog({athleteId,gender}){
                       </button>
                     );
                     const stepBtn=(onClick,label)=>(
-                      <button type="button" onClick={onClick} aria-label={label} style={{width:34,flexShrink:0,alignSelf:"stretch",borderRadius:10,border:"1px solid #2a2a2a",background:"#120d09",color:"#aaa",fontSize:18,lineHeight:1,cursor:"pointer",fontFamily:"Georgia,serif"}}>{label}</button>
+                      <button type="button" onClick={onClick} aria-label={label} style={{width:30,flexShrink:0,alignSelf:"stretch",borderRadius:9,border:"1px solid #2a2a2a",background:"#1a1a1a",color:"#aaa",fontSize:18,lineHeight:1,cursor:"pointer",fontFamily:"Georgia,serif"}}>{label}</button>
                     );
                     const repsInput=(
                       <div style={{flex:1}}>
@@ -1036,8 +1036,11 @@ export default function PRLog({athleteId,gender}){
                             </div>
                           </div>
                           {repsInput}
-                          <div>{logBtn(!inp.weight)}</div>
                         </div>
+                        <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
+                          style={{width:"100%",marginTop:11,padding:"15px",borderRadius:12,border:"none",background:!inp.weight?"#181818":(isSaved?"linear-gradient(135deg,#2FA869,#1E6B3A)":"linear-gradient(135deg,"+tc.color+","+tc.border+")"),color:!inp.weight?"#3a3a3a":"#fff",fontSize:15,fontWeight:800,letterSpacing:"0.04em",cursor:!inp.weight?"not-allowed":"pointer",fontFamily:"Georgia,serif",boxShadow:inp.weight&&!isSaved?"0 5px 18px "+tc.border+"55":"none",transition:"all 0.15s"}}>
+                          {isSaved?"✓ Logged":isSaving?"…":"Log this set"}
+                        </button>
                         {inp.weight&&inp.reps&&(
                           <div style={{textAlign:"center",fontSize:11.5,color:"#888",marginTop:10,padding:"8px",background:"#0d0d0d",borderRadius:10,border:"0.5px solid #1f1f1f"}}>
                             est. 1RM: <span style={{color:GOLD,fontWeight:800}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>
