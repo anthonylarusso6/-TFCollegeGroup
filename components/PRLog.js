@@ -1097,35 +1097,56 @@ export default function PRLog({athleteId,gender}){
       {/* ── WEEK VIEW ───────────────────────────────────────── */}
       {view==="week"&&(
         <div>
-          {phase&&(
-            <div style={{background:"linear-gradient(135deg,#1a1200,#1c1500,#0e0e0e)",borderRadius:14,padding:"16px 18px",marginBottom:14,border:"1px solid "+GOLD+"33",borderLeft:"3px solid "+GOLD,position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:-18,right:-12,fontSize:80,opacity:0.05,lineHeight:1,userSelect:"none",pointerEvents:"none"}}>⚡</div>
-              <div style={{fontSize:9,color:GOLD+"99",textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700,marginBottom:5}}>Current Phase</div>
-              <div style={{fontSize:19,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.2}}>{phase}</div>
-            </div>
-          )}
+          {/* Week hero — matches the Log session hero */}
+          {(()=>{
+            const weekLifts=DAYS.reduce((s,d)=>s+((program&&program[d])||[]).length,0);
+            return(
+              <div style={{position:"relative",borderRadius:20,padding:"18px 18px 16px",marginBottom:16,overflow:"hidden",background:"linear-gradient(155deg,#241a10,#150f0a 72%)",border:"1px solid "+GOLD+"38"}}>
+                <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#a3410a,"+ORANGE+","+GOLD+","+ORANGE+",#a3410a,transparent)"}}/>
+                <div style={{position:"absolute",right:-8,bottom:-18,fontSize:88,opacity:0.06,lineHeight:1,pointerEvents:"none"}}>🗓</div>
+                <div style={{position:"relative"}}>
+                  <div style={{fontSize:10,letterSpacing:"0.22em",textTransform:"uppercase",color:GOLD,fontWeight:700}}>The Full Week</div>
+                  <div style={{fontSize:26,fontWeight:800,color:"#fdf6ec",letterSpacing:"-0.02em",lineHeight:1,marginTop:5}}>Training Split</div>
+                  {phase&&<div style={{fontSize:12,color:"#a89a86",marginTop:6}}>⚡ {phase}</div>}
+                  <div style={{display:"flex",alignItems:"center",gap:16,marginTop:13}}>
+                    <div><span style={{fontSize:22,fontWeight:900,color:"#fdf6ec"}}>{DAYS.length}</span><span style={{fontSize:10,color:"#a89a86",marginLeft:6,textTransform:"uppercase",letterSpacing:"0.1em"}}>days</span></div>
+                    <div style={{width:1,alignSelf:"stretch",background:"rgba(255,255,255,0.12)"}}/>
+                    <div><span style={{fontSize:22,fontWeight:900,color:"#fdf6ec"}}>{weekLifts}</span><span style={{fontSize:10,color:"#a89a86",marginLeft:6,textTransform:"uppercase",letterSpacing:"0.1em"}}>lifts</span></div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
           {DAYS.map(day=>{
             const dayLifts=(program&&program[day])||[];
             const isToday=day===defaultDay;
             return(
-              <div key={day} style={{background:"#111",borderRadius:14,marginBottom:12,border:"1px solid #1e1e1e",borderLeft:"3px solid "+(isToday?GOLD:"#333"),overflow:"hidden"}}>
+              <div key={day} style={{background:"#111",borderRadius:16,marginBottom:12,
+                border:"0.5px solid "+(isToday?GOLD+"55":"#1e1e1e"),
+                borderLeft:"4px solid "+(isToday?GOLD:"#2e2e2e"),overflow:"hidden",
+                boxShadow:isToday?"0 6px 22px rgba(0,0,0,0.42),0 0 0 1px "+GOLD+"1f":"0 3px 12px rgba(0,0,0,0.28)"}}>
                 {/* Day header */}
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 14px 10px",borderBottom:"0.5px solid #1a1a1a"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8}}>
-                    <div style={{fontSize:15,fontWeight:800,color:"#fff"}}>{DAY_LABELS[day]||day}</div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 12px",borderBottom:"0.5px solid #1a1a1a"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:9,minWidth:0}}>
+                    <div style={{fontSize:17,fontWeight:800,color:"#fff",letterSpacing:"-0.01em"}}>{DAY_LABELS[day]||day}</div>
                     {isToday&&(
-                      <div style={{fontSize:9,fontWeight:700,color:"#000",background:GOLD,padding:"2px 7px",borderRadius:10,letterSpacing:"0.06em"}}>Today</div>
+                      <div style={{fontSize:9,fontWeight:800,color:"#241a00",background:"linear-gradient(135deg,#f0d477,"+GOLD+")",padding:"3px 9px",borderRadius:20,letterSpacing:"0.06em",textTransform:"uppercase"}}>Today</div>
                     )}
+                    <div style={{fontSize:10.5,fontWeight:600,color:"#8a8a8a",background:"#0d0d0d",padding:"3px 9px",borderRadius:20,border:"0.5px solid #262626"}}>{dayLifts.length} lifts</div>
                   </div>
                   <button onClick={()=>{setActiveDay(day);setView("log");}}
-                    style={{fontSize:12,fontWeight:700,color:GOLD,background:"transparent",border:"1px solid "+GOLD+"55",borderRadius:8,padding:"5px 12px",cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>
+                    style={{fontSize:12,fontWeight:800,color:isToday?"#241a00":GOLD,
+                      background:isToday?"linear-gradient(135deg,"+ORANGE+","+GOLD+")":"transparent",
+                      border:isToday?"none":"1px solid "+GOLD+"55",borderRadius:9,padding:"7px 14px",
+                      cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em",flexShrink:0,
+                      boxShadow:isToday?"0 3px 12px "+ORANGE+"55":"none"}}>
                     Log →
                   </button>
                 </div>
                 {/* Lift list */}
-                <div style={{padding:"8px 0"}}>
+                <div style={{padding:"6px 0"}}>
                   {dayLifts.length===0?(
-                    <div style={{padding:"10px 14px",fontSize:12,color:"#444",fontStyle:"italic"}}>No lifts programmed yet.</div>
+                    <div style={{padding:"12px 16px",fontSize:12,color:"#444",fontStyle:"italic"}}>No lifts programmed yet.</div>
                   ):dayLifts.map((lift,li)=>{
                     const tc=TIER_COLORS[lift.tier]||TIER_COLORS[1];
                     const tierKey=lift.tier;
@@ -1138,15 +1159,15 @@ export default function PRLog({athleteId,gender}){
                     return(
                       <div key={li} style={{display:"flex",alignItems:"center",gap:0,borderBottom:li<dayLifts.length-1?"0.5px solid #161616":"none"}}>
                         {/* Left tier color bar */}
-                        <div style={{width:3,alignSelf:"stretch",background:tc.border,flexShrink:0,minHeight:38}}/>
+                        <div style={{width:3,alignSelf:"stretch",background:tc.border,flexShrink:0,minHeight:40}}/>
                         {/* Lift info */}
-                        <div style={{flex:1,padding:"9px 10px"}}>
-                          <div style={{fontSize:12,color:"#ccc",fontWeight:600,lineHeight:1.2}}>{lift.name}</div>
-                          {lift.sets&&<div style={{fontSize:10,color:"#444",marginTop:2}}>{lift.sets}</div>}
+                        <div style={{flex:1,padding:"10px 12px",minWidth:0}}>
+                          <div style={{fontSize:12.5,color:"#d8d8d8",fontWeight:600,lineHeight:1.25}}>{lift.name}</div>
+                          {lift.sets&&<div style={{fontSize:10,color:"#555",marginTop:2}}>{lift.sets}</div>}
                         </div>
                         {/* Right tier badge */}
                         <div style={{padding:"0 12px",flexShrink:0}}>
-                          <div style={{fontSize:9,fontWeight:700,color:tc.color,background:tc.bg,padding:"3px 7px",borderRadius:5,border:"0.5px solid "+tc.border+"55",letterSpacing:"0.05em"}}>
+                          <div style={{fontSize:9,fontWeight:700,color:tc.color,background:tc.bg,padding:"3px 8px",borderRadius:5,border:"0.5px solid "+tc.border+"55",letterSpacing:"0.05em"}}>
                             {badgeLabel}
                           </div>
                         </div>
