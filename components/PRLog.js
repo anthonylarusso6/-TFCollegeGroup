@@ -440,13 +440,14 @@ export default function PRLog({athleteId,gender}){
   return(
     <div>
       {/* View toggle */}
-      <div style={{display:"flex",gap:4,marginBottom:14,background:"#0a0a0a",borderRadius:12,padding:4}}>
+      <div style={{display:"flex",gap:6,marginBottom:16,background:"#0d0d0d",borderRadius:14,padding:5,border:"1px solid #1e1e1e"}}>
         {[{id:"log",label:"Log"},{id:"dashboard",label:"Dashboard"},{id:"week",label:"Week"}].map(v=>(
           <button key={v.id} onClick={()=>setView(v.id)}
-            style={{flex:1,padding:"11px",borderRadius:9,border:"none",
-              background:view===v.id?"linear-gradient(135deg,"+GOLD+"cc,"+GOLD+"88)":"transparent",
-              color:view===v.id?"#fff":"#444",fontSize:13,fontWeight:view===v.id?700:400,
-              cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+            style={{flex:1,padding:"12px",borderRadius:10,border:"none",
+              background:view===v.id?"linear-gradient(135deg,"+ORANGE+","+GOLD+")":"transparent",
+              color:view===v.id?"#fff":"#9a9a9a",fontSize:13.5,fontWeight:view===v.id?800:500,
+              cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",
+              boxShadow:view===v.id?"0 3px 14px "+ORANGE+"55":"none"}}>
             {v.label}
           </button>
         ))}
@@ -463,26 +464,27 @@ export default function PRLog({athleteId,gender}){
             </div>
           )}
           {loadError&&<div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>Error: {loadError}</div>}
-          <div style={{display:"flex",gap:4,marginBottom:14,background:"#0a0a0a",borderRadius:12,padding:4}}>
+          <div style={{display:"flex",gap:6,marginBottom:16,background:"#0d0d0d",borderRadius:14,padding:5,border:"1px solid #1e1e1e"}}>
             {DAYS.map(d=>{
               const isActive=activeDay===d;
               const isToday=d===defaultDay;
               return(
                 <button key={d} onClick={()=>setActiveDay(d)}
-                  style={{flex:1,padding:"12px 4px",borderRadius:9,border:"none",
-                    background:isActive?ORANGE:"transparent",
-                    color:isActive?"#fff":isToday?"#777":"#444",
-                    fontSize:13,fontWeight:isActive?700:400,
-                    cursor:"pointer",fontFamily:"Georgia,serif",position:"relative",transition:"all 0.15s"}}>
-                  {isToday&&!isActive&&<div style={{position:"absolute",top:5,right:8,width:5,height:5,borderRadius:"50%",background:GREEN}}/>}
+                  style={{flex:1,padding:"13px 4px",borderRadius:10,border:"none",
+                    background:isActive?"linear-gradient(135deg,"+ORANGE+","+GOLD+")":"transparent",
+                    color:isActive?"#fff":isToday?"#c9c9c9":"#9a9a9a",
+                    fontSize:13.5,fontWeight:isActive?800:500,
+                    cursor:"pointer",fontFamily:"Georgia,serif",position:"relative",transition:"all 0.15s",
+                    boxShadow:isActive?"0 3px 14px "+ORANGE+"55":"none"}}>
+                  {isToday&&!isActive&&<div style={{position:"absolute",top:6,right:8,width:5,height:5,borderRadius:"50%",background:GREEN,boxShadow:"0 0 6px "+GREEN}}/>}
                   {d}
                 </button>
               );
             })}
           </div>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-            <div style={{fontSize:16,fontWeight:800,color:"#fff",letterSpacing:"-0.02em"}}>{DAY_LABELS[activeDay]}'s Lifts</div>
-            <div style={{fontSize:11,color:"#444",background:"#111",padding:"3px 10px",borderRadius:20,border:"0.5px solid #222"}}>{todayLifts.length} lifts</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <div style={{fontSize:18,fontWeight:800,color:"#fff",letterSpacing:"-0.02em"}}>{DAY_LABELS[activeDay]}'s Lifts</div>
+            <div style={{fontSize:11,fontWeight:600,color:"#aaa",background:"#111",padding:"4px 12px",borderRadius:20,border:"0.5px solid #2a2a2a"}}>{todayLifts.length} lifts</div>
           </div>
           {todayLifts.map((lift,i)=>{
             const tc=TIER_COLORS[lift.tier]||TIER_COLORS[1];
@@ -495,11 +497,11 @@ export default function PRLog({athleteId,gender}){
             const liftHistory=logs[lift.name]||[];
             const isExpanded=expanded===lift.name;
             return(
-              <div key={i} style={{background:"#111",borderRadius:14,marginBottom:10,border:"0.5px solid #1e1e1e",overflow:"hidden",borderLeft:"3px solid "+tc.border}}>
-                <div style={{padding:"14px 14px 12px"}}>
-                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}}>
+              <div key={i} style={{background:"#111",borderRadius:16,marginBottom:12,border:"0.5px solid #1e1e1e",overflow:"hidden",borderLeft:"4px solid "+tc.border,boxShadow:"0 4px 16px rgba(0,0,0,0.35)"}}>
+                <div style={{padding:"16px 16px 14px"}}>
+                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
                     <div style={{flex:1,minWidth:0,paddingRight:8}}>
-                      <div style={{fontSize:15,fontWeight:700,color:"#fff",lineHeight:1.2,marginBottom:4}}>{lift.name}</div>
+                      <div style={{fontSize:16.5,fontWeight:800,color:"#fff",lineHeight:1.2,marginBottom:5,letterSpacing:"-0.01em"}}>{lift.name}</div>
                       <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                         <span style={{fontSize:9,fontWeight:700,color:tc.color,textTransform:"uppercase",letterSpacing:"0.08em",background:tc.bg,padding:"2px 7px",borderRadius:4,border:"0.5px solid "+tc.border+"55"}}>{tc.label}</span>
                         {lift.sets&&<span style={{fontSize:10,color:"#555"}}>· {lift.sets}</span>}
@@ -507,9 +509,9 @@ export default function PRLog({athleteId,gender}){
                       {lift.note&&<div style={{fontSize:10,color:"#444",marginTop:4,fontStyle:"italic"}}>{lift.note}</div>}
                     </div>
                     <div style={{textAlign:"right",flexShrink:0}}>
-                      {lift.inputType!=="bodyweight"&&pr&&<div style={{fontSize:13,fontWeight:800,color:GOLD,lineHeight:1}}>{pr}<span style={{fontSize:9,fontWeight:500,marginLeft:2}}>{isVert(lift.name)?"in":"lbs"}</span></div>}
-                      {lift.inputType!=="bodyweight"&&pr&&<div style={{fontSize:9,color:"#444",marginBottom:2}}>PR</div>}
-                      {lift.inputType!=="bodyweight"&&last&&<div style={{fontSize:10,color:"#555"}}>last {last}</div>}
+                      {lift.inputType!=="bodyweight"&&pr&&<div style={{fontSize:20,fontWeight:900,color:GOLD,lineHeight:1,letterSpacing:"-0.02em"}}>{pr}<span style={{fontSize:10,fontWeight:600,marginLeft:2}}>{isVert(lift.name)?"in":"lbs"}</span></div>}
+                      {lift.inputType!=="bodyweight"&&pr&&<div style={{fontSize:8.5,color:GOLD+"99",marginTop:2,marginBottom:2,textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700}}>Your PR</div>}
+                      {lift.inputType!=="bodyweight"&&last&&<div style={{fontSize:10.5,color:"#888"}}>last {last}</div>}
                     </div>
                   </div>
                   {(()=>{
@@ -518,22 +520,22 @@ export default function PRLog({athleteId,gender}){
                     const selKB=inp.kbColor?KB_COLORS.find(k=>k.id===inp.kbColor):null;
                     const logBtn=(disabled)=>(
                       <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={disabled||isSaving}
-                        style={{padding:"11px 16px",borderRadius:10,border:"none",
-                          background:!disabled?(isSaved?"#1E6B3A":tc.border):"#1a1a1a",
-                          color:!disabled?"#fff":"#333",fontSize:13,fontWeight:700,
-                          cursor:!disabled?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:56,
-                          boxShadow:!disabled&&!isSaved?"0 2px 8px "+tc.border+"44":"none",
+                        style={{padding:"14px 20px",borderRadius:12,border:"none",
+                          background:!disabled?(isSaved?"linear-gradient(135deg,#2FA869,#1E6B3A)":"linear-gradient(135deg,"+tc.color+","+tc.border+")"):"#181818",
+                          color:!disabled?"#fff":"#3a3a3a",fontSize:14,fontWeight:800,
+                          cursor:!disabled?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:68,letterSpacing:"0.02em",
+                          boxShadow:!disabled&&!isSaved?"0 4px 14px "+tc.border+"66":"none",
                           transition:"all 0.15s"}}>
-                        {isSaved?"✓":isSaving?"…":"Log"}
+                        {isSaved?"✓ Saved":isSaving?"…":"Log"}
                       </button>
                     );
                     const repsInput=(
                       <div style={{flex:1}}>
-                        <div style={{fontSize:9,color:"#555",marginBottom:4,textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:600}}>Reps</div>
+                        <div style={{fontSize:9.5,color:"#999",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>Reps</div>
                         <input type="number" inputMode="numeric" value={inp.reps||""}
                           onChange={e=>setInput(lift.name,"reps",e.target.value)}
                           placeholder="0"
-                          style={{width:"100%",padding:"11px",borderRadius:9,border:"1px solid #252525",fontSize:16,fontFamily:"Georgia,serif",textAlign:"center",background:"#0f0f0f",boxSizing:"border-box",fontWeight:700,color:"#fff"}}/>
+                          style={{width:"100%",padding:"13px",borderRadius:11,border:"1px solid #2a2a2a",fontSize:18,fontFamily:"Georgia,serif",textAlign:"center",background:"#0d0d0d",boxSizing:"border-box",fontWeight:800,color:"#fff"}}/>
                       </div>
                     );
                     const bandPicker=(label)=>(
@@ -940,13 +942,13 @@ export default function PRLog({athleteId,gender}){
                         <div style={{display:"flex",gap:8,alignItems:"flex-end"}}>
                           <div style={{flex:1}}>
                             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-                              <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.06em",fontWeight:600}}>Weight (lbs)</div>
+                              <div style={{fontSize:9.5,color:"#999",textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>Weight (lbs)</div>
                               <button onClick={()=>toggleBW(lift.name)}
-                                style={{fontSize:9,padding:"3px 8px",borderRadius:6,
-                                  border:"1px solid "+(inp.bw?GREEN+"55":"#252525"),
-                                  background:inp.bw?GREEN+"22":"#0f0f0f",
-                                  color:inp.bw?GREEN:"#444",cursor:"pointer",
-                                  fontFamily:"Georgia,serif",fontWeight:inp.bw?700:400}}>
+                                style={{fontSize:9.5,padding:"4px 9px",borderRadius:7,
+                                  border:"1px solid "+(inp.bw?GREEN+"66":"#2a2a2a"),
+                                  background:inp.bw?GREEN+"22":"#0d0d0d",
+                                  color:inp.bw?GREEN:"#888",cursor:"pointer",
+                                  fontFamily:"Georgia,serif",fontWeight:inp.bw?700:500}}>
                                 ⚖️ BW{latestBW?" ("+latestBW+")":""}
                               </button>
                             </div>
@@ -955,27 +957,18 @@ export default function PRLog({athleteId,gender}){
                               readOnly={!!inp.bw}
                               onChange={e=>!inp.bw&&setInput(lift.name,"weight",e.target.value)}
                               placeholder={inp.bw&&!latestBW?"Log weight first":last?`Last: ${last}`:"0"}
-                              style={{width:"100%",padding:"11px",borderRadius:9,
-                                border:"1px solid "+(inp.bw?GREEN+"55":"#252525"),
-                                fontSize:16,fontFamily:"Georgia,serif",textAlign:"center",
-                                background:inp.bw?"#091510":"#0f0f0f",
+                              style={{width:"100%",padding:"13px",borderRadius:11,
+                                border:"1px solid "+(inp.bw?GREEN+"66":"#2a2a2a"),
+                                fontSize:18,fontFamily:"Georgia,serif",textAlign:"center",
+                                background:inp.bw?"#091510":"#0d0d0d",
                                 color:inp.bw?GREEN:"#fff",
-                                boxSizing:"border-box",fontWeight:700}}/>
+                                boxSizing:"border-box",fontWeight:800}}/>
                           </div>
                           {repsInput}
-                          <div>
-                            <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
-                              style={{padding:"11px 16px",borderRadius:9,border:"none",
-                                background:inp.weight?(isSaved?"#1E6B3A":tc.border):"#1a1a1a",
-                                color:inp.weight?"#fff":"#333",fontSize:13,fontWeight:700,
-                                cursor:inp.weight?"pointer":"not-allowed",fontFamily:"Georgia,serif",minWidth:56,
-                                boxShadow:inp.weight&&!isSaved?"0 2px 8px "+tc.border+"44":"none",transition:"all 0.15s"}}>
-                              {isSaved?"✓":isSaving?"…":"Log"}
-                            </button>
-                          </div>
+                          <div>{logBtn(!inp.weight)}</div>
                         </div>
                         {inp.weight&&inp.reps&&(
-                          <div style={{textAlign:"center",fontSize:11,color:"#444",marginTop:8,padding:"6px",background:"#0a0a0a",borderRadius:8,border:"0.5px solid #1a1a1a"}}>
+                          <div style={{textAlign:"center",fontSize:11.5,color:"#888",marginTop:10,padding:"8px",background:"#0d0d0d",borderRadius:10,border:"0.5px solid #1f1f1f"}}>
                             est. 1RM: <span style={{color:GOLD,fontWeight:800}}>{epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)} lbs</span>
                             {ormPR&&epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1)>ormPR&&
                               <span style={{marginLeft:8,background:GOLD,color:"#000",padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW PR!</span>
@@ -988,8 +981,8 @@ export default function PRLog({athleteId,gender}){
                 </div>
                 {liftHistory.length>0&&lift.inputType!=="bodyweight"&&(
                   <div>
-                    <button onClick={()=>setExpanded(isExpanded?null:lift.name)} style={{width:"100%",padding:"9px 14px",background:"#0d0d0d",border:"none",borderTop:"0.5px solid #1a1a1a",fontSize:11,color:"#444",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <span style={{fontWeight:500}}>History <span style={{color:"#333"}}>({liftHistory.length} sessions)</span></span><span style={{fontSize:9}}>{isExpanded?"▲":"▼"}</span>
+                    <button onClick={()=>setExpanded(isExpanded?null:lift.name)} style={{width:"100%",padding:"11px 16px",background:"#0d0d0d",border:"none",borderTop:"0.5px solid #1e1e1e",fontSize:11.5,color:"#9a9a9a",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span style={{fontWeight:600}}>History <span style={{color:"#666"}}>({liftHistory.length} sessions)</span></span><span style={{fontSize:9}}>{isExpanded?"▲":"▼"}</span>
                     </button>
                     {isExpanded&&(
                       <div style={{padding:"8px 14px",background:"#0d0d0d",borderTop:"0.5px solid #1a1a1a"}}>
