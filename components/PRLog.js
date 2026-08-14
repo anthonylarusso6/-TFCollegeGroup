@@ -163,6 +163,7 @@ export default function PRLog({athleteId,gender}){
   const[teamLoaded,setTeamLoaded]=useState(false);
   const[bwDone,setBwDone]=useState({});
   const[showPriorPhase,setShowPriorPhase]=useState(false);
+  const[sessionDone,setSessionDone]=useState(()=>new Set()); // "day|lift" logged this session (fills the progress ring)
 
   useEffect(()=>{
     (async()=>{
@@ -236,9 +237,16 @@ export default function PRLog({athleteId,gender}){
   },[athleteId]);
 
   const todayLifts=(program&&program[activeDay])||[];
+  const doneCount=todayLifts.filter(l=>sessionDone.has(activeDay+"|"+l.name)||bwDone[l.name]).length;
 
   const setInput=(liftName,field,val)=>{
     setInputs(prev=>({...prev,[liftName]:{...prev[liftName],[field]:val}}));
+  };
+  // Step a numeric input up/down (weight in 5s, reps in 1s), floored at 0.
+  const bump=(liftName,field,dir,step)=>{
+    const cur=parseFloat((inputs[liftName]||{})[field])||0;
+    const next=Math.max(0,Math.round((cur+dir*step)*100)/100);
+    setInput(liftName,field,String(next));
   };
 
   const toggleBW=(liftName)=>{
@@ -265,6 +273,7 @@ export default function PRLog({athleteId,gender}){
       if(error){setLoadError(error.message);setSaving(null);return;}
       setLogs(prev=>{const existing=prev[liftName]||[];return{...prev,[liftName]:[data,...existing]};});
       setInputs(prev=>({...prev,[liftName]:{weight:"",reps:""}}));
+      setSessionDone(s=>{const n=new Set(s);n.add(activeDay+"|"+liftName);return n;});
       setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);hSuccess();
       // Nudge athlete to log weight if they haven't today
       try{
@@ -456,13 +465,36 @@ export default function PRLog({athleteId,gender}){
       {/* ── LOG VIEW ────────────────────────────────────────── */}
       {view==="log"&&(
         <div>
-          {phase&&(
-            <div style={{background:"linear-gradient(135deg,#1a1200,#1c1500,#0e0e0e)",borderRadius:14,padding:"16px 18px",marginBottom:14,border:"1px solid "+GOLD+"33",borderLeft:"3px solid "+GOLD,position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:-18,right:-12,fontSize:80,opacity:0.05,lineHeight:1,userSelect:"none",pointerEvents:"none"}}>⚡</div>
-              <div style={{fontSize:9,color:GOLD+"99",textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700,marginBottom:5}}>Current Phase</div>
-              <div style={{fontSize:19,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.2}}>{phase}</div>
-            </div>
-          )}
+          {/* Session hero — day, phase, and a progress ring that fills as you log */}
+          {(()=>{
+            const total=todayLifts.length||1;
+            const pct=Math.min(1,doneCount/total);
+            const R=30,C=2*Math.PI*R;
+            return(
+              <div style={{position:"relative",borderRadius:20,padding:"18px 18px 16px",marginBottom:14,overflow:"hidden",background:"linear-gradient(155deg,#241a10,#150f0a 72%)",border:"1px solid "+GOLD+"38"}}>
+                <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#a3410a,"+ORANGE+","+GOLD+","+ORANGE+",#a3410a,transparent)"}}/>
+                <div style={{position:"absolute",right:-10,bottom:-16,fontSize:92,opacity:0.06,lineHeight:1,pointerEvents:"none"}}>⚒</div>
+                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,position:"relative"}}>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontSize:10,letterSpacing:"0.22em",textTransform:"uppercase",color:GOLD,fontWeight:700}}>Today's Session</div>
+                    <div style={{fontSize:26,fontWeight:800,color:"#fff",letterSpacing:"-0.02em",lineHeight:1,marginTop:5}}>{DAY_LABELS[activeDay]}</div>
+                    {phase&&<div style={{fontSize:12,color:"#a89a86",marginTop:6}}>⚡ {phase}</div>}
+                  </div>
+                  <div style={{position:"relative",width:70,height:70,flexShrink:0}}>
+                    <svg width="70" height="70" viewBox="0 0 70 70" style={{transform:"rotate(-90deg)"}}>
+                      <circle cx="35" cy="35" r={R} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="6.5"/>
+                      <circle cx="35" cy="35" r={R} fill="none" stroke="url(#irGrad)" strokeWidth="6.5" strokeLinecap="round" strokeDasharray={C} strokeDashoffset={C*(1-pct)} style={{transition:"stroke-dashoffset 0.6s cubic-bezier(0.22,1,0.36,1)"}}/>
+                      <defs><linearGradient id="irGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={ORANGE}/><stop offset="1" stopColor={GOLD}/></linearGradient></defs>
+                    </svg>
+                    <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",lineHeight:1}}>
+                      <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>{doneCount}/{todayLifts.length}</div>
+                      <div style={{fontSize:8,color:"#a89a86",textTransform:"uppercase",letterSpacing:"0.1em",marginTop:2}}>logged</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
           {loadError&&<div style={{background:"#FCEBEB",borderRadius:8,padding:"8px 12px",marginBottom:8,fontSize:12,color:RED}}>Error: {loadError}</div>}
           <div style={{display:"flex",gap:6,marginBottom:16,background:"#0d0d0d",borderRadius:14,padding:5,border:"1px solid #1e1e1e"}}>
             {DAYS.map(d=>{
@@ -529,13 +561,20 @@ export default function PRLog({athleteId,gender}){
                         {isSaved?"✓ Saved":isSaving?"…":"Log"}
                       </button>
                     );
+                    const stepBtn=(onClick,label)=>(
+                      <button type="button" onClick={onClick} aria-label={label} style={{width:34,flexShrink:0,alignSelf:"stretch",borderRadius:10,border:"1px solid #2a2a2a",background:"#120d09",color:"#aaa",fontSize:18,lineHeight:1,cursor:"pointer",fontFamily:"Georgia,serif"}}>{label}</button>
+                    );
                     const repsInput=(
                       <div style={{flex:1}}>
                         <div style={{fontSize:9.5,color:"#999",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>Reps</div>
-                        <input type="number" inputMode="numeric" value={inp.reps||""}
-                          onChange={e=>setInput(lift.name,"reps",e.target.value)}
-                          placeholder="0"
-                          style={{width:"100%",padding:"13px",borderRadius:11,border:"1px solid #2a2a2a",fontSize:18,fontFamily:"Georgia,serif",textAlign:"center",background:"#0d0d0d",boxSizing:"border-box",fontWeight:800,color:"#fff"}}/>
+                        <div style={{display:"flex",gap:5}}>
+                          {stepBtn(()=>bump(lift.name,"reps",-1,1),"−")}
+                          <input type="number" inputMode="numeric" value={inp.reps||""}
+                            onChange={e=>setInput(lift.name,"reps",e.target.value)}
+                            placeholder="0"
+                            style={{flex:1,minWidth:0,padding:"13px 6px",borderRadius:11,border:"1px solid #2a2a2a",fontSize:18,fontFamily:"Georgia,serif",textAlign:"center",background:"#0d0d0d",boxSizing:"border-box",fontWeight:800,color:"#fff"}}/>
+                          {stepBtn(()=>bump(lift.name,"reps",1,1),"+")}
+                        </div>
                       </div>
                     );
                     const bandPicker=(label)=>(
@@ -952,17 +991,21 @@ export default function PRLog({athleteId,gender}){
                                 ⚖️ BW{latestBW?" ("+latestBW+")":""}
                               </button>
                             </div>
-                            <input type="number" inputMode="decimal"
-                              value={inp.weight||""}
-                              readOnly={!!inp.bw}
-                              onChange={e=>!inp.bw&&setInput(lift.name,"weight",e.target.value)}
-                              placeholder={inp.bw&&!latestBW?"Log weight first":last?`Last: ${last}`:"0"}
-                              style={{width:"100%",padding:"13px",borderRadius:11,
-                                border:"1px solid "+(inp.bw?GREEN+"66":"#2a2a2a"),
-                                fontSize:18,fontFamily:"Georgia,serif",textAlign:"center",
-                                background:inp.bw?"#091510":"#0d0d0d",
-                                color:inp.bw?GREEN:"#fff",
-                                boxSizing:"border-box",fontWeight:800}}/>
+                            <div style={{display:"flex",gap:5}}>
+                              {!inp.bw&&stepBtn(()=>bump(lift.name,"weight",-1,5),"−")}
+                              <input type="number" inputMode="decimal"
+                                value={inp.weight||""}
+                                readOnly={!!inp.bw}
+                                onChange={e=>!inp.bw&&setInput(lift.name,"weight",e.target.value)}
+                                placeholder={inp.bw&&!latestBW?"Log weight first":last?`Last: ${last}`:"0"}
+                                style={{flex:1,minWidth:0,padding:"13px 6px",borderRadius:11,
+                                  border:"1px solid "+(inp.bw?GREEN+"66":"#2a2a2a"),
+                                  fontSize:18,fontFamily:"Georgia,serif",textAlign:"center",
+                                  background:inp.bw?"#091510":"#0d0d0d",
+                                  color:inp.bw?GREEN:"#fff",
+                                  boxSizing:"border-box",fontWeight:800}}/>
+                              {!inp.bw&&stepBtn(()=>bump(lift.name,"weight",1,5),"+")}
+                            </div>
                           </div>
                           {repsInput}
                           <div>{logBtn(!inp.weight)}</div>
