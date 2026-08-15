@@ -111,6 +111,24 @@ export default function Athlete(){
   const[myVote,setMyVote]=useState(null);
   const[groupmeLink,setGroupmeLink]=useState("https://groupme.com/join_group/111967377/1JobSG7L");
   const[weightLoggedToday,setWeightLoggedToday]=useState(null);
+  const[habitsDoneToday,setHabitsDoneToday]=useState(null);
+  // Profile editing
+  const[editOpen,setEditOpen]=useState(false);
+  const[editName,setEditName]=useState("");
+  const[editSport,setEditSport]=useState("");
+  const[editPin,setEditPin]=useState("");
+  const[editPinConfirm,setEditPinConfirm]=useState("");
+  const[editSaving,setEditSaving]=useState(false);
+  const[editMsg,setEditMsg]=useState("");
+  const[editPhotoBusy,setEditPhotoBusy]=useState(false);
+  // Self sign-up
+  const[signupName,setSignupName]=useState("");
+  const[signupGender,setSignupGender]=useState("male");
+  const[signupSport,setSignupSport]=useState("");
+  const[signupPin,setSignupPin]=useState("");
+  const[signupPinConfirm,setSignupPinConfirm]=useState("");
+  const[signupError,setSignupError]=useState("");
+  const[signupSaving,setSignupSaving]=useState(false);
   const[notifCard,setNotifCard]=useState("unknown"); // unknown | idle | enabled | denied | unsupported | ios-browser
   const[notifLoading,setNotifLoading]=useState(false);
   const pollRef=useRef(null);
@@ -261,6 +279,114 @@ export default function Athlete(){
       }catch(e){setWeightLoggedToday(true);}
     })();
   },[selectedAthlete]);
+
+  // Check if athlete completed all three habits today (drives the home nudge)
+  useEffect(()=>{
+    if(!selectedAthlete)return;
+    const est=nowEST();
+    const today=est.getFullYear()+"-"+String(est.getMonth()+1).padStart(2,"0")+"-"+String(est.getDate()).padStart(2,"0");
+    (async()=>{
+      try{
+        const{data}=await supabase.from("announcements").select("message").eq("type","habit_log").eq("day",String(selectedAthlete.id)).eq("week_label",today).maybeSingle();
+        let done=false;
+        if(data?.message){try{const p=JSON.parse(data.message);done=p.water===true&&p.nutrition===true&&p.sleep!=null;}catch(e){}}
+        setHabitsDoneToday(done);
+      }catch(e){setHabitsDoneToday(true);}
+    })();
+  },[selectedAthlete]);
+
+  // Resize + upload a profile photo to Supabase storage, return the public URL
+  const uploadAthletePhoto=(athleteId,file)=>new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=()=>reject(new Error("Could not read file"));
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error("Could not decode image"));
+      img.onload=()=>{
+        const SIZE=150;
+        const canvas=document.createElement("canvas");
+        canvas.width=SIZE;canvas.height=SIZE;
+        const ctx=canvas.getContext("2d");
+        const min=Math.min(img.width,img.height);
+        ctx.drawImage(img,(img.width-min)/2,(img.height-min)/2,min,min,0,0,SIZE,SIZE);
+        canvas.toBlob(async blob=>{
+          try{
+            const fileName=`athlete_${athleteId}_${Date.now()}.jpg`;
+            const{error:upErr}=await supabase.storage.from("athlete-photos").upload(fileName,blob,{contentType:"image/jpeg",upsert:true});
+            if(upErr){reject(upErr);return;}
+            const{data:{publicUrl}}=supabase.storage.from("athlete-photos").getPublicUrl(fileName);
+            resolve(publicUrl);
+          }catch(e){reject(e);}
+        },"image/jpeg",0.8);
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  const openEditProfile=()=>{
+    if(!selectedAthlete)return;
+    setEditName(selectedAthlete.name||"");
+    setEditSport(selectedAthlete.sport||"");
+    setEditPin("");setEditPinConfirm("");setEditMsg("");setEditOpen(true);
+  };
+
+  const onEditPhoto=async(file)=>{
+    if(!file||!selectedAthlete)return;
+    setEditPhotoBusy(true);setEditMsg("");
+    try{
+      const url=await uploadAthletePhoto(selectedAthlete.id,file);
+      await supabase.from("athletes").update({photo_url:url}).eq("id",selectedAthlete.id);
+      const updated={...selectedAthlete,photo_url:url};
+      setSelectedAthlete(updated);
+      setAthletes(prev=>prev.map(a=>a.id===updated.id?{...a,photo_url:url}:a));
+    }catch(e){setEditMsg("Photo upload failed — try a smaller image.");}
+    setEditPhotoBusy(false);
+  };
+
+  const saveProfile=async()=>{
+    if(!selectedAthlete)return;
+    setEditMsg("");
+    const name=editName.trim();
+    if(!name){setEditMsg("Name can't be empty.");return;}
+    if(editPin&&!/^\d{4}$/.test(editPin)){setEditMsg("PIN must be exactly 4 digits.");return;}
+    if(editPin&&editPin!==editPinConfirm){setEditMsg("PINs don't match.");return;}
+    setEditSaving(true);
+    const patch={name,sport:editSport.trim()};
+    if(editPin)patch.pin=editPin;
+    try{
+      const{error}=await supabase.from("athletes").update(patch).eq("id",selectedAthlete.id);
+      if(error){setEditMsg(error.message);setEditSaving(false);return;}
+      const updated={...selectedAthlete,...patch};
+      setSelectedAthlete(updated);
+      setAthletes(prev=>prev.map(a=>a.id===updated.id?{...a,...patch}:a));
+      setEditSaving(false);setEditOpen(false);setEditPin("");setEditPinConfirm("");
+    }catch(e){setEditMsg(e.message);setEditSaving(false);}
+  };
+
+  const createAccount=async()=>{
+    setSignupError("");
+    const name=signupName.trim();
+    if(!name){setSignupError("Enter your name.");return;}
+    if(!/^\d{4}$/.test(signupPin)){setSignupError("PIN must be exactly 4 digits.");return;}
+    if(signupPin!==signupPinConfirm){setSignupError("PINs don't match.");return;}
+    setSignupSaving(true);
+    try{
+      const{data:existing}=await supabase.from("athletes").select("id").ilike("name",name).maybeSingle();
+      if(existing){setSignupError("That name's already on the roster — find it on the list to sign in.");setSignupSaving(false);return;}
+      const{data,error}=await supabase.from("athletes").insert({name,sport:signupSport.trim(),gender:signupGender,role:"iron",status:"active",pin:signupPin}).select().single();
+      if(error){setSignupError(error.message);setSignupSaving(false);return;}
+      setAthletes(prev=>[...prev,data].sort((a,b)=>(a.name||"").localeCompare(b.name||"")));
+      athleteIdRef.current=data.id;
+      setSelectedAthlete(data);
+      loadAttendance(data.id).catch(()=>{});
+      setSignupName("");setSignupSport("");setSignupPin("");setSignupPinConfirm("");setSignupGender("male");setSignupSaving(false);
+      const info=await doCheckin(data);
+      setCheckinInfo(info);
+      if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
+      else setScreen("profile");
+    }catch(e){setSignupError(e.message);setSignupSaving(false);}
+  };
 
   // Check push notification status when athlete profile loads
   useEffect(()=>{
@@ -640,7 +766,70 @@ export default function Athlete(){
               );
             })}
           </div>
+          {/* New here → self sign-up */}
+          <button onClick={()=>{setSignupError("");setScreen("signup");}} style={{width:"100%",padding:"15px",borderRadius:14,border:"1px dashed #E8720C55",background:"linear-gradient(135deg,#140a02,#1a0d00)",color:"#E8720C",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <span style={{fontSize:17,lineHeight:1}}>＋</span> New here? Create your profile
+          </button>
           <div style={{textAlign:"center",fontSize:10,color:"#222",letterSpacing:"0.08em",textTransform:"uppercase"}}>TF College Group · Triple F Sports</div>
+        </div>
+      </div>
+    </>
+  );
+
+  if(screen==="signup")return(
+    <>
+      <Head><title>Create Your Profile — TF College Group</title></Head>
+      <div style={{minHeight:"100dvh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflowX:"hidden",padding:"0 0 3rem"}}>
+        <div style={{position:"fixed",top:-120,left:"50%",transform:"translateX(-50%)",width:500,height:400,borderRadius:"50%",background:"radial-gradient(ellipse,#E8720C22 0%,transparent 70%)",pointerEvents:"none"}}/>
+        <div style={{background:"linear-gradient(180deg,#0e0600 0%,#080808 100%)",borderBottom:"1px solid #1a0a00",padding:"1.5rem 1.5rem 1.75rem",position:"relative"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent 0%,#E8720C 30%,#C0392B 70%,transparent 100%)"}}/>
+          <button onClick={()=>setScreen("roster")} style={{background:"#0e0e0e",border:"0.5px solid #1e1e1e",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"7px 14px",borderRadius:10,marginBottom:18}}>← Back</button>
+          <div style={{width:72,height:72,borderRadius:22,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:38,boxShadow:"0 0 60px #E8720C44",marginBottom:14}}>⚒</div>
+          <div style={{fontSize:26,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",textTransform:"uppercase"}}>Create your profile</div>
+          <div style={{fontSize:12,color:"#E8720C",letterSpacing:"0.04em",marginTop:4}}>Join the College Group · takes 20 seconds</div>
+        </div>
+
+        <div style={{padding:"1.5rem 1.25rem",position:"relative",display:"flex",flexDirection:"column",gap:16}}>
+          {/* Name */}
+          <div>
+            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Your name</div>
+            <input type="text" value={signupName} onChange={e=>setSignupName(e.target.value)} placeholder="First & last name" autoComplete="off"
+              style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
+          </div>
+          {/* Team / gender */}
+          <div>
+            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Strength standards</div>
+            <div style={{display:"flex",gap:8}}>
+              {[{id:"male",label:"Men's"},{id:"female",label:"Women's"}].map(g=>(
+                <button key={g.id} onClick={()=>setSignupGender(g.id)} style={{flex:1,padding:"13px",borderRadius:12,border:"1px solid "+(signupGender===g.id?"#E8720C":"#252525"),background:signupGender===g.id?"linear-gradient(135deg,#E8720C22,#C0392B22)":"#0d0d0d",color:signupGender===g.id?"#E8720C":"#666",fontSize:14,fontWeight:signupGender===g.id?800:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>{g.label}</button>
+              ))}
+            </div>
+            <div style={{fontSize:10,color:"#444",marginTop:6}}>Used only to scale your strength benchmarks. Coach sets your group later.</div>
+          </div>
+          {/* Sport */}
+          <div>
+            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Sport / position <span style={{color:"#444",textTransform:"none",letterSpacing:0}}>· optional</span></div>
+            <input type="text" value={signupSport} onChange={e=>setSignupSport(e.target.value)} placeholder="e.g. Baseball · OF" autoComplete="off"
+              style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
+          </div>
+          {/* PIN */}
+          <div style={{display:"flex",gap:10}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Create a 4-digit PIN</div>
+              <input type="password" inputMode="numeric" maxLength={4} value={signupPin} onChange={e=>setSignupPin(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="••••"
+                style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:18,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none",textAlign:"center",letterSpacing:"0.3em"}}/>
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Confirm PIN</div>
+              <input type="password" inputMode="numeric" maxLength={4} value={signupPinConfirm} onChange={e=>setSignupPinConfirm(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="••••"
+                style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:18,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none",textAlign:"center",letterSpacing:"0.3em"}}/>
+            </div>
+          </div>
+          {signupError&&<div style={{fontSize:12,color:"#ff6b6b",background:"#1a0707",borderRadius:10,padding:"10px 14px",border:"1px solid #3a0a0a"}}>{signupError}</div>}
+          <button onClick={createAccount} disabled={signupSaving} style={{width:"100%",padding:"16px",borderRadius:14,border:"none",background:signupSaving?"#1a1a1a":"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:15,fontWeight:800,cursor:signupSaving?"default":"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.03em",boxShadow:signupSaving?"none":"0 6px 22px #E8720C44",marginTop:4}}>
+            {signupSaving?"Creating…":"Create profile & enter →"}
+          </button>
+          <div style={{textAlign:"center",fontSize:10.5,color:"#444",lineHeight:1.6}}>Already have a profile? <span onClick={()=>setScreen("roster")} style={{color:"#E8720C",cursor:"pointer",fontWeight:700}}>Find your name</span> on the list instead.</div>
         </div>
       </div>
     </>
@@ -867,6 +1056,15 @@ export default function Athlete(){
     const myBraceletRef=selectedAthlete?.bracelet||myGroupLeader?.bracelet||null;
     const myBracelet=myBraceletRef?BRACELETS.find(b=>b.ref===myBraceletRef):null;
 
+    // Theme-aware colors for the edit-profile sheet (its custom shades aren't in the CSS light-map)
+    const mSheet=isLight?"#ffffff":"linear-gradient(180deg,#12121c,#0b0b12)";
+    const mText=isLight?"#16191f":"#fff";
+    const mField=isLight?"#f4f5f8":"#0d0d14";
+    const mBorder=isLight?"rgba(0,0,0,0.16)":"#2a2a3a";
+    const mHandle=isLight?"rgba(0,0,0,0.18)":"rgba(255,255,255,0.18)";
+    const mChipBg=isLight?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.05)";
+    const mChipBorder=isLight?"rgba(0,0,0,0.14)":"rgba(255,255,255,0.14)";
+
     return(
       <>
         <style>{`@keyframes tfSlideFromRight{from{transform:translateX(52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfJiggle{0%{transform:rotate(-1.5deg) scale(1.03)}100%{transform:rotate(1.5deg) scale(1.03)}}`}</style>
@@ -880,6 +1078,47 @@ export default function Athlete(){
               <div style={{fontSize:32,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",marginBottom:12,lineHeight:1.1}}>{milestone.headline}</div>
               <div style={{fontSize:15,color:"#888",marginBottom:32,lineHeight:1.6,maxWidth:260,margin:"0 auto 32px"}}>{milestone.msg}</div>
               <button onClick={()=>setMilestone(null)} style={{padding:"14px 32px",borderRadius:16,border:"none",background:"linear-gradient(135deg,"+milestone.color+","+milestone.color+"aa)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>Let's go →</button>
+            </div>
+          </div>
+        )}
+        {editOpen&&(
+          <div onClick={()=>!editSaving&&setEditOpen(false)} style={{position:"fixed",inset:0,zIndex:9997,background:"rgba(0,0,0,0.82)",backdropFilter:"blur(4px)",WebkitBackdropFilter:"blur(4px)",display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0"}}>
+            <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:480,background:mSheet,borderTopLeftRadius:24,borderTopRightRadius:24,borderTop:"1px solid "+mChipBorder,padding:"10px 22px 32px",maxHeight:"92dvh",overflowY:"auto",boxShadow:"0 -20px 60px rgba(0,0,0,0.6)"}}>
+              <div style={{width:40,height:4,borderRadius:2,background:mHandle,margin:"0 auto 18px"}}/>
+              <div style={{fontSize:20,fontWeight:900,color:mText,letterSpacing:"-0.02em",marginBottom:20}}>Edit profile</div>
+              {/* Photo */}
+              <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
+                <div style={{width:66,height:66,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+")":"linear-gradient(145deg,#8a9aa4,"+STEEL+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:900,color:"#fff",overflow:"hidden",flexShrink:0}}>
+                  {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(editName||selectedAthlete.name||"?")[0]}
+                </div>
+                <label style={{padding:"11px 18px",borderRadius:11,border:"1px solid "+mChipBorder,background:mChipBg,color:mText,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                  {editPhotoBusy?"Uploading…":"📷 Change photo"}
+                  <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f)onEditPhoto(f);e.target.value="";}}/>
+                </label>
+              </div>
+              {/* Name */}
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Name</div>
+                <input type="text" value={editName} onChange={e=>setEditName(e.target.value)} style={{width:"100%",padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
+              </div>
+              {/* Sport */}
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Sport / position</div>
+                <input type="text" value={editSport} onChange={e=>setEditSport(e.target.value)} placeholder="e.g. Baseball · OF" style={{width:"100%",padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
+              </div>
+              {/* PIN change */}
+              <div style={{marginBottom:16}}>
+                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Change PIN <span style={{color:"#666",textTransform:"none",letterSpacing:0}}>· leave blank to keep current</span></div>
+                <div style={{display:"flex",gap:10}}>
+                  <input type="password" inputMode="numeric" maxLength={4} value={editPin} onChange={e=>setEditPin(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="New PIN" style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none",textAlign:"center",letterSpacing:"0.25em"}}/>
+                  <input type="password" inputMode="numeric" maxLength={4} value={editPinConfirm} onChange={e=>setEditPinConfirm(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="Confirm" style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none",textAlign:"center",letterSpacing:"0.25em"}}/>
+                </div>
+              </div>
+              {editMsg&&<div style={{fontSize:12,color:"#ff6b6b",background:"#1a0707",borderRadius:10,padding:"9px 13px",border:"1px solid #3a0a0a",marginBottom:14}}>{editMsg}</div>}
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={()=>!editSaving&&setEditOpen(false)} style={{flex:1,padding:"14px",borderRadius:12,border:"1px solid "+mChipBorder,background:"transparent",color:isLight?"#5b626c":"#999",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
+                <button onClick={saveProfile} disabled={editSaving} style={{flex:2,padding:"14px",borderRadius:12,border:"none",background:editSaving?"#1a1a1a":"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",color:"#fff",fontSize:14,fontWeight:800,cursor:editSaving?"default":"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>{editSaving?"Saving…":"Save changes"}</button>
+              </div>
             </div>
           </div>
         )}
@@ -901,11 +1140,12 @@ export default function Athlete(){
             </div>
             {/* Identity banner */}
             <div style={{display:"flex",alignItems:"center",gap:16,padding:"4px 16px 16px",position:"relative"}}>
-              <div style={{position:"relative",flexShrink:0}}>
+              <div onClick={openEditProfile} style={{position:"relative",flexShrink:0,cursor:"pointer"}}>
                 <div style={{position:"absolute",inset:-5,borderRadius:"50%",border:"1px solid "+(isForge?RED:STEEL)+"44",pointerEvents:"none"}}/>
                 <div style={{width:70,height:70,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:900,color:"#fff",overflow:"hidden",boxShadow:"0 0 30px "+(isForge?RED:STEEL)+"44"}}>
                   {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>{e.target.style.display="none";}}/>:selectedAthlete.name[0]}
                 </div>
+                <div style={{position:"absolute",bottom:-2,right:-2,width:26,height:26,borderRadius:"50%",background:"linear-gradient(135deg,#E8720C,#C0392B)",border:"2px solid #0a0a14",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,boxShadow:"0 2px 8px rgba(0,0,0,0.5)"}}>✎</div>
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1,textTransform:"uppercase"}}>{selectedAthlete.name}</div>
@@ -930,6 +1170,15 @@ export default function Athlete(){
                       <div style={{fontSize:11,color:GREEN}}>Tap to log your weight → stay on track</div>
                     </div>
                     <Icon name="barChart" size={22} color={GREEN}/>
+                  </div>
+                )}
+                {habitsDoneToday===false&&(
+                  <div onClick={()=>{slideDirRef.current=0;setTab("habits");}} style={{background:"linear-gradient(135deg,#1a1330,#100a22)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid "+PUR+"55",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>Log today's habits</div>
+                      <div style={{fontSize:11,color:"#b9a6ff"}}>Water · nutrition · sleep → keep your streak alive</div>
+                    </div>
+                    <div style={{fontSize:20}}>💧</div>
                   </div>
                 )}
                 {/* Push notification setup card — shown until enabled */}

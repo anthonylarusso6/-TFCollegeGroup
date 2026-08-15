@@ -164,6 +164,7 @@ export default function PRLog({athleteId,gender}){
   const[bwDone,setBwDone]=useState({});
   const[showPriorPhase,setShowPriorPhase]=useState(false);
   const[sessionDone,setSessionDone]=useState(()=>new Set()); // "day|lift" logged this session (fills the progress ring)
+  const[celebrate,setCelebrate]=useState(null); // {lift,value,unit} → PR confetti overlay
 
   useEffect(()=>{
     (async()=>{
@@ -260,6 +261,13 @@ export default function PRLog({athleteId,gender}){
   const saveLog=async(liftName,tier)=>{
     const inp=inputs[liftName]||{};
     if(!inp.weight)return;
+    // Snapshot the current best BEFORE inserting, so we can tell if this set is a PR.
+    const prevOrmPR=getOrmPR(liftName);
+    const prevWeightPR=getPR(liftName);
+    const vertLift=isVert(liftName);
+    const newWeight=parseFloat(inp.weight)||0;
+    const newReps=parseInt(inp.reps)||1;
+    const newOrm=epley(newWeight,newReps);
     setSaving(liftName);
     const estNow=nowEST();
     const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
@@ -275,6 +283,15 @@ export default function PRLog({athleteId,gender}){
       setInputs(prev=>({...prev,[liftName]:{weight:"",reps:""}}));
       setSessionDone(s=>{const n=new Set(s);n.add(activeDay+"|"+liftName);return n;});
       setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);hSuccess();
+      // 🏆 New PR? Only celebrate when beating an existing best (avoids confetti on every first-ever log).
+      let prHit=null;
+      if(vertLift){ if(prevWeightPR!=null&&newWeight>prevWeightPR)prHit={value:newWeight,unit:"in"}; }
+      else if(prevOrmPR!=null&&newOrm>prevOrmPR)prHit={value:newOrm,unit:"lbs"};
+      if(prHit){
+        try{if(navigator.vibrate)navigator.vibrate([0,45,55,45,55,90]);}catch(e){}
+        setCelebrate({lift:liftName,value:prHit.value,unit:prHit.unit});
+        setTimeout(()=>setCelebrate(c=>(c&&c.lift===liftName?null:c)),3400);
+      }
       // Nudge athlete to log weight if they haven't today
       try{
         const estNow=nowEST();
@@ -448,6 +465,24 @@ export default function PRLog({athleteId,gender}){
 
   return(
     <div>
+      {/* 🏆 PR CELEBRATION — confetti + haptic when a new record is set */}
+      {celebrate&&(
+        <div onClick={()=>setCelebrate(null)} style={{position:"fixed",inset:0,zIndex:9998,display:"flex",alignItems:"center",justifyContent:"center",background:"radial-gradient(ellipse at center,rgba(4,3,0,0.62),rgba(0,0,0,0.86))",backdropFilter:"blur(2px)",WebkitBackdropFilter:"blur(2px)",overflow:"hidden",cursor:"pointer"}}>
+          {Array.from({length:56}).map((_,ci)=>{
+            const cols=[GOLD,ORANGE,"#2FA869","#ffffff","#f0d477","#E8720C"];
+            const left=Math.random()*100,delay=Math.random()*0.55,dur=1.7+Math.random()*1.5,size=6+Math.random()*8,round=Math.random()>0.5;
+            return <div key={ci} style={{position:"absolute",top:"-8%",left:left+"%",width:size,height:round?size:size*0.5,background:cols[ci%cols.length],borderRadius:round?"50%":2,animation:"tfConfettiFall "+dur+"s linear "+delay+"s forwards"}}/>;
+          })}
+          <div style={{position:"relative",textAlign:"center",animation:"tfPrPop 0.55s cubic-bezier(0.22,1.45,0.4,1) both",padding:"0 2rem"}}>
+            <div style={{position:"absolute",top:"46%",left:"50%",transform:"translate(-50%,-50%)",width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle,"+GOLD+"38,transparent 68%)",pointerEvents:"none"}}/>
+            <div style={{fontSize:78,lineHeight:1,marginBottom:4,filter:"drop-shadow(0 0 26px "+GOLD+"cc)",position:"relative"}}>🏆</div>
+            <div style={{fontSize:12.5,letterSpacing:"0.3em",textTransform:"uppercase",color:GOLD,fontWeight:800,position:"relative"}}>New Personal Record</div>
+            <div style={{fontSize:38,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.05,margin:"9px 0 2px",position:"relative"}}>{celebrate.value}<span style={{fontSize:17,fontWeight:700,color:GOLD,marginLeft:5}}>{celebrate.unit}</span></div>
+            <div style={{fontSize:15,color:"#d3b988",fontWeight:600,position:"relative"}}>{celebrate.lift}</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.42)",marginTop:20,position:"relative"}}>tap to continue</div>
+          </div>
+        </div>
+      )}
       {/* View toggle */}
       <div style={{display:"flex",gap:6,marginBottom:16,background:"#0d0d0d",borderRadius:14,padding:5,border:"1px solid #1e1e1e"}}>
         {[{id:"log",label:"Log"},{id:"dashboard",label:"Dashboard"},{id:"week",label:"Week"}].map(v=>(

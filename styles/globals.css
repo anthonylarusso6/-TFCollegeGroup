@@ -169,6 +169,17 @@ select option {
 }
 .tf-fade-up { animation: tfFadeUp 0.4s ease both; }
 
+/* PR celebration — confetti fall + medal pop */
+@keyframes tfConfettiFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(112vh) rotate(720deg); opacity: 0.9; }
+}
+@keyframes tfPrPop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 /* ══════════════════════════════════════════════════════════════
    LIGHT MODE  —  html[data-theme="light"]
    Mirrors the dark attribute-selector system above, mapping the app's
