@@ -116,6 +116,8 @@ export default function Athlete(){
   const[editOpen,setEditOpen]=useState(false);
   const[editName,setEditName]=useState("");
   const[editSport,setEditSport]=useState("");
+  const[editCollege,setEditCollege]=useState("");
+  const[editYear,setEditYear]=useState("");
   const[editPin,setEditPin]=useState("");
   const[editPinConfirm,setEditPinConfirm]=useState("");
   const[editSaving,setEditSaving]=useState(false);
@@ -125,6 +127,8 @@ export default function Athlete(){
   const[signupName,setSignupName]=useState("");
   const[signupGender,setSignupGender]=useState("male");
   const[signupSport,setSignupSport]=useState("");
+  const[signupCollege,setSignupCollege]=useState("");
+  const[signupYear,setSignupYear]=useState("");
   const[signupPin,setSignupPin]=useState("");
   const[signupPinConfirm,setSignupPinConfirm]=useState("");
   const[signupError,setSignupError]=useState("");
@@ -328,6 +332,8 @@ export default function Athlete(){
     if(!selectedAthlete)return;
     setEditName(selectedAthlete.name||"");
     setEditSport(selectedAthlete.sport||"");
+    setEditCollege(selectedAthlete.college||"");
+    setEditYear(selectedAthlete.year||"");
     setEditPin("");setEditPinConfirm("");setEditMsg("");setEditOpen(true);
   };
 
@@ -353,6 +359,10 @@ export default function Athlete(){
     if(editPin&&editPin!==editPinConfirm){setEditMsg("PINs don't match.");return;}
     setEditSaving(true);
     const patch={name,sport:editSport.trim()};
+    // Only touch college/year when there's a value (or the athlete already has one),
+    // so profiles still save even before those columns are added to the table.
+    if(editCollege.trim()||selectedAthlete.college!=null)patch.college=editCollege.trim();
+    if(editYear||selectedAthlete.year!=null)patch.year=editYear;
     if(editPin)patch.pin=editPin;
     try{
       const{error}=await supabase.from("athletes").update(patch).eq("id",selectedAthlete.id);
@@ -374,13 +384,16 @@ export default function Athlete(){
     try{
       const{data:existing}=await supabase.from("athletes").select("id").ilike("name",name).maybeSingle();
       if(existing){setSignupError("That name's already on the roster — find it on the list to sign in.");setSignupSaving(false);return;}
-      const{data,error}=await supabase.from("athletes").insert({name,sport:signupSport.trim(),gender:signupGender,role:"iron",status:"active",pin:signupPin}).select().single();
+      const signupPayload={name,sport:signupSport.trim(),gender:signupGender,role:"iron",status:"active",pin:signupPin};
+      if(signupCollege.trim())signupPayload.college=signupCollege.trim();
+      if(signupYear)signupPayload.year=signupYear;
+      const{data,error}=await supabase.from("athletes").insert(signupPayload).select().single();
       if(error){setSignupError(error.message);setSignupSaving(false);return;}
       setAthletes(prev=>[...prev,data].sort((a,b)=>(a.name||"").localeCompare(b.name||"")));
       athleteIdRef.current=data.id;
       setSelectedAthlete(data);
       loadAttendance(data.id).catch(()=>{});
-      setSignupName("");setSignupSport("");setSignupPin("");setSignupPinConfirm("");setSignupGender("male");setSignupSaving(false);
+      setSignupName("");setSignupSport("");setSignupCollege("");setSignupYear("");setSignupPin("");setSignupPinConfirm("");setSignupGender("male");setSignupSaving(false);
       const info=await doCheckin(data);
       setCheckinInfo(info);
       if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
@@ -812,6 +825,21 @@ export default function Athlete(){
             <input type="text" value={signupSport} onChange={e=>setSignupSport(e.target.value)} placeholder="e.g. Baseball · OF" autoComplete="off"
               style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
           </div>
+          {/* College */}
+          <div>
+            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>College</div>
+            <input type="text" value={signupCollege} onChange={e=>setSignupCollege(e.target.value)} placeholder="e.g. University of Tennessee" autoComplete="off"
+              style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
+          </div>
+          {/* Year */}
+          <div>
+            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Year</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+              {["Freshman","Sophomore","Junior","Senior","5th Year","Grad"].map(y=>(
+                <button key={y} onClick={()=>setSignupYear(signupYear===y?"":y)} style={{padding:"11px 15px",borderRadius:11,border:"1px solid "+(signupYear===y?"#E8720C":"#252525"),background:signupYear===y?"linear-gradient(135deg,#E8720C22,#C0392B22)":"#0d0d0d",color:signupYear===y?"#E8720C":"#666",fontSize:13,fontWeight:signupYear===y?800:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>{y}</button>
+              ))}
+            </div>
+          </div>
           {/* PIN */}
           <div style={{display:"flex",gap:10}}>
             <div style={{flex:1}}>
@@ -1106,6 +1134,20 @@ export default function Athlete(){
                 <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Sport / position</div>
                 <input type="text" value={editSport} onChange={e=>setEditSport(e.target.value)} placeholder="e.g. Baseball · OF" style={{width:"100%",padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
               </div>
+              {/* College */}
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>College</div>
+                <input type="text" value={editCollege} onChange={e=>setEditCollege(e.target.value)} placeholder="e.g. University of Tennessee" style={{width:"100%",padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
+              </div>
+              {/* Year */}
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Year</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                  {["Freshman","Sophomore","Junior","Senior","5th Year","Grad"].map(y=>(
+                    <button key={y} onClick={()=>setEditYear(editYear===y?"":y)} style={{padding:"10px 14px",borderRadius:10,border:"1px solid "+(editYear===y?"#E8720C":mBorder),background:editYear===y?"linear-gradient(135deg,#E8720C22,#C0392B22)":mField,color:editYear===y?"#E8720C":(isLight?"#5b626c":"#888"),fontSize:13,fontWeight:editYear===y?800:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>{y}</button>
+                  ))}
+                </div>
+              </div>
               {/* PIN change */}
               <div style={{marginBottom:16}}>
                 <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Change PIN <span style={{color:"#666",textTransform:"none",letterSpacing:0}}>· leave blank to keep current</span></div>
@@ -1149,7 +1191,14 @@ export default function Athlete(){
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1,textTransform:"uppercase"}}>{selectedAthlete.name}</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:3,letterSpacing:"0.04em"}}>{selectedAthlete.sport}</div>
+                {selectedAthlete.sport&&<div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:3,letterSpacing:"0.04em"}}>{selectedAthlete.sport}</div>}
+                {(selectedAthlete.college||selectedAthlete.year)&&(
+                  <div style={{fontSize:10.5,color:"rgba(255,255,255,0.42)",marginTop:4,letterSpacing:"0.03em",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                    {selectedAthlete.college&&<span style={{display:"flex",alignItems:"center",gap:4}}>🎓 {selectedAthlete.college}</span>}
+                    {selectedAthlete.college&&selectedAthlete.year&&<span style={{color:"rgba(255,255,255,0.2)"}}>·</span>}
+                    {selectedAthlete.year&&<span style={{color:GOLD,fontWeight:700}}>{selectedAthlete.year}</span>}
+                  </div>
+                )}
               </div>
               <div style={{textAlign:"right",flexShrink:0}}>
                 <div style={{fontSize:9,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.12em",background:(isForge?RED:STEEL)+"18",padding:"4px 12px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"44",marginBottom:5,display:"inline-block",whiteSpace:"nowrap"}}>{isForge?"⚔ Forge":"⚒ Iron"}</div>
