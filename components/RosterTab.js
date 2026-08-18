@@ -18,7 +18,7 @@ export default function RosterTab({athletes=[],setAthletes,updateAthlete,deleteA
                 ))}
               </div>
               <div style={{position:"relative",marginBottom:12}}>
-                <input value={rosterSearch} onChange={e=>setRosterSearch(e.target.value)} placeholder="Search name or sport..." style={{width:"100%",padding:"10px 12px 10px 34px",borderRadius:10,border:"0.5px solid #252525",fontSize:13,fontFamily:"Georgia,serif",background:"#1a1a1a",color:"#ddd",boxSizing:"border-box"}}/>
+                <input value={rosterSearch} onChange={e=>setRosterSearch(e.target.value)} placeholder="Search name, sport, or school..." style={{width:"100%",padding:"10px 12px 10px 34px",borderRadius:10,border:"0.5px solid #252525",fontSize:13,fontFamily:"Georgia,serif",background:"#1a1a1a",color:"#ddd",boxSizing:"border-box"}}/>
                 <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#aaa"}}><Icon name="search" size={15} color="rgba(255,255,255,0.4)"/></div>
                 {rosterSearch&&<button onClick={()=>setRosterSearch("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:14,color:"#aaa",cursor:"pointer"}}>✕</button>}
               </div>
@@ -32,12 +32,12 @@ export default function RosterTab({athletes=[],setAthletes,updateAthlete,deleteA
                     <div>
                       <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Athletes</div>
                       <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Roster</div>
-                      <div style={{fontSize:11,color:"#666",marginTop:1}}>{athletes.filter(a=>a.status===rosterStatus&&(!rosterSearch||a.name?.toLowerCase().includes(rosterSearch.toLowerCase())||a.sport?.toLowerCase().includes(rosterSearch.toLowerCase()))).length} athletes · {rosterStatus}</div>
+                      <div style={{fontSize:11,color:"#666",marginTop:1}}>{athletes.filter(a=>a.status===rosterStatus&&(!rosterSearch||a.name?.toLowerCase().includes(rosterSearch.toLowerCase())||a.sport?.toLowerCase().includes(rosterSearch.toLowerCase())||a.college?.toLowerCase().includes(rosterSearch.toLowerCase()))).length} athletes · {rosterStatus}</div>
                     </div>
                   </div>
                 </div>
                 <div style={{background:"#111",padding:"16px 18px"}}>
-                {athletes.filter(a=>a.status===rosterStatus&&(!rosterSearch||a.name?.toLowerCase().includes(rosterSearch.toLowerCase())||a.sport?.toLowerCase().includes(rosterSearch.toLowerCase()))).map(a=>{
+                {athletes.filter(a=>a.status===rosterStatus&&(!rosterSearch||a.name?.toLowerCase().includes(rosterSearch.toLowerCase())||a.sport?.toLowerCase().includes(rosterSearch.toLowerCase())||a.college?.toLowerCase().includes(rosterSearch.toLowerCase()))).map(a=>{
                   const isExp=rosterExpanded===a.id;
                   const hasInjury=!!(a.injury||a.injury_note);
                   return(
@@ -62,6 +62,7 @@ export default function RosterTab({athletes=[],setAthletes,updateAthlete,deleteA
                             {hasInjury&&<span style={{fontSize:10,background:"#2a0808",color:RED,padding:"1px 6px",borderRadius:4,fontWeight:500}}>🤕 Injured</span>}
                           </div>
                           <div style={{fontSize:11,color:"#666"}}>{a.sport} · {a.gender} · <span style={{color:a.role==="forge"?RED:STEEL}}>{a.role==="forge"?"Forge":"Iron"}</span></div>
+                          {(a.college||a.year)&&<div style={{fontSize:10.5,color:"#7a7a7a",marginTop:1}}>🎓 {[a.college,a.year].filter(Boolean).join(" · ")}</div>}
                         </div>
                         <div style={{display:"flex",alignItems:"center",gap:6}} onClick={e=>e.stopPropagation()}>
                           <select value={a.status} onChange={e=>updateAthlete(a.id,"status",e.target.value)} style={{padding:"3px 6px",fontSize:11,border:"0.5px solid #333",borderRadius:6,background:"#1a1a1a",color:a.status==="active"?GREEN:a.status==="sleeping"?"#854F0B":RED}}>
@@ -96,6 +97,17 @@ export default function RosterTab({athletes=[],setAthletes,updateAthlete,deleteA
                               <select defaultValue={a.accountability_partner||""} onChange={async e=>{await supabase.from("athletes").update({accountability_partner:e.target.value||null}).eq("id",a.id);setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,accountability_partner:e.target.value}:x));}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #333",borderRadius:8,background:"#1a1a1a",color:"#ddd"}}>
                                 <option value="">No partner</option>
                                 {athletes.filter(x=>x.id!==a.id&&x.status==="active").map(x=><option key={x.id} value={x.id}>{x.name}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>College</div>
+                              <input defaultValue={a.college||""} placeholder="School" onBlur={async e=>{await supabase.from("athletes").update({college:e.target.value||null}).eq("id",a.id);setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,college:e.target.value}:x));}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #333",borderRadius:8,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
+                            </div>
+                            <div>
+                              <div style={{fontSize:10,color:"#aaa",marginBottom:3}}>Year</div>
+                              <select defaultValue={a.year||""} onChange={async e=>{await supabase.from("athletes").update({year:e.target.value||null}).eq("id",a.id);setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,year:e.target.value}:x));}} style={{width:"100%",padding:"6px 8px",fontSize:12,border:"0.5px solid #333",borderRadius:8,background:"#1a1a1a",color:"#ddd"}}>
+                                <option value="">—</option>
+                                {["Freshman","Sophomore","Junior","Senior","5th Year","Grad"].map(y=><option key={y} value={y}>{y}</option>)}
                               </select>
                             </div>
                           </div>
