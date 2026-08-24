@@ -5,7 +5,7 @@ const GOLD = "#D4AF37";
 const PINK = "#E8478C";
 
 // Google Drive video, shared "Anyone with the link". /preview streams it in an iframe.
-const VIDEO_ID = "1qB5FYEEDbMvGCUoKCaaN2ZngRtI6TqID";
+const VIDEO_ID = "1r7hhIqaLcfIBFyUW9uXgHmme171QmU1z";
 
 // Thank-you note shown after the video. Coach can ask to change this wording.
 const THANK_YOU = "Thank you for showing up, working hard, and being part of this family. Watching you grow this season has meant everything to me. This one's for you.";
