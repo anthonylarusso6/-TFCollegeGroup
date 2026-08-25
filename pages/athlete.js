@@ -1782,7 +1782,7 @@ export default function Athlete(){
             )}
 
 
-            {tab==="prs"&&<PRLog athleteId={selectedAthlete.id} gender={selectedAthlete.gender}/>}
+            {tab==="prs"&&<PRLog athleteId={selectedAthlete.id} gender={selectedAthlete.gender} onNavigate={(t)=>{slideDirRef.current=0;setTab(t);}}/>}
             {tab==="stretching"&&<StretchingTab/>}
 
             {tab==="journey"&&(

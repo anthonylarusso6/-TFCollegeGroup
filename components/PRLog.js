@@ -140,7 +140,7 @@ const piColor=(score)=>{
   return STEEL;
 };
 
-export default function PRLog({athleteId,gender}){
+export default function PRLog({athleteId,gender,onNavigate}){
   const _estNow=nowEST();
   const today=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][_estNow.getDay()];
   const defaultDay=DAYS.includes(today)?today:"Mon";
@@ -165,6 +165,8 @@ export default function PRLog({athleteId,gender}){
   const[showPriorPhase,setShowPriorPhase]=useState(false);
   const[sessionDone,setSessionDone]=useState(()=>new Set()); // "day|lift" logged this session (fills the progress ring)
   const[celebrate,setCelebrate]=useState(null); // {lift,value,unit} → PR confetti overlay
+  const[showSessionEnd,setShowSessionEnd]=useState(false); // end-of-workout → log weight/habits
+  const[sessionEndAcked,setSessionEndAcked]=useState(false); // only prompt once per session
 
   useEffect(()=>{
     (async()=>{
@@ -291,6 +293,12 @@ export default function PRLog({athleteId,gender}){
         try{if(navigator.vibrate)navigator.vibrate([0,45,55,45,55,90]);}catch(e){}
         setCelebrate({lift:liftName,value:prHit.value,unit:prHit.unit});
         setTimeout(()=>setCelebrate(c=>(c&&c.lift===liftName?null:c)),3400);
+      }
+      // End of workout? If this set finished the last programmed lift, prompt weight + habits.
+      const doneAfter=todayLifts.filter(l=>{const k=activeDay+"|"+l.name;return sessionDone.has(k)||bwDone[l.name]||l.name===liftName;}).length;
+      if(todayLifts.length>0&&doneAfter>=todayLifts.length&&!sessionEndAcked){
+        setSessionEndAcked(true);
+        setTimeout(()=>setShowSessionEnd(true),prHit?2800:1000);
       }
       // Nudge athlete to log weight if they haven't today
       try{
@@ -480,6 +488,25 @@ export default function PRLog({athleteId,gender}){
             <div style={{fontSize:38,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.05,margin:"9px 0 2px",position:"relative"}}>{celebrate.value}<span style={{fontSize:17,fontWeight:700,color:GOLD,marginLeft:5}}>{celebrate.unit}</span></div>
             <div style={{fontSize:15,color:"#d3b988",fontWeight:600,position:"relative"}}>{celebrate.lift}</div>
             <div style={{fontSize:11,color:"rgba(255,255,255,0.42)",marginTop:20,position:"relative"}}>tap to continue</div>
+          </div>
+        </div>
+      )}
+      {/* 💪 END OF WORKOUT — prompt to log weight + habits */}
+      {showSessionEnd&&(
+        <div onClick={()=>setShowSessionEnd(false)} style={{position:"fixed",inset:0,zIndex:9990,display:"flex",alignItems:"flex-end",justifyContent:"center",background:"rgba(0,0,0,0.78)",backdropFilter:"blur(4px)",WebkitBackdropFilter:"blur(4px)"}}>
+          <div onClick={e=>e.stopPropagation()} className="tf-fade-up" style={{width:"100%",maxWidth:440,background:"linear-gradient(170deg,#1c1509,#100b07 78%)",borderTopLeftRadius:24,borderTopRightRadius:24,borderTop:"1px solid "+GOLD+"44",padding:"12px 22px 30px",boxShadow:"0 -20px 60px rgba(0,0,0,0.6)"}}>
+            <div style={{width:40,height:4,borderRadius:2,background:"rgba(255,255,255,0.18)",margin:"0 auto 20px"}}/>
+            <div style={{textAlign:"center",marginBottom:20}}>
+              <div style={{fontSize:52,lineHeight:1,marginBottom:8,filter:"drop-shadow(0 0 20px "+GOLD+"88)"}}>⚒</div>
+              <div style={{fontSize:11,letterSpacing:"0.28em",textTransform:"uppercase",color:GOLD,fontWeight:800}}>Session Complete</div>
+              <div style={{fontSize:23,fontWeight:900,color:"#fdf6ec",letterSpacing:"-0.02em",marginTop:6}}>Finish strong 💪</div>
+              <div style={{fontSize:13,color:"#a89a86",marginTop:6,lineHeight:1.5}}>{todayLifts.length} lift{todayLifts.length!==1?"s":""} logged. Two quick things before you rack up.</div>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <button onClick={()=>{setShowSessionEnd(false);if(onNavigate)onNavigate("weight");}} style={{width:"100%",padding:"16px",borderRadius:14,border:"none",background:"linear-gradient(135deg,#2FA869,#1E6B3A)",color:"#fdf6ec",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",display:"flex",alignItems:"center",justifyContent:"center",gap:9,boxShadow:"0 5px 18px rgba(47,168,105,0.35)"}}>⚖️ Log your weight</button>
+              <button onClick={()=>{setShowSessionEnd(false);if(onNavigate)onNavigate("habits");}} style={{width:"100%",padding:"16px",borderRadius:14,border:"none",background:"linear-gradient(135deg,#6E5AE8,#4A3AAF)",color:"#fdf6ec",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",display:"flex",alignItems:"center",justifyContent:"center",gap:9,boxShadow:"0 5px 18px rgba(110,90,232,0.32)"}}>💧 Log today's habits</button>
+              <button onClick={()=>setShowSessionEnd(false)} style={{width:"100%",padding:"13px",borderRadius:12,border:"1px solid rgba(255,255,255,0.14)",background:"transparent",color:"#a89a86",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>Not now</button>
+            </div>
           </div>
         </div>
       )}
