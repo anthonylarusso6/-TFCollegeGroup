@@ -52,6 +52,10 @@ export default function Accountability({athletes=[]}){
     try{
       const{error:insErr}=await supabase.from("callouts").insert({athlete_id:selectedAthlete.id,violation:vLabel,count,type,crunches});
       if(insErr)throw insErr;
+      // Notify the athlete: how many crunches and what earned them
+      try{
+        fetch("/api/send-notification",{method:"POST",headers:{"Content-Type":"application/json","x-app-secret":process.env.NEXT_PUBLIC_APP_ACTION_SECRET||""},body:JSON.stringify({athleteId:selectedAthlete.id,title:type==="selfreport"?"📝 Self-report logged":"📢 You got called out",body:crunches+" crunches"+(count>1?" (×"+count+")":"")+" — "+vLabel,url:"/athlete"})}).catch(()=>{});
+      }catch(e){}
       try{
         const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",selectedAthlete.id);
         if(lb&&lb.length>0){

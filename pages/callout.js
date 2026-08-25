@@ -61,6 +61,10 @@ export default function Callout(){
         logged_at:new Date().toISOString(),
       });
       if(insErr)throw insErr;
+      // Notify the athlete: how many crunches and what earned them
+      try{
+        fetch("/api/send-notification",{method:"POST",headers:{"Content-Type":"application/json","x-app-secret":process.env.NEXT_PUBLIC_APP_ACTION_SECRET||""},body:JSON.stringify({athleteId:selected.id,title:type==="selfreport"?"📝 Self-report logged":"📢 You got called out",body:crunches+" crunches"+(count>1?" (×"+count+")":"")+" — "+vLabel,url:"/athlete"})}).catch(()=>{});
+      }catch(e){}
       hSuccess();
       try{
         const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",selected.id);

@@ -26,6 +26,7 @@ import SurpriseTab from "../components/SurpriseTab";
 import Achievements from "../components/Achievements";
 import SeasonRecap from "../components/SeasonRecap";
 import TeamPRFeed from "../components/TeamPRFeed";
+import MyCalloutsTab from "../components/MyCalloutsTab";
 import InjuryBodyMap from "../components/InjuryBodyMap";
 import HabitsTab from "../components/HabitsTab";
 import Icon from "../components/Icon";
@@ -569,7 +570,7 @@ export default function Athlete(){
     setGoalSaved({});setGoalText({});setMyVote(null);
     setTab("profile");setEditingPins(false);slideDirRef.current=0;
     try{const s=localStorage.getItem("tf_pinned_"+a.id);setPinnedTabs(s?JSON.parse(s):["prs","attendance","weight"]);}catch(e){setPinnedTabs(["prs","attendance","weight"]);}
-    const defaultOrder=["profile","mcastles","events","verse","notes","attendance","mygroup","anvil","weight","body","prs","prfeed","stretching","leaderboard","prayer","bracelets","photos","habits","private"];
+    const defaultOrder=["profile","mcastles","events","verse","notes","attendance","mygroup","anvil","weight","body","prs","prfeed","callouts","stretching","leaderboard","prayer","bracelets","photos","habits","private"];
     try{const storedOrder=localStorage.getItem("tf_more_order_"+a.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});const newTabs=defaultOrder.filter(id=>!seen.has(id));const fullOrder=[...initOrder,...newTabs];setMoreOrder(fullOrder);moreOrderRef.current=fullOrder;}catch(e){setMoreOrder(defaultOrder);moreOrderRef.current=defaultOrder;}
 
     // Show the PIN pad immediately as the base layer so it's already there if
@@ -1067,6 +1068,7 @@ export default function Athlete(){
       {id:"mygroup",label:"My Group"},
       {id:"anvil",label:"Anvil"},
       {id:"prfeed",label:"PR Feed"},
+      {id:"callouts",label:"Callouts"},
       {id:"badges",label:"Badges"},
       {id:"recap",label:"My Season"},
       {id:"weight",label:"Weight"},
@@ -1737,6 +1739,7 @@ export default function Athlete(){
 
             {tab==="anvil"&&<AnvilHistory athleteId={selectedAthlete?.id} athleteName={selectedAthlete?.name}/>}
             {tab==="prfeed"&&<TeamPRFeed athletes={athletes} currentAthleteId={selectedAthlete?.id}/>}
+            {tab==="callouts"&&<MyCalloutsTab athleteId={selectedAthlete.id} athleteName={selectedAthlete.name}/>}
             {tab==="badges"&&<Achievements athleteId={selectedAthlete?.id} athleteName={selectedAthlete?.name}/>}
             {tab==="recap"&&<SeasonRecap athleteId={selectedAthlete?.id} athleteName={selectedAthlete?.name} photoUrl={selectedAthlete?.photo_url}/>}
 
@@ -1906,8 +1909,8 @@ export default function Athlete(){
         </div>
         {/* ── LIQUID GLASS BOTTOM NAV ── */}
         {(()=>{
-            const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"heart","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"compass","anvil":"anvil","mcastles":"crown","events":"star","surprise":"gift","badges":"medal","recap":"award","prfeed":"flame"};
-            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#C8D040","verse":"#4DC8F5","draft":"#44D9B0","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#FFD700","prayer":"#9060E0","bracelets":"#C090F0","photos":"#50D0B8","notes":"#E8B84A","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#E8720C","mcastles":"#D060C0","events":"#D4AF37","surprise":"#E8478C","badges":"#D4AF37","recap":"#E8720C","prfeed":"#F0C040"};
+            const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"heart","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"compass","anvil":"anvil","mcastles":"crown","events":"star","surprise":"gift","badges":"medal","recap":"award","prfeed":"flame","callouts":"megaphone"};
+            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#C8D040","verse":"#4DC8F5","draft":"#44D9B0","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#FFD700","prayer":"#9060E0","bracelets":"#C090F0","photos":"#50D0B8","notes":"#E8B84A","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#E8720C","mcastles":"#D060C0","events":"#D4AF37","surprise":"#E8478C","badges":"#D4AF37","recap":"#E8720C","prfeed":"#F0C040","callouts":"#E05555"};
             const tabColor=isForge?"#E8720C":STEEL;
             const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id));
             const PRIMARY=["profile",...validPinned];
