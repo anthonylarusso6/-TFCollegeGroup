@@ -91,6 +91,7 @@ export default function Athlete(){
   const gridLongPressRef=useRef(null);
   const gridLastOverId=useRef(null);
   const[checkinInfo,setCheckinInfo]=useState(null);
+  const[postCheckinStep,setPostCheckinStep]=useState(null); // null | "weight" | "habits" — guided post-check-in flow
   const[tab,setTab]=useState("profile");
   const[loading,setLoading]=useState(true);
   const[feedbackText,setFeedbackText]=useState("");
@@ -299,6 +300,11 @@ export default function Athlete(){
       }catch(e){setHabitsDoneToday(true);}
     })();
   },[selectedAthlete]);
+
+  // End the guided post-check-in flow the moment they navigate off weight/habits
+  useEffect(()=>{
+    if(postCheckinStep&&tab!=="weight"&&tab!=="habits")setPostCheckinStep(null);
+  },[tab,postCheckinStep]);
 
   // Resize + upload a profile photo to Supabase storage, return the public URL
   const uploadAthletePhoto=(athleteId,file)=>new Promise((resolve,reject)=>{
@@ -1027,9 +1033,25 @@ export default function Athlete(){
               :(<><div style={{fontSize:13,fontWeight:800,color:"#4cdd80",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.04em"}}>Keep it up</div><div style={{fontSize:13,color:"#888",lineHeight:1.7}}>Early is the only acceptable arrival. ⚒</div></>)}
             </div>
           )}
-          <button onClick={()=>{setScreen("profile");setTab("profile");slideDirRef.current=0;}} style={{width:"100%",maxWidth:360,padding:"18px",borderRadius:14,border:"none",background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.06em",textTransform:"uppercase",boxShadow:"0 6px 30px #E8720C44"}}>
-            My Profile →
-          </button>
+          {noClass?(
+            <button onClick={()=>{setScreen("profile");setTab("profile");slideDirRef.current=0;}} style={{width:"100%",maxWidth:360,padding:"18px",borderRadius:14,border:"none",background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.06em",textTransform:"uppercase",boxShadow:"0 6px 30px #E8720C44"}}>
+              My Profile →
+            </button>
+          ):(()=>{
+            const _dow=nowEST().getDay();
+            const isWeighDay=_dow===1||_dow===5;
+            return(
+              <div style={{width:"100%",maxWidth:360,display:"flex",flexDirection:"column",gap:11}}>
+                <div style={{fontSize:12,color:"#777",letterSpacing:"0.02em",marginBottom:2}}>{isWeighDay?"Two quick things before you go 👇":"One quick thing before you go 👇"}</div>
+                <button onClick={()=>{const first=isWeighDay?"weight":"habits";setPostCheckinStep(first);setScreen("profile");setTab(first);slideDirRef.current=0;}} style={{width:"100%",padding:"18px",borderRadius:14,border:"none",background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.04em",textTransform:"uppercase",boxShadow:"0 6px 30px #E8720C44"}}>
+                  {isWeighDay?"Log weight & habits →":"Log today's habits →"}
+                </button>
+                <button onClick={()=>{setPostCheckinStep(null);setScreen("profile");setTab("profile");slideDirRef.current=0;}} style={{width:"100%",padding:"13px",borderRadius:12,border:"1px solid rgba(255,255,255,0.12)",background:"transparent",color:"#777",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia, serif"}}>
+                  Skip for now
+                </button>
+              </div>
+            );
+          })()}
         </div>
       </>
     );
@@ -1694,7 +1716,18 @@ export default function Athlete(){
             {tab==="notes"&&<NotesTab athleteId={selectedAthlete.id} athlete={selectedAthlete}/>}
 
 
-            {tab==="weight"&&<WeightTracker athleteId={selectedAthlete.id} onWeighed={()=>setWeightLoggedToday(true)}/>}
+            {tab==="weight"&&(<>
+              {postCheckinStep==="weight"&&(
+                <div style={{background:"linear-gradient(135deg,#12210f,#0d1a0b)",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"1px solid "+GREEN+"55",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontSize:9.5,color:GREEN,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:800,marginBottom:2}}>✓ Checked in · Step 1 of 2</div>
+                    <div style={{fontSize:13.5,fontWeight:700,color:"#fff"}}>Log your weight</div>
+                  </div>
+                  <button onClick={()=>{setPostCheckinStep("habits");slideDirRef.current=0;setTab("habits");}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:"#9a9a9a",border:"1px solid rgba(255,255,255,0.14)",borderRadius:9,padding:"8px 13px",background:"transparent",cursor:"pointer",fontFamily:"Georgia,serif"}}>Skip →</button>
+                </div>
+              )}
+              <WeightTracker athleteId={selectedAthlete.id} onWeighed={()=>{setWeightLoggedToday(true);if(postCheckinStep==="weight"){setPostCheckinStep("habits");slideDirRef.current=0;setTimeout(()=>setTab("habits"),650);}}}/>
+            </>)}
 
             {tab==="body"&&<InjuryBodyMap athleteId={selectedAthlete.id}/>}
 
@@ -1802,7 +1835,21 @@ export default function Athlete(){
               </div>
             )}
 
-            {tab==="habits"&&<HabitsTab athleteId={selectedAthlete.id}/>}
+            {tab==="habits"&&(<>
+              {postCheckinStep==="habits"&&(()=>{
+                const _wd=nowEST().getDay();const _weigh=_wd===1||_wd===5;
+                return(
+                  <div style={{background:"linear-gradient(135deg,#12210f,#0d1a0b)",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"1px solid "+GREEN+"55",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+                    <div style={{minWidth:0}}>
+                      <div style={{fontSize:9.5,color:GREEN,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:800,marginBottom:2}}>✓ Checked in · {_weigh?"Step 2 of 2":"Last step"}</div>
+                      <div style={{fontSize:13.5,fontWeight:700,color:"#fff"}}>Log today's habits</div>
+                    </div>
+                    <button onClick={()=>{setPostCheckinStep(null);slideDirRef.current=0;setTab("profile");}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:"#9a9a9a",border:"1px solid rgba(255,255,255,0.14)",borderRadius:9,padding:"8px 13px",background:"transparent",cursor:"pointer",fontFamily:"Georgia,serif"}}>Done</button>
+                  </div>
+                );
+              })()}
+              <HabitsTab athleteId={selectedAthlete.id}/>
+            </>)}
 
             {tab==="surprise"&&<SurpriseTab athleteName={selectedAthlete.name}/>}
             {tab==="private"&&(
