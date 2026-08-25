@@ -73,7 +73,7 @@ export default function Athlete(){
   useEffect(()=>{try{setThemeMode(localStorage.getItem("tf_theme")==="light"?"light":"dark");}catch(e){}},[]);
   const toggleTheme=()=>setThemeMode(prev=>{const next=prev==="dark"?"light":"dark";try{localStorage.setItem("tf_theme",next);}catch(e){}if(typeof document!=="undefined")document.documentElement.setAttribute("data-theme",next==="light"?"light":"");return next;});
   const isLight=themeMode==="light";
-  const[pinnedTabs,setPinnedTabs]=useState(["prs","attendance","weight"]);
+  const[pinnedTabs,setPinnedTabs]=useState(["prs","attendance","weight","callouts"]);
   const[editingPins,setEditingPins]=useState(false);
   const[navDragId,setNavDragId]=useState(null);
   const navDragOrderRef=useRef(null);
@@ -569,7 +569,17 @@ export default function Athlete(){
     setInjuryText("");setInjurySent(false);setInjuryOpen(false);
     setGoalSaved({});setGoalText({});setMyVote(null);
     setTab("profile");setEditingPins(false);slideDirRef.current=0;
-    try{const s=localStorage.getItem("tf_pinned_"+a.id);setPinnedTabs(s?JSON.parse(s):["prs","attendance","weight"]);}catch(e){setPinnedTabs(["prs","attendance","weight"]);}
+    try{
+      const s=localStorage.getItem("tf_pinned_"+a.id);
+      let pins=s?JSON.parse(s):["prs","attendance","weight","callouts"];
+      // One-time migration: make sure the new Callouts tab lands on the bottom nav for existing athletes
+      const migKey="tf_pinmig_callouts_"+a.id;
+      if(!localStorage.getItem(migKey)){
+        if(!pins.includes("callouts"))pins=[...pins,"callouts"].slice(0,4);
+        try{localStorage.setItem(migKey,"1");localStorage.setItem("tf_pinned_"+a.id,JSON.stringify(pins));}catch(e2){}
+      }
+      setPinnedTabs(pins);
+    }catch(e){setPinnedTabs(["prs","attendance","weight","callouts"]);}
     const defaultOrder=["profile","mcastles","events","verse","notes","attendance","mygroup","anvil","weight","body","prs","prfeed","callouts","stretching","leaderboard","prayer","bracelets","photos","habits","private"];
     try{const storedOrder=localStorage.getItem("tf_more_order_"+a.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});const newTabs=defaultOrder.filter(id=>!seen.has(id));const fullOrder=[...initOrder,...newTabs];setMoreOrder(fullOrder);moreOrderRef.current=fullOrder;}catch(e){setMoreOrder(defaultOrder);moreOrderRef.current=defaultOrder;}
 
@@ -1916,7 +1926,7 @@ export default function Athlete(){
             const PRIMARY=["profile",...validPinned];
             const togglePin=(id)=>{
               if(id==="profile")return;
-              const next=validPinned.includes(id)?validPinned.filter(p=>p!==id):(validPinned.length<3?[...validPinned,id]:validPinned);
+              const next=validPinned.includes(id)?validPinned.filter(p=>p!==id):(validPinned.length<4?[...validPinned,id]:validPinned);
               setPinnedTabs(next);
               try{localStorage.setItem("tf_pinned_"+selectedAthlete.id,JSON.stringify(next));}catch(e){}
             };
