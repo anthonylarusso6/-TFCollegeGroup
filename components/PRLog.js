@@ -1392,7 +1392,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
                           border:"1px solid "+(isSel?(vert?PUR+"55":GOLD+"44"):"#1e1e1e"),cursor:"pointer",
                           boxShadow:isSel?"0 0 16px "+(vert?PUR:GOLD)+"22":"none",position:"relative",overflow:"hidden"}}>
                         {isSel&&<div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+(vert?PUR:GOLD)+",transparent)"}}/>}
-                        <div style={{fontSize:9,color:"#444",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        <div style={{fontSize:11,color:"#b4b4b4",fontWeight:600,marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                           {name}
                         </div>
                         <div style={{display:"flex",alignItems:"baseline",gap:4,marginBottom:2}}>
@@ -1456,7 +1456,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
                         return(
                           <div key={name} style={{padding:"10px 12px",background:"#111",borderRadius:10,
                             border:"0.5px solid #1e1e1e"}}>
-                            <div style={{fontSize:9,color:"#444",marginBottom:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            <div style={{fontSize:11,color:"#8f8f8f",fontWeight:600,marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                               {name}
                             </div>
                             <div style={{fontSize:20,fontWeight:900,color:"#666",lineHeight:1}}>
