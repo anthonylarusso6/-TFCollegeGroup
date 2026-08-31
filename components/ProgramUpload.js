@@ -14,6 +14,54 @@ const ALL_LIFTS=[
   "Dumbbell Press","Lat Pulldown","Dips","Lunges",
 ];
 
+// One-tap preset. Uses the `sets` field (what the athlete Iron Room renders as the
+// rep scheme) so the reps show up immediately after pushing.
+const BASEBALL_FALL_P1={
+  phase:"Baseball Fall Phase 1",
+  notes:"Baseball Fall Phase 1 - in-season (4 athletes). Overhead pressing retained with pull-bias; scap/cuff care via TRX T-Y-I, Waiter Carry, face pull, rear delt fly; rotation via MB with intent; run volume trimmed for skill-work load.",
+  days:{
+    Mon:[
+      {name:"SSB Hatfield Squat",tier:1,sets:"8, 6, 5, 4"},
+      {name:"Band Assisted Alt. SS Drop Jump",tier:1,sets:"3 x 5e"},
+      {name:"DB Arnold Press",tier:2,sets:"4 x 8 (3:0:0)"},
+      {name:"Cable Face Pull",tier:2,sets:"3 x 12 (2:2:0)"},
+      {name:"MB Slam to Rot Scoop Throw",tier:2,sets:"4 x 5e"},
+      {name:"Foam Roller SL Hip Bridge",tier:3,sets:"3 x 10ea"},
+      {name:"Foam Roller (X2) Plank Hold",tier:3,sets:"2 x 2:00s"},
+    ],
+    Tue:[
+      {name:"BB Forward Lunge",tier:1,sets:"4 x 6ea"},
+      {name:"BB Strict Press",tier:1,sets:"8, (4, 3, 3 (3:0:0))"},
+      {name:"Alt. DB Bench Press",tier:2,sets:"4 x 7e"},
+      {name:"Banded KB Swing",tier:2,sets:"4 x 15"},
+      {name:"Lat Pull Down",tier:3,sets:"3 x 7 (2:2:0)"},
+      {name:"DB Rear Delt Flys",tier:3,sets:"3 x 10"},
+      {name:"Cable SA Row",tier:3,sets:"3 x 15e"},
+    ],
+    Thu:[
+      {name:"BB Hang Cleans",tier:1,sets:"6, 5, 4, 3"},
+      {name:"10/5 RSI",tier:1,sets:"2 x 1"},
+      {name:"KB Side Lat Dips",tier:1,sets:"3 x 10e"},
+      {name:"DB Alt. Incline NG Bench Press",tier:2,sets:"12, 10, 8, 6"},
+      {name:"Seated Cable Row",tier:2,sets:"12, 8, 8, 4 (3:2:0)"},
+      {name:"Hollow Body Holds",tier:2,sets:"3 x 30s"},
+      {name:"BWD Sled Drag Heavy",tier:3,sets:"3 x 20yds"},
+      {name:"KB Lateral Cont. Lunge",tier:3,sets:"3 x 6e"},
+    ],
+    Fri:[
+      {name:"Front Squat",tier:1,sets:"9, 7, (5, 4 (0:2:0))"},
+      {name:"Standing SL Vert",tier:1,sets:"4 x 3ea"},
+      {name:"TRX T,Y,I",tier:1,sets:"4 x 3ea (QUALITY REPS)"},
+      {name:"KB SA Sit Up",tier:2,sets:"3 x 10ea"},
+      {name:"KB Waiter Carry",tier:2,sets:"3 x 20yds ea"},
+      {name:"KB PUP Pull Through w/Push Up",tier:2,sets:"3 x 7ea"},
+      {name:"Side Plank Cable Row",tier:3,sets:"3 x 12 (0:2:0)"},
+      {name:"DB Zottman Curl",tier:3,sets:"3 x 12"},
+      {name:"Cable SA Kickback",tier:3,sets:"3 x 9e"},
+    ],
+  },
+};
+
 const TIER_COLORS={
   1:{color:PUR,label:"T1"},
   2:{color:GREEN,label:"T2"},
@@ -30,6 +78,7 @@ export default function ProgramUpload(){
   const[saveErr,setSaveErr]=useState("");
   const[currentProgram,setCurrentProgram]=useState(null);
   const[loading,setLoading]=useState(true);
+  const[presetLoaded,setPresetLoaded]=useState(false);
 
   useEffect(()=>{
     (async()=>{
@@ -119,6 +168,11 @@ export default function ProgramUpload(){
         <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:8}}>📋 Phase name</div>
         <input value={phase} onChange={e=>setPhase(e.target.value)} placeholder="e.g. Strength Phase 1, Hypertrophy Block..." style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid rgba(255,255,255,0.1)",fontSize:13,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd",boxSizing:"border-box"}}/>
       </div>
+
+      {/* One-tap preset loader */}
+      <button onClick={()=>{setPhase(BASEBALL_FALL_P1.phase);setDays(BASEBALL_FALL_P1.days);setNotes(BASEBALL_FALL_P1.notes);setPresetLoaded(true);setTimeout(()=>setPresetLoaded(false),4000);}} style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid "+GOLD+"55",background:presetLoaded?GOLD+"22":GOLD+"11",color:GOLD,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",marginBottom:12}}>
+        {presetLoaded?"✓ Loaded — review days, then push below":"⚡ Load Baseball Fall Phase 1"}
+      </button>
 
       {/* Day selector */}
       <div style={{display:"flex",gap:6,marginBottom:10}}>
