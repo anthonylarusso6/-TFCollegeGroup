@@ -100,6 +100,29 @@ const CATS={
 
 const KEYS=Object.keys(CATS);
 
+// ── Guided post-workout cool-down: hamstrings, hips, shoulders (~11 min) ──
+const AREA_COLORS={Shoulders:"#C0392B",Hips:"#0F6E56",Hamstrings:"#854F0B"};
+const FLOW=[
+  {n:"Cross-Body Shoulder",area:"Shoulders",side:"Left",d:30,c:"Pull the arm across your chest with the opposite forearm. Feel it in the rear delt and upper back. Keep the shoulder down, away from your ear."},
+  {n:"Cross-Body Shoulder",area:"Shoulders",side:"Right",d:30,c:"Switch sides. Same relaxed shoulder, steady breathing."},
+  {n:"Doorway Chest Stretch",area:"Shoulders",d:45,c:"Forearms on the doorframe at 90°. Step one foot through and let the chest open. Breathe into it."},
+  {n:"Sleeper Stretch",area:"Shoulders",side:"Left",d:30,c:"On your side, elbow bent 90°, gently press the forearm toward the floor. This is the posterior capsule — ease in, don't force."},
+  {n:"Sleeper Stretch",area:"Shoulders",side:"Right",d:30,c:"Roll to the other side and repeat. Gentle pressure only."},
+  {n:"Hip Flexor Lunge",area:"Hips",side:"Left",d:40,c:"Low lunge, back knee on the floor. Drive the hips forward and stay tall. Squeeze the back glute to deepen it."},
+  {n:"Hip Flexor Lunge",area:"Hips",side:"Right",d:40,c:"Switch legs. Tall chest, hips driving forward."},
+  {n:"Figure-4 Stretch",area:"Hips",side:"Left",d:40,c:"On your back, ankle over the opposite knee, pull the thigh toward your chest. Hits the glute and piriformis."},
+  {n:"Figure-4 Stretch",area:"Hips",side:"Right",d:40,c:"Other side. Keep both feet flexed to protect the knees."},
+  {n:"Butterfly Stretch",area:"Hips",d:60,c:"Soles of the feet together, knees wide. Sit tall, then hinge forward from the hips. Inner thigh and groin."},
+  {n:"90/90 Hip Rotation",area:"Hips",side:"Left",d:40,c:"Both legs bent at 90°. Sit tall and lean gently over the front shin."},
+  {n:"90/90 Hip Rotation",area:"Hips",side:"Right",d:40,c:"Rotate your legs to the other side and repeat. Slow and controlled."},
+  {n:"Lying Single-Leg Hamstring",area:"Hamstrings",side:"Left",d:40,c:"On your back, pull one straight leg toward you. Keep the other leg flat. Flex the foot toward your face."},
+  {n:"Lying Single-Leg Hamstring",area:"Hamstrings",side:"Right",d:40,c:"Switch legs. Straight knee, flat back."},
+  {n:"Seated Hamstring Fold",area:"Hamstrings",d:60,c:"Legs out in front, hinge from the hip crease. Lead with your chest, keep the back flat — a rounded back means less stretch."},
+  {n:"Standing Hamstring",area:"Hamstrings",side:"Left",d:35,c:"Heel on a low surface, hinge from the hips. Back flat, chest proud."},
+  {n:"Standing Hamstring",area:"Hamstrings",side:"Right",d:35,c:"Other leg. Finish strong — long exhales."},
+];
+const FLOW_TOTAL=FLOW.reduce((s,x)=>s+x.d,0);
+
 export default function StretchingTab(){
   const[cat,setCat]=useState("neck");
   const[open,setOpen]=useState(null);
@@ -109,6 +132,22 @@ export default function StretchingTab(){
   const[timerTotal,setTimerTotal]=useState(0);
   const[timerColor,setTimerColor]=useState("#E8720C");
   const timerRef=useRef(null);
+  // Guided cool-down flow: null = not running, 0..N-1 = current step, N = complete
+  const[flowIdx,setFlowIdx]=useState(null);
+  const[flowSecs,setFlowSecs]=useState(0);
+  const[flowPaused,setFlowPaused]=useState(false);
+
+  useEffect(()=>{ if(flowIdx!=null&&flowIdx<FLOW.length)setFlowSecs(FLOW[flowIdx].d); },[flowIdx]);
+  useEffect(()=>{
+    if(flowIdx==null||flowIdx>=FLOW.length||flowPaused)return;
+    const id=setInterval(()=>{
+      setFlowSecs(s=>{
+        if(s<=1){clearInterval(id);try{if(navigator.vibrate)navigator.vibrate(35);}catch(e){}setFlowIdx(i=>i+1);return 0;}
+        return s-1;
+      });
+    },1000);
+    return()=>clearInterval(id);
+  },[flowIdx,flowPaused]);
 
   useEffect(()=>{
     if(timerName){
@@ -132,6 +171,87 @@ export default function StretchingTab(){
     setDone(prev=>{const n=new Set(prev);n.has(key)?n.delete(key):n.add(key);return n;});
   };
 
+  // ── GUIDED COOL-DOWN PLAYER ──
+  if(flowIdx!=null){
+    const exit=()=>{setFlowIdx(null);setFlowPaused(false);};
+    // Completion screen
+    if(flowIdx>=FLOW.length){
+      return(
+        <div style={{fontFamily:"Georgia,serif",minHeight:"70vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"}}>
+          <div style={{width:"100%",maxWidth:420,textAlign:"center",background:"linear-gradient(160deg,#141414,#0b0b0b)",borderRadius:24,padding:"36px 24px 30px",border:"1px solid "+"#D4AF37"+"55",boxShadow:"0 0 40px "+"#D4AF37"+"22"}}>
+            <div style={{fontSize:66,lineHeight:1,marginBottom:10}}>🧘</div>
+            <div style={{fontSize:11,letterSpacing:"0.28em",textTransform:"uppercase",color:"#D4AF37",fontWeight:800}}>Cool-Down Complete</div>
+            <div style={{fontSize:24,fontWeight:900,color:"#fdf6ec",marginTop:8,letterSpacing:"-0.02em"}}>Recovery in the bank 💪</div>
+            <div style={{fontSize:13,color:"#a89a86",marginTop:8,lineHeight:1.5}}>{Math.round(FLOW_TOTAL/60)} min · hamstrings, hips &amp; shoulders. That's how you stay durable.</div>
+            <div style={{display:"flex",gap:10,marginTop:24}}>
+              <button onClick={()=>{setFlowIdx(0);setFlowPaused(false);}} style={{flex:1,padding:"14px",borderRadius:13,border:"1px solid rgba(255,255,255,0.16)",background:"transparent",color:"#fdf6ec",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>↺ Again</button>
+              <button onClick={exit} style={{flex:1,padding:"14px",borderRadius:13,border:"none",background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif"}}>Done →</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    const step=FLOW[flowIdx];
+    const col=AREA_COLORS[step.area]||"#E8720C";
+    const remaining=flowSecs+FLOW.slice(flowIdx+1).reduce((s,x)=>s+x.d,0);
+    const overallPct=Math.round(((FLOW_TOTAL-remaining)/FLOW_TOTAL)*100);
+    const mm=Math.floor(remaining/60),ss=remaining%60;
+    const R=52,CIRC=2*Math.PI*R;
+    return(
+      <div style={{fontFamily:"Georgia,serif",minHeight:"70vh"}}>
+        <div style={{background:"linear-gradient(160deg,#141414,#0b0b0b)",borderRadius:22,padding:"18px 18px 22px",border:"1px solid "+col+"66",position:"relative",overflow:"hidden",boxShadow:"0 0 40px "+col+"22"}}>
+          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+col+",transparent)"}}/>
+          {/* Header */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,position:"relative"}}>
+            <div>
+              <div style={{fontSize:9.5,letterSpacing:"0.2em",textTransform:"uppercase",color:col,fontWeight:800}}>Cool-Down Flow</div>
+              <div style={{fontSize:12,color:"#a89a86",marginTop:2}}>Step {flowIdx+1} of {FLOW.length} · {mm}:{String(ss).padStart(2,"0")} left</div>
+            </div>
+            <button onClick={exit} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.14)",color:"#bbb",fontSize:15,cursor:"pointer",padding:"6px 11px",borderRadius:10,lineHeight:1}}>✕</button>
+          </div>
+          {/* Overall progress */}
+          <div style={{height:4,background:"rgba(255,255,255,0.1)",borderRadius:3,overflow:"hidden",marginBottom:20}}>
+            <div style={{height:"100%",width:overallPct+"%",background:"linear-gradient(90deg,"+col+","+col+"aa)",borderRadius:3,transition:"width 0.9s linear"}}/>
+          </div>
+          {/* Ring timer */}
+          <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
+            <div style={{position:"relative",width:150,height:150}}>
+              <svg width="150" height="150" viewBox="0 0 120 120" style={{transform:"rotate(-90deg)"}}>
+                <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="8"/>
+                <circle cx="60" cy="60" r={R} fill="none" stroke={flowSecs<=3?"#ff5555":col} strokeWidth="8" strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={CIRC*(1-flowSecs/(step.d||1))} style={{transition:"stroke-dashoffset 1s linear,stroke 0.3s"}}/>
+              </svg>
+              <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+                <div style={{fontSize:44,fontWeight:900,color:flowSecs<=3?"#ff6b6b":"#fdf6ec",lineHeight:1}}>{flowSecs}</div>
+                <div style={{fontSize:9,color:"#a89a86",textTransform:"uppercase",letterSpacing:"0.14em",marginTop:2}}>{flowPaused?"paused":"hold"}</div>
+              </div>
+            </div>
+          </div>
+          {/* Stretch name + area */}
+          <div style={{textAlign:"center",marginBottom:14}}>
+            <span style={{fontSize:9.5,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",color:col,background:col+"1f",padding:"3px 10px",borderRadius:6,border:"0.5px solid "+col+"55"}}>{step.area}</span>
+            <div style={{fontSize:22,fontWeight:900,color:"#fdf6ec",letterSpacing:"-0.02em",marginTop:9,lineHeight:1.15}}>{step.n}{step.side?<span style={{color:col}}> · {step.side}</span>:null}</div>
+          </div>
+          {/* Cue */}
+          <div style={{fontSize:13,color:"#c9c0b4",lineHeight:1.65,textAlign:"center",padding:"0 6px",marginBottom:20,minHeight:52}}>{step.c}</div>
+          {/* Controls */}
+          <div style={{display:"flex",gap:9,alignItems:"stretch"}}>
+            <button onClick={()=>setFlowIdx(i=>Math.max(0,i-1))} disabled={flowIdx===0} style={{flex:1,padding:"14px",borderRadius:13,border:"1px solid rgba(255,255,255,0.14)",background:"transparent",color:flowIdx===0?"#555":"#fdf6ec",fontSize:14,fontWeight:700,cursor:flowIdx===0?"default":"pointer",fontFamily:"Georgia,serif"}}>‹ Prev</button>
+            <button onClick={()=>setFlowPaused(p=>!p)} style={{flex:1.4,padding:"14px",borderRadius:13,border:"none",background:"linear-gradient(135deg,"+col+","+col+"bb)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 4px 16px "+col+"44"}}>{flowPaused?"▶ Resume":"⏸ Pause"}</button>
+            <button onClick={()=>setFlowIdx(i=>i+1)} style={{flex:1,padding:"14px",borderRadius:13,border:"1px solid rgba(255,255,255,0.14)",background:"transparent",color:"#fdf6ec",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>Skip ›</button>
+          </div>
+        </div>
+        {/* Up next */}
+        {flowIdx+1<FLOW.length&&(
+          <div style={{display:"flex",alignItems:"center",gap:10,marginTop:12,padding:"11px 14px",background:"#141414",borderRadius:12,border:"0.5px solid #262626"}}>
+            <span style={{fontSize:9,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",color:"#777"}}>Up next</span>
+            <span style={{fontSize:13,color:"#cfcfcf",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{FLOW[flowIdx+1].n}{FLOW[flowIdx+1].side?" · "+FLOW[flowIdx+1].side:""}</span>
+            <span style={{marginLeft:"auto",fontSize:12,color:"#777"}}>{FLOW[flowIdx+1].d}s</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const c=CATS[cat];
   const totalDone=done.size;
   const totalAll=KEYS.reduce((s,k)=>s+CATS[k].s.length,0);
@@ -141,6 +261,16 @@ export default function StretchingTab(){
 
   return(
     <div style={{fontFamily:"Georgia,serif",minHeight:"60vh"}}>
+
+      {/* ── GUIDED COOL-DOWN FLOW ── */}
+      <button onClick={()=>{setFlowIdx(0);setFlowPaused(false);}} style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:14,padding:"16px 18px",marginBottom:16,borderRadius:18,border:"1px solid #E8720C55",background:"linear-gradient(135deg,#1c1206,#160d04)",cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 4px 20px #00000060"}}>
+        <div style={{width:46,height:46,borderRadius:14,flexShrink:0,background:"linear-gradient(145deg,#E8720C,#C0392B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,boxShadow:"0 0 18px #E8720C44"}}>🧘</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:15,fontWeight:900,color:"#fdf6ec",letterSpacing:"-0.01em"}}>Post-Workout Cool-Down</div>
+          <div style={{fontSize:11.5,color:"#a89a86",marginTop:2}}>Hamstrings · Hips · Shoulders · ~{Math.round(FLOW_TOTAL/60)} min guided</div>
+        </div>
+        <div style={{flexShrink:0,padding:"9px 15px",borderRadius:11,background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:13,fontWeight:800,whiteSpace:"nowrap"}}>Start ▶</div>
+      </button>
 
       {/* ── ACTIVE TIMER ── */}
       {timerName&&(
