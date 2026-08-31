@@ -266,7 +266,12 @@ export default function PRLog({athleteId,gender,onNavigate}){
     // Snapshot the current best BEFORE inserting, so we can tell if this set is a PR.
     const prevOrmPR=getOrmPR(liftName);
     const prevWeightPR=getPR(liftName);
+    const liftObj=todayLifts.find(l=>l.name===liftName);
+    const it=liftObj?.inputType||"weight";
     const vertLift=isVert(liftName);
+    // RSI and single-leg vertical track a raw value (higher = better), not an est-1RM.
+    const higherIsBetter=vertLift||it==="rsi"||it==="vert_lr";
+    const metricUnit=it==="rsi"?"RSI":(it==="vert_lr"||vertLift)?"in":"lbs";
     const newWeight=parseFloat(inp.weight)||0;
     const newReps=parseInt(inp.reps)||1;
     const newOrm=epley(newWeight,newReps);
@@ -287,7 +292,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
       setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);hSuccess();
       // 🏆 New PR? Only celebrate when beating an existing best (avoids confetti on every first-ever log).
       let prHit=null;
-      if(vertLift){ if(prevWeightPR!=null&&newWeight>prevWeightPR)prHit={value:newWeight,unit:"in"}; }
+      if(higherIsBetter){ if(prevWeightPR!=null&&newWeight>prevWeightPR)prHit={value:newWeight,unit:metricUnit}; }
       else if(prevOrmPR!=null&&newOrm>prevOrmPR)prHit={value:newOrm,unit:"lbs"};
       if(prHit){
         try{if(navigator.vibrate)navigator.vibrate([0,45,55,45,55,90]);}catch(e){}
@@ -594,6 +599,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
             // On PR pace? (live, before logging) — the card ignites gold.
             const ormNow=inp.weight&&inp.reps?epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1):0;
             const hot=!done&&lift.inputType!=="bodyweight"&&((pr&&parseFloat(inp.weight||0)>pr)||(ormPR&&ormNow>ormPR));
+            const prUnit=lift.inputType==="rsi"?"RSI":(lift.inputType==="vert_lr"||isVert(lift.name))?"in":"lbs";
 
             // ── COLLAPSED DONE CARD — keeps the list clean ──
             if(done){
@@ -605,7 +611,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
                     <div style={{width:34,height:34,borderRadius:"50%",flexShrink:0,background:"rgba(52,209,122,0.14)",border:"1px solid "+GREEN+"88",display:"flex",alignItems:"center",justifyContent:"center",color:GREEN,fontSize:16}}>✓</div>
                     <div style={{minWidth:0,flex:1}}>
                       <div style={{fontSize:15,fontWeight:800,color:"#dff3e7",letterSpacing:"-0.01em"}}>{lift.name}</div>
-                      <div style={{fontSize:11.5,color:"#7fae90",marginTop:1}}>{isBw?"Sets complete":le?le.weight+" × "+(le.reps||1)+(isVert(lift.name)?" in":" lbs"):"Logged"}</div>
+                      <div style={{fontSize:11.5,color:"#7fae90",marginTop:1}}>{isBw?"Sets complete":!le?"Logged":lift.inputType==="rsi"?("RSI "+le.weight):lift.inputType==="vert_lr"?("L "+le.weight+'"  ·  R '+(le.reps||0)+'"'):le.weight+" × "+(le.reps||1)+(isVert(lift.name)?" in":" lbs")}</div>
                     </div>
                     <button onClick={()=>{if(isBw){setBwDone(p=>({...p,[lift.name]:false}));}else{setSessionDone(s=>{const n=new Set(s);n.delete(activeDay+"|"+lift.name);return n;});}}}
                       style={{flexShrink:0,fontSize:11,fontWeight:600,color:"#8a8578",border:"1px solid #2a2a2a",borderRadius:9,padding:"7px 13px",background:"transparent",cursor:"pointer",fontFamily:"Georgia,serif"}}>Edit</button>
@@ -631,7 +637,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
                       {lift.note&&<div style={{fontSize:10,color:"#444",marginTop:4,fontStyle:"italic"}}>{lift.note}</div>}
                     </div>
                     <div style={{textAlign:"right",flexShrink:0}}>
-                      {lift.inputType!=="bodyweight"&&pr&&<div style={{fontSize:20,fontWeight:900,color:GOLD,lineHeight:1,letterSpacing:"-0.02em"}}>{pr}<span style={{fontSize:10,fontWeight:600,marginLeft:2}}>{isVert(lift.name)?"in":"lbs"}</span></div>}
+                      {lift.inputType!=="bodyweight"&&pr&&<div style={{fontSize:20,fontWeight:900,color:GOLD,lineHeight:1,letterSpacing:"-0.02em"}}>{pr}<span style={{fontSize:10,fontWeight:600,marginLeft:2}}>{prUnit}</span></div>}
                       {lift.inputType!=="bodyweight"&&pr&&<div style={{fontSize:8.5,color:GOLD+"99",marginTop:2,marginBottom:2,textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700}}>Your PR</div>}
                       {lift.inputType!=="bodyweight"&&last&&<div style={{fontSize:10.5,color:"#888"}}>last {last}</div>}
                     </div>
@@ -740,6 +746,62 @@ export default function PRLog({athleteId,gender,onNavigate}){
                               boxShadow:done?"0 2px 8px #1E6B3A44":"none"}}>
                             {done?"✓ Done":"Mark Done"}
                           </button>
+                        </div>
+                      );
+                    }
+
+                    // ── RSI (10/5 reactive strength index — enter the value, track best) ──
+                    if(itype==="rsi"){
+                      const bestRsi=getPR(lift.name);
+                      return(
+                        <div>
+                          <div style={{fontSize:9.5,color:"#999",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>Average RSI</div>
+                          <input type="number" inputMode="decimal" step="0.01" value={inp.weight||""}
+                            onChange={e=>setInput(lift.name,"weight",e.target.value)}
+                            placeholder={last?"Last: "+last:"e.g. 2.35"}
+                            style={{width:"100%",padding:"14px 8px",borderRadius:11,border:"1px solid #2a2a2a",fontSize:20,fontFamily:"Georgia,serif",textAlign:"center",background:"#0d0d0d",boxSizing:"border-box",fontWeight:800,color:"#fff"}}/>
+                          <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||isSaving}
+                            style={{width:"100%",marginTop:11,padding:"15px",borderRadius:12,border:"none",background:!inp.weight?"#1a1a1a":(isSaved?"linear-gradient(135deg,#2FA869,#1E6B3A)":"linear-gradient(135deg,"+tc.color+","+tc.border+")"),color:!inp.weight?"#3a3a3a":"#fff",fontSize:15,fontWeight:800,letterSpacing:"0.04em",cursor:!inp.weight?"not-allowed":"pointer",fontFamily:"Georgia,serif",boxShadow:inp.weight&&!isSaved?"0 5px 18px "+tc.border+"55":"none"}}>
+                            {isSaved?"✓ Logged":isSaving?"…":"Log RSI"}
+                          </button>
+                          {inp.weight&&(
+                            <div style={{textAlign:"center",fontSize:11.5,color:"#888",marginTop:10,padding:"8px",background:"#0d0d0d",borderRadius:10,border:"0.5px solid #1f1f1f"}}>
+                              RSI: <span style={{color:GOLD,fontWeight:800}}>{inp.weight}</span>
+                              {bestRsi&&parseFloat(inp.weight)>bestRsi&&<span style={{marginLeft:8,background:GOLD,color:"#000",padding:"2px 8px",borderRadius:4,fontSize:10,fontWeight:700}}>NEW BEST!</span>}
+                              {bestRsi&&<span style={{marginLeft:8,color:"#555"}}>best {bestRsi}</span>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    // ── SINGLE-LEG VERTICAL (left + right leg jump height, inches) ──
+                    if(itype==="vert_lr"){
+                      return(
+                        <div>
+                          <div style={{display:"flex",gap:8}}>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:9.5,color:"#999",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>Left leg (in)</div>
+                              <input type="number" inputMode="decimal" value={inp.weight||""}
+                                onChange={e=>setInput(lift.name,"weight",e.target.value)} placeholder="0"
+                                style={{width:"100%",padding:"14px 8px",borderRadius:11,border:"1px solid #2a2a2a",fontSize:19,fontFamily:"Georgia,serif",textAlign:"center",background:"#0d0d0d",boxSizing:"border-box",fontWeight:800,color:"#fff"}}/>
+                            </div>
+                            <div style={{flex:1}}>
+                              <div style={{fontSize:9.5,color:"#999",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em",fontWeight:700}}>Right leg (in)</div>
+                              <input type="number" inputMode="decimal" value={inp.reps||""}
+                                onChange={e=>setInput(lift.name,"reps",e.target.value)} placeholder="0"
+                                style={{width:"100%",padding:"14px 8px",borderRadius:11,border:"1px solid #2a2a2a",fontSize:19,fontFamily:"Georgia,serif",textAlign:"center",background:"#0d0d0d",boxSizing:"border-box",fontWeight:800,color:"#fff"}}/>
+                            </div>
+                          </div>
+                          <button onClick={()=>saveLog(lift.name,lift.tier)} disabled={!inp.weight||!inp.reps||isSaving}
+                            style={{width:"100%",marginTop:11,padding:"15px",borderRadius:12,border:"none",background:(!inp.weight||!inp.reps)?"#1a1a1a":(isSaved?"linear-gradient(135deg,#2FA869,#1E6B3A)":"linear-gradient(135deg,"+tc.color+","+tc.border+")"),color:(!inp.weight||!inp.reps)?"#3a3a3a":"#fff",fontSize:15,fontWeight:800,letterSpacing:"0.04em",cursor:(!inp.weight||!inp.reps)?"not-allowed":"pointer",fontFamily:"Georgia,serif",boxShadow:(inp.weight&&inp.reps&&!isSaved)?"0 5px 18px "+tc.border+"55":"none"}}>
+                            {isSaved?"✓ Logged":isSaving?"…":"Log jump"}
+                          </button>
+                          {inp.weight&&inp.reps&&(
+                            <div style={{textAlign:"center",fontSize:12,color:"#888",marginTop:10,padding:"8px",background:"#0d0d0d",borderRadius:10,border:"0.5px solid #1f1f1f"}}>
+                              L <span style={{color:PUR,fontWeight:800}}>{inp.weight}&quot;</span><span style={{color:"#444",margin:"0 8px"}}>·</span>R <span style={{color:GOLD,fontWeight:800}}>{inp.reps}&quot;</span>
+                            </div>
+                          )}
                         </div>
                       );
                     }
@@ -1125,7 +1187,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
                         {liftHistory.slice(0,5).map((h,hi)=>(
                           <div key={hi} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:hi<Math.min(liftHistory.length,5)-1?"0.5px solid #1a1a1a":"none"}}>
                             <div style={{fontSize:11,color:"#444"}}>{new Date(h.date).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
-                            <div style={{fontSize:12,fontWeight:700,color:"#ccc"}}>{h.weight} lbs × {h.reps||1} {(itype==="kb2_yards"||itype==="weight_yards")?"yards":"reps"}</div>
+                            <div style={{fontSize:12,fontWeight:700,color:"#ccc"}}>{itype==="rsi"?("RSI "+h.weight):itype==="vert_lr"?("L "+h.weight+'" · R '+(h.reps||0)+'"'):(h.weight+" lbs × "+(h.reps||1)+" "+((itype==="kb2_yards"||itype==="weight_yards")?"yards":"reps"))}</div>
                             {h.weight===pr&&<div style={{fontSize:10,color:GOLD,fontWeight:700}}>PR 🏆</div>}
                             {confirmDelete===h.id?(
                               <div style={{display:"flex",gap:4,marginLeft:4}}>

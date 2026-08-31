@@ -7,6 +7,8 @@ import { Skeleton, SkeletonList } from "./Skeleton";
 const epley = (w, r) => (r === 1 ? w : Math.round(w * (1 + r / 30)));
 const VERT = new Set(["pvc max vert"]);
 const isVert = (n) => VERT.has((n || "").toLowerCase());
+// Lifts whose logged number isn't a weight/e1RM (RSI value, split-leg jump) — keep them out of the feed.
+const FEED_SKIP = new Set(["10/5 rsi", "standing sl vert"]);
 
 function relTime(dateStr, createdAt) {
   const base = createdAt ? new Date(createdAt) : new Date((dateStr || "") + "T12:00:00");
@@ -40,6 +42,7 @@ export default function TeamPRFeed({ athletes = [], currentAthleteId = null, com
         const best = {};
         const ev = [];
         for (const row of (data || [])) {
+          if (FEED_SKIP.has((row.lift || "").toLowerCase())) continue;
           const w = parseFloat(row.weight) || 0;
           const r = parseInt(row.reps) || 1;
           if (!w) continue;
