@@ -125,6 +125,23 @@ const FLOW_TOTAL=FLOW.reduce((s,x)=>s+x.d,0);
 
 export default function StretchingTab(){
   const[cat,setCat]=useState("neck");
+  // Detect light/dark so the stretch cards are readable without relying on CSS color-mapping
+  const[isLight,setIsLight]=useState(false);
+  useEffect(()=>{
+    if(typeof document==="undefined")return;
+    const check=()=>{
+      const t=document.documentElement.getAttribute("data-theme");
+      if(t==="light")setIsLight(true);
+      else if(t==="dark")setIsLight(false);
+      else setIsLight(!!(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches));
+    };
+    check();
+    const mo=new MutationObserver(check);
+    mo.observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+    let mq;
+    try{mq=window.matchMedia("(prefers-color-scheme: light)");mq.addEventListener&&mq.addEventListener("change",check);}catch(e){}
+    return()=>{mo.disconnect();try{mq&&mq.removeEventListener&&mq.removeEventListener("change",check);}catch(e){}};
+  },[]);
   const[open,setOpen]=useState(null);
   const[done,setDone]=useState(new Set());
   const[timerName,setTimerName]=useState("");
@@ -393,12 +410,12 @@ export default function StretchingTab(){
           const isTimerHere=timerName===s.n;
           return(
             <div key={i} style={{
-              background:isDone?"#0f160f":isOpen?"#1c1c1c":"#181818",
+              background:isDone?(isLight?"#e8f4ea":"#0f160f"):isOpen?(isLight?"#eef0f4":"#1c1c1c"):(isLight?"#f6f7f9":"#181818"),
               borderRadius:14,
-              border:"1px solid "+(isDone?c.c+"44":isOpen?c.c+"66":"#2d2d2d"),
+              border:"1px solid "+(isDone?c.c+"55":isOpen?c.c+"88":(isLight?"rgba(0,0,0,0.12)":"#2d2d2d")),
               overflow:"hidden",
-              borderLeft:"3px solid "+(isDone?c.c:isOpen?c.c:"#404040"),
-              boxShadow:isOpen?"0 0 16px "+c.c+"18,0 2px 12px #00000060":isDone?"0 0 8px "+c.c+"12":undefined,
+              borderLeft:"3px solid "+(isDone?c.c:isOpen?c.c:(isLight?"rgba(0,0,0,0.18)":"#404040")),
+              boxShadow:isOpen?"0 0 16px "+c.c+"18,0 2px 12px "+(isLight?"rgba(0,0,0,0.12)":"#00000060"):isDone?"0 0 8px "+c.c+"12":undefined,
               transition:"all 0.15s",
             }}>
               <div onClick={()=>setOpen(isOpen?null:i)}
@@ -417,7 +434,7 @@ export default function StretchingTab(){
                   {isDone?"✓":""}
                 </button>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:14,fontWeight:isDone?500:700,color:isDone?"#555":"#fff",textDecoration:isDone?"line-through":"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:"-0.01em"}}>{s.n}</div>
+                  <div style={{fontSize:14,fontWeight:isDone?500:700,color:isDone?(isLight?"#98929a":"#555"):(isLight?"#16191f":"#fff"),textDecoration:isDone?"line-through":"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:"-0.01em"}}>{s.n}</div>
                   <div style={{fontSize:11,color:isTimerHere?c.c:"#666",marginTop:2,fontWeight:isTimerHere?700:400}}>
                     {isTimerHere?"⏳ Timer running...":s.d+"s hold"}
                   </div>
@@ -439,9 +456,9 @@ export default function StretchingTab(){
               </div>
 
               {isOpen&&(
-                <div style={{borderTop:"1px solid #252525",padding:"14px 14px 16px"}}>
+                <div style={{borderTop:"1px solid "+(isLight?"rgba(0,0,0,0.1)":"#252525"),padding:"14px 14px 16px"}}>
                   <p style={{
-                    fontSize:13,color:"#aaa",lineHeight:1.85,margin:"0 0 14px",
+                    fontSize:13,color:isLight?"#464c56":"#aaa",lineHeight:1.85,margin:"0 0 14px",
                     paddingLeft:12,
                     borderLeft:"3px solid "+c.c+"55",
                     fontStyle:"italic",
