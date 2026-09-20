@@ -224,6 +224,9 @@ html[data-theme="light"] [style*="background:#131313"] { background:#ffffff !imp
 html[data-theme="light"] [style*="background:#141414"] { background:#f4f5f8 !important; }
 html[data-theme="light"] [style*="background:#151515"] { background:#f4f5f8 !important; }
 html[data-theme="light"] [style*="background:#1a1a1a"] { background:#eef0f4 !important; }
+html[data-theme="light"] [style*="background:#181818"] { background:#eef0f4 !important; }
+html[data-theme="light"] [style*="background:#1c1c1c"] { background:#e7e9ee !important; }
+html[data-theme="light"] [style*="background:#0f160f"] { background:#e8f4ea !important; }
 html[data-theme="light"] [style*="background:#1e1e1e"] { background:#e7e9ee !important; }
 html[data-theme="light"] [style*="background:#222"]    { background:#e7e9ee !important; }
 /* Glass whites used as surfaces → subtle dark tint on light */
@@ -240,6 +243,7 @@ html[data-theme="light"] [style*="rgba(10,10,18"] { background:rgba(250,250,252,
    distinct panels against the light-grey page instead of floating. */
 html[data-theme="light"] [style*="solid #252525"] { border-color:rgba(0,0,0,0.20) !important; }
 html[data-theme="light"] [style*="solid #2a2a2a"] { border-color:rgba(0,0,0,0.20) !important; }
+html[data-theme="light"] [style*="solid #2d2d2d"] { border-color:rgba(0,0,0,0.16) !important; }
 html[data-theme="light"] [style*="solid #1e1e1e"] { border-color:rgba(0,0,0,0.18) !important; }
 html[data-theme="light"] [style*="solid #1a1a1a"] { border-color:rgba(0,0,0,0.17) !important; }
 html[data-theme="light"] [style*="solid #141414"] { border-color:rgba(0,0,0,0.16) !important; }
