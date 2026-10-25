@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { RED, GREEN, GOLD, ORANGE, PUR } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 import { SkeletonList } from "./Skeleton";
-import ProgramSlideImport from "./ProgramSlideImport";
 
 const DAYS=["Mon","Tue","Thu","Fri"];
 const DAY_LABELS={Mon:"Monday",Tue:"Tuesday",Thu:"Thursday",Fri:"Friday"};
@@ -163,9 +162,6 @@ export default function ProgramUpload(){
           </div>
         </div>
       )}
-
-      {/* Rich's slides -> lifts (Fast row only). Fills the builder below; the builder's own Push is the only thing that goes live. */}
-      <ProgramSlideImport onApply={(d)=>setDays(prev=>({...prev,...d}))}/>
 
       {/* Phase name */}
       <div style={{background:"rgba(255,255,255,0.045)",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid rgba(255,255,255,0.08)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"}}>
