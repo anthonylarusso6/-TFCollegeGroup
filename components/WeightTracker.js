@@ -1,109 +1,140 @@
 import { useState, useEffect, useRef } from "react";
-import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
-import EmptyState from "./EmptyState";
-import { hSuccess, hError } from "../lib/haptics";
+import { hSuccess, hError, hTap } from "../lib/haptics";
 import { ensurePushSync } from "../lib/push";
+import { pulseMood } from "../lib/ambient";
 
+const DAY = 86400000;
+const MAINTAIN_RANGE = 3;
+const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const RANGES = [{ k: "1m", label: "1M", days: 31 }, { k: "3m", label: "3M", days: 92 }, { k: "all", label: "All", days: null }];
 
+const ymd = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const estNow = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+// "2026-11-16" → local midnight. new Date("2026-11-16") is UTC midnight, which shows
+// as the previous day on phones in Eastern time.
+const pd = (s) => { const [y, m, d] = String(s).slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d); };
+const fmtDay = (s, opts = { weekday: "short", month: "short", day: "numeric" }) => pd(s).toLocaleDateString("en-US", opts);
+const r1 = (v) => Math.round(v * 10) / 10;
+const f1 = (v) => v.toFixed(1);
 
-const epley = (entries) => {
-  const n = entries.length;
-  if (n < 2) return null;
-  const xs = entries.map((e, i) => i);
-  const ys = entries.map(e => parseFloat(e.weight));
-  const sumX = xs.reduce((s, x) => s + x, 0);
-  const sumY = ys.reduce((s, y) => s + y, 0);
-  const sumXY = xs.reduce((s, x, i) => s + x * ys[i], 0);
-  const sumX2 = xs.reduce((s, x) => s + x * x, 0);
-  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-  const intercept = (sumY - slope * sumX) / n;
-  return { slope, intercept };
-};
-
-const predictGoalDate = (entries, goalWeight, goalMode) => {
-  if (entries.length < 4) return null;
-  const recent = entries.slice(-14);
-  const xs = recent.map(e => new Date(e.date).getTime() / 86400000);
-  const ys = recent.map(e => parseFloat(e.weight));
+const predictGoalDate = (pts, goalWeight, goalMode) => {
+  if (pts.length < 4) return null;
+  const recent = pts.slice(-14);
+  const xs = recent.map((p) => p.t / DAY);
+  const ys = recent.map((p) => p.w);
   const n = xs.length;
   const sumX = xs.reduce((s, x) => s + x, 0);
   const sumY = ys.reduce((s, y) => s + y, 0);
   const sumXY = xs.reduce((s, x, i) => s + x * ys[i], 0);
   const sumX2 = xs.reduce((s, x) => s + x * x, 0);
   const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-  if (Math.abs(slope) < 0.005) return null;
+  if (!isFinite(slope) || Math.abs(slope) < 0.005) return null;
   if (goalMode === "lose" && slope >= 0) return null;
   if (goalMode === "gain" && slope <= 0) return null;
   const intercept = (sumY - slope * sumX) / n;
-  const targetX = (goalWeight - intercept) / slope;
-  const targetDate = new Date(targetX * 86400000);
+  const targetDate = new Date(((goalWeight - intercept) / slope) * DAY);
   const now = new Date();
-  if (targetDate <= now) return null;
-  if (targetDate > new Date(now.getTime() + 365 * 86400000)) return null;
+  if (targetDate <= now || targetDate > new Date(now.getTime() + 365 * DAY)) return null;
   return targetDate;
 };
 
+// Monotone cubic path — smooth, but never overshoots a real weigh-in.
+function smoothPath(P) {
+  const n = P.length;
+  if (n < 2) return "";
+  if (n === 2) return `M${f1(P[0].x)},${f1(P[0].y)}L${f1(P[1].x)},${f1(P[1].y)}`;
+  const dx = [], m = [];
+  for (let i = 0; i < n - 1; i++) { dx[i] = P[i + 1].x - P[i].x; m[i] = dx[i] ? (P[i + 1].y - P[i].y) / dx[i] : 0; }
+  const t = [m[0]];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  t[n - 1] = m[n - 2];
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = 0; t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+    if (s > 9) { const k = 3 / Math.sqrt(s); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; }
+  }
+  let d = `M${f1(P[0].x)},${f1(P[0].y)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += `C${f1(P[i].x + h)},${f1(P[i].y + t[i] * h)} ${f1(P[i + 1].x - h)},${f1(P[i + 1].y - t[i + 1] * h)} ${f1(P[i + 1].x)},${f1(P[i + 1].y)}`;
+  }
+  return d;
+}
+
+function Switch({ on, disabled, onClick, label }) {
+  return (
+    <button className={"bm-switch wt-switch" + (on ? " is-on" : "")} role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={onClick}>
+      <span className="bm-switch-track"><span className="bm-switch-knob" /></span>
+    </button>
+  );
+}
+
 export default function WeightTracker({ athleteId, onWeighed }) {
-  const[entries, setEntries] = useState([]);
-  const[weight, setWeight] = useState("");
-  const[goalWeight, setGoalWeight] = useState("");
-  const[goalMode, setGoalMode] = useState("lose");
-  const[saving, setSaving] = useState(false);
-  const[saved, setSaved] = useState(false);
-  const[error, setError] = useState("");
-  const[showGoalInput, setShowGoalInput] = useState(false);
-  const[notes, setNotes] = useState({});
-  const[noteInput, setNoteInput] = useState("");
-  const[editingNote, setEditingNote] = useState(null);
-  const[savingNote, setSavingNote] = useState(false);
-  const[notifState, setNotifState] = useState("idle"); // idle | requesting | enabled | denied | unsupported
-  const[notifLoading, setNotifLoading] = useState(false);
-  const[confirmDelete, setConfirmDelete] = useState(null);
-  const[deleting, setDeleting] = useState(null);
+  const [entries, setEntries] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+  const [weight, setWeight] = useState("");
+  const [goalWeight, setGoalWeight] = useState("");
+  const [goalMode, setGoalMode] = useState("lose");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+  const [editingGoal, setEditingGoal] = useState(false);
+  const [goalDraft, setGoalDraft] = useState("");
+  const [modeDraft, setModeDraft] = useState("lose");
+  const [goalErr, setGoalErr] = useState("");
+  const [notes, setNotes] = useState({});
+  const [noteInput, setNoteInput] = useState("");
+  const [editingNote, setEditingNote] = useState(null);
+  const [savingNote, setSavingNote] = useState(false);
+  const [notifState, setNotifState] = useState("idle"); // idle | enabled | denied | unsupported
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+  const [range, setRange] = useState("3m");
+  const [scrub, setScrub] = useState(null);
+  const [showAllWeeks, setShowAllWeeks] = useState(false);
   const savingRef = useRef(false);
+  const svgRef = useRef(null);
 
   const loadEntries = async () => {
     try {
       const { data, error: err } = await supabase.from("weight_log").select("*").eq("athlete_id", athleteId).order("date", { ascending: true });
-      if (err) { setError("Could not load entries: " + err.message); return; }
+      if (err) { setError("Couldn't load your weigh-ins. Check your connection and reopen this tab."); return; }
       setEntries(data || []);
-    } catch (e) { setError("Could not load entries."); }
+    } catch (e) { setError("Couldn't load your weigh-ins. Check your connection and reopen this tab."); }
+    finally { setLoaded(true); }
   };
 
   const loadGoal = async () => {
+    const fromLocal = () => {
+      try {
+        const sg = localStorage.getItem("goal_weight_" + athleteId);
+        const sm = localStorage.getItem("goal_mode_" + athleteId);
+        if (sg) setGoalWeight(sg);
+        if (sm) setGoalMode(sm);
+      } catch (e) {}
+    };
     try {
       const { data } = await supabase.from("announcements").select("message,week_label").eq("type", "weight_goal").eq("day", String(athleteId)).order("created_at", { ascending: false }).limit(1).maybeSingle();
       if (data) {
         if (data.message) setGoalWeight(data.message);
         if (data.week_label) setGoalMode(data.week_label);
-      } else {
-        const sg = localStorage.getItem("goal_weight_" + athleteId);
-        const sm = localStorage.getItem("goal_mode_" + athleteId);
-        if (sg) setGoalWeight(sg);
-        if (sm) setGoalMode(sm);
-      }
-    } catch (e) {
-      const sg = localStorage.getItem("goal_weight_" + athleteId);
-      const sm = localStorage.getItem("goal_mode_" + athleteId);
-      if (sg) setGoalWeight(sg);
-      if (sm) setGoalMode(sm);
-    }
+      } else fromLocal();
+    } catch (e) { fromLocal(); }
   };
 
   const loadNotes = async () => {
     try {
       const { data } = await supabase.from("announcements").select("week_label,message,created_at").eq("type", "weight_note").eq("day", String(athleteId)).order("created_at", { ascending: false });
       const map = {};
-      (data || []).forEach(r => { if (!map[r.week_label]) map[r.week_label] = r.message; });
+      (data || []).forEach((r) => { if (!map[r.week_label]) map[r.week_label] = r.message; });
       setNotes(map);
     } catch (e) {}
   };
 
   const checkNotifStatus = async () => {
-    if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) {
-      setNotifState("unsupported"); return;
-    }
+    if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) { setNotifState("unsupported"); return; }
     const perm = Notification.permission;
     if (perm === "denied") { setNotifState("denied"); return; }
     if (perm === "granted") {
@@ -120,33 +151,42 @@ export default function WeightTracker({ athleteId, onWeighed }) {
     try { await supabase.from("announcements").insert({ type: "weight_goal", day: String(athleteId), message: String(val), week_label: mode, active: true }); } catch (e) {}
   };
 
-  const save = async () => {
+  const save = async (ev) => {
+    if (ev) ev.preventDefault();
     if (!weight || savingRef.current) return;
+    const w = parseFloat(weight);
+    if (!isFinite(w) || w < 60 || w > 600) { setError("Enter your weight in pounds, like 182.4"); hError(); return; }
     savingRef.current = true;
     setSaving(true); setError("");
     try {
-      const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-      const today = estNow.getFullYear() + "-" + String(estNow.getMonth() + 1).padStart(2, "0") + "-" + String(estNow.getDate()).padStart(2, "0");
+      const today = ymd(estNow());
       const { data: todayRow, error: selectErr } = await supabase.from("weight_log").select("id").eq("athlete_id", athleteId).eq("date", today).maybeSingle();
-      if (selectErr) { setError("Save failed: " + selectErr.message); return; }
+      if (selectErr) { setError("Didn't save. Check your connection and tap Log again."); hError(); return; }
       if (todayRow) {
-        const { error: err } = await supabase.from("weight_log").update({ weight: parseFloat(weight) }).eq("id", todayRow.id);
-        if (err) { setError("Save failed: " + err.message); return; }
+        const { error: err } = await supabase.from("weight_log").update({ weight: w }).eq("id", todayRow.id);
+        if (err) { setError("Didn't save. Check your connection and tap Log again."); hError(); return; }
       } else {
-        const { error: err } = await supabase.from("weight_log").insert({ athlete_id: athleteId, date: today, weight: parseFloat(weight) });
-        if (err) { setError("Save failed: " + err.message); return; }
+        const { error: err } = await supabase.from("weight_log").insert({ athlete_id: athleteId, date: today, weight: w });
+        if (err) { setError("Didn't save. Check your connection and tap Log again."); hError(); return; }
       }
       await loadEntries();
-      setWeight(""); setSaved(true); setTimeout(() => setSaved(false), 3000);
+      setWeight(""); setSaved(true); setTimeout(() => setSaved(false), 2600);
       hSuccess();
+      pulseMood("celebrate", 1800);
       if (onWeighed) onWeighed();
-    } catch (e) { setError("Save failed. Please try again."); hError(); }
+    } catch (e) { setError("Didn't save. Check your connection and tap Log again."); hError(); }
     finally { setSaving(false); savingRef.current = false; }
   };
 
-  const saveGoal = async (val, mode) => {
-    setGoalWeight(val); setGoalMode(mode); setShowGoalInput(false);
-    await persistGoal(val, mode);
+  const openGoalEditor = () => {
+    setGoalDraft(goalWeight || ""); setModeDraft(goalMode || "lose"); setGoalErr(""); setEditingGoal(true);
+  };
+  const saveGoal = async () => {
+    const v = parseFloat(goalDraft);
+    if (!isFinite(v) || v < 60 || v > 600) { setGoalErr("Enter a target in pounds, like 175"); return; }
+    const val = String(r1(v));
+    setGoalWeight(val); setGoalMode(modeDraft); setEditingGoal(false); hTap();
+    await persistGoal(val, modeDraft);
   };
 
   const saveNote = async (date) => {
@@ -154,7 +194,7 @@ export default function WeightTracker({ athleteId, onWeighed }) {
     setSavingNote(true);
     try {
       await supabase.from("announcements").insert({ type: "weight_note", day: String(athleteId), week_label: date, message: noteInput.trim(), active: true });
-      setNotes(prev => ({ ...prev, [date]: noteInput.trim() }));
+      setNotes((prev) => ({ ...prev, [date]: noteInput.trim() }));
     } catch (e) {}
     setSavingNote(false); setEditingNote(null); setNoteInput("");
   };
@@ -163,8 +203,8 @@ export default function WeightTracker({ athleteId, onWeighed }) {
     setDeleting(id);
     try {
       await supabase.from("weight_log").delete().eq("id", id);
-      setEntries(prev => prev.filter(e => e.id !== id));
-    } catch(e) {}
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+    } catch (e) {}
     setDeleting(null);
     setConfirmDelete(null);
   };
@@ -195,525 +235,400 @@ export default function WeightTracker({ athleteId, onWeighed }) {
     setNotifLoading(false);
   };
 
-  // ── Computed analytics ────────────────────────────────────
-  const first = entries[0]?.weight != null ? parseFloat(entries[0].weight) : null;
-  const latest = entries[entries.length - 1]?.weight != null ? parseFloat(entries[entries.length - 1].weight) : null;
-  const diff = first != null && latest != null ? parseFloat((latest - first).toFixed(1)) : null;
+  // ── Data ───────────────────────────────────────────────────────────
+  const todayStr = ymd(estNow());
+  const byDate = {};
+  entries.forEach((e) => { const w = parseFloat(e.weight); if (e.date && isFinite(w)) byDate[String(e.date).slice(0, 10)] = { id: e.id, date: String(e.date).slice(0, 10), w }; });
+  const pts = Object.values(byDate).sort((a, b) => (a.date < b.date ? -1 : 1)).map((p) => ({ ...p, t: pd(p.date).getTime() }));
+  const first = pts.length ? pts[0].w : null;
+  const latest = pts.length ? pts[pts.length - 1].w : null;
+  const diff = first != null && latest != null ? r1(latest - first) : null;
   const goal = parseFloat(goalWeight) || null;
+  const todayEntry = byDate[todayStr];
 
   // Streak — consecutive Mon/Fri weigh-ins (grace for today if not yet logged)
   const streak = (() => {
-    if (!entries.length) return 0;
-    const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-    const todayStr = estNow.getFullYear() + "-" + String(estNow.getMonth() + 1).padStart(2, "0") + "-" + String(estNow.getDate()).padStart(2, "0");
-    const dateSet = new Set(entries.map(e => e.date));
-    const sessions = [];
-    const d = new Date(estNow);
-    while (sessions.length < 52) {
+    if (!pts.length) return 0;
+    const d = estNow();
+    let s = 0, seen = 0;
+    while (seen < 104) {
       const dow = d.getDay();
       if (dow === 1 || dow === 5) {
-        const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-        sessions.push(key);
+        seen++;
+        const key = ymd(d);
+        if (byDate[key]) s++;
+        else if (key !== todayStr) break;
       }
       d.setDate(d.getDate() - 1);
-    }
-    let s = 0;
-    for (const key of sessions) {
-      if (key === todayStr && !dateSet.has(key)) continue;
-      if (dateSet.has(key)) s++;
-      else break;
     }
     return s;
   })();
 
-  // 7-day rolling average
-  const rollingAvg = entries.map((_, i) => {
-    const window = entries.slice(Math.max(0, i - 6), i + 1);
-    return parseFloat((window.reduce((s, e) => s + parseFloat(e.weight), 0) / window.length).toFixed(1));
-  });
-
-  // Predicted goal date
-  const predictedDate = goal ? predictGoalDate(entries, goal, goalMode) : null;
-
-  // Calendar dots — Mon/Fri weigh-in days only (last 10 weeks)
-  const calDots = (() => {
-    const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-    const dateSet = new Set(entries.map(e => e.date));
-    const mon = [], fri = [];
-    const d = new Date(estNow);
-    while (mon.length < 10 || fri.length < 10) {
-      const dow = d.getDay();
-      const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-      if (dow === 1 && mon.length < 10) mon.unshift({ date: key, logged: dateSet.has(key) });
-      if (dow === 5 && fri.length < 10) fri.unshift({ date: key, logged: dateSet.has(key) });
-      d.setDate(d.getDate() - 1);
+  // Goal progress
+  const progress = (() => {
+    if (!goal || first == null || latest == null) return null;
+    if (goalMode === "maintain") {
+      const dev = r1(latest - goal);
+      const recent = pts.slice(-14);
+      const inN = recent.filter((p) => Math.abs(p.w - goal) <= MAINTAIN_RANGE).length;
+      return { maintain: true, inRange: Math.abs(dev) <= MAINTAIN_RANGE, dev, stability: recent.length ? Math.round((inN / recent.length) * 100) : 0 };
     }
-    return { mon, fri };
+    const lose = goalMode === "lose";
+    const span = lose ? first - goal : goal - first;
+    const moved = lose ? first - latest : latest - first;
+    const pct = span > 0 ? Math.max(0, Math.min(100, Math.round((moved / span) * 100))) : (lose ? (latest <= goal ? 100 : 0) : (latest >= goal ? 100 : 0));
+    const reached = lose ? latest <= goal : latest >= goal;
+    const onTrack = lose ? diff <= 0 : diff >= 0;
+    return { pct, reached, onTrack, left: r1(Math.abs(latest - goal)) };
+  })();
+  const predictedDate = goal && progress && !progress.maintain && !progress.reached ? predictGoalDate(pts, goal, goalMode) : null;
+
+  const tone = (d) => {
+    if (d == null || Math.abs(d) < 0.1) return "is-flat";
+    if (!goal) return "is-flat";
+    if (goalMode === "maintain") return Math.abs(d) <= MAINTAIN_RANGE ? "is-good" : "is-bad";
+    return (goalMode === "lose" ? d < 0 : d > 0) ? "is-good" : "is-bad";
+  };
+
+  // ── Chart ──────────────────────────────────────────────────────────
+  const W = 320, H = 150, PT = 14, PB = 8, PL = 30, PR = 10;
+  const spanDays = pts.length > 1 ? (pts[pts.length - 1].t - pts[0].t) / DAY : 0;
+  const showRanges = spanDays > 35;
+  const rDays = (RANGES.find((r) => r.k === range) || {}).days;
+  let vis = showRanges && rDays ? pts.filter((p) => p.t >= pts[pts.length - 1].t - rDays * DAY) : pts;
+  if (vis.length < 2 && pts.length >= 2) vis = pts.slice(-2);
+  const trend = vis.map((p) => { const win = pts.filter((q) => q.t <= p.t && q.t > p.t - 14 * DAY); return win.reduce((s, q) => s + q.w, 0) / win.length; });
+  let lo = Infinity, hi = -Infinity;
+  vis.forEach((p, i) => { lo = Math.min(lo, p.w, trend[i]); hi = Math.max(hi, p.w, trend[i]); });
+  const goalOnChart = goal && vis.length > 1 && goal >= lo - 12 && goal <= hi + 12;
+  if (goalOnChart) {
+    const g0 = goalMode === "maintain" ? goal - MAINTAIN_RANGE : goal, g1 = goalMode === "maintain" ? goal + MAINTAIN_RANGE : goal;
+    lo = Math.min(lo, g0); hi = Math.max(hi, g1);
+  }
+  const pad = Math.max(1.2, (hi - lo) * 0.14);
+  lo -= pad; hi += pad;
+  if (hi - lo < 5) { const mid = (hi + lo) / 2; lo = mid - 2.5; hi = mid + 2.5; }
+  const t0 = vis.length ? vis[0].t : 0, t1 = vis.length ? vis[vis.length - 1].t : 1;
+  const X = (t) => PL + ((t - t0) / Math.max(1, t1 - t0)) * (W - PL - PR);
+  const Y = (v) => PT + (1 - (v - lo) / (hi - lo)) * (H - PT - PB);
+  const xy = vis.map((p) => ({ x: X(p.t), y: Y(p.w) }));
+  const linePath = smoothPath(xy);
+  const areaPath = xy.length > 1 ? linePath + `L${f1(xy[xy.length - 1].x)},${H}L${f1(xy[0].x)},${H}Z` : "";
+  const trendPath = smoothPath(vis.map((p, i) => ({ x: X(p.t), y: Y(trend[i]) })));
+  const gridStep = [1, 2, 5, 10, 20, 50].find((s) => s >= (hi - lo) / 3.2) || 50;
+  const gridVals = [];
+  for (let v = Math.ceil(lo / gridStep) * gridStep; v < hi && gridVals.length < 4; v += gridStep) if (Y(v) > PT + 8) gridVals.push(v);
+
+  const onScrub = (ev) => {
+    if (!svgRef.current || xy.length < 2) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const xv = ((ev.clientX - rect.left) / rect.width) * W;
+    let best = 0;
+    xy.forEach((p, i) => { if (Math.abs(p.x - xv) < Math.abs(xy[best].x - xv)) best = i; });
+    if (best !== scrub) { setScrub(best); }
+  };
+  const sp = scrub != null && vis[scrub] ? vis[scrub] : null;
+  const shownW = sp ? sp.w : latest;
+  const shownLabel = sp ? (sp.date === todayStr ? "Today" : fmtDay(sp.date)) : todayEntry ? "Today" : latest != null ? "Latest · " + fmtDay(pts[pts.length - 1].date, { month: "short", day: "numeric" }) : "No weigh-ins yet";
+
+  // ── Mon/Fri consistency (last 10 weeks) ───────────────────────────
+  const cols = (() => {
+    const out = [];
+    const d = estNow();
+    while (d.getDay() !== 1) d.setDate(d.getDate() - 1); // this week's Monday
+    for (let w = 0; w < 10; w++) {
+      const mon = new Date(d); mon.setDate(d.getDate() - 7 * w);
+      const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+      out.unshift([mon, fri].map((day) => {
+        const key = ymd(day);
+        const logged = !!byDate[key];
+        const state = logged ? "hit" : key > todayStr ? "future" : key === todayStr ? "today" : pts.length && key < pts[0].date ? "pre" : "miss";
+        return { key, state };
+      }));
+    }
+    return out;
+  })();
+  const counted = cols.flat().filter((c) => c.state === "hit" || c.state === "miss");
+  const hits = counted.filter((c) => c.state === "hit").length;
+
+  // Day-of-week pattern → one plain-English insight
+  const insight = (() => {
+    const map = {};
+    pts.forEach((p) => { const k = pd(p.date).getDay(); (map[k] = map[k] || []).push(p.w); });
+    const avgs = Object.entries(map).filter(([, ws]) => ws.length >= 2).map(([k, ws]) => ({ day: DOW[k], avg: ws.reduce((s, w) => s + w, 0) / ws.length }));
+    if (avgs.length < 2) return null;
+    avgs.sort((a, b) => b.avg - a.avg);
+    const gap = r1(avgs[0].avg - avgs[avgs.length - 1].avg);
+    if (gap < 0.5) return "Rock steady between weigh-in days.";
+    return `On average you weigh ${gap} lbs more on ${avgs[0].day}s than ${avgs[avgs.length - 1].day}s. That's normal water swing, so judge progress by the trend line.`;
   })();
 
-  // Day-of-week averages
-  const DOW_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const dowMap = {};
-  entries.forEach(e => {
-    const d = new Date(e.date).getDay();
-    if (!dowMap[d]) dowMap[d] = [];
-    dowMap[d].push(parseFloat(e.weight));
+  // ── Weekly history (Mon–Sun weeks) ────────────────────────────────
+  const weeks = [];
+  pts.forEach((p) => {
+    const d = pd(p.date);
+    const ws = new Date(d); ws.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    const key = ymd(ws);
+    let wk = weeks.find((x) => x.key === key);
+    if (!wk) { wk = { key, label: "Week of " + ws.toLocaleDateString("en-US", { month: "short", day: "numeric" }), pts: [] }; weeks.push(wk); }
+    wk.pts.push(p);
   });
-  const dowAvgs = Object.entries(dowMap)
-    .filter(([, ws]) => ws.length >= 2)
-    .map(([d, ws]) => ({ day: DOW_NAMES[d], avg: parseFloat((ws.reduce((s, w) => s + w, 0) / ws.length).toFixed(1)), count: ws.length }))
-    .sort((a, b) => b.avg - a.avg);
+  weeks.forEach((wk) => { wk.avg = r1(wk.pts.reduce((s, p) => s + p.w, 0) / wk.pts.length); });
+  const weeksDesc = [...weeks].reverse();
+  const shownWeeks = showAllWeeks ? weeksDesc : weeksDesc.slice(0, 3);
 
-  // Weekly ranges (fluctuation bands)
-  const weekRanges = {};
-  entries.forEach(e => {
-    const d = new Date(e.date);
-    const ws = new Date(d); ws.setDate(d.getDate() - d.getDay());
-    const key = ws.getFullYear() + "-" + String(ws.getMonth() + 1).padStart(2, "0") + "-" + String(ws.getDate()).padStart(2, "0");
-    if (!weekRanges[key]) weekRanges[key] = { min: Infinity, max: -Infinity };
-    const w = parseFloat(e.weight);
-    weekRanges[key].min = Math.min(weekRanges[key].min, w);
-    weekRanges[key].max = Math.max(weekRanges[key].max, w);
-  });
-
-  // Chart data (last 10 entries)
-  const chartData = entries.slice(-10);
-  const chartH = 80, chartW = 100;
-  const weights = chartData.map(e => parseFloat(e.weight));
-  const raWeights = rollingAvg.slice(-10);
-  const allVals = [...weights, ...raWeights].filter(Boolean);
-  const chartMin = allVals.length ? Math.min(...allVals) - 2 : 0;
-  const chartMax = allVals.length ? Math.max(...allVals) + 2 : 100;
-  const toY = v => chartH - ((v - chartMin) / (Math.max(chartMax - chartMin, 1))) * chartH;
-  const pts = weights.map((w, i) => { const x = (i / (Math.max(weights.length - 1, 1))) * chartW; return `${x},${toY(w)}`; }).join(" ");
-  const raPts = raWeights.map((w, i) => { const x = (i / (Math.max(raWeights.length - 1, 1))) * chartW; return `${x},${toY(w)}`; }).join(" ");
-
-  // Maintenance: ±3 lb tolerance zone
-  const MAINTAIN_RANGE = 3;
-
-  // Goal progress
-  const getProgress = () => {
-    if (!goal || first == null || latest == null) return { pct: 0, onTrack: false, lbsLeft: null, msg: "" };
-    if (goalMode === "maintain") {
-      const inRange = Math.abs(latest - goal) <= MAINTAIN_RANGE;
-      const deviation = parseFloat((latest - goal).toFixed(1));
-      const recent = entries.slice(-14);
-      const inRangeDays = recent.filter(e => Math.abs(parseFloat(e.weight) - goal) <= MAINTAIN_RANGE).length;
-      const stabilityPct = recent.length > 0 ? Math.round((inRangeDays / recent.length) * 100) : 0;
-      return { pct: stabilityPct, onTrack: inRange, lbsLeft: deviation, goalReached: false, isMaintain: true, inRange, deviation, stabilityPct, msg: inRange ? `✅ In range — ${Math.abs(deviation) < 0.1 ? "spot on!" : Math.abs(deviation).toFixed(1) + " lbs " + (deviation > 0 ? "above" : "below") + " target"}` : `⚠ ${Math.abs(deviation).toFixed(1)} lbs ${deviation > 0 ? "above" : "below"} your maintenance target` };
-    }
-    if (goalMode === "lose") {
-      const pct = (first - goal) > 0 ? Math.min(100, Math.round(((first - latest) / (first - goal)) * 100)) : 0;
-      const lbsLeft = parseFloat((latest - goal).toFixed(1));
-      const onTrack = diff <= 0;
-      const goalReached = latest <= goal;
-      return { pct, onTrack, lbsLeft, goalReached, msg: goalReached ? "🎉 Goal reached! You did it!" : onTrack ? "↓ On track — keep going!" : "⚠ Weight went up — refocus!" };
-    } else {
-      const pct = (goal - first) > 0 ? Math.min(100, Math.round(((latest - first) / (goal - first)) * 100)) : 0;
-      const lbsLeft = parseFloat((goal - latest).toFixed(1));
-      const onTrack = diff >= 0;
-      const goalReached = latest >= goal;
-      return { pct, onTrack, lbsLeft, goalReached, msg: goalReached ? "🎉 Goal reached! You bulked up!" : onTrack ? "↑ On track — keep eating!" : "⚠ Weight dropped — refocus!" };
-    }
-  };
-  const progress = getProgress();
-  const progressColor = progress.isMaintain ? (progress.inRange ? GREEN : RED) : progress.goalReached ? GREEN : progress.onTrack ? ORANGE : RED;
-
-  // Weekly log
-  const byWeek = [];
-  entries.forEach(e => {
-    const d = new Date(e.date);
-    const ws = new Date(d); ws.setDate(d.getDate() - d.getDay());
-    const key = ws.getFullYear() + "-" + String(ws.getMonth() + 1).padStart(2, "0") + "-" + String(ws.getDate()).padStart(2, "0");
-    const ex = byWeek.find(w => w.key === key);
-    if (ex) { ex.entries.push(e); ex.avg = parseFloat((ex.entries.reduce((s, x) => s + parseFloat(x.weight), 0) / ex.entries.length).toFixed(1)); }
-    else byWeek.push({ key, label: "Week of " + ws.toLocaleDateString("en-US", { month: "short", day: "numeric" }), entries: [e], avg: parseFloat(e.weight) });
-  });
+  const remindCard = notifState !== "unsupported" && (
+    <section className="tfx-card wt-remind">
+      <span className="wt-remind-ico" aria-hidden="true">🔔</span>
+      <div className="wt-remind-txt">
+        <b>Weigh-in reminders</b>
+        <small>{notifState === "enabled" ? "On · Mon & Fri before class" : notifState === "denied" ? "Blocked. Allow notifications for this site in your phone's settings." : "A nudge Mon & Fri before class"}</small>
+      </div>
+      {notifState !== "denied" && (
+        <Switch on={notifState === "enabled"} disabled={notifLoading} label="Weigh-in reminders"
+          onClick={() => (notifState === "enabled" ? disableNotifications() : enableNotifications())} />
+      )}
+    </section>
+  );
 
   return (
-    <div>
-      {/* ── Hero log card ── */}
-      <div style={{ background: BG, borderRadius: 16, padding: "1.5rem", marginBottom: 12, border: "1px solid #222", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg," + GREEN + "," + ORANGE + ")" }} />
+    <div className="tfx wt">
+      <header className="tfx-hb-head">
+        <div>
+          <div className="tfx-eyebrow">Weight</div>
+          <h2>Weigh-in</h2>
+        </div>
+        {streak > 0 && <span className="tfx-hb-streak">🔥 <b className="tfx-num">{streak}</b> in a row</span>}
+      </header>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-          <div style={{ fontSize: 11, color: "#555", textTransform: "uppercase", letterSpacing: "0.1em" }}>⚖️ Weight Tracker</div>
-          {streak > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 5, background: streak >= 7 ? GOLD + "22" : "#1a1a1a", border: "1px solid " + (streak >= 7 ? GOLD + "44" : "#333"), borderRadius: 8, padding: "4px 10px" }}>
-              <span style={{ fontSize: 14 }}>{streak >= 14 ? "🔥" : streak >= 7 ? "⚡" : "📅"}</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: streak >= 7 ? GOLD : "#aaa" }}>{streak}</span>
-              <span style={{ fontSize: 9, color: "#555" }}>in a row</span>
+      {/* ── Hero: number, chart, log ── */}
+      <section className="tfx-card wt-hero">
+        <div className="wt-read">
+          <div>
+            <div className="tfx-eyebrow wt-read-label" suppressHydrationWarning>{shownLabel}</div>
+            <div className="wt-big tfx-num">{shownW != null ? f1(shownW) : "—"}<small>lbs</small></div>
+          </div>
+          {!sp && diff != null && pts.length > 1 && (
+            <div className={"wt-delta " + tone(diff)}>
+              <b className="tfx-num">{diff > 0 ? "▲ " : diff < 0 ? "▼ " : ""}{f1(Math.abs(diff))}</b>
+              <span>since {fmtDay(pts[0].date, { month: "short", day: "numeric" })}</span>
+            </div>
+          )}
+          {sp && scrub > 0 && (
+            <div className={"wt-delta " + tone(sp.w - vis[scrub - 1].w)}>
+              <b className="tfx-num">{sp.w - vis[scrub - 1].w > 0 ? "▲ " : sp.w - vis[scrub - 1].w < 0 ? "▼ " : ""}{f1(Math.abs(sp.w - vis[scrub - 1].w))}</b>
+              <span>vs {fmtDay(vis[scrub - 1].date, { weekday: "short" })}</span>
             </div>
           )}
         </div>
 
-        {entries.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
-            {[
-              { label: "Start", val: first, color: "#555" },
-              { label: "Now", val: latest, color: "#fff" },
-              { label: "Change", val: diff === null ? "—" : (diff > 0 ? "+" : "") + diff, color: diff === null ? "#555" : diff < 0 ? GREEN : diff > 0 ? RED : "#fff" }
-            ].map(s => (
-              <div key={s.label} style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 26, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.val}</div>
-                <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Chart with rolling average */}
-        {weights.length > 1 && (
-          <div style={{ marginBottom: 16 }}>
-            <svg viewBox={`-4 -4 ${chartW + 8} ${chartH + 8}`} style={{ width: "100%", height: 90, overflow: "visible" }}>
+        {xy.length > 1 ? (
+          <div className="wt-chart">
+            <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="wt-svg" aria-label={`Weight chart, ${vis.length} weigh-ins from ${f1(vis[0].w)} to ${f1(vis[vis.length - 1].w)} lbs`}
+              onPointerDown={onScrub} onPointerMove={onScrub} onPointerUp={() => setScrub(null)} onPointerLeave={() => setScrub(null)} onPointerCancel={() => setScrub(null)}>
               <defs>
-                <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={ORANGE} stopOpacity="0.3" />
-                  <stop offset="100%" stopColor={ORANGE} stopOpacity="0" />
+                <linearGradient id="wtArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" className="wt-stop-a" />
+                  <stop offset="100%" className="wt-stop-b" />
                 </linearGradient>
               </defs>
-              <polygon points={`0,${chartH} ${pts} ${chartW},${chartH}`} fill="url(#wg)" />
-              <polyline points={pts} fill="none" stroke={ORANGE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              {/* Rolling average line */}
-              {raWeights.length > 1 && (
-                <polyline points={raPts} fill="none" stroke={GREEN} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3,3" />
+              {gridVals.map((v, i) => (
+                <g key={i}>
+                  <line x1={PL} x2={W - PR} y1={Y(v)} y2={Y(v)} className="wt-grid" />
+                  <text x={PL - 7} y={Y(v) + 3.5} textAnchor="end" className="wt-axis">{v}</text>
+                </g>
+              ))}
+              {goalOnChart && goalMode === "maintain" && (
+                <rect x={PL} width={W - PL - PR} y={Y(goal + MAINTAIN_RANGE)} height={Math.max(1, Y(goal - MAINTAIN_RANGE) - Y(goal + MAINTAIN_RANGE))} className="wt-band" rx="6" />
               )}
-              {weights.map((w, i) => {
-                const x = (i / (Math.max(weights.length - 1, 1))) * chartW;
-                const y = toY(w);
-                const isLast = i === weights.length - 1;
-                return (
-                  <g key={i}>
-                    <circle cx={x} cy={y} r={isLast ? 4 : 2} fill={isLast ? "#fff" : ORANGE} stroke={isLast ? ORANGE : "none"} strokeWidth="2" />
-                    {isLast && <text x={x} y={y - 8} textAnchor="middle" fontSize="9" fill="#fff" fontFamily="Georgia">{w}</text>}
-                  </g>
-                );
-              })}
-              {goal && goalMode !== "maintain" && goal >= chartMin && goal <= chartMax && (
-                <>
-                  <line x1="0" y1={toY(goal)} x2={chartW} y2={toY(goal)} stroke={GOLD} strokeWidth="1.5" strokeDasharray="5,4" />
-                  <text x={chartW + 2} y={toY(goal) + 3} fontSize="8" fill={GOLD} fontFamily="Georgia">goal</text>
-                </>
+              {goalOnChart && (
+                <g>
+                  <line x1={PL} x2={W - PR} y1={Y(goal)} y2={Y(goal)} className="wt-goal" />
+                  <text x={W - PR} y={Y(goal) - 5} textAnchor="end" className="wt-goal-t">{goalMode === "maintain" ? "Target" : "Goal"} {goal}</text>
+                </g>
               )}
-              {goal && goalMode === "maintain" && (
-                <>
-                  {(goal + MAINTAIN_RANGE) <= chartMax && (goal + MAINTAIN_RANGE) >= chartMin && (
-                    <line x1="0" y1={toY(goal + MAINTAIN_RANGE)} x2={chartW} y2={toY(goal + MAINTAIN_RANGE)} stroke={GREEN} strokeWidth="1" strokeDasharray="4,3" opacity="0.6" />
-                  )}
-                  {(goal - MAINTAIN_RANGE) >= chartMin && (goal - MAINTAIN_RANGE) <= chartMax && (
-                    <line x1="0" y1={toY(goal - MAINTAIN_RANGE)} x2={chartW} y2={toY(goal - MAINTAIN_RANGE)} stroke={GREEN} strokeWidth="1" strokeDasharray="4,3" opacity="0.6" />
-                  )}
-                  {goal >= chartMin && goal <= chartMax && (
-                    <line x1="0" y1={toY(goal)} x2={chartW} y2={toY(goal)} stroke={GREEN} strokeWidth="1.5" strokeDasharray="5,4" />
-                  )}
-                  <text x={chartW + 2} y={toY(goal) + 3} fontSize="8" fill={GREEN} fontFamily="Georgia">±3</text>
-                </>
+              <path d={areaPath} fill="url(#wtArea)" className="wt-area" />
+              <path d={trendPath} className="wt-trend" />
+              <path key={"l" + range} d={linePath} className="wt-line" pathLength="1" />
+              {xy.map((p, i) => <circle key={vis[i].date} cx={p.x} cy={p.y} r={i === xy.length - 1 ? 0 : 2.4} className="wt-dot" />)}
+              <circle cx={xy[xy.length - 1].x} cy={xy[xy.length - 1].y} r="9" className="wt-end-halo" />
+              <circle cx={xy[xy.length - 1].x} cy={xy[xy.length - 1].y} r="4.5" className="wt-end" />
+              {sp && (
+                <g>
+                  <line x1={xy[scrub].x} x2={xy[scrub].x} y1={PT - 6} y2={H} className="wt-scrub" />
+                  <circle cx={xy[scrub].x} cy={xy[scrub].y} r="5.5" className="wt-scrub-dot" />
+                </g>
               )}
             </svg>
-            {raWeights.length > 1 && (
-              <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: -4 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 10, height: 2, background: ORANGE, borderRadius: 1 }} /><span style={{ fontSize: 9, color: "#444" }}>Daily</span></div>
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}><div style={{ width: 10, height: 2, background: GREEN, borderRadius: 1 }} /><span style={{ fontSize: 9, color: "#444" }}>7-day avg</span></div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Input */}
-        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
-          <input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} placeholder="Enter lbs..."
-            style={{ flex: 1, minWidth: 0, boxSizing: "border-box", padding: "14px", borderRadius: 10, border: "1px solid #333", fontSize: 18, fontFamily: "Georgia,serif", background: "#1a1a1a", color: "#fff", textAlign: "center" }} />
-          <button onClick={save} disabled={!weight || saving}
-            style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 10, border: "none", background: weight ? "linear-gradient(135deg," + ORANGE + "," + RED + ")" : "#222", color: weight ? "#fff" : "#444", fontSize: 14, fontWeight: 600, cursor: weight ? "pointer" : "not-allowed", fontFamily: "Georgia,serif", minWidth: 80 }}>
-            {saved ? "✓" : saving ? "..." : "Save"}
-          </button>
-        </div>
-        {error && <div style={{ fontSize: 13, color: "#fff", background: RED, borderRadius: 8, padding: "10px 14px", marginBottom: 8, fontWeight: 500 }}>{error}</div>}
-        <div style={{ fontSize: 10, color: "#444", textAlign: "center" }}>Private — only you can see this</div>
-      </div>
-
-      {/* ── Notification card ── */}
-      {notifState !== "unsupported" && (
-        <div style={{ background: "#111", borderRadius: 12, padding: "12px 16px", marginBottom: 12, border: "1px solid #1e1e1e", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, marginBottom: 2 }}>🔔 Weight Reminders</div>
-            <div style={{ fontSize: 10, color: "#555" }}>
-              {notifState === "enabled" ? "Reminders on — Mon & Fri mornings" : notifState === "denied" ? "Blocked — enable in browser settings" : "Get notified Mon & Fri before the workout"}
+            <div className="wt-chart-foot">
+              <span>{fmtDay(vis[0].date, { month: "short", day: "numeric" })}</span>
+              <span className="wt-key"><i className="k-line" />Weigh-ins<i className="k-trend" />2-wk avg</span>
+              <span>{vis[vis.length - 1].date === todayStr ? "Today" : fmtDay(vis[vis.length - 1].date, { month: "short", day: "numeric" })}</span>
             </div>
-          </div>
-          {notifState === "enabled" ? (
-            <button onClick={disableNotifications} disabled={notifLoading}
-              style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #333", background: "#111", color: "#888", fontSize: 11, cursor: "pointer", fontFamily: "Georgia,serif", flexShrink: 0 }}>
-              {notifLoading ? "..." : "Turn off"}
-            </button>
-          ) : notifState === "denied" ? (
-            <div style={{ fontSize: 10, color: "#555", flexShrink: 0 }}>Check browser</div>
-          ) : (
-            <button onClick={enableNotifications} disabled={notifLoading}
-              style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: "linear-gradient(135deg," + PUR + "," + PUR + "aa)", color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "Georgia,serif", flexShrink: 0 }}>
-              {notifLoading ? "..." : "Enable"}
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ── Goal card ── */}
-      <div style={{ background: "#111", borderRadius: 16, padding: "1.25rem", marginBottom: 12, border: "1px solid #222" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: goal ? 12 : 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>🎯 Goal Weight</div>
-          <button onClick={() => setShowGoalInput(!showGoalInput)} style={{ fontSize: 12, color: ORANGE, background: "none", border: "none", cursor: "pointer", fontFamily: "Georgia,serif", fontWeight: 600 }}>{goal ? "Edit" : "Set goal →"}</button>
-        </div>
-        {(showGoalInput || goal) && (
-          <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-            {[{ id: "lose", label: "🔻 Lose" }, { id: "maintain", label: "⚖️ Maintain" }, { id: "gain", label: "📈 Gain" }].map(m => (
-              <button key={m.id} onClick={() => { setGoalMode(m.id); if (goalWeight) persistGoal(goalWeight, m.id); }}
-                style={{ flex: 1, padding: "8px", borderRadius: 8, border: "1px solid " + (goalMode === m.id ? ORANGE+"66" : "#252525"), background: goalMode === m.id ? ORANGE+"18" : "#1a1a1a", color: goalMode === m.id ? ORANGE : "#555", fontSize: 11, fontWeight: goalMode === m.id ? 700 : 400, cursor: "pointer", fontFamily: "Georgia,serif" }}>
-                {m.label}
-              </button>
-            ))}
-          </div>
-        )}
-        {showGoalInput && (
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <input type="text" inputMode="decimal" value={goalWeight} onChange={e => setGoalWeight(e.target.value)} placeholder={goalMode === "lose" ? "Target low (lbs)" : "Target high (lbs)"}
-              style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid #333", fontSize: 14, fontFamily: "Georgia,serif", background: "#1a1a1a", color: "#fff", textAlign: "center" }} />
-            <button onClick={() => saveGoal(goalWeight, goalMode)} style={{ padding: "10px 16px", borderRadius: 8, border: "none", background: ORANGE, color: "#fff", fontSize: 13, cursor: "pointer", fontFamily: "Georgia,serif" }}>Save</button>
-          </div>
-        )}
-        {goal && !showGoalInput && (
-          <div>
-            {progress.msg && (
-              <div style={{ fontSize: 12, fontWeight: 600, color: progressColor, marginBottom: 10, padding: "8px 12px", background: progressColor + "11", borderRadius: 8, border: "1px solid " + progressColor + "33" }}>
-                {progress.msg}
-              </div>
-            )}
-            {progress.isMaintain && (
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: "#1a1a1a", borderRadius: 10, border: "0.5px solid #252525" }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>{goal}</div>
-                    <div style={{ fontSize: 9, color: "#555" }}>target lbs</div>
-                  </div>
-                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: "#1a1a1a", borderRadius: 10, border: "0.5px solid #252525" }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: "#888" }}>{goal - MAINTAIN_RANGE}–{goal + MAINTAIN_RANGE}</div>
-                    <div style={{ fontSize: 9, color: "#555" }}>±3 lb zone</div>
-                  </div>
-                  <div style={{ flex: 1, textAlign: "center", padding: "10px", background: progress.stabilityPct >= 80 ? GREEN + "11" : "#1a1a1a", borderRadius: 10, border: "0.5px solid " + (progress.stabilityPct >= 80 ? GREEN + "33" : "#252525") }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: progress.stabilityPct >= 80 ? GREEN : "#fff" }}>{progress.stabilityPct}%</div>
-                    <div style={{ fontSize: 9, color: "#555" }}>in range (14d)</div>
-                  </div>
-                </div>
-                <div style={{ height: 6, background: "#1a1a1a", borderRadius: 3, overflow: "hidden" }}>
-                  <div style={{ width: progress.stabilityPct + "%", height: "100%", background: "linear-gradient(90deg," + GREEN + "," + GREEN + "88)", borderRadius: 3 }} />
-                </div>
-              </div>
-            )}
-            {predictedDate && !progress.goalReached && !progress.isMaintain && (
-              <div style={{ fontSize: 11, color: "#aaa", marginBottom: 10, padding: "7px 12px", background: "#1a1a1a", borderRadius: 8, border: "0.5px solid #252525", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ color: "#555" }}>📅 At your current rate:</span>
-                <span style={{ fontWeight: 700, color: "#fff" }}>{predictedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
-              </div>
-            )}
-            {!progress.isMaintain && (
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
-              <div style={{ position: "relative", width: 72, height: 72, flexShrink: 0 }}>
-                <svg viewBox="0 0 72 72" style={{ width: 72, height: 72, transform: "rotate(-90deg)" }}>
-                  <circle cx="36" cy="36" r="30" fill="none" stroke="#222" strokeWidth="7" />
-                  <circle cx="36" cy="36" r="30" fill="none" stroke={progressColor} strokeWidth="7"
-                    strokeDasharray={`${Math.min(progress.pct, 100) * 1.885} 188.5`} strokeLinecap="round"
-                    style={{ filter: `drop-shadow(0 0 6px ${progressColor}88)` }} />
-                </svg>
-                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                  <div style={{ fontSize: 14, fontWeight: 900, color: progressColor, lineHeight: 1 }}>{Math.min(progress.pct, 100)}</div>
-                  <div style={{ fontSize: 9, color: "#555" }}>%</div>
-                </div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 8 }}>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>{latest || 0}</div><div style={{ fontSize: 9, color: "#555" }}>current</div></div>
-                  <div style={{ color: "#333" }}>→</div>
-                  <div style={{ textAlign: "center" }}><div style={{ fontSize: 20, fontWeight: 800, color: progressColor }}>{goal}</div><div style={{ fontSize: 9, color: "#555" }}>{goalMode === "lose" ? "goal (low)" : "goal (high)"}</div></div>
-                </div>
-                <div style={{ height: 8, background: "#1a1a1a", borderRadius: 4, overflow: "visible", position: "relative" }}>
-                  <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: Math.min(progress.pct, 100) + "%", background: `linear-gradient(90deg,${progressColor},${progressColor}99)`, borderRadius: 4, boxShadow: `0 0 8px ${progressColor}66` }} />
-                  <div style={{ position: "absolute", top: "50%", left: Math.min(progress.pct, 100) + "%", transform: "translate(-50%,-50%)", width: 16, height: 16, borderRadius: "50%", background: progressColor, border: "2px solid #111", boxShadow: `0 0 8px ${progressColor}` }} />
-                </div>
-                {!progress.goalReached && progress.lbsLeft != null && (
-                  <div style={{ fontSize: 11, color: "#555", marginTop: 6, textAlign: "center" }}>{Math.abs(progress.lbsLeft)} lbs to go</div>
-                )}
-              </div>
-            </div>
-            )}
-          </div>
-        )}
-        {!goal && !showGoalInput && <div style={{ fontSize: 12, color: "#555", marginTop: 4 }}>Set a target and track your progress.</div>}
-      </div>
-
-      {/* ── Mon/Fri weigh-in consistency grid ── */}
-      {entries.length > 0 && (()=>{
-        const logged = calDots.mon.filter(d=>d.logged).length + calDots.fri.filter(d=>d.logged).length;
-        const pct = Math.round((logged/20)*100);
-        return(
-        <div style={{ background:"#0f0f0f", borderRadius:16, marginBottom:12, overflow:"hidden", border:"1px solid #1e1e1e", position:"relative" }}>
-          <div style={{ height:3, background:"linear-gradient(90deg,"+GREEN+","+GREEN+"66,transparent)" }}/>
-          <div style={{ position:"absolute", top:0, right:0, bottom:0, width:"35%", background:"radial-gradient(ellipse at right,"+GREEN+"08,transparent 70%)", pointerEvents:"none" }}/>
-          <div style={{ padding:"16px 16px 12px", position:"relative" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:14 }}>
-              <div>
-                <div style={{ fontSize:8, color:GREEN, textTransform:"uppercase", letterSpacing:"0.2em", fontWeight:900, marginBottom:3 }}>10 Weeks</div>
-                <div style={{ fontSize:17, fontWeight:900, color:"#fff", letterSpacing:"-0.02em" }}>Weigh-In Log</div>
-                <div style={{ fontSize:10, color:"#555", marginTop:2 }}>Mon &amp; Fri before the workout</div>
-              </div>
-              <div style={{ textAlign:"center", background:GREEN+"18", border:"1px solid "+GREEN+"33", borderRadius:12, padding:"8px 14px" }}>
-                <div style={{ fontSize:22, fontWeight:900, color:GREEN, lineHeight:1 }}>{logged}<span style={{ fontSize:11, color:GREEN+"88", fontWeight:500 }}>/20</span></div>
-                <div style={{ fontSize:9, color:"#555", marginTop:2, textTransform:"uppercase", letterSpacing:"0.06em" }}>{pct}% hit</div>
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div style={{ height:4, background:"#1a1a1a", borderRadius:2, marginBottom:14, overflow:"hidden" }}>
-              <div style={{ width:pct+"%", height:"100%", background:"linear-gradient(90deg,"+GREEN+","+GREEN+"88)", borderRadius:2, boxShadow:"0 0 8px "+GREEN+"55", transition:"width 0.6s ease" }}/>
-            </div>
-
-            {/* Grid rows */}
-            {[{ label:"Mon", dots:calDots.mon }, { label:"Fri", dots:calDots.fri }].map(row=>(
-              <div key={row.label} style={{ display:"flex", alignItems:"center", gap:4, marginBottom:6 }}>
-                <div style={{ fontSize:9, fontWeight:800, color:"#555", width:24, flexShrink:0, textTransform:"uppercase", letterSpacing:"0.08em" }}>{row.label}</div>
-                {row.dots.map((dot,i)=>(
-                  <div key={i} title={dot.date} style={{ flex:1, height:18, borderRadius:4, minWidth:0,
-                    background: dot.logged ? "linear-gradient(180deg,"+GREEN+"cc,"+GREEN+"88)" : "#1a1a1a",
-                    border:"1px solid "+(dot.logged ? GREEN+"55" : "#1e1e1e"),
-                    boxShadow: dot.logged ? "0 0 8px "+GREEN+"44" : "none",
-                  }}/>
+            {showRanges && (
+              <div className="wt-ranges" role="tablist" aria-label="Chart range">
+                {RANGES.map((r) => (
+                  <button key={r.k} role="tab" aria-selected={range === r.k} className={"wt-range tfx-press" + (range === r.k ? " is-on" : "")} onClick={() => { setRange(r.k); setScrub(null); }}>{r.label}</button>
                 ))}
               </div>
-            ))}
-
-            {streak > 0 && (
-              <div style={{ marginTop:10, display:"flex", alignItems:"center", justifyContent:"flex-end", gap:6 }}>
-                <div style={{ height:1, flex:1, background:"#1a1a1a" }}/>
-                <div style={{ display:"flex", alignItems:"center", gap:5, background: streak>=5 ? GOLD+"18":"#1a1a1a", border:"1px solid "+(streak>=5?GOLD+"44":"#252525"), borderRadius:20, padding:"5px 12px" }}>
-                  <span style={{ fontSize:13 }}>🔥</span>
-                  <span style={{ fontSize:12, fontWeight:800, color:streak>=5?GOLD:"#aaa" }}>{streak}</span>
-                  <span style={{ fontSize:9, color:streak>=5?GOLD+"88":"#555" }}>in a row</span>
-                </div>
-              </div>
             )}
           </div>
-        </div>
-        );
-      })()}
+        ) : loaded && pts.length < 2 ? (
+          <p className="wt-empty">{pts.length === 0 ? "Step on the scale before class on Monday and Friday, then log it here. Your trend line starts after two weigh-ins." : "One more weigh-in and your trend line appears."}</p>
+        ) : null}
 
-      {/* ── Day-of-week insight ── */}
-      {dowAvgs.length >= 3 && (
-        <div style={{ background: "#111", borderRadius: 16, padding: "1.25rem", marginBottom: 12, border: "1px solid #1e1e1e" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 2 }}>📊 Day-of-Week Pattern</div>
-          <div style={{ fontSize: 10, color: "#555", marginBottom: 12 }}>Average weight by day</div>
-          {dowAvgs.map((d, i) => {
-            const isHeaviest = i === 0;
-            const isLightest = i === dowAvgs.length - 1;
-            const range = dowAvgs[0].avg - dowAvgs[dowAvgs.length - 1].avg;
-            const barPct = range > 0 ? ((d.avg - dowAvgs[dowAvgs.length - 1].avg) / range) * 100 : 50;
-            return (
-              <div key={d.day} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <div style={{ width: 30, fontSize: 11, color: isHeaviest ? RED : isLightest ? GREEN : "#555", fontWeight: isHeaviest || isLightest ? 700 : 400 }}>{d.day}</div>
-                <div style={{ flex: 1, height: 6, background: "#1a1a1a", borderRadius: 3, overflow: "hidden" }}>
-                  <div style={{ width: barPct + "%", height: "100%", background: isHeaviest ? RED : isLightest ? GREEN : "#333", borderRadius: 3, boxShadow: (isHeaviest||isLightest) ? "0 0 6px "+(isHeaviest?RED:GREEN)+"66" : "none" }} />
-                </div>
-                <div style={{ width: 40, fontSize: 11, fontWeight: 600, color: isHeaviest ? RED : isLightest ? GREEN : "#888", textAlign: "right" }}>{d.avg}</div>
-                {(isHeaviest || isLightest) && <div style={{ fontSize: 9, color: isHeaviest ? RED : GREEN, width: 44 }}>{isHeaviest ? "heaviest" : "lightest"}</div>}
-              </div>
-            );
-          })}
+        <form className="wt-log" onSubmit={save}>
+          <label className="wt-input">
+            <input type="text" inputMode="decimal" enterKeyHint="done" autoComplete="off" value={weight}
+              onChange={(e) => { setWeight(e.target.value.replace(/[^0-9.]/g, "")); setError(""); }}
+              placeholder={todayEntry ? f1(todayEntry.w) : latest != null ? f1(latest) : "0.0"} aria-label="Today's weight in pounds" />
+            <span>lbs</span>
+          </label>
+          <button type="submit" className={"tfx-btn tfx-press wt-save" + (saved ? " is-saved" : "")} disabled={!weight || saving}>
+            {saved ? "Logged ✓" : saving ? "Saving…" : todayEntry ? "Update" : "Log"}
+          </button>
+        </form>
+        {error && <div className="wt-err" role="alert">{error}</div>}
+        <div className="wt-fine">
+          {todayEntry ? <>Logged today: <b className="tfx-num">{f1(todayEntry.w)}</b>. Logging again replaces it.</> : "Only you and Coach Ant see this."}
         </div>
+      </section>
+
+      {notifState === "idle" && remindCard}
+
+      {/* ── Goal ── */}
+      <section className="tfx-card wt-goalcard">
+        <div className="wt-sec-head">
+          <div className="tfx-eyebrow">Goal</div>
+          {!editingGoal && <button className="wt-link tfx-press" onClick={openGoalEditor}>{goal ? "Edit" : "Set goal"}</button>}
+        </div>
+
+        {editingGoal ? (
+          <div className="wt-goal-form">
+            <div className="wt-seg" role="radiogroup" aria-label="Goal type">
+              {[{ id: "lose", label: "Lose" }, { id: "maintain", label: "Maintain" }, { id: "gain", label: "Gain" }].map((m) => (
+                <button key={m.id} role="radio" aria-checked={modeDraft === m.id} className={"tfx-press" + (modeDraft === m.id ? " is-on" : "")} onClick={() => setModeDraft(m.id)}>{m.label}</button>
+              ))}
+            </div>
+            <label className="wt-input wt-input-sm">
+              <input type="text" inputMode="decimal" value={goalDraft} onChange={(e) => { setGoalDraft(e.target.value.replace(/[^0-9.]/g, "")); setGoalErr(""); }}
+                placeholder={modeDraft === "maintain" ? "Target weight" : modeDraft === "lose" ? "Get down to" : "Build up to"} aria-label="Goal weight in pounds" autoFocus />
+              <span>lbs</span>
+            </label>
+            {goalErr && <div className="wt-err">{goalErr}</div>}
+            <div className="wt-goal-actions">
+              <button className="tfx-btn-ghost tfx-press" onClick={() => setEditingGoal(false)}>Cancel</button>
+              <button className="tfx-btn tfx-press" onClick={saveGoal} disabled={!goalDraft}>Save goal</button>
+            </div>
+          </div>
+        ) : !goal ? (
+          <p className="wt-goal-empty">Pick a target (lose, maintain or gain) and this card tracks your pace toward it.</p>
+        ) : !progress ? (
+          <div className="wt-goal-line"><b className="tfx-num">{goal}</b><span>{goalMode === "maintain" ? "lbs target · log a weigh-in to start tracking" : goalMode === "lose" ? "lbs goal · log a weigh-in to start tracking" : "lbs goal · log a weigh-in to start tracking"}</span></div>
+        ) : progress.maintain ? (
+          <div className={"wt-goal-body " + (progress.inRange ? "is-good" : "is-bad")}>
+            <div className="wt-goal-top">
+              <div><b className="tfx-num">{f1(goal - MAINTAIN_RANGE)}–{f1(goal + MAINTAIN_RANGE)}</b><span>Maintain zone</span></div>
+              <span className="wt-pill">{progress.inRange ? "In the zone" : `${f1(Math.abs(progress.dev))} lbs ${progress.dev > 0 ? "above" : "below"} target`}</span>
+            </div>
+            <div className="wt-bar"><i style={{ "--p": progress.stability / 100 }} /></div>
+            <div className="wt-goal-foot"><span>In the zone on <b className="tfx-num">{progress.stability}%</b> of your last {Math.min(14, pts.length)} weigh-ins</span></div>
+          </div>
+        ) : (
+          <div className={"wt-goal-body " + (progress.reached ? "is-good" : progress.onTrack ? "is-good" : "is-bad")}>
+            <div className="wt-goal-top">
+              <div><b className="tfx-num">{f1(latest)} <em>→</em> {goal}</b><span>{goalMode === "lose" ? "Cutting to" : "Building to"} {goal} lbs</span></div>
+              <span className="wt-pill">{progress.reached ? "Goal reached" : progress.onTrack ? "On track" : "Off pace"}</span>
+            </div>
+            <div className="wt-bar"><i style={{ "--p": progress.pct / 100 }} /><b style={{ "--p": progress.pct / 100 }} /></div>
+            <div className="wt-goal-foot">
+              <span>{progress.reached ? "You hit it. Set the next one." : <><b className="tfx-num">{f1(progress.left)}</b> lbs to go · {progress.pct}% there</>}</span>
+              {predictedDate && <span>At this pace: <b>{predictedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</b></span>}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ── Consistency ── */}
+      {pts.length > 0 && (
+        <section className="tfx-card wt-consist">
+          <div className="wt-sec-head">
+            <div>
+              <div className="tfx-eyebrow">Mon &amp; Fri weigh-ins</div>
+              <p className="wt-sub">Last 10 weeks</p>
+            </div>
+            <div className="wt-score"><b className="tfx-num">{hits}</b><span>/{counted.length || 0}</span></div>
+          </div>
+          <div className="wt-grid-wrap">
+            <div className="wt-grid-days" aria-hidden="true"><span>M</span><span>F</span></div>
+            <div className="wt-cells">
+              {cols.map((col, i) => (
+                <div key={i} className="wt-col">
+                  {col.map((c) => <i key={c.key} className={"is-" + c.state} title={fmtDay(c.key) + (c.state === "hit" ? " · logged" : c.state === "miss" ? " · missed" : "")} />)}
+                </div>
+              ))}
+            </div>
+          </div>
+          {insight && <p className="wt-insight">{insight}</p>}
+        </section>
       )}
 
-      {/* ── Weekly log with fluctuation + notes ── */}
-      {byWeek.length > 0 && (
-        <div style={{ background: "#111", borderRadius: 16, padding: "1.25rem", border: "1px solid #1e1e1e" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 12 }}>📋 Weekly Log</div>
-          {[...byWeek].reverse().map((week, wi) => {
-            const prevWeek = [...byWeek].reverse()[wi + 1];
-            const weekDiff = prevWeek ? parseFloat((week.avg - prevWeek.avg).toFixed(1)) : null;
-            const isGoodDir = goalMode === "lose" ? (weekDiff !== null && weekDiff < 0) : (weekDiff !== null && weekDiff > 0);
-            const range = weekRanges[week.key];
-            const spread = range ? parseFloat((range.max - range.min).toFixed(1)) : null;
+      {/* ── History ── */}
+      {weeksDesc.length > 0 && (
+        <section className="tfx-card wt-history">
+          <div className="wt-sec-head"><div className="tfx-eyebrow">History</div></div>
+          {shownWeeks.map((wk) => {
+            const idx = weeks.indexOf(wk);
+            const prev = idx > 0 ? weeks[idx - 1] : null;
+            const wd = prev ? r1(wk.avg - prev.avg) : null;
             return (
-              <div key={wi} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: wi < byWeek.length - 1 ? "0.5px solid #1e1e1e" : "none" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "#ccc" }}>{week.label}</div>
-                    {spread !== null && spread > 0 && (
-                      <div style={{ fontSize: 9, color: "#444", marginTop: 1 }}>{range.min}–{range.max} lbs · {spread} lb spread</div>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{week.avg} lbs</span>
-                    {weekDiff !== null && (
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: isGoodDir ? GREEN+"18" : weekDiff === 0 ? "#1a1a1a" : RED+"18", color: isGoodDir ? GREEN : weekDiff === 0 ? "#555" : RED, border:"1px solid "+(isGoodDir?GREEN+"33":weekDiff===0?"#252525":RED+"33") }}>
-                        {weekDiff > 0 ? "↑ +" : weekDiff < 0 ? "↓ " : "→ "}{Math.abs(weekDiff)}
-                      </span>
-                    )}
-                  </div>
+              <div key={wk.key} className="wt-week">
+                <div className="wt-week-head">
+                  <span>{wk.label}</span>
+                  <span className="wt-week-avg">
+                    <b className="tfx-num">{f1(wk.avg)}</b> avg
+                    {wd != null && <em className={"wt-chg " + tone(wd)}>{wd > 0 ? "▲" : wd < 0 ? "▼" : "•"} {f1(Math.abs(wd))}</em>}
+                  </span>
                 </div>
-                {week.entries.map((e, ei) => (
-                  <div key={ei} style={{ padding: "7px 10px", background: "#1a1a1a", borderRadius: 8, marginBottom: 4, border:"0.5px solid #222" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
-                      <div style={{ fontSize: 12, color: "#555" }}>{new Date(e.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</div>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "#fff" }}>{e.weight} lbs</div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
-                        <button onClick={() => { setEditingNote(e.date); setNoteInput(notes[e.date] || ""); }}
-                          style={{ fontSize: 11, color: notes[e.date] ? ORANGE : "#444", background: "none", border: "none", cursor: "pointer", padding: "0 4px" }}>
-                          {notes[e.date] ? "✏️" : "+ note"}
-                        </button>
-                        {confirmDelete === e.id ? (
+                {[...wk.pts].reverse().map((p) => (
+                  <div key={p.date} className="wt-row">
+                    <div className="wt-row-main">
+                      <span className="wt-row-day">{p.date === todayStr ? "Today" : fmtDay(p.date)}</span>
+                      <b className="tfx-num">{f1(p.w)}</b>
+                      <span className="wt-row-acts">
+                        {confirmDelete === p.id ? (
                           <>
-                            <button onClick={() => deleteEntry(e.id)} disabled={deleting === e.id}
-                              style={{ fontSize: 11, padding: "3px 8px", borderRadius: 5, border: "none", background: RED, color: "#fff", cursor: "pointer", fontFamily: "Georgia,serif" }}>
-                              {deleting === e.id ? "..." : "Delete"}
-                            </button>
-                            <button onClick={() => setConfirmDelete(null)}
-                              style={{ fontSize: 11, padding: "3px 7px", borderRadius: 5, border: "0.5px solid #333", background: "#222", color: "#888", cursor: "pointer", fontFamily: "Georgia,serif" }}>
-                              ✕
-                            </button>
+                            <button className="wt-act is-danger tfx-press" onClick={() => deleteEntry(p.id)} disabled={deleting === p.id}>{deleting === p.id ? "…" : "Delete"}</button>
+                            <button className="wt-act tfx-press" onClick={() => setConfirmDelete(null)}>Keep</button>
                           </>
                         ) : (
-                          <button onClick={() => setConfirmDelete(e.id)}
-                            style={{ fontSize: 12, padding: "3px 8px", borderRadius: 5, border: "0.5px solid "+RED+"44", background: RED+"11", color: RED, cursor: "pointer", fontFamily: "Georgia,serif" }}>
-                            🗑
-                          </button>
+                          <>
+                            <button className="wt-act tfx-press" onClick={() => { setEditingNote(p.date); setNoteInput(notes[p.date] || ""); }}>{notes[p.date] ? "Edit note" : "+ Note"}</button>
+                            <button className="wt-act wt-act-x tfx-press" onClick={() => setConfirmDelete(p.id)} aria-label={"Delete weigh-in on " + fmtDay(p.date)}>✕</button>
+                          </>
                         )}
-                      </div>
+                      </span>
                     </div>
-                    {notes[e.date] && editingNote !== e.date && (
-                      <div style={{ fontSize: 11, color: "#555", marginTop: 4, fontStyle: "italic" }}>"{notes[e.date]}"</div>
-                    )}
-                    {editingNote === e.date && (
-                      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                        <input autoFocus value={noteInput} onChange={ev => setNoteInput(ev.target.value)}
-                          placeholder='e.g. "competition day", "post-travel"'
-                          style={{ flex: 1, padding: "6px 10px", borderRadius: 6, border: "1px solid #333", fontSize: 11, fontFamily: "Georgia,serif", background: "#222", color: "#fff" }} />
-                        <button onClick={() => saveNote(e.date)} disabled={savingNote}
-                          style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: ORANGE, color: "#fff", fontSize: 11, cursor: "pointer", fontFamily: "Georgia,serif" }}>
-                          {savingNote ? "..." : "Save"}
-                        </button>
-                        <button onClick={() => { setEditingNote(null); setNoteInput(""); }}
-                          style={{ padding: "6px 10px", borderRadius: 6, border: "0.5px solid #333", background: "#222", color: "#555", fontSize: 11, cursor: "pointer", fontFamily: "Georgia,serif" }}>
-                          ✕
-                        </button>
-                      </div>
+                    {notes[p.date] && editingNote !== p.date && <p className="wt-note">“{notes[p.date]}”</p>}
+                    {editingNote === p.date && (
+                      <form className="wt-note-form" onSubmit={(e) => { e.preventDefault(); saveNote(p.date); }}>
+                        <input autoFocus className="tfx-field" value={noteInput} onChange={(ev) => setNoteInput(ev.target.value)} placeholder="Game day, post-travel, sick…" aria-label="Note" />
+                        <button type="submit" className="wt-act is-on tfx-press" disabled={savingNote}>{savingNote ? "…" : "Save"}</button>
+                        <button type="button" className="wt-act tfx-press" onClick={() => { setEditingNote(null); setNoteInput(""); }}>Cancel</button>
+                      </form>
                     )}
                   </div>
                 ))}
               </div>
             );
           })}
-        </div>
+          {weeksDesc.length > 3 && (
+            <button className="wt-more tfx-press" onClick={() => setShowAllWeeks((s) => !s)}>{showAllWeeks ? "Show less" : `Show all ${weeksDesc.length} weeks`}</button>
+          )}
+        </section>
       )}
 
-      {entries.length === 0 && !saving && (
-        <EmptyState icon="scale" color={GREEN} title="Start tracking your weight" hint="Log your first entry above and watch your progress build week by week." />
-      )}
+      {notifState !== "idle" && remindCard}
     </div>
   );
 }

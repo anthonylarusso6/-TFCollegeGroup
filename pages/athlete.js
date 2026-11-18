@@ -1683,12 +1683,12 @@ export default function Athlete(){
 
             {tab==="weight"&&(<>
               {postCheckinStep==="weight"&&(
-                <div style={{background:"linear-gradient(135deg,#12210f,#0d1a0b)",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"1px solid "+GREEN+"55",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+                <div className="tfx tfx-card wt-step tfx-rise">
                   <div style={{minWidth:0}}>
-                    <div style={{fontSize:9.5,color:GREEN,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:800,marginBottom:2}}>✓ Checked in · Step 1 of 2</div>
-                    <div style={{fontSize:13.5,fontWeight:700,color:"#fff"}}>Log your weight</div>
+                    <div className="tfx-eyebrow">✓ Checked in · Step 1 of 2</div>
+                    <b>Log your weight</b>
                   </div>
-                  <button onClick={()=>{setPostCheckinStep("habits");slideDirRef.current=0;setTab("habits");}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:"#9a9a9a",border:"1px solid rgba(255,255,255,0.14)",borderRadius:9,padding:"8px 13px",background:"transparent",cursor:"pointer",fontFamily:"Georgia,serif"}}>Skip →</button>
+                  <button className="tfx-btn-ghost tfx-press" onClick={()=>{setPostCheckinStep("habits");slideDirRef.current=0;setTab("habits");}}>Skip →</button>
                 </div>
               )}
               <WeightTracker athleteId={selectedAthlete.id} onWeighed={()=>{setWeightLoggedToday(true);if(postCheckinStep==="weight"){setPostCheckinStep("habits");slideDirRef.current=0;setTimeout(()=>setTab("habits"),650);}}}/>
