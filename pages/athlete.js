@@ -1814,7 +1814,7 @@ export default function Athlete(){
                   </div>
                 );
               })()}
-              <HabitsTab athleteId={selectedAthlete.id}/>
+              <HabitsTab athleteId={selectedAthlete.id} onComplete={()=>setHabitsDoneToday(true)}/>
             </>)}
 
             {tab==="surprise"&&<SurpriseTab athleteName={selectedAthlete.name}/>}

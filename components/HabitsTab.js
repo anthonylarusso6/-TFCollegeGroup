@@ -1,389 +1,225 @@
-import { useState, useEffect } from "react";
-import { GREEN, GOLD } from "../lib/constants";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
+import { pulseMood } from "../lib/ambient";
+import { hSuccess, hTap } from "../lib/haptics";
 
-const BG = "#0f0f0f";
-const CARD = "#111";
+// Ring colors (SVG attributes, not inline styles — unaffected by legacy light-mode rules)
+const WATER = "#22d3ee";
+const FOOD = "#34d399";
+const SLEEP = "#a78bfa";
+const SLEEP_GOAL = 8;
 
-function getEstDate() {
+function estDate(offsetDays = 0) {
   const est = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-  const y = est.getFullYear();
-  const m = String(est.getMonth() + 1).padStart(2, "0");
-  const d = String(est.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  est.setDate(est.getDate() - offsetDays);
+  return est;
 }
-
-function formatDisplayDate(dateStr) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const dt = new Date(y, m - 1, d);
-  return dt.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
-}
-
-function getLast7Days() {
-  const est = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-  const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(est);
-    d.setDate(est.getDate() - i);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    days.push(`${y}-${m}-${day}`);
-  }
-  return days;
-}
-
-function getLast14Days() {
-  const est = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-  const days = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(est);
-    d.setDate(est.getDate() - i);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    days.push(`${y}-${m}-${day}`);
-  }
-  return days;
-}
+const ymd = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const isComplete = (r) => !!r && r.water === true && r.nutrition === true && typeof r.sleep === "number" && r.sleep > 0;
 
 function computeStreak(logMap) {
   let streak = 0;
-  const est = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-  let cursor = new Date(est);
-  while (true) {
-    const y = cursor.getFullYear();
-    const m = String(cursor.getMonth() + 1).padStart(2, "0");
-    const d = String(cursor.getDate()).padStart(2, "0");
-    const dateKey = `${y}-${m}-${d}`;
-    const row = logMap[dateKey];
-    const complete = row && row.water === true && row.nutrition === true && typeof row.sleep === "number" && row.sleep > 0;
-    if (!complete) break;
+  for (let i = 0; i < 400; i++) {
+    if (!isComplete(logMap[ymd(estDate(i))])) break;
     streak++;
-    cursor.setDate(cursor.getDate() - 1);
   }
   return streak;
 }
 
-// Parse an announcements row into a normalized habit object
 function parseRow(row) {
   try {
     const d = JSON.parse(row.message || "{}");
-    return {
-      water: d.water === true,
-      nutrition: d.nutrition === true,
-      sleep: typeof d.sleep === "number" ? d.sleep : null,
-    };
+    return { water: d.water === true, nutrition: d.nutrition === true, sleep: typeof d.sleep === "number" ? d.sleep : null };
   } catch (e) {
     return { water: false, nutrition: false, sleep: null };
   }
 }
 
-export default function HabitsTab({ athleteId }) {
-  const today = getEstDate();
+function Rings({ water, food, sleep, size = 172, stroke = 12, gap = 4 }) {
+  const rings = [
+    { v: water ? 1 : 0, c: WATER },
+    { v: food ? 1 : 0, c: FOOD },
+    { v: Math.min(1, (sleep || 0) / SLEEP_GOAL), c: SLEEP },
+  ];
+  const mid = size / 2;
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} width="100%" height="100%" aria-hidden="true">
+      {rings.map((r, i) => {
+        const rad = mid - stroke / 2 - i * (stroke + gap);
+        const C = 2 * Math.PI * rad;
+        return (
+          <g key={i}>
+            <circle cx={mid} cy={mid} r={rad} fill="none" stroke={r.c} strokeOpacity="0.17" strokeWidth={stroke} />
+            <circle className="tfx-hb-arc" cx={mid} cy={mid} r={rad} fill="none" stroke={r.c} strokeWidth={stroke} strokeLinecap="round"
+              strokeDasharray={C} strokeDashoffset={C * (1 - r.v)} transform={`rotate(-90 ${mid} ${mid})`} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 
+export default function HabitsTab({ athleteId, onComplete }) {
+  const today = ymd(estDate());
   const [logMap, setLogMap] = useState({});
-  const [water, setWater] = useState(null);
-  const [nutrition, setNutrition] = useState(null);
-  const [sleepHours, setSleepHours] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [savedMsg, setSavedMsg] = useState("");
+  const [water, setWater] = useState(false);
+  const [food, setFood] = useState(false);
+  const [sleep, setSleep] = useState(null); // number | null
+  const [status, setStatus] = useState("idle"); // idle | pending | saving | saved | error
   const [loadError, setLoadError] = useState("");
 
-  useEffect(() => {
-    loadHabits();
-  }, [athleteId]);
+  const dirty = useRef(false);
+  const timer = useRef(null);
+  const savingRef = useRef(false);
+  const queued = useRef(false);
+  const latest = useRef({ water: false, food: false, sleep: null });
+  const wasComplete = useRef(false);
 
-  async function loadHabits() {
+  useEffect(() => { load(); }, [athleteId]);
+
+  async function load() {
     setLoadError("");
     try {
-      const oldest = getLast14Days()[0];
-      const { data, error: err } = await supabase
-        .from("announcements")
-        .select("week_label,message")
-        .eq("type", "habit_log")
-        .eq("day", String(athleteId))
-        .gte("week_label", oldest)
-        .order("week_label", { ascending: true });
-
-      if (err) { setLoadError("Could not load habits: " + err.message); return; }
-
+      const oldest = ymd(estDate(60));
+      const { data, error } = await supabase.from("announcements").select("week_label,message")
+        .eq("type", "habit_log").eq("day", String(athleteId)).gte("week_label", oldest).order("week_label", { ascending: true });
+      if (error) { setLoadError("Couldn't load your habits. Pull to refresh or try again."); return; }
       const map = {};
-      (data || []).forEach(row => {
-        map[row.week_label] = parseRow(row);
-      });
+      (data || []).forEach((row) => { map[row.week_label] = parseRow(row); });
       setLogMap(map);
-
-      const todayRow = map[today];
-      if (todayRow) {
-        setWater(todayRow.water === true ? true : null);
-        setNutrition(todayRow.nutrition === true ? true : null);
-        setSleepHours(todayRow.sleep != null ? String(todayRow.sleep) : "");
-      }
+      const t = map[today];
+      if (t) { setWater(t.water); setFood(t.nutrition); setSleep(t.sleep); }
+      wasComplete.current = isComplete(t);
     } catch (e) {
-      setLoadError("Could not load habits.");
+      setLoadError("Couldn't load your habits.");
     }
   }
 
-  async function saveHabits() {
-    if (saving) return;
-    setSaving(true);
-    setSavedMsg("");
+  async function flush() {
+    if (savingRef.current) { queued.current = true; return; }
+    savingRef.current = true;
+    setStatus("saving");
+    const v = latest.current;
+    const payload = { water: v.water === true, nutrition: v.food === true, sleep: typeof v.sleep === "number" ? v.sleep : null };
     try {
-      const payload = {
-        water: water === true,
-        nutrition: nutrition === true,
-        sleep: sleepHours !== "" ? parseFloat(sleepHours) : null,
-      };
-
-      // Delete existing record for this athlete+date, then insert fresh
-      await supabase
-        .from("announcements")
-        .delete()
-        .eq("type", "habit_log")
-        .eq("day", String(athleteId))
-        .eq("week_label", today);
-
-      const { error: err } = await supabase
-        .from("announcements")
-        .insert({
-          type: "habit_log",
-          day: String(athleteId),
-          week_label: today,
-          message: JSON.stringify(payload),
-          active: true,
-        });
-
-      if (err) {
-        setSavedMsg("Error saving: " + err.message);
-      } else {
-        setSavedMsg("Saved!");
-        setLogMap(prev => ({ ...prev, [today]: payload }));
-        setTimeout(() => setSavedMsg(""), 2500);
-      }
+      // Same storage as before: one habit_log row per athlete per day
+      await supabase.from("announcements").delete().eq("type", "habit_log").eq("day", String(athleteId)).eq("week_label", today);
+      const { error } = await supabase.from("announcements").insert({ type: "habit_log", day: String(athleteId), week_label: today, message: JSON.stringify(payload), active: true });
+      if (error) throw error;
+      setLogMap((p) => ({ ...p, [today]: payload }));
+      setStatus("saved");
     } catch (e) {
-      setSavedMsg("Error saving.");
-    } finally {
-      setSaving(false);
+      setStatus("error");
     }
+    savingRef.current = false;
+    if (queued.current) { queued.current = false; flush(); }
   }
 
-  const streak = computeStreak(logMap);
-  const last7 = getLast7Days();
+  // Auto-save shortly after any change the athlete makes
+  useEffect(() => {
+    latest.current = { water, food, sleep };
+    if (!dirty.current) return;
+    setStatus("pending");
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => { timer.current = null; flush(); }, 650);
+    const complete = water && food && typeof sleep === "number" && sleep > 0;
+    if (complete && !wasComplete.current) {
+      pulseMood("celebrate", 2400);
+      hSuccess();
+      onComplete && onComplete();
+    }
+    wasComplete.current = complete;
+  }, [water, food, sleep]);
 
-  const toggleStyle = (active, color) => ({
-    padding: "8px 20px",
-    borderRadius: 20,
-    border: "1px solid " + (active ? color : "#2a2a2a"),
-    background: active ? color + "22" : "transparent",
-    color: active ? color : "#444",
-    fontSize: 13,
-    fontWeight: active ? 800 : 500,
-    cursor: "pointer",
-    fontFamily: "Georgia,serif",
-    transition: "all 0.15s",
-  });
+  // Never lose the last tap when leaving the tab
+  useEffect(() => () => { if (timer.current) { clearTimeout(timer.current); flush(); } }, []);
+
+  const touch = () => { dirty.current = true; };
+  const toggleWater = () => { touch(); hTap(); setWater((w) => !w); };
+  const toggleFood = () => { touch(); hTap(); setFood((f) => !f); };
+  const setSleepVal = (v) => { touch(); setSleep(v); };
+
+  const doneCount = (water ? 1 : 0) + (food ? 1 : 0) + (typeof sleep === "number" && sleep > 0 ? 1 : 0);
+  const shown = { ...logMap, [today]: { water, nutrition: food, sleep } };
+  const streak = computeStreak(shown);
+  const dateLabel = estDate().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+  const statusText = { pending: "Saving…", saving: "Saving…", saved: "Saved ✓", error: "Didn't save — tap again to retry" }[status] || "Saves automatically";
 
   return (
-    <div style={{ background: BG, minHeight: "60vh", fontFamily: "Georgia,serif" }}>
-
-      {/* Header */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-          <div>
-            <div style={{ fontSize: 9, color: GOLD, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 900, marginBottom: 2 }}>Daily Habits</div>
-            <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.02em" }}>{formatDisplayDate(today)}</div>
-          </div>
-          {streak > 0 && (
-            <div style={{ background: GREEN + "18", border: "1px solid " + GREEN + "44", borderRadius: 20, padding: "6px 14px", display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 16 }}>🔥</span>
-              <span style={{ fontSize: 13, fontWeight: 800, color: GREEN }}>{streak}-day streak</span>
-            </div>
-          )}
+    <div className="tfx tfx-hb">
+      <header className="tfx-hb-head">
+        <div>
+          <div className="tfx-eyebrow">Daily habits</div>
+          <h2>{dateLabel}</h2>
         </div>
-        {streak === 0 && (
-          <div style={{ marginTop: 6, fontSize: 11, color: "#555" }}>Complete all three habits to start a streak.</div>
-        )}
+        {streak > 0 && <span className="tfx-hb-streak">🔥 <b className="tfx-num">{streak}</b> day{streak === 1 ? "" : "s"}</span>}
+      </header>
+
+      {loadError && <div className="tfx-card tfx-hb-err">{loadError}</div>}
+
+      <div className={"tfx-card tfx-hb-hero" + (doneCount === 3 ? " is-complete" : "")}>
+        <div className="tfx-hb-dial">
+          <Rings water={water} food={food} sleep={sleep} />
+          <div className="tfx-hb-center">
+            <b className="tfx-num">{doneCount}<i>/3</i></b>
+            <span>{doneCount === 3 ? "All in" : "today"}</span>
+          </div>
+        </div>
+        <ul className="tfx-hb-legend">
+          <li style={{ "--c": WATER }}><i />Water<b>{water ? "Done" : "—"}</b></li>
+          <li style={{ "--c": FOOD }}><i />Nutrition<b>{food ? "Done" : "—"}</b></li>
+          <li style={{ "--c": SLEEP }}><i />Sleep<b className="tfx-num">{typeof sleep === "number" ? sleep + "h" : "—"}</b></li>
+          <li className="tfx-hb-hint">{doneCount === 3 ? (streak > 1 ? streak + " days straight. Keep it alive." : "Streak started. Come back tomorrow.") : "Hit all three to grow your streak."}</li>
+        </ul>
       </div>
 
-      {loadError && (
-        <div style={{ fontSize: 12, color: "#e05", background: "#1a0008", border: "1px solid #500", borderRadius: 10, padding: "10px 14px", marginBottom: 14 }}>{loadError}</div>
-      )}
+      <div className="tfx-hb-list">
+        <button className={"tfx-card tfx-hb-tile tfx-press" + (water ? " is-done" : "")} style={{ "--c": WATER }} onClick={toggleWater} aria-pressed={water}>
+          <span className="tfx-hb-ico" aria-hidden="true">💧</span>
+          <span className="tfx-hb-txt"><b>Water</b><small>{water ? "Hydrated. Nice." : "Tap when you've hit your water"}</small></span>
+          <span className="tfx-hb-check" aria-hidden="true">{water ? "✓" : ""}</span>
+        </button>
+        <button className={"tfx-card tfx-hb-tile tfx-press" + (food ? " is-done" : "")} style={{ "--c": FOOD }} onClick={toggleFood} aria-pressed={food}>
+          <span className="tfx-hb-ico" aria-hidden="true">🥗</span>
+          <span className="tfx-hb-txt"><b>Nutrition</b><small>{food ? "Fueled right." : "Tap when you've eaten well today"}</small></span>
+          <span className="tfx-hb-check" aria-hidden="true">{food ? "✓" : ""}</span>
+        </button>
 
-      {/* Habit cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-
-        {/* Water */}
-        <div style={{ background: CARD, borderRadius: 14, padding: "14px 16px", border: "1px solid #1a1a1a" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 22 }}>💧</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>Water</div>
-                <div style={{ fontSize: 10, color: "#555" }}>Did you drink enough water today?</div>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-              <button onClick={() => setWater(true)} style={toggleStyle(water === true, GREEN)}>Yes</button>
-              <button onClick={() => setWater(false)} style={toggleStyle(water === false, "#c0392b")}>No</button>
-            </div>
+        <div className={"tfx-card tfx-hb-sleep" + (typeof sleep === "number" && sleep > 0 ? " is-done" : "")} style={{ "--c": SLEEP }}>
+          <div className="tfx-hb-sleep-top">
+            <span className="tfx-hb-ico" aria-hidden="true">😴</span>
+            <span className="tfx-hb-txt"><b>Sleep</b><small>Hours last night · goal {SLEEP_GOAL}h</small></span>
+            <span className="tfx-hb-sleepval tfx-num">{typeof sleep === "number" ? <>{sleep}<small>h</small></> : <small className="is-unset">not set</small>}</span>
           </div>
-        </div>
-
-        {/* Nutrition */}
-        <div style={{ background: CARD, borderRadius: 14, padding: "14px 16px", border: "1px solid #1a1a1a" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 22 }}>🥗</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>Nutrition</div>
-                <div style={{ fontSize: 10, color: "#555" }}>Did you eat well today?</div>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-              <button onClick={() => setNutrition(true)} style={toggleStyle(nutrition === true, GREEN)}>Yes</button>
-              <button onClick={() => setNutrition(false)} style={toggleStyle(nutrition === false, "#c0392b")}>No</button>
-            </div>
-          </div>
-        </div>
-
-        {/* Sleep */}
-        <div style={{ background: CARD, borderRadius: 14, padding: "14px 16px", border: "1px solid #1a1a1a" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: 22 }}>😴</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>Sleep</div>
-                <div style={{ fontSize: 10, color: "#555" }}>Hours of sleep last night</div>
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-              <input
-                type="number"
-                min="0"
-                max="12"
-                step="0.5"
-                value={sleepHours}
-                onChange={e => {
-                  const v = e.target.value;
-                  if (v === "" || (parseFloat(v) >= 0 && parseFloat(v) <= 12)) setSleepHours(v);
-                }}
-                placeholder="hrs"
-                style={{
-                  width: 70,
-                  padding: "8px 10px",
-                  borderRadius: 10,
-                  border: "1px solid " + (sleepHours !== "" ? GOLD + "88" : "#2a2a2a"),
-                  background: "#0a0a0a",
-                  color: sleepHours !== "" ? GOLD : "#666",
-                  fontSize: 15,
-                  fontWeight: 800,
-                  fontFamily: "Georgia,serif",
-                  textAlign: "center",
-                  outline: "none",
-                }}
-              />
-              <span style={{ fontSize: 11, color: "#555" }}>/ 12</span>
-            </div>
+          <input type="range" min="0" max="12" step="0.5" className={"tfx-range" + (typeof sleep === "number" ? "" : " is-unset")}
+            value={typeof sleep === "number" ? sleep : 7} style={{ "--p": (typeof sleep === "number" ? sleep : 7) / 12 }}
+            onChange={(e) => setSleepVal(parseFloat(e.target.value))} aria-label="Hours of sleep last night" />
+          <div className="tfx-hb-quick">
+            {[6, 7, 8, 9].map((h) => (
+              <button key={h} className={"tfx-chipbtn tfx-press" + (sleep === h ? " is-on" : "")} onClick={() => { hTap(); setSleepVal(h); }}>{h}h</button>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Save button */}
-      <button
-        onClick={saveHabits}
-        disabled={saving}
-        style={{
-          width: "100%",
-          padding: "13px",
-          borderRadius: 12,
-          border: "none",
-          background: saving ? "#1a1a1a" : "linear-gradient(135deg," + GOLD + "," + GOLD + "aa)",
-          color: saving ? "#444" : "#000",
-          fontSize: 14,
-          fontWeight: 900,
-          cursor: saving ? "default" : "pointer",
-          fontFamily: "Georgia,serif",
-          letterSpacing: "0.04em",
-          marginBottom: 8,
-          transition: "all 0.15s",
-          boxShadow: saving ? "none" : "0 0 20px " + GOLD + "44",
-        }}
-      >
-        {saving ? "Saving…" : "Save Today's Habits"}
-      </button>
+      <div className={"tfx-hb-status is-" + status} aria-live="polite">{statusText}</div>
 
-      {savedMsg && (
-        <div style={{
-          textAlign: "center",
-          fontSize: 13,
-          fontWeight: 700,
-          color: savedMsg.startsWith("Error") ? "#e05" : GREEN,
-          marginBottom: 16,
-          padding: "8px",
-          background: (savedMsg.startsWith("Error") ? "#e05" : GREEN) + "18",
-          borderRadius: 10,
-          border: "0.5px solid " + (savedMsg.startsWith("Error") ? "#e05" : GREEN) + "44",
-        }}>
-          {savedMsg.startsWith("Error") ? savedMsg : "✓ " + savedMsg}
-        </div>
-      )}
-
-      {/* Last 7 days history */}
-      <div style={{ marginTop: 24 }}>
-        <div style={{ fontSize: 9, color: GOLD, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 900, marginBottom: 10 }}>Last 7 Days</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 }}>
-          {last7.map(dateStr => {
-            const row = logMap[dateStr];
-            const isToday = dateStr === today;
-            const [, , dd] = dateStr.split("-");
-            const dayLabel = new Date(...dateStr.split("-").map((v, i) => i === 1 ? Number(v) - 1 : Number(v))).toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1);
-
-            const waterOk = row && row.water === true;
-            const nutritionOk = row && row.nutrition === true;
-            const sleepVal = row && row.sleep != null ? Number(row.sleep) : null;
-            const allDone = waterOk && nutritionOk && sleepVal != null && sleepVal > 0;
-
+      <section className="tfx-card tfx-hb-week">
+        <div className="tfx-eyebrow">Last 7 days</div>
+        <div className="tfx-hb-days">
+          {Array.from({ length: 7 }).map((_, k) => {
+            const d = estDate(6 - k);
+            const key = ymd(d);
+            const r = shown[key];
             return (
-              <div
-                key={dateStr}
-                style={{
-                  background: allDone ? GREEN + "18" : "#111",
-                  border: "1px solid " + (isToday ? GOLD + "66" : allDone ? GREEN + "44" : "#1e1e1e"),
-                  borderRadius: 10,
-                  padding: "8px 4px",
-                  textAlign: "center",
-                  boxShadow: isToday ? "0 0 8px " + GOLD + "33" : "none",
-                }}
-              >
-                <div style={{ fontSize: 9, color: isToday ? GOLD : "#555", fontWeight: isToday ? 800 : 400, marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.05em" }}>{dayLabel}</div>
-                <div style={{ fontSize: 11, color: isToday ? GOLD : "#666", fontWeight: 700, marginBottom: 5 }}>{parseInt(dd, 10)}</div>
-                <div style={{ fontSize: 10, lineHeight: 1.6 }}>
-                  <div style={{ color: waterOk ? GREEN : "#333" }}>{waterOk ? "✓" : "—"}</div>
-                  <div style={{ color: nutritionOk ? GREEN : "#333" }}>{nutritionOk ? "✓" : "—"}</div>
-                  <div style={{ color: sleepVal != null && sleepVal > 0 ? GOLD : "#333", fontSize: 9 }}>
-                    {sleepVal != null && sleepVal > 0 ? sleepVal + "h" : "—"}
-                  </div>
-                </div>
+              <div key={key} className={"tfx-hb-day" + (key === today ? " is-today" : "") + (isComplete(r) ? " is-full" : "")}>
+                <div className="tfx-hb-mini"><Rings water={r?.water} food={r?.nutrition} sleep={r?.sleep} size={44} stroke={5} gap={2} /></div>
+                <span>{d.toLocaleDateString("en-US", { weekday: "narrow" })}</span>
               </div>
             );
           })}
         </div>
-        <div style={{ display: "flex", gap: 14, marginTop: 10, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ fontSize: 10, color: GREEN }}>✓</span>
-            <span style={{ fontSize: 9, color: "#555" }}>💧 Water</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ fontSize: 10, color: GREEN }}>✓</span>
-            <span style={{ fontSize: 9, color: "#555" }}>🥗 Nutrition</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ fontSize: 10, color: GOLD }}>8h</span>
-            <span style={{ fontSize: 9, color: "#555" }}>😴 Sleep hours</span>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }
