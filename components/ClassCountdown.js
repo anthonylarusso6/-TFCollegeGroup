@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { GOLD, RED, GREEN, ORANGE } from "../lib/constants";
+import { loadSeason, seasonStart, seasonEnd, seasonWeeks, fmtSeasonDate } from "../lib/season";
 
 export default function ClassCountdown(){
   const[now,setNow]=useState(null);
+  const[season,setSeason]=useState(null);
+  useEffect(()=>{loadSeason().then(setSeason);},[]);
 
   useEffect(()=>{
     setNow(new Date());
@@ -10,11 +13,12 @@ export default function ClassCountdown(){
     return()=>clearInterval(t);
   },[]);
 
-  if(!now)return null;
+  // Only show the countdown for a season the coach actually set — never a guess.
+  if(!now||!season||!season.explicit)return null;
 
-  const CLASS_START=new Date("2026-05-19T09:00:00");
-  const SEASON_END=new Date("2026-08-11T11:20:00");
-  const TOTAL_WEEKS=12;
+  const CLASS_START=seasonStart(season);
+  const SEASON_END=seasonEnd(season);
+  const TOTAL_WEEKS=seasonWeeks(season);
 
   // Before season
   if(now<CLASS_START){
@@ -35,20 +39,21 @@ export default function ClassCountdown(){
             </div>
           ))}
         </div>
-        <div style={{fontSize:11,color:"#444",marginTop:10}}>May 19, 2026 · 9:00am · Iron sharpens iron</div>
+        <div style={{fontSize:11,color:"#444",marginTop:10}}>{season.label} · starts {fmtSeasonDate(season.start,true)} · Iron sharpens iron</div>
       </div>
     );
   }
 
-  // Season complete
+  // Season complete — celebrate for two weeks, then get out of the way
   if(now>SEASON_END){
+    if(now-SEASON_END>14*86400000)return null;
     return(
       <div style={{background:"linear-gradient(135deg,#0d1f0f,#1a3a1f)",borderRadius:12,padding:"1.5rem",marginBottom:12,border:"1px solid "+GREEN+"44",textAlign:"center",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GREEN+","+GOLD+")"}}/>
         <div style={{fontSize:32,marginBottom:8}}>🏆</div>
         <div style={{fontSize:16,fontWeight:800,color:GREEN,marginBottom:4}}>Season Complete!</div>
-        <div style={{fontSize:12,color:"#888"}}>12 weeks. Iron sharpened iron.</div>
-        <div style={{fontSize:11,color:"#555",marginTop:6}}>May 19 — August 11, 2026</div>
+        <div style={{fontSize:12,color:"#888"}}>{TOTAL_WEEKS} weeks. Iron sharpened iron.</div>
+        <div style={{fontSize:11,color:"#555",marginTop:6}}>{season.label} · {fmtSeasonDate(season.start)} — {fmtSeasonDate(season.end,true)}</div>
       </div>
     );
   }
@@ -76,9 +81,9 @@ export default function ClassCountdown(){
         <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,"+ORANGE+","+GOLD+")",borderRadius:3,transition:"width 0.5s"}}/>
       </div>
       <div style={{display:"flex",justifyContent:"space-between"}}>
-        <div style={{fontSize:9,color:"#444"}}>May 19</div>
+        <div style={{fontSize:9,color:"#444"}}>{fmtSeasonDate(season.start)}</div>
         <div style={{fontSize:9,color:ORANGE,fontWeight:600}}>{pct}% complete</div>
-        <div style={{fontSize:9,color:"#444"}}>Aug 11</div>
+        <div style={{fontSize:9,color:"#444"}}>{fmtSeasonDate(season.end)}</div>
       </div>
     </div>
   );

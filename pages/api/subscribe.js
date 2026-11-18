@@ -10,6 +10,16 @@ export default async function handler(req, res) {
     const { athleteId, subscription } = req.body;
     if (!athleteId || !subscription) return res.status(400).json({ error: "Missing fields" });
     try {
+      // Already on file and active for this athlete? Nothing to do — the client
+      // re-syncs periodically, so this keeps it from churning rows.
+      const endpoint = subscription && subscription.endpoint;
+      if (endpoint) {
+        const { data: existing } = await supabase.from("announcements")
+          .select("id, message").eq("type", "push_sub").eq("day", String(athleteId)).eq("active", true);
+        if ((existing || []).some(r => { try { return JSON.parse(r.message).endpoint === endpoint; } catch (e) { return false; } })) {
+          return res.status(200).json({ ok: true, unchanged: true });
+        }
+      }
       // Deactivate old subscriptions for this athlete
       await supabase.from("announcements").update({ active: false })
         .eq("type", "push_sub").eq("day", String(athleteId));

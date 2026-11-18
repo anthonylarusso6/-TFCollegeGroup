@@ -2,6 +2,19 @@ import { useState, useEffect } from "react";
 import { RED, GREEN, GOLD, ORANGE, PUR } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 import { SkeletonList } from "./Skeleton";
+import { loadSeason, saveSeason, fmtSeasonDate } from "../lib/season";
+
+// How athletes log each lift in the Iron Room (matches PRLog's inputType branches)
+const INPUT_TYPES=[
+  {id:"weight",label:"Weight × reps"},
+  {id:"bodyweight",label:"Complete button"},
+  {id:"weight_yards",label:"Weight × yards"},
+  {id:"kb",label:"Kettlebell"},
+  {id:"band",label:"Band + complete"},
+  {id:"mb",label:"Med ball"},
+  {id:"rsi",label:"RSI value"},
+  {id:"vert_lr",label:"Vertical L / R (in)"},
+];
 
 const DAYS=["Mon","Tue","Thu","Fri"];
 const DAY_LABELS={Mon:"Monday",Tue:"Tuesday",Thu:"Thursday",Fri:"Friday"};
@@ -79,6 +92,14 @@ export default function ProgramUpload(){
   const[currentProgram,setCurrentProgram]=useState(null);
   const[loading,setLoading]=useState(true);
   const[presetLoaded,setPresetLoaded]=useState(false);
+  const[newLift,setNewLift]=useState("");
+  // Season dates (drive the athlete countdown, home-page progress, and season recap)
+  const[season,setSeason]=useState(null);
+  const[sLabel,setSLabel]=useState("");
+  const[sStart,setSStart]=useState("");
+  const[sEnd,setSEnd]=useState("");
+  const[sSaving,setSSaving]=useState(false);
+  const[sMsg,setSMsg]=useState("");
 
   useEffect(()=>{
     (async()=>{
@@ -93,32 +114,50 @@ export default function ProgramUpload(){
           if(p.notes)setNotes(p.notes);
         }
       }catch(e){}
+      try{
+        const ssn=await loadSeason();
+        setSeason(ssn);setSLabel(ssn.label);setSStart(ssn.start);setSEnd(ssn.end);
+      }catch(e){}
       setLoading(false);
     })();
   },[]);
 
-  const toggleLift=(day,liftName,tier)=>{
-    setDays(prev=>{
-      const dayLifts=[...(prev[day]||[])];
-      const exists=dayLifts.findIndex(l=>l.name===liftName);
-      if(exists>=0){
-        dayLifts.splice(exists,1);
-      }else{
-        dayLifts.push({name:liftName,tier:tier||1});
-      }
-      return{...prev,[day]:dayLifts};
-    });
+  const saveSeasonDates=async()=>{
+    setSMsg("");
+    if(!sLabel.trim()||!sStart||!sEnd){setSMsg("Add a name, start date, and end date.");return;}
+    if(sEnd<sStart){setSMsg("End date must be after the start date.");return;}
+    setSSaving(true);
+    try{
+      await saveSeason({label:sLabel.trim(),start:sStart,end:sEnd});
+      setSeason({label:sLabel.trim(),start:sStart,end:sEnd,explicit:true});
+      setSMsg("✓ Season saved — athletes see it now");
+    }catch(e){setSMsg("Save failed: "+(e.message||e));}
+    setSSaving(false);
   };
 
-  const setLiftTier=(day,liftName,tier)=>{
+  // ── Lift editing ──
+  const updateLift=(day,idx,patch)=>{
+    setDays(prev=>{const list=[...(prev[day]||[])];list[idx]={...list[idx],...patch};return{...prev,[day]:list};});
+  };
+  const removeLift=(day,idx)=>{
+    setDays(prev=>{const list=[...(prev[day]||[])];list.splice(idx,1);return{...prev,[day]:list};});
+  };
+  const moveLift=(day,idx,dir)=>{
     setDays(prev=>{
-      const dayLifts=(prev[day]||[]).map(l=>l.name===liftName?{...l,tier}:l);
-      return{...prev,[day]:dayLifts};
+      const list=[...(prev[day]||[])];const j=idx+dir;
+      if(j<0||j>=list.length)return prev;
+      [list[idx],list[j]]=[list[j],list[idx]];
+      return{...prev,[day]:list};
     });
   };
-
-  const isSelected=(day,liftName)=>(days[day]||[]).some(l=>l.name===liftName);
-  const getLiftTier=(day,liftName)=>(days[day]||[]).find(l=>l.name===liftName)?.tier||1;
+  const addLift=(day,name)=>{
+    const n=(name||"").trim();if(!n)return;
+    setDays(prev=>{
+      const list=[...(prev[day]||[])];
+      if(list.some(l=>l.name.toLowerCase()===n.toLowerCase()))return prev;
+      return{...prev,[day]:[...list,{name:n,tier:1,sets:""}]};
+    });
+  };
 
   const copyDayTo=(fromDay,toDay)=>{
     setDays(prev=>({...prev,[toDay]:[...(prev[fromDay]||[])]}));
@@ -129,7 +168,9 @@ export default function ProgramUpload(){
       setSaveErr("Add a phase name and at least one lift.");return;
     }
     setSaving(true);setSaveErr("");
-    const program={phase,days,notes,updatedAt:new Date().toISOString()};
+    const cleanDays={};
+    DAYS.forEach(d=>{cleanDays[d]=(days[d]||[]).filter(l=>(l.name||"").trim()).map(l=>({...l,name:l.name.trim()}));});
+    const program={phase,days:cleanDays,notes,updatedAt:new Date().toISOString()};
     try{
       await supabase.from("announcements").update({active:false}).eq("type","program");
       const{error}=await supabase.from("announcements").insert({type:"program",message:JSON.stringify(program),active:true});
@@ -146,6 +187,29 @@ export default function ProgramUpload(){
 
   return(
     <div>
+      {/* Season dates */}
+      <div style={{background:"rgba(255,255,255,0.045)",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid "+ORANGE+"33"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>🗓 Season dates</div>
+          {season&&<div style={{fontSize:10,fontWeight:700,color:season.explicit?GREEN:"#888",textTransform:"uppercase",letterSpacing:"0.08em"}}>{season.explicit?"Live":"Auto (not set)"}</div>}
+        </div>
+        <div style={{fontSize:11,color:"#888",marginBottom:12,lineHeight:1.5}}>Drives the athletes' countdown, week-by-week progress, and season recap. Until you save dates here, the countdown stays hidden.</div>
+        <input value={sLabel} onChange={e=>setSLabel(e.target.value)} placeholder="e.g. Winter 2026, Spring 2027" style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid rgba(255,255,255,0.1)",fontSize:13,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd",boxSizing:"border-box",marginBottom:8}}/>
+        <div style={{display:"flex",gap:8,marginBottom:10}}>
+          <label style={{flex:1,fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.06em"}}>Start
+            <input type="date" value={sStart} onChange={e=>setSStart(e.target.value)} style={{display:"block",width:"100%",marginTop:4,padding:"9px 10px",borderRadius:8,border:"0.5px solid rgba(255,255,255,0.1)",fontSize:13,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd",boxSizing:"border-box"}}/>
+          </label>
+          <label style={{flex:1,fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.06em"}}>End
+            <input type="date" value={sEnd} onChange={e=>setSEnd(e.target.value)} style={{display:"block",width:"100%",marginTop:4,padding:"9px 10px",borderRadius:8,border:"0.5px solid rgba(255,255,255,0.1)",fontSize:13,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd",boxSizing:"border-box"}}/>
+          </label>
+        </div>
+        {sMsg&&<div style={{fontSize:12,color:sMsg.startsWith("✓")?GREEN:RED,marginBottom:8}}>{sMsg}</div>}
+        <button onClick={saveSeasonDates} disabled={sSaving} style={{width:"100%",padding:"11px",borderRadius:10,border:"none",background:sSaving?"rgba(255,255,255,0.1)":"linear-gradient(135deg,"+ORANGE+","+GOLD+")",color:"#fff",fontSize:13,fontWeight:700,cursor:sSaving?"not-allowed":"pointer",fontFamily:"Georgia,serif"}}>
+          {sSaving?"Saving…":"Save season dates"}
+        </button>
+        {season&&season.explicit&&<div style={{fontSize:10.5,color:"#888",marginTop:8,textAlign:"center"}}>Current: {season.label} · {fmtSeasonDate(season.start)} – {fmtSeasonDate(season.end,true)}</div>}
+      </div>
+
       {/* Current program */}
       {currentProgram&&(
         <div style={{background:"linear-gradient(135deg,#1a1400,#221b00)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid "+GOLD+"33",position:"relative",overflow:"hidden"}}>
@@ -196,34 +260,52 @@ export default function ProgramUpload(){
         ))}
       </div>
 
-      {/* Lift selection */}
+      {/* Lift editor */}
       <div style={{background:"rgba(255,255,255,0.045)",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"1px solid rgba(255,255,255,0.08)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:4}}>{DAY_LABELS[activeDay]} lifts</div>
-        <div style={{fontSize:11,color:"#aaa",marginBottom:12}}>Tap to add. Long-press to set tier.</div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+          <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{DAY_LABELS[activeDay]} lifts</div>
+          {activeDayLifts.length>0&&<button onClick={()=>{if(typeof window==="undefined"||window.confirm("Clear every lift on "+DAY_LABELS[activeDay]+"?"))setDays(p=>({...p,[activeDay]:[]}));}} style={{fontSize:10,padding:"4px 9px",borderRadius:6,border:"0.5px solid "+RED+"55",background:"transparent",color:RED,cursor:"pointer",fontFamily:"Georgia,serif"}}>Clear day</button>}
+        </div>
+        <div style={{fontSize:11,color:"#aaa",marginBottom:12}}>Order = how athletes see them. Tier sets the 1A/2B/3C grouping.</div>
 
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-          {ALL_LIFTS.map((lift,i)=>{
-            const selected=isSelected(activeDay,lift);
-            const tier=getLiftTier(activeDay,lift);
-            const tc=TIER_COLORS[tier];
+        {activeDayLifts.length===0&&<div style={{fontSize:12,color:"#888",fontStyle:"italic",padding:"8px 0 12px"}}>No lifts yet — add one below.</div>}
+
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {activeDayLifts.map((lift,i)=>{
+            const tc=TIER_COLORS[lift.tier]||TIER_COLORS[1];
             return(
-              <div key={i} style={{borderRadius:8,border:"1px solid "+(selected?tc.color:"rgba(255,255,255,0.08)"),background:selected?tc.color+"11":"rgba(255,255,255,0.03)",overflow:"hidden"}}>
-                <button onClick={()=>toggleLift(activeDay,lift,1)} style={{width:"100%",padding:"8px 10px",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",display:"flex",alignItems:"center",gap:6}}>
-                  {selected&&<div style={{width:8,height:8,borderRadius:"50%",background:tc.color,flexShrink:0}}/>}
-                  <span style={{fontSize:11,fontWeight:selected?700:400,color:selected?tc.color:"#888"}}>{lift}</span>
-                </button>
-                {selected&&(
-                  <div style={{display:"flex",borderTop:"0.5px solid "+tc.color+"22"}}>
+              <div key={i} style={{borderRadius:10,border:"1px solid "+tc.color+"44",borderLeft:"3px solid "+tc.color,background:"rgba(255,255,255,0.03)",padding:"10px"}}>
+                <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:7}}>
+                  <input value={lift.name} onChange={e=>updateLift(activeDay,i,{name:e.target.value})} placeholder="Exercise name" style={{flex:1,minWidth:0,padding:"8px 10px",borderRadius:7,border:"0.5px solid rgba(255,255,255,0.12)",fontSize:13,fontWeight:700,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd",boxSizing:"border-box"}}/>
+                  <button onClick={()=>moveLift(activeDay,i,-1)} disabled={i===0} aria-label="Move up" style={{width:28,height:32,borderRadius:7,border:"0.5px solid rgba(255,255,255,0.12)",background:"transparent",color:i===0?"#555":"#bbb",cursor:i===0?"default":"pointer",flexShrink:0}}>↑</button>
+                  <button onClick={()=>moveLift(activeDay,i,1)} disabled={i===activeDayLifts.length-1} aria-label="Move down" style={{width:28,height:32,borderRadius:7,border:"0.5px solid rgba(255,255,255,0.12)",background:"transparent",color:i===activeDayLifts.length-1?"#555":"#bbb",cursor:i===activeDayLifts.length-1?"default":"pointer",flexShrink:0}}>↓</button>
+                  <button onClick={()=>removeLift(activeDay,i)} aria-label="Remove lift" style={{width:28,height:32,borderRadius:7,border:"0.5px solid "+RED+"55",background:"transparent",color:RED,cursor:"pointer",flexShrink:0}}>✕</button>
+                </div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+                  <input value={lift.sets||""} onChange={e=>updateLift(activeDay,i,{sets:e.target.value})} placeholder="Sets × reps (e.g. 4 x 6ea)" style={{flex:"1 1 140px",minWidth:0,padding:"7px 9px",borderRadius:7,border:"0.5px solid rgba(255,255,255,0.12)",fontSize:12,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd",boxSizing:"border-box"}}/>
+                  <div style={{display:"flex",borderRadius:7,overflow:"hidden",border:"0.5px solid rgba(255,255,255,0.12)",flexShrink:0}}>
                     {[1,2,3].map(t=>(
-                      <button key={t} onClick={()=>setLiftTier(activeDay,lift,t)} style={{flex:1,padding:"4px 2px",background:tier===t?TIER_COLORS[t].color:"transparent",border:"none",cursor:"pointer",fontSize:9,fontWeight:700,color:tier===t?"#fff":TIER_COLORS[t].color,fontFamily:"Georgia,serif"}}>
-                        T{t}
-                      </button>
+                      <button key={t} onClick={()=>updateLift(activeDay,i,{tier:t})} style={{padding:"6px 9px",background:lift.tier===t?TIER_COLORS[t].color:"transparent",border:"none",cursor:"pointer",fontSize:10,fontWeight:700,color:lift.tier===t?"#fff":TIER_COLORS[t].color,fontFamily:"Georgia,serif"}}>T{t}</button>
                     ))}
                   </div>
-                )}
+                  <select value={lift.inputType||"weight"} onChange={e=>updateLift(activeDay,i,{inputType:e.target.value==="weight"?undefined:e.target.value})} style={{flex:"1 1 130px",padding:"7px 8px",borderRadius:7,border:"0.5px solid rgba(255,255,255,0.12)",fontSize:12,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd"}}>
+                    {INPUT_TYPES.map(o=><option key={o.id} value={o.id}>{o.label}</option>)}
+                  </select>
+                </div>
               </div>
             );
           })}
+        </div>
+
+        {/* Add a lift */}
+        <div style={{display:"flex",gap:6,marginTop:12}}>
+          <input value={newLift} onChange={e=>setNewLift(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){addLift(activeDay,newLift);setNewLift("");}}} placeholder="Add an exercise…" style={{flex:1,minWidth:0,padding:"10px 12px",borderRadius:8,border:"0.5px solid rgba(255,255,255,0.12)",fontSize:13,fontFamily:"Georgia,serif",background:"rgba(255,255,255,0.05)",color:"#ddd",boxSizing:"border-box"}}/>
+          <button onClick={()=>{addLift(activeDay,newLift);setNewLift("");}} disabled={!newLift.trim()} style={{padding:"10px 16px",borderRadius:8,border:"none",background:newLift.trim()?ORANGE:"rgba(255,255,255,0.08)",color:newLift.trim()?"#fff":"#777",fontSize:13,fontWeight:700,cursor:newLift.trim()?"pointer":"not-allowed",fontFamily:"Georgia,serif",flexShrink:0}}>+ Add</button>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:5,marginTop:10}}>
+          {ALL_LIFTS.filter(l=>!activeDayLifts.some(x=>x.name===l)).map(l=>(
+            <button key={l} onClick={()=>addLift(activeDay,l)} style={{fontSize:10.5,padding:"5px 9px",borderRadius:14,border:"0.5px solid rgba(255,255,255,0.12)",background:"rgba(255,255,255,0.03)",color:"#999",cursor:"pointer",fontFamily:"Georgia,serif"}}>+ {l}</button>
+          ))}
         </div>
       </div>
 

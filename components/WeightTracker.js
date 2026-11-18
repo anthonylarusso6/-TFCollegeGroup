@@ -3,14 +3,9 @@ import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 import EmptyState from "./EmptyState";
 import { hSuccess, hError } from "../lib/haptics";
-const VAPID_KEY = "BObWJUwxM9tPxbrXUhj4JW15F1ngheVLKhqlSiQklDc0LtlPMITMNB1D-jx8ywwEnZfPsYKGCI5EmgCMqfRt2IU";
+import { ensurePushSync } from "../lib/push";
 
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const raw = atob(base64);
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-}
+
 
 const epley = (entries) => {
   const n = entries.length;
@@ -112,13 +107,8 @@ export default function WeightTracker({ athleteId, onWeighed }) {
     const perm = Notification.permission;
     if (perm === "denied") { setNotifState("denied"); return; }
     if (perm === "granted") {
-      try {
-        const reg = await navigator.serviceWorker.getRegistration();
-        if (reg?.active) {
-          const sub = await reg.pushManager.getSubscription();
-          if (sub) { setNotifState("enabled"); return; }
-        }
-      } catch (e) {}
+      // Repairs + re-saves this phone's subscription silently (no prompt).
+      try { const sub = await ensurePushSync(athleteId); if (sub) { setNotifState("enabled"); return; } } catch (e) {}
     }
     setNotifState("idle");
   };
@@ -187,17 +177,8 @@ export default function WeightTracker({ athleteId, onWeighed }) {
       if (perm !== "granted") { setNotifState("denied"); setNotifLoading(false); return; }
       let reg = await navigator.serviceWorker.getRegistration();
       if (!reg) reg = await navigator.serviceWorker.register("/sw.js");
-      reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_KEY),
-      });
-      const resp = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ athleteId, subscription: sub }),
-      });
-      if (!resp.ok) throw new Error("Subscription save failed");
+      const sub = await ensurePushSync(athleteId);
+      if (!sub) throw new Error("Subscription failed");
       setNotifState("enabled");
     } catch (e) { setNotifState("denied"); }
     setNotifLoading(false);

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import { nowEST } from "../lib/dates";
+import { loadSeason, seasonStart, seasonEnd, seasonWeeks } from "../lib/season";
 import Icon from "../components/Icon";
 
 const GOLD="#D4AF37";
@@ -153,17 +154,17 @@ export default function Landing(){
           }catch(e){setForgeLeaders(names.map(n=>({name:n,photo_url:null})));}
         }
       }catch(e){}
-      // Season progress — weeks since May 19
-      const start=new Date("2026-05-19T09:00:00");
-      const nowDate=new Date();
-      const totalWeeks=12;
-      if(nowDate<start){
-        setWeekProgress({current:1,total:totalWeeks,pct:0});
-      }else{
-        const diffWeeks=Math.floor((nowDate-start)/(1000*60*60*24*7));
-        const current=Math.min(diffWeeks+1,totalWeeks);
-        setWeekProgress({current,total:totalWeeks,pct:Math.round((current/totalWeeks)*100)});
-      }
+      // Season progress — only while a coach-set season is actually running
+      try{
+        const season=await loadSeason();
+        const nowDate=new Date();
+        if(season.explicit&&nowDate>=seasonStart(season)&&nowDate<=seasonEnd(season)){
+          const totalWeeks=seasonWeeks(season);
+          const diffWeeks=Math.floor((nowDate-seasonStart(season))/(1000*60*60*24*7));
+          const current=Math.min(diffWeeks+1,totalWeeks);
+          setWeekProgress({current,total:totalWeeks,pct:Math.round((current/totalWeeks)*100),label:season.label});
+        }else setWeekProgress(null);
+      }catch(e){setWeekProgress(null);}
       try{const{data}=await supabase.from("culture_photos").select("*").order("created_at",{ascending:false}).limit(1);if(data&&data[0])setPhoto(data[0]);}catch(e){}
       try{const{data}=await supabase.from("announcements").select("day").eq("type","groupme_link").order("created_at",{ascending:false}).limit(1).maybeSingle();if(data?.day)setGroupmeLink(data.day);}catch(e){}
       try{
@@ -351,7 +352,7 @@ export default function Landing(){
             {[
               {label:"Athletes",val:athleteCount||"—",color:STEEL,icon:"users"},
               {label:"Classes",val:classCount!==null?classCount:"—",color:ORANGE,icon:"calendar"},
-              {label:"Week",val:weekProgress?`${weekProgress.current}/12`:"1/12",color:GOLD,icon:"activity"},
+              {label:"Week",val:weekProgress?`${weekProgress.current}/${weekProgress.total}`:"—",color:GOLD,icon:"activity"},
             ].map((s,i)=>(
               <div key={i} style={{...glass,padding:"13px 8px",textAlign:"center"}}>
                 <div style={{display:"flex",justifyContent:"center",marginBottom:7,opacity:0.85}}><Icon name={s.icon} size={15} color={s.color}/></div>
@@ -365,7 +366,7 @@ export default function Landing(){
           {weekProgress&&(
             <div style={{...glass,padding:"14px 18px",marginBottom:14}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.45)",textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700}}>Season progress</span>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.45)",textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700}}>{weekProgress.label||"Season"} progress</span>
                 <span style={{fontSize:12,fontWeight:700,color:"#5FD08A"}}>Week {weekProgress.current} / {weekProgress.total}</span>
               </div>
               <div style={{height:7,background:"rgba(255,255,255,0.07)",borderRadius:4,overflow:"hidden"}}>

@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { loadSeason, defaultSeason } from "../lib/season";
 
 const GOLD = "#D4AF37", ORANGE = "#E8720C", GREEN = "#3FCB7F", BLUE = "#4DC8F5", PUR = "#9A8CF0", RED = "#E8635B", STEEL = "#8CA0B0";
 const INK = "#fdf6ec"; // warm white, collision-safe against the light-mode text flip
 
-const SEASON_LABEL = "Summer 2026";
-const SEASON_START = "2026-05-19";
 
 // Count a number up from 0 → value on mount (respects reduced motion).
 function CountUp({ value, dur = 950, suffix = "" }) {
@@ -38,11 +37,17 @@ function archetypeFor(s, earlyPct) {
 
 export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
   const [s, setS] = useState(null);
+  // Season the coach set (Coach → Program), else the current academic term.
+  const [season, setSeason] = useState(() => defaultSeason());
+  const SEASON_LABEL = season.label;
 
   useEffect(() => {
     if (!athleteId) return;
     let alive = true;
     (async () => {
+      const ssn = await loadSeason();
+      if (alive) setSeason(ssn);
+      const SEASON_START = ssn.start;
       const out = { sessions: 0, early: 0, late: 0, bestStreak: 0, prs: 0, anvilWins: 0, totalLbs: 0, rankPct: null, cells: [] };
       try {
         const { data } = await supabase.from("attendance").select("status,date").eq("athlete_id", athleteId).gte("date", SEASON_START).order("date", { ascending: true });
@@ -53,7 +58,7 @@ export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
         if (data) out.bestStreak = data.best_streak || 0;
       } catch (e) {}
       try {
-        const { data } = await supabase.from("pr_log").select("weight,reps").eq("athlete_id", athleteId);
+        const { data } = await supabase.from("pr_log").select("weight,reps").eq("athlete_id", athleteId).gte("date", SEASON_START);
         if (data) { out.prs = data.length; out.totalLbs = data.reduce((sum, r) => sum + (Number(r.weight) || 0) * (Number(r.reps) || 1), 0); }
       } catch (e) {}
       try {

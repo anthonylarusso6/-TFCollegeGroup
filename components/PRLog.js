@@ -188,8 +188,8 @@ export default function PRLog({athleteId,gender,onNavigate}){
           } else if(p.lifts){
             const spread={Mon:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Tue:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Thu:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Fri:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3}))};
             setProgram(spread);setPhase(p.phase||"");
-          }else{setProgram(DEFAULT_PROGRAM);setPhase("Summer Phase 2 Workouts");}
-        }else{setProgram(DEFAULT_PROGRAM);setPhase("Summer Phase 2 Workouts");}
+          }else{setProgram(DEFAULT_PROGRAM);setPhase("Current Program");}
+        }else{setProgram(DEFAULT_PROGRAM);setPhase("Current Program");}
       }catch(e){setProgram(DEFAULT_PROGRAM);}
     })();
   },[]);

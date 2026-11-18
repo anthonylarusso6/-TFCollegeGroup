@@ -34,6 +34,7 @@ import { hTap, hSuccess, hError, hCelebrate } from "../lib/haptics";
 
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
+import { ensurePushSync } from "../lib/push";
 
 const LC=["#534AB7","#0F6E56","#854F0B","#993556"];
 const LB=["#EEEDFE","#E1F5EE","#FAEEDA","#FBEAF0"];
@@ -421,17 +422,13 @@ export default function Athlete(){
       const perm=Notification.permission;
       if(perm==="denied"){setNotifCard("denied");return;}
       if(perm==="granted"){
-        try{
-          const reg=await navigator.serviceWorker.getRegistration();
-          if(reg?.active){const sub=await reg.pushManager.getSubscription();if(sub){setNotifCard("enabled");return;}}
-        }catch(e){}
+        // Repairs + re-saves this phone's subscription silently (no prompt).
+        try{const sub=await ensurePushSync(selectedAthlete.id);if(sub){setNotifCard("enabled");return;}}catch(e){}
       }
       setNotifCard("idle");
     })();
   },[selectedAthlete]);
 
-  const VAPID_KEY="BJH-bvrd9uoxQC76SpcJLkipflZHMbuN6ky8htrZ9Itd2-9o_2fqyEDb6WqglLStoE26XIT05CYI2KZ00eHL_XE";
-  function urlB64ToUint8(b){const p="=".repeat((4-(b.length%4))%4);const s=(b+p).replace(/-/g,"+").replace(/_/g,"/");const r=atob(s);return Uint8Array.from([...r].map(c=>c.charCodeAt(0)));}
 
   const enableProfileNotif=async()=>{
     if(!selectedAthlete)return;
@@ -439,10 +436,10 @@ export default function Athlete(){
     try{
       const perm=await Notification.requestPermission();
       if(perm!=="granted"){setNotifCard("denied");setNotifLoading(false);return;}
-      const reg=await navigator.serviceWorker.ready;
-      const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToUint8(VAPID_KEY)});
-      const resp=await fetch("/api/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({athleteId:selectedAthlete.id,subscription:sub})});
-      if(!resp.ok)throw new Error("save failed");
+      let reg=await navigator.serviceWorker.getRegistration();
+      if(!reg)reg=await navigator.serviceWorker.register("/sw.js");
+      const sub=await ensurePushSync(selectedAthlete.id);
+      if(!sub)throw new Error("subscribe failed");
       setNotifCard("enabled");
     }catch(e){setNotifCard("denied");}
     setNotifLoading(false);
