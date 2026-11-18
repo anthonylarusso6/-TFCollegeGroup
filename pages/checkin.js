@@ -1,245 +1,378 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import Icon from "../components/Icon";
 import { hSuccess, hError, hTap } from "../lib/haptics";
+import { setMood } from "../lib/ambient";
+import { loadSeason, isBeforeSeason, firstClassAt, fmtFirstClass, classTimeOn, CLASS_DAYS as CLASS_DOW } from "../lib/season";
 
-const GREEN="#2FA869";
-const GREEN_TXT="#5FD08A";
-const RED="#C0392B";
-const GOLD="#D4AF37";
-const STEEL="#8CA0B0";
-const ORANGE="#E8720C";
-const BG_GRAD="linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)";
+const GREEN = "#30A46C";
+const RED = "#E5484D";
+const GOLD = "#D4AF37";
+const VIOLET = "#8E7CF0";
+const FORGE = "#C0392B";
+const IRON = "#708090";
 
-const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-const CLASS_DAYS=["Mon","Tue","Thu","Fri"];
-const CUTOFFS={Mon:{h:9,m:0},Fri:{h:9,m:0},Tue:{h:9,m:30},Thu:{h:9,m:30}};
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_LONG = { Mon: "Monday", Tue: "Tuesday", Thu: "Thursday", Fri: "Friday" };
+const CLASS_DAYS = ["Mon", "Tue", "Thu", "Fri"];
+const CUTOFFS = { Mon: { h: 9, m: 0 }, Fri: { h: 9, m: 0 }, Tue: { h: 9, m: 30 }, Thu: { h: 9, m: 30 } };
+const AUTO_RETURN_MS = 7000;
 
-export default function CheckIn(){
-  const[athletes,setAthletes]=useState([]);
-  const[search,setSearch]=useState("");
-  const[selected,setSelected]=useState(null);
-  const[done,setDone]=useState(null);
-  const[err,setErr]=useState(null);
-  const[loading,setLoading]=useState(true);
+const estNowDate = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+const ymd = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 
-  useEffect(()=>{
-    (async()=>{
-      try{
-        const{data}=await supabase.from("athletes").select("id,name,photo_url,role").eq("status","active").order("name");
-        setAthletes(data||[]);
-      }catch(e){}
+// Next class start (device time): the season's first class if it hasn't happened,
+// otherwise the next Mon/Tue/Thu/Fri at class time.
+function nextClassAt(season, now = new Date()) {
+  if (isBeforeSeason(season, now)) return firstClassAt(season);
+  const d = new Date(now);
+  for (let i = 0; i < 8; i++) {
+    const day = new Date(d.getFullYear(), d.getMonth(), d.getDate() + i);
+    if (CLASS_DOW.includes(day.getDay())) {
+      const t = classTimeOn(day);
+      if (t > now) return t;
+    }
+  }
+  return null;
+}
+
+function Avatar({ a, cls }) {
+  const col = a.role === "forge" ? FORGE : IRON;
+  return (
+    <div className={cls} style={{ "--c": col }}>
+      {a.photo_url ? <img src={a.photo_url} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : (a.name || "?")[0]}
+    </div>
+  );
+}
+
+export default function CheckIn() {
+  const [athletes, setAthletes] = useState([]);
+  const [todayIn, setTodayIn] = useState([]); // [{athlete_id,status,time_logged}]
+  const [program, setProgram] = useState(null);
+  const [season, setSeason] = useState(null);
+  const [search, setSearch] = useState("");
+  const [busyId, setBusyId] = useState(null);
+  const [done, setDone] = useState(null);
+  const [err, setErr] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tick, setTick] = useState(() => Date.now());
+  const [mounted, setMounted] = useState(false);
+  const returnTimer = useRef(null);
+
+  // Live clock. The page is pre-rendered at build time, so everything that
+  // depends on "now" (class day, late, the clock) renders only on the device.
+  useEffect(() => { setMounted(true); const t = setInterval(() => setTick(Date.now()), 1000); return () => clearInterval(t); }, []);
+
+  const estNow = estNowDate();
+  const day = DAYS[estNow.getDay()];
+  const isClassDay = CLASS_DAYS.includes(day);
+  const today = ymd(estNow);
+  const cut = CUTOFFS[day] || { h: 9, m: 30 };
+  const cutDate = new Date(estNow.getFullYear(), estNow.getMonth(), estNow.getDate(), cut.h, cut.m, 0);
+  const isLate = estNow >= cutDate;
+  const timeStr = estNow.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const cutStr = cutDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).replace(" ", "").toLowerCase();
+
+  const loadToday = async () => {
+    try {
+      const { data } = await supabase.from("attendance").select("athlete_id,status,time_logged").eq("date", ymd(estNowDate()));
+      setTodayIn(data || []);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // Sleeping athletes come back for a new season — they must be able to check in too.
+        const { data } = await supabase.from("athletes").select("id,name,photo_url,role,status").in("status", ["active", "sleeping"]).order("name");
+        setAthletes(data || []);
+      } catch (e) {}
+      await loadToday();
       setLoading(false);
+      try {
+        const { data } = await supabase.from("announcements").select("message").eq("type", "program").eq("active", true).order("created_at", { ascending: false }).limit(1);
+        if (data && data[0]) setProgram(JSON.parse(data[0].message || "{}"));
+      } catch (e) {}
+      try { setSeason(await loadSeason()); } catch (e) {}
     })();
-  },[]);
+    const poll = setInterval(loadToday, 20000); // "who's in" stays live
+    return () => clearInterval(poll);
+  }, []);
 
-  const now=new Date();
-  const estNow=new Date(now.toLocaleString("en-US",{timeZone:"America/New_York"}));
-  const day=DAYS[estNow.getDay()];
-  const isClassDay=CLASS_DAYS.includes(day);
-  const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
-  const cut=CUTOFFS[day]||{h:9,m:30};
-  const isLate=estNow.getHours()>cut.h||(estNow.getHours()===cut.h&&estNow.getMinutes()>=cut.m);
-  const timeStr=estNow.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
+  // Room light follows the moment
+  useEffect(() => {
+    if (err) setMood("late");
+    else if (done) setMood(done.already ? "already" : done.status === "early" ? "early" : "late");
+    else if (isClassDay) setMood(isLate ? "late" : "early");
+    else setMood("base");
+  }, [err, done, isClassDay, isLate]);
 
-  const doCheckin=async(athlete)=>{
-    setSelected(athlete);
-    try{
-      const[attRes,lbRes]=await Promise.all([
-        supabase.from("attendance").select("*").eq("athlete_id",athlete.id).eq("date",today),
-        supabase.from("leaderboard").select("*").eq("athlete_id",athlete.id),
+  useEffect(() => () => { if (returnTimer.current) clearTimeout(returnTimer.current); }, []);
+
+  const reset = () => {
+    if (returnTimer.current) clearTimeout(returnTimer.current);
+    returnTimer.current = null;
+    setDone(null); setErr(null); setBusyId(null); setSearch("");
+  };
+  const scheduleReturn = () => {
+    if (returnTimer.current) clearTimeout(returnTimer.current);
+    returnTimer.current = setTimeout(reset, AUTO_RETURN_MS);
+  };
+
+  const doCheckin = async (athlete) => {
+    if (busyId) return;
+    setBusyId(athlete.id);
+    try {
+      const [attRes, lbRes] = await Promise.all([
+        supabase.from("attendance").select("*").eq("athlete_id", athlete.id).eq("date", today),
+        supabase.from("leaderboard").select("*").eq("athlete_id", athlete.id),
       ]);
-      const existing=attRes.data;
-      const lb=lbRes.data;
-      if(existing&&existing.length>0){
+      const existing = attRes.data;
+      const lb = lbRes.data;
+      if (existing && existing.length > 0) {
         hTap();
-        setDone({already:true,status:existing[0].status,time:existing[0].time_logged,name:athlete.name});
+        setDone({ already: true, status: existing[0].status, time: existing[0].time_logged, name: athlete.name, streak: lb && lb[0] ? lb[0].current_streak || 0 : 0, place: null });
+        scheduleReturn();
         return;
       }
-      const status=isLate?"late":"early";
-      const{error:insErr}=await supabase.from("attendance").insert({
-        athlete_id:athlete.id,date:today,day,status,time_logged:timeStr,
-      });
-      if(insErr){hError();setErr({name:athlete.name});return;}
-      if(status==="early")hSuccess();else hError();
-      // Update leaderboard streak
-      if(lb&&lb.length>0){
-        const updates={};
-        if(status==="early"){
-          const oldStreak=lb[0].current_streak||0;
-          const oldEarly=lb[0].early_count||0;
-          updates.early_count=oldEarly+1;
-          updates.current_streak=oldStreak+1;
-          if(updates.current_streak>(lb[0].best_streak||0))updates.best_streak=updates.current_streak;
-        }else{
-          updates.late_count=(lb[0].late_count||0)+1;
-          updates.current_streak=0;
-        }
-        try{await supabase.from("leaderboard").update(updates).eq("athlete_id",athlete.id);}catch(e){}
-      }else{
-        try{await supabase.from("leaderboard").insert({athlete_id:athlete.id,early_count:status==="early"?1:0,late_count:status==="late"?1:0,current_streak:status==="early"?1:0,best_streak:status==="early"?1:0});}catch(e){}
+      const status = isLate ? "late" : "early";
+      const { error: insErr } = await supabase.from("attendance").insert({ athlete_id: athlete.id, date: today, day, status, time_logged: timeStr });
+      if (insErr) { hError(); setErr({ name: athlete.name }); return; }
+      if (status === "early") hSuccess(); else hError();
+      // A sleeping athlete who shows up is back in the group
+      if (athlete.status === "sleeping") {
+        try { await supabase.from("athletes").update({ status: "active" }).eq("id", athlete.id); } catch (e) {}
+        setAthletes((p) => p.map((x) => (x.id === athlete.id ? { ...x, status: "active" } : x)));
       }
-      setDone({already:false,status,time:timeStr,name:athlete.name});
-    }catch(e){
-      hError();setErr({name:athlete?.name});
+      // Update leaderboard streak (unchanged logic)
+      let streak = 0;
+      if (lb && lb.length > 0) {
+        const updates = {};
+        if (status === "early") {
+          updates.early_count = (lb[0].early_count || 0) + 1;
+          updates.current_streak = (lb[0].current_streak || 0) + 1;
+          if (updates.current_streak > (lb[0].best_streak || 0)) updates.best_streak = updates.current_streak;
+        } else {
+          updates.late_count = (lb[0].late_count || 0) + 1;
+          updates.current_streak = 0;
+        }
+        streak = updates.current_streak;
+        try { await supabase.from("leaderboard").update(updates).eq("athlete_id", athlete.id); } catch (e) {}
+      } else {
+        streak = status === "early" ? 1 : 0;
+        try { await supabase.from("leaderboard").insert({ athlete_id: athlete.id, early_count: status === "early" ? 1 : 0, late_count: status === "late" ? 1 : 0, current_streak: streak, best_streak: streak }); } catch (e) {}
+      }
+      const place = todayIn.length + 1;
+      setTodayIn((p) => [...p, { athlete_id: athlete.id, status, time_logged: timeStr }]);
+      setDone({ already: false, status, time: timeStr, name: athlete.name, streak, place });
+      scheduleReturn();
+    } catch (e) {
+      hError(); setErr({ name: athlete?.name });
+    } finally {
+      setBusyId(null);
     }
   };
 
-  // Failure screen — the check-in did NOT save
-  if(err){
-    return(
+  if (!mounted) return <><Head><title>Check In — TF College Group</title></Head><div className="tfx tfx-ci" /></>;
+
+  // ── Failure: the check-in did NOT save ──────────────────────────────
+  if (err) {
+    return (
       <>
         <Head><title>Check-in failed</title></Head>
-        <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",textAlign:"center",color:"#fff"}}>
-          <div style={{width:100,height:100,borderRadius:"50%",background:RED+"1c",border:"2px solid "+RED+"66",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20,boxShadow:"0 0 40px "+RED+"44"}}>
-            <Icon name="clock" size={46} color={RED}/>
+        <div className="tfx tfx-ci-result" style={{ "--c": RED }}>
+          <div className="tfx-card tfx-ci-penalty" style={{ "--c": RED }}>
+            <b>Didn't save</b>
+            <span>{err.name ? err.name + " — y" : "Y"}our check-in was not recorded. Check the connection and tap your name again.</span>
           </div>
-          <div style={{fontSize:24,fontWeight:900,color:RED,marginBottom:8,letterSpacing:"-0.02em"}}>Check-in didn't go through</div>
-          {err.name&&<div style={{fontSize:17,fontWeight:700,color:"#fff",marginBottom:5}}>{err.name}</div>}
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.45)",marginBottom:26,lineHeight:1.6,maxWidth:300}}>Your check-in was <strong>not</strong> saved. Check your connection and tap your name again.</div>
-          <button onClick={()=>{setErr(null);setSelected(null);setSearch("");}} style={{display:"flex",alignItems:"center",gap:7,padding:"12px 26px",borderRadius:24,border:"1px solid rgba(255,255,255,0.12)",background:"rgba(255,255,255,0.05)",color:"rgba(255,255,255,0.7)",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-            Try again
-          </button>
+          <button className="tfx-btn tfx-press tfx-ci-done" onClick={reset}>Try again</button>
         </div>
       </>
     );
   }
 
-  // Success screen
-  if(done){
-    const isEarly=done.status==="early";
-    const accent=done.already?GOLD:isEarly?GREEN:RED;
-    const icon=done.already?"checkSquare":isEarly?"flame":"clock";
-    return(
+  // ── Result ───────────────────────────────────────────────────────────
+  if (done) {
+    const early = done.status === "early";
+    const c = done.already ? VIOLET : early ? GREEN : RED;
+    return (
       <>
-        <Head><title>Checked In!</title></Head>
-        <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",textAlign:"center",position:"relative",overflow:"hidden",color:"#fff"}}>
-          <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 38%, "+accent+"22, transparent 60%)",pointerEvents:"none"}}/>
-          {isEarly&&!done.already&&(
-            <div style={{position:"absolute",top:"32%",left:"50%",width:0,height:0,pointerEvents:"none",zIndex:2}}>
-              {Array.from({length:16}).map((_,i)=>{
-                const ang=(i/16)*Math.PI*2;const dist=70+((i*37)%60);
-                const cols=[GREEN,GOLD,"#fff"];
-                return <div key={i} style={{position:"absolute",left:Math.cos(ang)*dist,top:Math.sin(ang)*dist*0.6,width:8,height:8,borderRadius:i%3===0?"50%":1,background:cols[i%cols.length],opacity:0,animation:`tfSpark 1.2s ease-out ${0.1+(i%5)*0.06}s both`,boxShadow:`0 0 8px ${cols[i%cols.length]}`}}/>;
+        <Head><title>{done.already ? "Already checked in" : early ? "You're early" : "You're late"}</title></Head>
+        <div className="tfx tfx-ci-result" style={{ "--c": c }} onClick={reset} role="button" aria-label="Back to check-in">
+          {early && !done.already && (
+            <div style={{ position: "absolute", top: "30%", left: "50%", width: 0, height: 0, pointerEvents: "none" }}>
+              {Array.from({ length: 18 }).map((_, i) => {
+                const ang = (i / 18) * Math.PI * 2; const dist = 90 + ((i * 41) % 70);
+                const cols = [GREEN, GOLD, "#bff0d4"];
+                return <span key={i} className="tfx-spark" style={{ left: Math.cos(ang) * dist, top: Math.sin(ang) * dist * 0.65, "--c": cols[i % 3], animationDelay: (0.15 + (i % 6) * 0.05) + "s" }} />;
               })}
             </div>
           )}
-          <div style={{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center"}}>
-            <div className="tf-pop" style={{width:120,height:120,borderRadius:"50%",background:accent+"1c",border:"2px solid "+accent+"66",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:22,boxShadow:"0 0 50px "+accent+"55"}}>
-              <Icon name={icon} size={54} color={accent} style={{filter:"drop-shadow(0 0 12px "+accent+"88)"}}/>
-            </div>
-            <div style={{fontSize:27,fontWeight:900,color:accent,marginBottom:8,letterSpacing:"-0.02em"}}>
-              {done.already?"Already checked in":isEarly?"You're early!":"You're late"}
-            </div>
-            <div style={{fontSize:19,fontWeight:700,color:"#fff",marginBottom:5}}>{done.name}</div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,0.4)",marginBottom:28}}>{done.time} · {day}</div>
-
-            {isEarly&&!done.already&&(
-              <div style={{background:"rgba(47,168,105,0.1)",borderRadius:16,padding:"16px 26px",marginBottom:26,border:"1px solid "+GREEN+"44",maxWidth:300}}>
-                <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:5}}>
-                  <Icon name="anvil" size={16} color={GREEN_TXT}/>
-                  <span style={{fontSize:16,fontWeight:800,color:GREEN_TXT}}>Iron sharpens iron</span>
-                </div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>Early arrival counts toward your streak!</div>
-              </div>
-            )}
-            {!isEarly&&!done.already&&(
-              <div style={{background:"rgba(192,57,43,0.12)",borderRadius:16,padding:"16px 26px",marginBottom:26,border:"1px solid "+RED+"44",maxWidth:300}}>
-                <div style={{fontSize:18,fontWeight:900,color:RED,marginBottom:4}}>50 crunches</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>On time is late. Early is the only standard.</div>
-              </div>
-            )}
-
-            <button onClick={()=>{setDone(null);setSelected(null);setSearch("");}} style={{display:"flex",alignItems:"center",gap:7,padding:"12px 26px",borderRadius:24,border:"1px solid rgba(255,255,255,0.12)",background:"rgba(255,255,255,0.05)",color:"rgba(255,255,255,0.7)",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-              <Icon name="chevronRight" size={13} color="rgba(255,255,255,0.5)" style={{transform:"rotate(180deg)"}}/> Back
-            </button>
+          <svg className="tfx-ci-ring" viewBox="0 0 148 148" aria-hidden="true">
+            <circle className="track" cx="74" cy="74" r="68" fill="none" strokeWidth="6" />
+            <circle className="arc" cx="74" cy="74" r="68" fill="none" strokeWidth="6" strokeLinecap="round" transform="rotate(-90 74 74)" />
+            {early || done.already
+              ? <path className="mark" d="M47 76 L66 94 L102 56" fill="none" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+              : <path className="mark" d="M74 44 L74 78 L96 90" fill="none" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />}
+          </svg>
+          <div className="tfx-ci-verdict tfx-rise">{done.already ? "Already in" : early ? "You're early" : "You're late"}</div>
+          <div className="tfx-ci-who tfx-rise" style={{ animationDelay: "0.08s" }}>{done.name}</div>
+          <div className="tfx-ci-meta tfx-rise" style={{ animationDelay: "0.14s" }}>
+            {done.time} · {DAY_LONG[day] || day}{done.place ? " · #" + done.place + " in today" : ""}
           </div>
+          <div className="tfx-ci-pills tfx-rise" style={{ animationDelay: "0.2s" }}>
+            {early && done.streak > 0 && <span className="tfx-ci-pill">🔥 {done.streak}-day early streak</span>}
+            {early && !done.already && <span className="tfx-ci-pill">⚒ Iron sharpens iron</span>}
+          </div>
+          {!early && !done.already && (
+            <div className="tfx-card tfx-ci-penalty tfx-rise" style={{ "--c": RED, animationDelay: "0.2s" }}>
+              <b>50 crunches</b>
+              <span>On time is late. Early is the only standard.</span>
+            </div>
+          )}
+          <button className="tfx-btn-ghost tfx-press tfx-ci-done" onClick={(e) => { e.stopPropagation(); reset(); }}>Done</button>
+          <div className="tfx-ci-autobar" style={{ "--t": AUTO_RETURN_MS + "ms" }}><i /></div>
         </div>
       </>
     );
   }
 
-  // Not a class day
-  if(!isClassDay){
-    return(
+  // ── Rest day (or before the season starts): count down to the next class ──
+  const preSeason = season && isBeforeSeason(season);
+  if (!isClassDay) {
+    const next = nextClassAt(season);
+    const diff = next ? Math.max(0, next - tick) : 0;
+    const parts = [
+      [Math.floor(diff / 86400000), "Days"],
+      [Math.floor((diff % 86400000) / 3600000), "Hrs"],
+      [Math.floor((diff % 3600000) / 60000), "Min"],
+      [Math.floor((diff % 60000) / 1000), "Sec"],
+    ];
+    return (
       <>
         <Head><title>Check In — TF College Group</title></Head>
-        <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",textAlign:"center",color:"#fff"}}>
-          <div style={{width:84,height:84,borderRadius:"50%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20}}>
-            <Icon name="calendar" size={36} color="rgba(255,255,255,0.4)"/>
-          </div>
-          <div style={{fontSize:20,fontWeight:800,color:"#fff",marginBottom:8,letterSpacing:"-0.01em"}}>No class today</div>
-          <div style={{fontSize:13,color:"rgba(255,255,255,0.4)",lineHeight:1.6}}>Class days are Monday, Tuesday,<br/>Thursday &amp; Friday</div>
+        <div className="tfx tfx-ci-rest">
+          <div className="tfx-eyebrow">{preSeason ? season.label : "No class today"}</div>
+          <h1>{preSeason ? "First class in" : "Next class in"}</h1>
+          {next && (
+            <div className="tfx-ci-count" suppressHydrationWarning>
+              {parts.map(([v, l]) => (
+                <div key={l} className="tfx-card"><b suppressHydrationWarning>{String(v).padStart(2, "0")}</b><span>{l}</span></div>
+              ))}
+            </div>
+          )}
+          {next && (
+            <div className="tfx-ci-when" suppressHydrationWarning>
+              {preSeason ? fmtFirstClass(season) : next.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }) + " · " + next.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+            </div>
+          )}
+          <div className="tfx-ci-note">Class days are Monday, Tuesday, Thursday &amp; Friday</div>
         </div>
       </>
     );
   }
 
-  const filtered=athletes.filter(a=>!search||a.name.toLowerCase().includes(search.toLowerCase()));
+  // ── Class day: the station ──────────────────────────────────────────
+  const inSet = new Set(todayIn.map((r) => String(r.athlete_id)));
+  const byId = Object.fromEntries(athletes.map((a) => [String(a.id), a]));
+  const inAthletes = todayIn.map((r) => byId[String(r.athlete_id)]).filter(Boolean);
+  const earlyCount = todayIn.filter((r) => r.status === "early").length;
+  const q = search.trim().toLowerCase();
+  const list = athletes
+    .filter((a) => !q || a.name.toLowerCase().includes(q))
+    .sort((a, b) => (inSet.has(String(a.id)) - inSet.has(String(b.id))) || a.name.localeCompare(b.name));
 
-  return(
+  // Meter drains over the last hour before the doors close
+  const minsLeft = (cutDate - estNow) / 60000;
+  const meter = Math.max(0, Math.min(1, minsLeft / 60));
+  const minsPast = Math.floor((estNow - cutDate) / 60000);
+  const h12 = ((estNow.getHours() + 11) % 12) + 1;
+  const lifts = (program?.days?.[day] || []).map((l) => l.name).filter(Boolean);
+
+  return (
     <>
       <Head><title>Check In — TF College Group</title></Head>
-      <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia,serif",maxWidth:480,margin:"0 auto",color:"#fff"}}>
-        {/* Header */}
-        <div style={{background:"rgba(10,10,16,0.92)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",padding:"20px 18px 16px",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"sticky",top:0,zIndex:10}}>
-          <div style={{textAlign:"center",marginBottom:14}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:9,marginBottom:7}}>
-              <Icon name="anvil" size={20} color={GOLD}/>
-              <span style={{fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Check In</span>
-            </div>
-            <div style={{display:"inline-flex",alignItems:"center",gap:7,fontSize:11,fontWeight:700,padding:"4px 12px",borderRadius:20,background:isLate?RED+"22":GREEN+"22",border:"1px solid "+(isLate?RED+"44":GREEN+"44"),color:isLate?"#E88":GREEN_TXT}}>
-              <span style={{width:6,height:6,borderRadius:"50%",background:isLate?RED:GREEN,boxShadow:"0 0 8px "+(isLate?RED:GREEN)}}/>
-              {isLate?"Late":"On time"} · {timeStr} · {day}
-            </div>
+      <div className="tfx tfx-ci">
+        <div className="tfx-ci-hero">
+          <div className="tfx-eyebrow tfx-ci-eyebrow"><Icon name="anvil" size={14} color={GOLD} /> Check in · {DAY_LONG[day]}</div>
+          <div className="tfx-ci-clock tfx-num" suppressHydrationWarning>
+            {h12}:{String(estNow.getMinutes()).padStart(2, "0")}
+            <span className="tfx-ci-sec">{String(estNow.getSeconds()).padStart(2, "0")}</span>
+            <small>{estNow.getHours() < 12 ? "AM" : "PM"}</small>
           </div>
-          <div style={{position:"relative"}}>
-            <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",display:"flex",pointerEvents:"none"}}>
-              <Icon name="search" size={16} color="rgba(255,255,255,0.3)"/>
-            </span>
-            <input
-              autoFocus
-              type="search"
-              value={search}
-              onChange={e=>setSearch(e.target.value)}
-              placeholder="Search your name…"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="none"
-              spellCheck={false}
-              style={{width:"100%",padding:"13px 16px 13px 40px",borderRadius:14,border:"1px solid rgba(255,255,255,0.12)",background:"rgba(255,255,255,0.06)",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none",WebkitAppearance:"none"}}
-              onFocus={e=>e.target.style.borderColor="rgba(255,255,255,0.28)"}
-              onBlur={e=>e.target.style.borderColor="rgba(255,255,255,0.12)"}
-            />
+          <div className="tfx-ci-status" style={{ "--c": isLate ? RED : GREEN }} suppressHydrationWarning>
+            <span className="tfx-livedot" style={{ "--c": isLate ? RED : GREEN }} />
+            {isLate
+              ? (minsPast < 1 ? "Late · doors just closed" : "Late · " + minsPast + " min past " + cutStr)
+              : (minsLeft <= 60 ? "On time · " + Math.ceil(minsLeft) + " min until " + cutStr : "On time · doors close " + cutStr)}
+          </div>
+          {!isLate && <div className="tfx-ci-meter"><i style={{ "--p": meter }} /></div>}
+        </div>
+
+        {preSeason && (
+          <div className="tfx-card tfx-ci-banner"><span>🗓</span><span><b>{season.label}</b> starts {fmtFirstClass(season)} — come get a head start.</span></div>
+        )}
+
+        <div className="tfx-ci-row">
+          <div className="tfx-card tfx-ci-whosin tfx-rise">
+            {inAthletes.length > 0 ? (
+              <>
+                <div className="tfx-ci-stack">
+                  {inAthletes.slice(-5).reverse().map((a) => <Avatar key={a.id} a={a} cls="tfx-ci-mini" />)}
+                  {inAthletes.length > 5 && <div className="tfx-ci-mini is-more">+{inAthletes.length - 5}</div>}
+                </div>
+                <div><b>{inAthletes.length}</b> <span className="tfx-eyebrow" style={{ letterSpacing: "0.08em" }}>in today</span><p>{earlyCount} early · {inAthletes.length - earlyCount} late</p></div>
+              </>
+            ) : (
+              <div><b style={{ fontSize: 17 }}>Be the first one in 🔥</b><p>Nobody's checked in yet today.</p></div>
+            )}
+          </div>
+
+          {lifts.length > 0 && (
+            <div className="tfx-card tfx-ci-today tfx-rise" style={{ animationDelay: "0.06s" }}>
+              <div className="tfx-eyebrow">Today in the Iron Room</div>
+              <h3>{program.phase || "Today's session"}</h3>
+              <div className="tfx-ci-chips">
+                {lifts.slice(0, 4).map((n) => <span key={n} className="tfx-ci-chip">{n}</span>)}
+                {lifts.length > 4 && <span className="tfx-ci-chip">+{lifts.length - 4} more</span>}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="tfx-ci-search">
+          <div className="tfx-ci-search-wrap">
+            <span className="tfx-ci-sicon" style={{ left: 16 }}><Icon name="search" size={17} color="currentColor" /></span>
+            <input className="tfx-field" type="search" value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Find your name…" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} aria-label="Find your name" />
           </div>
         </div>
 
-        {/* Athlete list */}
-        <div style={{padding:"14px"}}>
-          {loading?(
-            <div style={{textAlign:"center",padding:"3rem",color:"rgba(255,255,255,0.3)",fontSize:13}}>Loading…</div>
-          ):filtered.length===0?(
-            <div style={{textAlign:"center",padding:"3rem",color:"rgba(255,255,255,0.3)",fontSize:13}}>No athletes found</div>
-          ):filtered.map(a=>{
-            const isForge=a.role==="forge";
-            const col=isForge?RED:STEEL;
-            return(
-            <button key={a.id} onClick={()=>doCheckin(a)} style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"13px 16px",borderRadius:16,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.045)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)",cursor:"pointer",fontFamily:"Georgia,serif",marginBottom:9,textAlign:"left",transition:"border-color 0.15s,background 0.15s"}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor=col+"66";e.currentTarget.style.background="rgba(255,255,255,0.07)";}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(255,255,255,0.08)";e.currentTarget.style.background="rgba(255,255,255,0.045)";}}>
-              <div style={{width:48,height:48,borderRadius:"50%",background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:800,color:"#fff",flexShrink:0,overflow:"hidden",boxShadow:"0 0 16px "+col+"44"}}>
-                {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt="" onError={e=>{e.target.style.display="none";}}/>:a.name[0]}
-              </div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:15,fontWeight:700,color:"#fff"}}>{a.name}</div>
-                <div style={{display:"flex",alignItems:"center",gap:5,marginTop:3}}>
-                  <Icon name={isForge?"flame":"barbell"} size={11} color={col}/>
-                  <span style={{fontSize:11,color:col}}>{isForge?"The Forge":"The Iron"}</span>
+        <div className="tfx-ci-section">
+          <span className="tfx-eyebrow">Tap your name</span>
+          <span className="tfx-eyebrow">A–Z</span>
+        </div>
+
+        <div className="tfx-ci-grid">
+          {loading ? (
+            <div className="tfx-ci-empty">Loading the roster…</div>
+          ) : list.length === 0 ? (
+            <div className="tfx-ci-empty">No one by that name. Try your first name.</div>
+          ) : list.map((a) => {
+            const isIn = inSet.has(String(a.id));
+            const col = a.role === "forge" ? FORGE : IRON;
+            const [first, ...rest] = (a.name || "").split(" ");
+            return (
+              <button key={a.id} className={"tfx-ci-tile tfx-press" + (isIn ? " is-in" : "") + (busyId === a.id ? " is-busy" : "")}
+                style={{ "--c": col }} onClick={() => doCheckin(a)} disabled={!!busyId} aria-label={(isIn ? "Already checked in: " : "Check in ") + a.name}>
+                <div className="tfx-ci-av" style={{ "--c": col }}>
+                  {a.photo_url ? <img src={a.photo_url} alt="" onError={(e) => { e.target.style.display = "none"; }} /> : first[0]}
+                  {isIn && <span className="tfx-ci-badge">✓</span>}
                 </div>
-              </div>
-              <Icon name="chevronRight" size={17} color="rgba(255,255,255,0.25)"/>
-            </button>
+                <div className="tfx-ci-first">{first}</div>
+                <div className="tfx-ci-last">{rest.join(" ") || " "}</div>
+              </button>
             );
           })}
         </div>
