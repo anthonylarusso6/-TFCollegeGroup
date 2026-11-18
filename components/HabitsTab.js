@@ -4,9 +4,9 @@ import { pulseMood } from "../lib/ambient";
 import { hSuccess, hTap } from "../lib/haptics";
 
 // Ring colors (SVG attributes, not inline styles — unaffected by legacy light-mode rules)
-const WATER = "#22d3ee";
-const FOOD = "#34d399";
-const SLEEP = "#a78bfa";
+const WATER = "#6e9cc6"; // dusty blue
+const FOOD = "#82a47c";  // sage
+const SLEEP = "#9a92c6"; // soft lavender
 const SLEEP_GOAL = 8;
 
 function estDate(offsetDays = 0) {

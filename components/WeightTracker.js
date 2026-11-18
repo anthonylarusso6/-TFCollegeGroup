@@ -360,7 +360,7 @@ export default function WeightTracker({ athleteId, onWeighed }) {
     avgs.sort((a, b) => b.avg - a.avg);
     const gap = r1(avgs[0].avg - avgs[avgs.length - 1].avg);
     if (gap < 0.5) return "Rock steady between weigh-in days.";
-    return `On average you weigh ${gap} lbs more on ${avgs[0].day}s than ${avgs[avgs.length - 1].day}s. That's normal water swing, so judge progress by the trend line.`;
+    return `On average you weigh ${f1(gap)} lbs more on ${avgs[0].day}s than ${avgs[avgs.length - 1].day}s. That's normal water swing, so judge progress by the trend line.`;
   })();
 
   // ── Weekly history (Mon–Sun weeks) ────────────────────────────────

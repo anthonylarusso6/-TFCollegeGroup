@@ -10,8 +10,8 @@
   --tx: #f5f2ec;
   --tx2: rgba(245, 242, 236, 0.68);
   --tx3: rgba(245, 242, 236, 0.44);
-  --glass: rgba(16, 14, 20, 0.52);
-  --glass-strong: rgba(13, 11, 17, 0.74);
+  --glass: rgba(16, 14, 20, 0.72);
+  --glass-strong: rgba(13, 11, 17, 0.86);
   --glass-line: rgba(255, 255, 255, 0.09);
   --glass-hi: rgba(255, 255, 255, 0.08);
   --field: rgba(255, 255, 255, 0.055);
@@ -33,8 +33,8 @@ html[data-theme="light"] {
   --tx: #15171c;
   --tx2: rgba(21, 23, 28, 0.66);
   --tx3: rgba(21, 23, 28, 0.46);
-  --glass: rgba(255, 255, 255, 0.6);
-  --glass-strong: rgba(255, 255, 255, 0.84);
+  --glass: rgba(255, 255, 255, 0.8);
+  --glass-strong: rgba(255, 255, 255, 0.92);
   --glass-line: rgba(18, 22, 40, 0.08);
   --glass-hi: rgba(255, 255, 255, 0.95);
   --field: rgba(18, 22, 40, 0.045);
@@ -45,40 +45,40 @@ html[data-theme="light"] {
 
 /* ── Living background ──────────────────────────────────────────────── */
 /* Registered so the palette cross-fades when the mood changes. */
-@property --amb-1 { syntax: "<color>"; inherits: true; initial-value: #e8720c; }
-@property --amb-2 { syntax: "<color>"; inherits: true; initial-value: #d4af37; }
-@property --amb-3 { syntax: "<color>"; inherits: true; initial-value: #5b2a86; }
-@property --amb-4 { syntax: "<color>"; inherits: true; initial-value: #1f4e79; }
-@property --amb-sky { syntax: "<color>"; inherits: true; initial-value: #38bdf8; }
+@property --amb-1 { syntax: "<color>"; inherits: true; initial-value: #a8652a; }
+@property --amb-2 { syntax: "<color>"; inherits: true; initial-value: #9c8a4a; }
+@property --amb-3 { syntax: "<color>"; inherits: true; initial-value: #4a3d63; }
+@property --amb-4 { syntax: "<color>"; inherits: true; initial-value: #2c4058; }
+@property --amb-sky { syntax: "<color>"; inherits: true; initial-value: #4f7f9c; }
 
 html {
-  --amb-o: 0.5;
-  --amb-1: #e8720c; --amb-2: #d4af37; --amb-3: #5b2a86; --amb-4: #1f4e79;
+  --amb-o: 0.26;
+  --amb-1: #a8652a; --amb-2: #9c8a4a; --amb-3: #4a3d63; --amb-4: #2c4058;
   transition: --amb-1 1.6s ease, --amb-2 1.6s ease, --amb-3 1.6s ease, --amb-4 1.6s ease, --amb-sky 3s ease;
 }
-html[data-theme="light"] { --amb-o: 0.3; }
+html[data-theme="light"] { --amb-o: 0.14; }
 
-/* Moods */
-html[data-mood="iron"]      { --amb-1: #ff5a1f; --amb-2: #e8a33c; --amb-3: #8b1a1a; --amb-4: #5a2a10; }
-html[data-mood="habits"]    { --amb-1: #14b8a6; --amb-2: #22d3ee; --amb-3: #4f46e5; --amb-4: #0e7490; }
-html[data-mood="weight"]    { --amb-1: #d4af37; --amb-2: #f59e0b; --amb-3: #16a34a; --amb-4: #7c4a0b; }
-html[data-mood="stretch"]   { --amb-1: #10b981; --amb-2: #34d399; --amb-3: #0ea5e9; --amb-4: #065f46; }
-html[data-mood="goals"]     { --amb-1: #8b5cf6; --amb-2: #d4af37; --amb-3: #ec4899; --amb-4: #312e81; }
-html[data-mood="faith"]     { --amb-1: #6366f1; --amb-2: #a855f7; --amb-3: #d4af37; --amb-4: #1e3a8a; }
-html[data-mood="body"]      { --amb-1: #f43f5e; --amb-2: #fb7185; --amb-3: #64748b; --amb-4: #7f1d1d; }
-html[data-mood="social"]    { --amb-1: #d4af37; --amb-2: #e8720c; --amb-3: #f59e0b; --amb-4: #7c2d12; }
-html[data-mood="callouts"]  { --amb-1: #ef4444; --amb-2: #f59e0b; --amb-3: #7f1d1d; --amb-4: #312e2a; }
-html[data-mood="coach"]     { --amb-1: #3b82f6; --amb-2: #e8720c; --amb-3: #64748b; --amb-4: #1e3a8a; }
-html[data-mood="early"]     { --amb-1: #22c55e; --amb-2: #10b981; --amb-3: #d4af37; --amb-4: #064e3b; }
-html[data-mood="late"]      { --amb-1: #ef4444; --amb-2: #f97316; --amb-3: #7f1d1d; --amb-4: #450a0a; }
-html[data-mood="already"]   { --amb-1: #8b5cf6; --amb-2: #6366f1; --amb-3: #d4af37; --amb-4: #2e1065; }
-html[data-mood="celebrate"] { --amb-1: #facc15; --amb-2: #f59e0b; --amb-3: #fde68a; --amb-4: #e8720c; }
+/* Moods — low-chroma so each screen gets a hint of color, not a filter */
+html[data-mood="iron"]      { --amb-1: #a5502e; --amb-2: #a07a45; --amb-3: #5e2a2a; --amb-4: #4a3222; }
+html[data-mood="habits"]    { --amb-1: #3f7f8f; --amb-2: #5a7fa0; --amb-3: #4b4f7a; --amb-4: #2f4f5a; }
+html[data-mood="weight"]    { --amb-1: #9c8a4a; --amb-2: #a07a45; --amb-3: #4f7a5a; --amb-4: #5a4428; }
+html[data-mood="stretch"]   { --amb-1: #4f8f74; --amb-2: #5f8f80; --amb-3: #3f6f88; --amb-4: #2f5446; }
+html[data-mood="goals"]     { --amb-1: #6a5f96; --amb-2: #9c8a4a; --amb-3: #7a5a70; --amb-4: #35335a; }
+html[data-mood="faith"]     { --amb-1: #5a5f92; --amb-2: #75628f; --amb-3: #9c8a4a; --amb-4: #2c3a5e; }
+html[data-mood="body"]      { --amb-1: #8f5058; --amb-2: #946874; --amb-3: #5f6a78; --amb-4: #4f2a30; }
+html[data-mood="social"]    { --amb-1: #9c8a4a; --amb-2: #a8652a; --amb-3: #a07a45; --amb-4: #5a3422; }
+html[data-mood="callouts"]  { --amb-1: #934a46; --amb-2: #a07a45; --amb-3: #5a2a2a; --amb-4: #3a3430; }
+html[data-mood="coach"]     { --amb-1: #4f6a92; --amb-2: #a8652a; --amb-3: #5f6a78; --amb-4: #2c3a5e; }
+html[data-mood="early"]     { --amb-1: #4f8f68; --amb-2: #4f8577; --amb-3: #9c8a4a; --amb-4: #2f5446; }
+html[data-mood="late"]      { --amb-1: #934a46; --amb-2: #9a603a; --amb-3: #5a2a2a; --amb-4: #3a1e1e; }
+html[data-mood="already"]   { --amb-1: #6a5f96; --amb-2: #5a5f92; --amb-3: #9c8a4a; --amb-4: #352a55; }
+html[data-mood="celebrate"] { --amb-1: #c2a046; --amb-2: #b8863e; --amb-3: #cbb98a; --amb-4: #a8652a; }
 
 /* Time of day tints the sky blob */
-html                       { --amb-sky: #38bdf8; }
-html[data-daypart="dawn"]  { --amb-sky: #fb923c; }
-html[data-daypart="dusk"]  { --amb-sky: #db2777; }
-html[data-daypart="night"] { --amb-sky: #312e81; }
+html                       { --amb-sky: #4f7f9c; }
+html[data-daypart="dawn"]  { --amb-sky: #a8785a; }
+html[data-daypart="dusk"]  { --amb-sky: #85546a; }
+html[data-daypart="night"] { --amb-sky: #33335a; }
 
 .tf-amb {
   position: fixed;
@@ -110,7 +110,7 @@ html[data-daypart="night"] { --amb-sky: #312e81; }
 .tf-amb-b2 { --c: var(--amb-2); top: -22vmax; right: -38vmax; animation-name: tfAmbB; animation-duration: 53s; opacity: calc(var(--amb-o) * 0.8); }
 .tf-amb-b3 { --c: var(--amb-3); bottom: -40vmax; left: -26vmax; animation-name: tfAmbC; animation-duration: 59s; }
 .tf-amb-b4 { --c: var(--amb-4); bottom: -30vmax; right: -34vmax; animation-name: tfAmbA; animation-duration: 67s; animation-delay: -20s; }
-.tf-amb-sky { --c: var(--amb-sky); top: 18vh; left: 10vw; width: 60vmax; height: 60vmax; animation-name: tfAmbB; animation-duration: 74s; animation-delay: -30s; opacity: calc(var(--amb-o) * 0.45); }
+.tf-amb-sky { --c: var(--amb-sky); top: 18vh; left: 10vw; width: 60vmax; height: 60vmax; animation-name: tfAmbB; animation-duration: 74s; animation-delay: -30s; opacity: calc(var(--amb-o) * 0.3); }
 
 @keyframes tfAmbA {
   0%   { transform: translate3d(0, 0, 0) scale(1); }
@@ -131,7 +131,7 @@ html[data-daypart="night"] { --amb-sky: #312e81; }
 .tf-amb-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.5) 100%);
+  background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.35) 100%);
 }
 html[data-theme="light"] .tf-amb-vignette {
   background: radial-gradient(120% 90% at 50% 40%, transparent 60%, rgba(255, 255, 255, 0.45) 100%);
@@ -177,7 +177,7 @@ html:not([data-theme="light"]) :is(
   [style*="background:#131313"], [style*="background: rgb(19, 19, 19)"],
   [style*="background:#141414"], [style*="background: rgb(20, 20, 20)"]
 ):not([style*="position:fixed"]):not([style*="position: fixed"]):not([style*="position:absolute"]):not([style*="position: absolute"]):not([style*="sticky"]) {
-  background: rgba(14, 12, 18, 0.64) !important;
+  background: rgba(14, 12, 18, 0.8) !important;
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -294,7 +294,7 @@ html:not([data-theme="light"]) :is(
 
 /* Result */
 .tfx-ci-result { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 22px; text-align: center; position: relative; overflow: hidden; cursor: pointer; }
-.tfx-ci-ring { width: 148px; height: 148px; margin-bottom: 26px; filter: drop-shadow(0 0 28px color-mix(in srgb, var(--c) 60%, transparent)); }
+.tfx-ci-ring { width: 148px; height: 148px; margin-bottom: 26px; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--c) 28%, transparent)); }
 .tfx-ci-ring circle.track { stroke: color-mix(in srgb, var(--c) 22%, transparent); }
 .tfx-ci-ring circle.arc { stroke: var(--c); stroke-dasharray: 427; stroke-dashoffset: 427; animation: tfxDraw 0.9s var(--ease-out) 0.05s forwards; }
 .tfx-ci-ring path.mark { stroke: var(--c); stroke-dasharray: 90; stroke-dashoffset: 90; animation: tfxDraw 0.5s var(--ease-out) 0.7s forwards; }
@@ -348,7 +348,7 @@ html:not([data-theme="light"]) :is(
 .tfx-goal-dial { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
 .tfx-goal-dial svg { width: 72px; height: 72px; display: block; }
 .tfx-goal-ring .track { stroke: var(--track); }
-.tfx-goal-ring .arc { stroke: var(--c); transition: stroke-dashoffset 0.8s var(--ease-out); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 60%, transparent)); }
+.tfx-goal-ring .arc { stroke: var(--c); transition: stroke-dashoffset 0.8s var(--ease-out); }
 .tfx-goal-ring-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 23px; font-weight: 750; line-height: 1; color: var(--tx); }
 .tfx-goal-ring-num small { display: block; margin-top: 3px; font-size: 9.5px; font-weight: 650; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tx3); }
 .tfx-goal-ring-txt b { display: block; margin-top: 3px; font-family: var(--font-ui); font-size: 16px; font-weight: 650; color: var(--tx); }
@@ -411,7 +411,7 @@ html:not([data-theme="light"]) :is(
 .tfx-hb-txt small { font-family: var(--font-ui); font-size: 13px; color: var(--tx2); }
 .tfx-hb-check { width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-ui); font-weight: 800; font-size: 16px;
   border: 2px solid var(--field-line); color: transparent; transition: all 0.25s var(--spring); }
-.tfx-hb-tile.is-done .tfx-hb-check { background: var(--c); border-color: var(--c); color: #04141a; transform: scale(1.06); box-shadow: 0 0 16px color-mix(in srgb, var(--c) 60%, transparent); }
+.tfx-hb-tile.is-done .tfx-hb-check { background: var(--c); border-color: var(--c); color: #04141a; transform: scale(1.06); box-shadow: 0 0 10px color-mix(in srgb, var(--c) 28%, transparent); }
 
 .tfx-hb-sleep { padding: 16px; }
 .tfx-hb-sleep.is-done { border-color: color-mix(in srgb, var(--c) 50%, transparent); }
