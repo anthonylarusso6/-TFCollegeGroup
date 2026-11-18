@@ -17,7 +17,7 @@ import AttendanceCalendar from "../components/AttendanceCalendar";
 import NotesTab from "../components/NotesTab";
 import DailyWord from "../components/DailyWord";
 import ClassCountdown from "../components/ClassCountdown";
-import GoalsCountdown from "../components/GoalsCountdown";
+import Goals from "../components/Goals";
 import GroupPhotos from "../components/GroupPhotos";
 import AchievementBadges from "../components/AchievementBadges";
 import MCastlesTab from "../components/MCastlesTab";
@@ -105,11 +105,7 @@ export default function Athlete(){
   const[injuryOpen,setInjuryOpen]=useState(false);
   const[injuryText,setInjuryText]=useState("");
   const[injurySent,setInjurySent]=useState(false);
-  const[goalSaved,setGoalSaved]=useState({});
-  const[goalText,setGoalText]=useState({});
   const[painLevel,setPainLevel]=useState(0);
-  const athleticGoalRef=useRef();
-  const characterGoalRef=useRef();
   const[attendance,setAttendance]=useState([]);
   const[streak,setStreak]=useState(0);
   const[athleteLb,setAthleteLb]=useState(null);
@@ -583,7 +579,7 @@ export default function Athlete(){
     setFeedbackText("");setFeedbackSent(false);
     setPrayerText("");setPrayerSent(false);
     setInjuryText("");setInjurySent(false);setInjuryOpen(false);
-    setGoalSaved({});setGoalText({});setMyVote(null);
+    setMyVote(null);
     setTab("profile");setEditingPins(false);slideDirRef.current=0;
     try{
       const s=localStorage.getItem("tf_pinned_"+a.id);
@@ -1556,72 +1552,7 @@ export default function Athlete(){
                   </div>
                 )}
                 {/* ── GOALS ── */}
-                {[
-                  {label:"Athletic Goal",sub:"Physical",question:"What are you chasing this summer?",goalKey:"athletic_goal",taskKey:"coach_athletic_task",color:GREEN,icon:"🎯",placeholder:"Drop my 40 time, add 20 lbs to my squat, make the travel roster…",ref:athleticGoalRef},
-                  {label:"Character Goal",sub:"Who you're becoming",question:"How are you growing as a person?",goalKey:"character_goal",taskKey:"coach_character_task",color:PUR,icon:"⚔️",placeholder:"First one in every day, lead without being asked, own my mistakes fast…",ref:characterGoalRef},
-                ].map(({label,sub,question,goalKey,taskKey,color,icon,placeholder,ref})=>(
-                  <div key={goalKey} style={{borderRadius:20,marginBottom:14,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+color+"33"}}>
-                    {/* Hero banner */}
-                    <div style={{background:"linear-gradient(140deg,"+color+"30,"+color+"10,#0d0d0d)",padding:"20px 18px 16px",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+color+","+color+"44,transparent)"}}/>
-                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>{icon}</div>
-                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+color+"12,transparent 70%)",pointerEvents:"none"}}/>
-                      <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative"}}>
-                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+color+"44,"+color+"22)",border:"1px solid "+color+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+color+"33"}}>{icon}</div>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:8,color:color,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>{sub}</div>
-                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>{label}</div>
-                          <div style={{fontSize:11,color:"#666",marginTop:3}}>{question}</div>
-                        </div>
-                      </div>
-                      {/* Goal display */}
-                      {selectedAthlete[goalKey]&&(
-                        <div style={{marginTop:14,position:"relative"}}>
-                          <div style={{fontSize:9,color:color+"aa",textTransform:"uppercase",letterSpacing:"0.14em",fontWeight:700,marginBottom:5}}>Your goal</div>
-                          <div style={{fontSize:15,fontWeight:700,color:"#fff",lineHeight:1.5,fontStyle:"italic",borderLeft:"3px solid "+color,paddingLeft:12}}>"{selectedAthlete[goalKey]}"</div>
-                        </div>
-                      )}
-                    </div>
-                    {/* Edit area */}
-                    <div style={{background:"#111",padding:"16px"}}>
-                      <div style={{fontSize:10,color:"#444",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8,fontWeight:600}}>{selectedAthlete[goalKey]?"Update your goal":"Set your goal"}</div>
-                      <textarea
-                        ref={ref}
-                        defaultValue={selectedAthlete[goalKey]||""}
-                        onChange={e=>setGoalText(p=>({...p,[goalKey]:e.target.value}))}
-                        placeholder={placeholder}
-                        rows={2}
-                        style={{width:"100%",padding:"12px 14px",fontSize:14,border:"1px solid #2a2a2a",borderRadius:12,background:"#0a0a0a",color:"#fff",fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",lineHeight:1.6,outline:"none",transition:"border-color 0.2s"}}
-                        onFocus={e=>e.target.style.borderColor=color+"88"}
-                        onBlur={e=>e.target.style.borderColor="#2a2a2a"}
-                      />
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginTop:10}}>
-                        <button onClick={async()=>{
-                          const val=ref.current.value.trim();
-                          if(!val)return;
-                          setSelectedAthlete(a=>({...a,[goalKey]:val}));
-                          try{await supabase.from("athletes").update({[goalKey]:val}).eq("id",selectedAthlete.id);}catch(e){}
-                          setGoalSaved(p=>({...p,[goalKey]:true}));
-                          setTimeout(()=>setGoalSaved(p=>({...p,[goalKey]:false})),2500);
-                        }} style={{flex:1,padding:"12px",borderRadius:12,border:"none",background:goalSaved[goalKey]?"linear-gradient(135deg,#0a2a0a,#0d360d)":"linear-gradient(135deg,"+color+","+color+"cc)",color:"#fff",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",boxShadow:goalSaved[goalKey]?"0 0 12px "+GREEN+"44":"0 0 16px "+color+"44",transition:"all 0.25s"}}>
-                          {goalSaved[goalKey]?"✓ Goal saved":"Lock it in →"}
-                        </button>
-                      </div>
-                    </div>
-                    {/* Coach task */}
-                    {selectedAthlete[taskKey]&&(
-                      <div style={{background:"#0a0a0a",padding:"14px 16px",borderTop:"1px solid "+color+"22"}}>
-                        <div style={{display:"flex",alignItems:"center",gap:10}}>
-                          <div style={{width:32,height:32,borderRadius:8,background:color+"18",border:"1px solid "+color+"33",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>⚒</div>
-                          <div style={{flex:1}}>
-                            <div style={{fontSize:9,color:color,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:800,marginBottom:3}}>Task from Coach Ant</div>
-                            <div style={{fontSize:13,color:"#bbb",lineHeight:1.65}}>{selectedAthlete[taskKey]}</div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                <Goals athlete={selectedAthlete} season={seasonInfo} onUpdate={patch=>setSelectedAthlete(x=>({...x,...patch}))}/>
 
                 <a href={groupmeLink} target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",marginBottom:12}}>
                   <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid #00aff033"}}>
@@ -1765,7 +1696,7 @@ export default function Athlete(){
 
             {tab==="body"&&<InjuryBodyMap athleteId={selectedAthlete.id}/>}
 
-            {tab==="goals"&&<GoalsCountdown athlete={selectedAthlete}/>}
+            {tab==="goals"&&<Goals athlete={selectedAthlete} season={seasonInfo} onUpdate={patch=>setSelectedAthlete(x=>({...x,...patch}))}/>}
 
             {tab==="verse"&&<VerseOfDay/>}
 

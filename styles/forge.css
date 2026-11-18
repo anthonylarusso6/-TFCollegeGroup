@@ -324,3 +324,54 @@ html:not([data-theme="light"]) :is(
 .tfx-ci-note { margin-top: 6px; font-family: var(--font-ui); font-size: 13px; color: var(--tx3); }
 .tfx-ci-banner { margin: 16px 16px 0; padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-family: var(--font-ui); font-size: 13.5px; color: var(--tx2); }
 .tfx-ci-banner b { color: var(--tx); font-weight: 650; }
+
+/* ════════════════════════════════════════════════════════════════════
+   GOALS  (components/Goals.js)
+   ════════════════════════════════════════════════════════════════════ */
+.tfx-goals { display: grid; gap: 14px; margin-bottom: 14px; }
+.tfx-goals-head { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 4px 0; }
+.tfx-goals-head h2 { margin: 0; font-size: 23px; font-weight: 800; letter-spacing: -0.02em; color: var(--tx); }
+.tfx-goal { position: relative; overflow: hidden; padding: 18px; color: var(--tx); }
+.tfx-goal::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--c), transparent 85%); }
+.tfx-goal::after { content: ""; position: absolute; right: -70px; top: -70px; width: 220px; height: 220px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--c) 24%, transparent), transparent 70%); }
+.tfx-goal > * { position: relative; z-index: 1; }
+.tfx-goal-head { display: flex; align-items: center; gap: 12px; }
+.tfx-goal-icon { width: 46px; height: 46px; flex-shrink: 0; border-radius: 15px; display: grid; place-items: center; font-size: 22px;
+  background: color-mix(in srgb, var(--c) 18%, transparent); border: 1px solid color-mix(in srgb, var(--c) 42%, transparent); }
+.tfx-goal-sub { color: var(--c); }
+.tfx-goal-head h3 { margin: 3px 0 0; font-size: 19px; font-weight: 800; letter-spacing: -0.015em; color: var(--tx); }
+.tfx-goal-edit { margin-left: auto; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: var(--font-ui); font-size: 13px; font-weight: 600;
+  color: var(--tx2); background: var(--field); border: 1px solid var(--field-line); }
+.tfx-goal-quote { margin: 18px 0 0; padding-left: 16px; border-left: 3px solid var(--c); font-size: 21px; line-height: 1.38; font-weight: 700; letter-spacing: -0.012em; color: var(--tx); }
+.tfx-goal-ring { display: flex; align-items: center; gap: 14px; margin-top: 18px; padding: 14px 16px; border-radius: 18px; background: var(--field); border: 1px solid var(--glass-line); position: relative; }
+.tfx-goal-dial { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+.tfx-goal-dial svg { width: 72px; height: 72px; display: block; }
+.tfx-goal-ring .track { stroke: var(--track); }
+.tfx-goal-ring .arc { stroke: var(--c); transition: stroke-dashoffset 0.8s var(--ease-out); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 60%, transparent)); }
+.tfx-goal-ring-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 23px; font-weight: 750; line-height: 1; color: var(--tx); }
+.tfx-goal-ring-num small { display: block; margin-top: 3px; font-size: 9.5px; font-weight: 650; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tx3); }
+.tfx-goal-ring-txt b { display: block; margin-top: 3px; font-family: var(--font-ui); font-size: 16px; font-weight: 650; color: var(--tx); }
+.tfx-goal-ring-txt span { display: block; margin-top: 2px; font-family: var(--font-ui); font-size: 13px; color: var(--tx2); }
+.tfx-goal-adddl { margin-top: 16px; }
+.tfx-goal-form { margin-top: 14px; }
+.tfx-goal-q { margin: 0 0 10px; font-size: 16px; font-weight: 600; color: var(--tx2); font-style: italic; }
+.tfx-goal-input { padding: 14px 16px; resize: none; line-height: 1.5; font-family: var(--font-brand); font-size: 17px; }
+.tfx-goal-input:focus { border-color: var(--c); }
+.tfx-goal-starters, .tfx-goal-dlrow { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.tfx-goal-dl { margin-top: 16px; }
+.tfx-goal-date { width: auto; flex: 1 1 140px; padding: 8px 12px; font-size: 14px; border-radius: 999px; }
+.tfx-goal-actions { display: flex; gap: 10px; margin-top: 18px; }
+.tfx-goal-actions .tfx-btn { flex: 1; background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 68%, #000)); box-shadow: 0 10px 24px -10px var(--c); }
+.tfx-goal-actions .tfx-btn:disabled { opacity: 0.45; box-shadow: none; cursor: not-allowed; }
+.tfx-goal-err { margin-top: 12px; font-family: var(--font-ui); font-size: 13px; color: var(--red); }
+.tfx-goal-coach { display: flex; gap: 12px; margin-top: 16px; padding: 14px; border-radius: 16px;
+  background: color-mix(in srgb, var(--c) 10%, transparent); border: 1px solid color-mix(in srgb, var(--c) 30%, transparent); }
+.tfx-goal-coach-av { width: 34px; height: 34px; flex-shrink: 0; border-radius: 11px; display: grid; place-items: center; font-size: 15px; background: color-mix(in srgb, var(--c) 22%, transparent); }
+.tfx-goal-coach .tfx-eyebrow { color: var(--c); }
+.tfx-goal-coach p { margin: 4px 0 0; font-family: var(--font-ui); font-size: 14.5px; line-height: 1.5; color: var(--tx); }
+
+/* Chip-style choice buttons (shared) */
+.tfx-chipbtn { font-family: var(--font-ui); font-size: 13px; font-weight: 550; padding: 8px 13px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--field-line); background: var(--field); color: var(--tx2); }
+.tfx-chipbtn.is-on { border-color: var(--c, var(--gold)); color: var(--tx); background: color-mix(in srgb, var(--c, var(--gold)) 18%, transparent); }
