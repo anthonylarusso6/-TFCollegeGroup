@@ -1,9 +1,9 @@
 // v4
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import { nowEST } from "../lib/dates";
-import { loadSeason, seasonStart, seasonEnd, seasonWeeks } from "../lib/season";
+import { loadSeason, seasonStart, seasonEnd, seasonWeeks, isBeforeSeason, firstClassAt, fmtFirstClass } from "../lib/season";
 import Icon from "../components/Icon";
 
 const GOLD="#D4AF37";
@@ -62,6 +62,9 @@ export default function Landing(){
   // `mounted` gates client-only values so the first client render matches the
   // server render (no hydration mismatch); real values apply after mount.
   const[mounted,setMounted]=useState(false);
+  // Season the coach set; before its first class the group is off, so no "class today"
+  const seasonRef=useRef(null);
+  const[preSeason,setPreSeason]=useState(false);
   useEffect(()=>{
     setMounted(true);
     try{setThemeMode(localStorage.getItem("tf_theme")==="light"?"light":"dark");}catch(e){}
@@ -85,6 +88,8 @@ export default function Landing(){
       setTime(now);
       // Next class time
       const getNextClass=()=>{
+        const ssn=seasonRef.current;
+        if(isBeforeSeason(ssn,now))return{diff:firstClassAt(ssn)-now,label:"First class · "+fmtFirstClass(ssn)};
         const classDays=[1,2,4,5]; // Mon,Tue,Thu,Fri
         let next=new Date(now);
         next.setSeconds(0);next.setMilliseconds(0);
@@ -157,6 +162,8 @@ export default function Landing(){
       // Season progress — only while a coach-set season is actually running
       try{
         const season=await loadSeason();
+        seasonRef.current=season;
+        setPreSeason(isBeforeSeason(season));
         const nowDate=new Date();
         if(season.explicit&&nowDate>=seasonStart(season)&&nowDate<=seasonEnd(season)){
           const totalWeeks=seasonWeeks(season);
@@ -225,7 +232,7 @@ export default function Landing(){
 
   const estTime=(mounted&&time)?new Date(time.toLocaleString("en-US",{timeZone:"America/New_York"})):new Date();
   const day=mounted?["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][estTime.getDay()]:"Mon";
-  const isClassDay=mounted&&["Mon","Tue","Thu","Fri"].includes(day);
+  const isClassDay=mounted&&!preSeason&&["Mon","Tue","Thu","Fri"].includes(day);
   const isMonFri=typeof window!=="undefined"&&(day==="Mon"||day==="Fri");
   const todayQuote=QUOTES[(mounted?new Date().getDate():0)%QUOTES.length];
 

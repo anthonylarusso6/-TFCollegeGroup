@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { loadSeason, defaultSeason } from "../lib/season";
+import { loadSeason, defaultSeason, isBeforeSeason, fmtFirstClass } from "../lib/season";
 
 const GOLD = "#D4AF37", ORANGE = "#E8720C", GREEN = "#3FCB7F", BLUE = "#4DC8F5", PUR = "#9A8CF0", RED = "#E8635B", STEEL = "#8CA0B0";
 const INK = "#fdf6ec"; // warm white, collision-safe against the light-mode text flip
@@ -46,8 +46,13 @@ export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
     let alive = true;
     (async () => {
       const ssn = await loadSeason();
-      if (alive) setSeason(ssn);
-      const SEASON_START = ssn.start;
+      // Before the new season's first class there's nothing to recap yet, so show
+      // all-time numbers (and say what's coming) instead of a card full of zeros.
+      const view = isBeforeSeason(ssn)
+        ? { ...ssn, label: "All-time", start: "2000-01-01", upcoming: ssn.label + " starts " + fmtFirstClass(ssn) }
+        : ssn;
+      if (alive) setSeason(view);
+      const SEASON_START = view.start;
       const out = { sessions: 0, early: 0, late: 0, bestStreak: 0, prs: 0, anvilWins: 0, totalLbs: 0, rankPct: null, cells: [] };
       try {
         const { data } = await supabase.from("attendance").select("status,date").eq("athlete_id", athleteId).gte("date", SEASON_START).order("date", { ascending: true });
@@ -103,7 +108,9 @@ export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
     <div className="tf-fade-up" style={{ fontFamily: "Georgia,serif" }}>
       <div style={{
         borderRadius: 22, overflow: "hidden", position: "relative", padding: "26px 20px 22px",
-        background: "radial-gradient(130% 80% at 50% 0%, rgba(232,114,12,0.32) 0%, rgba(212,175,55,0.14) 32%, rgba(14,9,2,0.99) 74%)",
+        // Solid dark base under the glow: the gradient is see-through at the top, so
+        // without it the light-mode page bleeds through and washes out the header.
+        background: "radial-gradient(130% 80% at 50% 0%, rgba(232,114,12,0.32) 0%, rgba(212,175,55,0.14) 32%, rgba(14,9,2,0.99) 74%), #0e0902",
         border: "1px solid " + GOLD + "44", boxShadow: "0 0 60px rgba(232,114,12,0.18), 0 20px 50px rgba(0,0,0,0.55)",
       }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg,transparent," + ORANGE + "," + GOLD + ",transparent)" }} />
@@ -120,6 +127,7 @@ export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
           </div>
           <div style={{ fontSize: 23, fontWeight: 900, color: INK, letterSpacing: "-0.01em", textShadow: "0 2px 18px rgba(0,0,0,0.5)" }}>{athleteName || "Athlete"}</div>
           <div style={{ fontSize: 12, color: GOLD, letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 2 }}>{SEASON_LABEL}</div>
+          {season.upcoming && <div style={{ fontSize: 11.5, color: "#c9b48a", marginTop: 6 }}>{season.upcoming} — this card resets then</div>}
         </div>
 
         {/* Archetype reveal */}

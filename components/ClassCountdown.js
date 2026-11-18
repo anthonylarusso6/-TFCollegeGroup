@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { GOLD, RED, GREEN, ORANGE } from "../lib/constants";
-import { loadSeason, seasonStart, seasonEnd, seasonWeeks, fmtSeasonDate } from "../lib/season";
+import { loadSeason, seasonStart, seasonEnd, seasonWeeks, fmtSeasonDate, firstClassAt, fmtFirstClass } from "../lib/season";
 
 export default function ClassCountdown(){
   const[now,setNow]=useState(null);
@@ -20,9 +20,10 @@ export default function ClassCountdown(){
   const SEASON_END=seasonEnd(season);
   const TOTAL_WEEKS=seasonWeeks(season);
 
-  // Before season
-  if(now<CLASS_START){
-    const diff=CLASS_START-now;
+  // Before season — count down to the first actual class (day + class time)
+  const FIRST_CLASS=firstClassAt(season);
+  if(now<FIRST_CLASS){
+    const diff=FIRST_CLASS-now;
     const days=Math.floor(diff/(1000*60*60*24));
     const hours=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
     const mins=Math.floor((diff%(1000*60*60))/(1000*60));
@@ -39,7 +40,7 @@ export default function ClassCountdown(){
             </div>
           ))}
         </div>
-        <div style={{fontSize:11,color:"#444",marginTop:10}}>{season.label} · starts {fmtSeasonDate(season.start,true)} · Iron sharpens iron</div>
+        <div style={{fontSize:11,color:"#444",marginTop:10}}>{season.label} · {fmtFirstClass(season)} · Iron sharpens iron</div>
       </div>
     );
   }

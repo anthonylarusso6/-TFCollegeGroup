@@ -29,7 +29,9 @@ export default function AttendanceCalendar({athleteId}){
   const now=new Date();
   const startRef=earliestRec<now?earliestRec:now;
   const START=new Date(startRef.getFullYear(),startRef.getMonth(),1);
-  const END=new Date(2026,9,1); // October 2026 (covers full Sep season)
+  // Through next month, so the current month always exists (and the calendar opens
+  // on it) and athletes can see the upcoming month too. Never a hardcoded season.
+  const END=new Date(now.getFullYear(),now.getMonth()+2,1);
   // Today's date key in EST — used to flag future days by calendar date (not clock time)
   const _estNow=nowEST();
   const todayEStr=_estNow.getFullYear()+"-"+String(_estNow.getMonth()+1).padStart(2,"0")+"-"+String(_estNow.getDate()).padStart(2,"0");

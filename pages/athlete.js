@@ -35,6 +35,7 @@ import { hTap, hSuccess, hError, hCelebrate } from "../lib/haptics";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import { ensurePushSync } from "../lib/push";
+import { loadSeason, isBeforeSeason, fmtFirstClass } from "../lib/season";
 
 const LC=["#534AB7","#0F6E56","#854F0B","#993556"];
 const LB=["#EEEDFE","#E1F5EE","#FAEEDA","#FBEAF0"];
@@ -302,6 +303,10 @@ export default function Athlete(){
       }catch(e){setHabitsDoneToday(true);}
     })();
   },[selectedAthlete]);
+
+  // Season the coach set — before its first class, don't tell athletes "class today"
+  const[seasonInfo,setSeasonInfo]=useState(null);
+  useEffect(()=>{loadSeason().then(setSeasonInfo).catch(()=>{});},[]);
 
   // End the guided post-check-in flow the moment they navigate off weight/habits
   useEffect(()=>{
@@ -1244,7 +1249,7 @@ export default function Athlete(){
 
             {tab==="profile"&&(
               <div>
-                {(()=>{const _est=nowEST();const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay)return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><Icon name="zap" size={22} color="rgba(255,255,255,0.6)"/></div>);})()}
+                {(()=>{const _est=nowEST();const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay||isBeforeSeason(seasonInfo))return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><Icon name="zap" size={22} color="rgba(255,255,255,0.6)"/></div>);})()}
                 {weightLoggedToday===false&&(
                   <div onClick={()=>{slideDirRef.current=0;setTab("weight");}} style={{background:"linear-gradient(135deg,#1a3a1a,#0e240e)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
                     <div>
@@ -1397,6 +1402,12 @@ export default function Athlete(){
                   const _day=_days[nowEST().getDay()];
                   const _classDays=["Mon","Tue","Thu","Fri"];
                   const _isClassDay=_classDays.includes(_day);
+                  if(isBeforeSeason(seasonInfo)) return(
+                    <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525"}}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:4}}>{seasonInfo.label} starts {fmtFirstClass(seasonInfo)}</div>
+                      <div style={{fontSize:12,color:"#666"}}>Class days are Monday, Tuesday, Thursday &amp; Friday. Get your body ready — log your weight and habits so you show up strong.</div>
+                    </div>
+                  );
                   if(!_isClassDay) return(
                     <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525"}}>
                       <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:4}}>No class today</div>

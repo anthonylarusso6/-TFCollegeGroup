@@ -422,9 +422,9 @@ export default function WeightTracker({ athleteId, onWeighed }) {
         {/* Input */}
         <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
           <input type="text" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} placeholder="Enter lbs..."
-            style={{ flex: 1, padding: "14px", borderRadius: 10, border: "1px solid #333", fontSize: 18, fontFamily: "Georgia,serif", background: "#1a1a1a", color: "#fff", textAlign: "center" }} />
+            style={{ flex: 1, minWidth: 0, boxSizing: "border-box", padding: "14px", borderRadius: 10, border: "1px solid #333", fontSize: 18, fontFamily: "Georgia,serif", background: "#1a1a1a", color: "#fff", textAlign: "center" }} />
           <button onClick={save} disabled={!weight || saving}
-            style={{ padding: "14px 20px", borderRadius: 10, border: "none", background: weight ? "linear-gradient(135deg," + ORANGE + "," + RED + ")" : "#222", color: weight ? "#fff" : "#444", fontSize: 14, fontWeight: 600, cursor: weight ? "pointer" : "not-allowed", fontFamily: "Georgia,serif", minWidth: 80 }}>
+            style={{ flexShrink: 0, padding: "14px 20px", borderRadius: 10, border: "none", background: weight ? "linear-gradient(135deg," + ORANGE + "," + RED + ")" : "#222", color: weight ? "#fff" : "#444", fontSize: 14, fontWeight: 600, cursor: weight ? "pointer" : "not-allowed", fontFamily: "Georgia,serif", minWidth: 80 }}>
             {saved ? "✓" : saving ? "..." : "Save"}
           </button>
         </div>
@@ -581,7 +581,7 @@ export default function WeightTracker({ athleteId, onWeighed }) {
                 <div style={{ fontSize:9, fontWeight:800, color:"#555", width:24, flexShrink:0, textTransform:"uppercase", letterSpacing:"0.08em" }}>{row.label}</div>
                 {row.dots.map((dot,i)=>(
                   <div key={i} title={dot.date} style={{ flex:1, height:18, borderRadius:4, minWidth:0,
-                    background: dot.logged ? "linear-gradient(180deg,"+GREEN+"cc,"+GREEN+"88)" : "#161616",
+                    background: dot.logged ? "linear-gradient(180deg,"+GREEN+"cc,"+GREEN+"88)" : "#1a1a1a",
                     border:"1px solid "+(dot.logged ? GREEN+"55" : "#1e1e1e"),
                     boxShadow: dot.logged ? "0 0 8px "+GREEN+"44" : "none",
                   }}/>
@@ -592,7 +592,7 @@ export default function WeightTracker({ athleteId, onWeighed }) {
             {streak > 0 && (
               <div style={{ marginTop:10, display:"flex", alignItems:"center", justifyContent:"flex-end", gap:6 }}>
                 <div style={{ height:1, flex:1, background:"#1a1a1a" }}/>
-                <div style={{ display:"flex", alignItems:"center", gap:5, background: streak>=5 ? GOLD+"18":"#161616", border:"1px solid "+(streak>=5?GOLD+"44":"#252525"), borderRadius:20, padding:"5px 12px" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:5, background: streak>=5 ? GOLD+"18":"#1a1a1a", border:"1px solid "+(streak>=5?GOLD+"44":"#252525"), borderRadius:20, padding:"5px 12px" }}>
                   <span style={{ fontSize:13 }}>🔥</span>
                   <span style={{ fontSize:12, fontWeight:800, color:streak>=5?GOLD:"#aaa" }}>{streak}</span>
                   <span style={{ fontSize:9, color:streak>=5?GOLD+"88":"#555" }}>in a row</span>

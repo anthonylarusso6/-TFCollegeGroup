@@ -125,22 +125,18 @@ const FLOW_TOTAL=FLOW.reduce((s,x)=>s+x.d,0);
 
 export default function StretchingTab(){
   const[cat,setCat]=useState("neck");
-  // Detect light/dark so the stretch cards are readable without relying on CSS color-mapping
+  // Detect light/dark so the stretch cards are readable without relying on CSS color-mapping.
+  // The app has its own theme toggle: light is data-theme="light", anything else is dark.
+  // It deliberately ignores the phone's system setting, so this must too — otherwise an
+  // iPhone in system light mode gets white cards inside the dark app.
   const[isLight,setIsLight]=useState(false);
   useEffect(()=>{
     if(typeof document==="undefined")return;
-    const check=()=>{
-      const t=document.documentElement.getAttribute("data-theme");
-      if(t==="light")setIsLight(true);
-      else if(t==="dark")setIsLight(false);
-      else setIsLight(!!(window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches));
-    };
+    const check=()=>setIsLight(document.documentElement.getAttribute("data-theme")==="light");
     check();
     const mo=new MutationObserver(check);
     mo.observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
-    let mq;
-    try{mq=window.matchMedia("(prefers-color-scheme: light)");mq.addEventListener&&mq.addEventListener("change",check);}catch(e){}
-    return()=>{mo.disconnect();try{mq&&mq.removeEventListener&&mq.removeEventListener("change",check);}catch(e){}};
+    return()=>mo.disconnect();
   },[]);
   const[open,setOpen]=useState(null);
   const[done,setDone]=useState(new Set());
@@ -350,8 +346,8 @@ export default function StretchingTab(){
               style={{
                 display:"flex",flexDirection:"column",alignItems:"center",gap:3,
                 padding:"10px 12px",borderRadius:12,
-                border:"1.5px solid "+(isA?cc.c:allD?cc.c+"66":"#2d2d2d"),
-                background:isA?"linear-gradient(160deg,"+cc.c+"ee,"+cc.c+"bb)":allD?cc.c+"18":"#181818",
+                border:"1.5px solid "+(isA?cc.c:allD?cc.c+"66":(isLight?"rgba(0,0,0,0.12)":"#2d2d2d")),
+                background:isA?"linear-gradient(160deg,"+cc.c+"ee,"+cc.c+"bb)":allD?cc.c+"18":(isLight?"#ffffff":"#181818"),
                 cursor:"pointer",flexShrink:0,fontFamily:"Georgia,serif",
                 position:"relative",
                 boxShadow:isA?"0 0 16px "+cc.c+"44,0 2px 8px #00000060":allD?"0 0 8px "+cc.c+"22":"none",
@@ -359,7 +355,7 @@ export default function StretchingTab(){
               }}>
               {allD&&!isA&&<div style={{position:"absolute",top:4,right:4,width:6,height:6,borderRadius:"50%",background:cc.c,boxShadow:"0 0 6px "+cc.c}}/>}
               <span style={{fontSize:20}}>{cc.i}</span>
-              <span style={{fontSize:9,color:isA?"#fff":allD?cc.c:"#aaa",whiteSpace:"nowrap",fontWeight:isA?900:500,textTransform:"uppercase",letterSpacing:"0.06em"}}>{cc.l}</span>
+              <span style={{fontSize:9,color:isA?"#fff":allD?cc.c:(isLight?"#4e545e":"#aaa"),whiteSpace:"nowrap",fontWeight:isA?900:500,textTransform:"uppercase",letterSpacing:"0.06em"}}>{cc.l}</span>
               {kd>0&&!allD&&<span style={{fontSize:8,color:cc.c,fontWeight:700}}>{kd}/{cc.s.length}</span>}
             </button>
           );
