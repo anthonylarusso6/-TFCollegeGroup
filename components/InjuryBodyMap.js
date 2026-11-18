@@ -212,47 +212,35 @@ const STRETCHES={
 
 // ── Anatomical SVG body map (real polygon paths from react-body-highlighter) ──
 function BodySVG({view, partData, selected, onSelect}){
-  const BODY="#282828";
-  const BASE="#353535";
-  const SEL ="#5e58b8";
-
+  // Colors live in styles/forge.css (.bm-*) so the figure is themed for light/dark
+  // and flagged zones read clearly. Paths below are unchanged.
   const mp=(id)=>{
-    const d=partData[id];
-    const isFlag=d?.status==="sore"||d?.status==="pain";
-    const isSel=selected===id;
-    const fill=isFlag
-      ?(isSel?(d.status==="pain"?RED:SORE):(d.status==="pain"?"#631515":"#7a4e00"))
-      :(isSel?SEL:BASE);
-    const stroke=isSel?"#9990e8":isFlag?(d.status==="pain"?RED+"99":SORE+"99"):"none";
-    const sw=isSel?1.5:0.7;
-    const filter=isSel
-      ?"drop-shadow(0 0 5px #5e58b899)"
-      :isFlag?`drop-shadow(0 0 4px ${d.status==="pain"?RED:SORE}aa)`
-      :"none";
-    return{fill,stroke,strokeWidth:sw,style:{cursor:"pointer",filter,transition:"all 0.12s"},
+    const st=partData[id]?.status;
+    const flag=st==="sore"||st==="pain";
+    const cls="bm-m"+(flag?" is-"+st:"")+(selected===id?" is-sel":"");
+    return{className:cls,role:"button","aria-label":MUSCLE_NAMES[id]||id,
       onClick:(e)=>{e.stopPropagation();onSelect(id);}};
   };
 
-  const svgStyle={display:"block",width:"100%",maxWidth:200,margin:"0 auto"};
 
   if(view==="front") return(
-    <svg viewBox="0 0 100 215" style={svgStyle}>
+    <svg viewBox="0 0 100 215" className="bm-svg">
       {/* silhouette */}
-      <ellipse cx="50" cy="13" rx="12" ry="13" fill={BODY}/>
-      <rect x="42" y="24" width="16" height="9" rx="3" fill={BODY}/>
-      <rect x="28" y="30" width="44" height="42" rx="10" fill={BODY}/>
-      <rect x="17" y="30" width="14" height="44" rx="7" fill={BODY}/>
-      <rect x="69" y="30" width="14" height="44" rx="7" fill={BODY}/>
-      <rect x="33" y="68" width="34" height="40" rx="5" fill={BODY}/>
-      <rect x="15" y="68" width="12" height="36" rx="6" fill={BODY}/>
-      <rect x="73" y="68" width="12" height="36" rx="6" fill={BODY}/>
-      <rect x="2"  y="99" width="16" height="14" rx="6" fill={BODY}/>
-      <rect x="82" y="99" width="16" height="14" rx="6" fill={BODY}/>
-      <rect x="30" y="90" width="40" height="70" rx="8" fill={BODY}/>
-      <rect x="32" y="153" width="15" height="57" rx="8" fill={BODY}/>
-      <rect x="53" y="153" width="15" height="57" rx="8" fill={BODY}/>
-      <rect x="29" y="200" width="21" height="14" rx="5" fill={BODY}/>
-      <rect x="50" y="200" width="21" height="14" rx="5" fill={BODY}/>
+      <ellipse cx="50" cy="13" rx="12" ry="13" className="bm-sil"/>
+      <rect x="42" y="24" width="16" height="9" rx="3" className="bm-sil"/>
+      <rect x="28" y="30" width="44" height="42" rx="10" className="bm-sil"/>
+      <rect x="17" y="30" width="14" height="44" rx="7" className="bm-sil"/>
+      <rect x="69" y="30" width="14" height="44" rx="7" className="bm-sil"/>
+      <rect x="33" y="68" width="34" height="40" rx="5" className="bm-sil"/>
+      <rect x="15" y="68" width="12" height="36" rx="6" className="bm-sil"/>
+      <rect x="73" y="68" width="12" height="36" rx="6" className="bm-sil"/>
+      <rect x="2"  y="99" width="16" height="14" rx="6" className="bm-sil"/>
+      <rect x="82" y="99" width="16" height="14" rx="6" className="bm-sil"/>
+      <rect x="30" y="90" width="40" height="70" rx="8" className="bm-sil"/>
+      <rect x="32" y="153" width="15" height="57" rx="8" className="bm-sil"/>
+      <rect x="53" y="153" width="15" height="57" rx="8" className="bm-sil"/>
+      <rect x="29" y="200" width="21" height="14" rx="5" className="bm-sil"/>
+      <rect x="50" y="200" width="21" height="14" rx="5" className="bm-sil"/>
       {/* HEAD */}
       <polygon points="42.4 2.9 40 11.8 42 19.6 46.1 23.3 49.8 25.3 54.7 22.4 57.6 19.2 59.2 10.2 57.1 2.4 49.8 0" {...mp("head")}/>
       {/* NECK */}
@@ -327,23 +315,23 @@ function BodySVG({view, partData, selected, onSelect}){
   );
 
   return(
-    <svg viewBox="0 0 100 215" style={svgStyle}>
+    <svg viewBox="0 0 100 215" className="bm-svg">
       {/* silhouette */}
-      <ellipse cx="50" cy="11" rx="11" ry="11" fill={BODY}/>
-      <rect x="42" y="21" width="16" height="9" rx="3" fill={BODY}/>
-      <rect x="28" y="28" width="44" height="48" rx="10" fill={BODY}/>
-      <rect x="16" y="30" width="15" height="46" rx="7" fill={BODY}/>
-      <rect x="69" y="30" width="15" height="46" rx="7" fill={BODY}/>
-      <rect x="33" y="72" width="34" height="34" rx="5" fill={BODY}/>
-      <rect x="15" y="72" width="12" height="34" rx="6" fill={BODY}/>
-      <rect x="73" y="72" width="12" height="34" rx="6" fill={BODY}/>
-      <rect x="3"  y="99" width="15" height="14" rx="6" fill={BODY}/>
-      <rect x="82" y="99" width="15" height="14" rx="6" fill={BODY}/>
-      <rect x="30" y="96" width="40" height="68" rx="8" fill={BODY}/>
-      <rect x="32" y="156" width="15" height="58" rx="8" fill={BODY}/>
-      <rect x="53" y="156" width="15" height="58" rx="8" fill={BODY}/>
-      <rect x="29" y="203" width="20" height="11" rx="4" fill={BODY}/>
-      <rect x="51" y="203" width="20" height="11" rx="4" fill={BODY}/>
+      <ellipse cx="50" cy="11" rx="11" ry="11" className="bm-sil"/>
+      <rect x="42" y="21" width="16" height="9" rx="3" className="bm-sil"/>
+      <rect x="28" y="28" width="44" height="48" rx="10" className="bm-sil"/>
+      <rect x="16" y="30" width="15" height="46" rx="7" className="bm-sil"/>
+      <rect x="69" y="30" width="15" height="46" rx="7" className="bm-sil"/>
+      <rect x="33" y="72" width="34" height="34" rx="5" className="bm-sil"/>
+      <rect x="15" y="72" width="12" height="34" rx="6" className="bm-sil"/>
+      <rect x="73" y="72" width="12" height="34" rx="6" className="bm-sil"/>
+      <rect x="3"  y="99" width="15" height="14" rx="6" className="bm-sil"/>
+      <rect x="82" y="99" width="15" height="14" rx="6" className="bm-sil"/>
+      <rect x="30" y="96" width="40" height="68" rx="8" className="bm-sil"/>
+      <rect x="32" y="156" width="15" height="58" rx="8" className="bm-sil"/>
+      <rect x="53" y="156" width="15" height="58" rx="8" className="bm-sil"/>
+      <rect x="29" y="203" width="20" height="11" rx="4" className="bm-sil"/>
+      <rect x="51" y="203" width="20" height="11" rx="4" className="bm-sil"/>
       {/* HEAD */}
       <polygon points="50.6 0 46 0.9 40.9 5.5 40.4 12.8 45.1 20 55.7 20 59.1 13.6 59.6 4.7 55.7 1.3" {...mp("head")}/>
       {/* TRAPEZIUS */}
@@ -516,128 +504,109 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
     return STATUS[d.status]?.color||null;
   };
 
+  // Brighter UI tones (the STATUS colors above are kept for inbox/coach text)
+  const UI={good:"#30A46C",sore:"#E8A33C",pain:"#E5484D"};
+  const flagged=Object.entries(partData).filter(([,d])=>d&&(d.status==="sore"||d.status==="pain"));
+  const openZone=(id)=>{
+    if(!chips.includes(id))setView(FRONT_CHIPS.includes(id)?"front":"back");
+    selectPart(id);
+  };
+  const painTone=(n)=>n<=3?UI.good:n<=6?UI.sore:UI.pain;
+
   return(
-    <div>
+    <div className="tfx bm">
       {/* Header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:12}}>
+      <header className="bm-head">
         <div>
-          <div style={{fontSize:14,fontWeight:800,color:"#fff",letterSpacing:"-0.01em"}}>Body Check-In</div>
-          <div style={{fontSize:11,color:"#444",marginTop:2}}>{readOnly?"Athlete's injury status":"Tap a muscle or chip to log it"}</div>
+          <div className="tfx-eyebrow">{readOnly?"Athlete status":"Body check-in"}</div>
+          <h2>{readOnly?"Body map":"How's your body?"}</h2>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <div className="bm-head-right">
           {injCount>0&&!readOnly&&(
-            <button onClick={clearAll} disabled={clearing} style={{fontSize:10,color:"#555",background:"#0e0e0e",border:"1px solid #2a2a2a",padding:"4px 12px",borderRadius:20,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-              {clearing?"…":"Clear all"}
-            </button>
+            <button className="bm-clear tfx-press" onClick={clearAll} disabled={clearing}>{clearing?"…":"Clear all"}</button>
           )}
-          {injCount>0&&(
-            <div style={{fontSize:11,color:RED,fontWeight:800,background:RED+"18",padding:"4px 12px",borderRadius:20,border:"1px solid "+RED+"33",whiteSpace:"nowrap"}}>
-              {injCount} flagged
-            </div>
-          )}
+          <span className={"bm-pill "+(injCount>0?"is-flag":"is-clear")}>
+            <span className="tfx-livedot" style={{"--c":injCount>0?UI.pain:UI.good}}/>
+            {injCount>0?injCount+" flagged":"All clear"}
+          </span>
         </div>
-      </div>
+      </header>
 
-      {/* Front / Back toggle */}
-      <div style={{display:"flex",gap:6,marginBottom:14,background:"#0a0a0a",borderRadius:14,padding:4,border:"1px solid #222"}}>
-        {["front","back"].map(v=>(
-          <button key={v} onClick={()=>{setView(v);setSelected(null);}} style={{flex:1,padding:"10px 0",borderRadius:10,border:"none",background:view===v?"#1e1e1e":"transparent",color:view===v?"#ddd":"#3a3a3a",fontSize:12,fontWeight:view===v?700:400,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.06em",textTransform:"uppercase",transition:"all 0.15s",boxShadow:view===v?"0 1px 6px rgba(0,0,0,0.5)":"none"}}>
-            {v==="front"?"Front":"Back"}
-          </button>
-        ))}
-      </div>
+      {/* Flagged zones — quick access */}
+      {flagged.length>0&&(
+        <div className="bm-flagged">
+          {flagged.map(([id,d])=>(
+            <button key={id} className={"bm-flag tfx-press is-"+d.status} onClick={()=>openZone(id)}>
+              <b>{MUSCLE_NAMES[id]||id}</b>
+              <span>{d.status==="pain"?"Pain":"Sore"}{d.pain>0?" · "+d.pain+"/10":""}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Legend */}
-      <div style={{display:"flex",gap:12,justifyContent:"center",marginBottom:12,flexWrap:"wrap"}}>
-        {Object.entries(STATUS).map(([k,v])=>(
-          <div key={k} style={{display:"flex",alignItems:"center",gap:5,fontSize:10,color:"#555"}}>
-            <div style={{width:8,height:8,borderRadius:"50%",background:v.color}}/>
-            {v.label}
-          </div>
-        ))}
-      </div>
-
-      {/* Body map */}
-      <div style={{marginBottom:14,padding:"6px 0"}}>
-        <BodySVG view={view} partData={partData} selected={selected} onSelect={selectPart}/>
-        {selected?(
-          <div style={{textAlign:"center",marginTop:10}}>
-            <span style={{fontSize:12,fontWeight:700,color:STATUS[pStatus]?.color||"#fff",background:(STATUS[pStatus]?.color||"#fff")+"18",padding:"5px 16px",borderRadius:20,border:"1px solid "+(STATUS[pStatus]?.color||"#fff")+"33"}}>
-              {selName} · {STATUS[pStatus]?.label}
-            </span>
-          </div>
-        ):(
-          !readOnly&&<div style={{textAlign:"center",fontSize:10,color:"#2e2e2e",marginTop:8,letterSpacing:"0.06em",textTransform:"uppercase"}}>tap a muscle or chip below</div>
-        )}
+      {/* Scanner */}
+      <div className="tfx-card bm-scan">
+        <div className="bm-seg" role="tablist" aria-label="Body side">
+          {["front","back"].map(v=>(
+            <button key={v} role="tab" aria-selected={view===v} className={"tfx-press"+(view===v?" is-on":"")} onClick={()=>{setView(v);setSelected(null);}}>
+              {v==="front"?"Front":"Back"}
+            </button>
+          ))}
+        </div>
+        <div className="bm-figure" key={view}>
+          <BodySVG view={view} partData={partData} selected={selected} onSelect={selectPart}/>
+          <div className="bm-sweep" aria-hidden="true"/>
+        </div>
+        <div className="bm-legend">
+          <span style={{"--c":UI.good}}><i/>All good</span>
+          <span style={{"--c":UI.sore}}><i/>Sore</span>
+          <span style={{"--c":UI.pain}}><i/>Pain</span>
+        </div>
+        {!readOnly&&!selected&&<div className="bm-hint">Tap a muscle on the body, or pick one below</div>}
       </div>
 
       {/* Muscle chips */}
-      <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:16,padding:"2px 0"}}>
+      <div className="bm-chips">
         {chips.map(id=>{
           const c=chipColor(id);
-          const isSel=selected===id;
+          const st=partData[id]?.status;
           if(readOnly&&!c)return null;
           return(
             <button key={id} onClick={()=>selectPart(id)}
-              style={{padding:"6px 11px",borderRadius:20,
-                border:"1px solid "+(isSel?"#4a4a6a":c?c+"55":"#222"),
-                background:isSel?"#2a2a40":c?c+"1a":"#0e0e0e",
-                color:isSel?"#c0b8ff":c?c:"#444",
-                fontSize:10,fontWeight:isSel?700:c?600:400,
-                cursor:readOnly?"default":"pointer",
-                fontFamily:"Georgia,serif",whiteSpace:"nowrap",transition:"all 0.1s"}}>
-              {c&&<span style={{marginRight:3,fontSize:8}}>{partData[id]?.status==="pain"?"●":"●"}</span>}
-              {MUSCLE_NAMES[id]}
+              className={"bm-chip tfx-press"+(selected===id?" is-sel":"")+(c?" is-"+st:"")}>
+              {c&&<i/>}{MUSCLE_NAMES[id]}
             </button>
           );
         })}
-        {readOnly&&Object.keys(partData).filter(id=>!chips.includes(id)&&(partData[id]?.status==="sore"||partData[id]?.status==="pain")).map(id=>{
-          const c=chipColor(id);
-          return(
-            <span key={id} style={{padding:"6px 11px",borderRadius:20,
-              border:"1px solid "+c+"55",background:c+"1a",color:c,
-              fontSize:10,fontWeight:600,fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
-              {MUSCLE_NAMES[id]||id}
-            </span>
-          );
-        })}
+        {readOnly&&Object.keys(partData).filter(id=>!chips.includes(id)&&(partData[id]?.status==="sore"||partData[id]?.status==="pain")).map(id=>(
+          <span key={id} className={"bm-chip is-"+partData[id].status}><i/>{MUSCLE_NAMES[id]||id}</span>
+        ))}
       </div>
 
       {/* Read-only detail panel (coach view) */}
       {selected&&selName&&readOnly&&(()=>{
         const d=partData[selected];
         if(!d||d.status==="good")return(
-          <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e1e1e",fontSize:12,color:"#555",fontStyle:"italic"}}>
-            No issues reported for {selName}.
-          </div>
+          <div className="tfx-card bm-panel"><p className="bm-muted">No issues reported for {selName}.</p></div>
         );
         const st=STATUS[d.status]||STATUS.good;
         const sk=MUSCLE_STRETCH[selected]||"";
         const slist=STRETCHES[sk]||[];
         return(
-          <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid #222",borderLeft:"3px solid "+st.color}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,gap:8,flexWrap:"wrap"}}>
-              <div style={{fontSize:15,fontWeight:900,color:"#fff"}}>{selName}</div>
-              <span style={{fontSize:11,background:st.color+"22",color:st.color,padding:"4px 12px",borderRadius:20,border:"1px solid "+st.color+"44",fontWeight:700,whiteSpace:"nowrap"}}>
-                {st.emoji} {st.label}{d.pain>0?" · "+d.pain+"/10":""}
-              </span>
+          <div className="tfx-card bm-panel" style={{"--c":UI[d.status]}}>
+            <div className="bm-panel-head">
+              <h3>{selName}</h3>
+              <span className="bm-status">{st.label}{d.pain>0?" · "+d.pain+"/10":""}</span>
             </div>
-            {d.description?(
-              <div style={{fontSize:13,color:"#aaa",lineHeight:1.65,fontStyle:"italic",marginBottom:8}}>"{d.description}"</div>
-            ):(
-              <div style={{fontSize:12,color:"#555",fontStyle:"italic",marginBottom:8}}>No description provided.</div>
-            )}
-            {d.updatedAt&&<div style={{fontSize:9,color:"#444",marginBottom:slist.length?12:0}}>{fmtDate(d.updatedAt)}</div>}
+            {d.description?<blockquote className="bm-quote">{d.description}</blockquote>:<p className="bm-muted">No description provided.</p>}
+            {d.updatedAt&&<div className="bm-when">{fmtDate(d.updatedAt)}</div>}
             {slist.length>0&&(
-              <div>
-                <div style={{fontSize:9,color:SORE,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:800,marginBottom:8}}>Recommended Stretches</div>
+              <div className="bm-stretches">
+                <div className="tfx-eyebrow">Recommended stretches</div>
                 {slist.map((s,i)=>(
-                  <div key={i} style={{marginBottom:7,padding:"10px 12px",borderRadius:8,background:"#0e0e0e",border:"1px solid #1e1e1e"}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:4}}>
-                      <div style={{fontSize:12,fontWeight:700,color:"#ddd"}}>{s.name}</div>
-                      <div style={{fontSize:9,color:SORE,background:SORE+"18",padding:"2px 8px",borderRadius:8,whiteSpace:"nowrap",flexShrink:0}}>{s.duration}</div>
-                    </div>
-                    <div style={{fontSize:11,color:"#666",lineHeight:1.55}}>{s.desc}</div>
+                  <div key={i} className="bm-stretch">
+                    <div><b>{s.name}</b><span>{s.duration}</span></div>
+                    <p>{s.desc}</p>
                   </div>
                 ))}
               </div>
@@ -648,104 +617,72 @@ export default function InjuryBodyMap({athleteId, readOnly=false}){
 
       {/* Editable detail panel (athlete view) */}
       {selected&&selName&&!readOnly&&(
-        <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid #222"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,gap:8}}>
-            <div style={{fontSize:15,fontWeight:800,color:"#fff",letterSpacing:"-0.01em"}}>{selName}</div>
-            {selEx?.updatedAt&&(
-              <div style={{fontSize:10,color:"#333",flexShrink:0}}>{fmtDate(selEx.updatedAt)}</div>
-            )}
+        <div className="tfx-card bm-panel tfx-rise" style={{"--c":UI[pStatus]}}>
+          <div className="bm-panel-head">
+            <h3>{selName}</h3>
+            {selEx?.updatedAt&&<span className="bm-when">Updated {fmtDate(selEx.updatedAt)}</span>}
           </div>
 
-          <div style={{marginBottom:14}}>
-            <div style={{fontSize:9,color:"#3a3a3a",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>How does it feel?</div>
-            <div style={{display:"flex",gap:6}}>
-              {Object.entries(STATUS).map(([k,v])=>(
-                <button key={k} onClick={()=>{setPStatus(k);if(k==="good")setPPain(0);}} style={{flex:1,padding:"10px 4px",borderRadius:10,border:"1px solid "+(pStatus===k?v.color+"55":"#1e1e1e"),background:pStatus===k?v.color+"18":"#0a0a0a",color:pStatus===k?v.color:"#3a3a3a",fontSize:9,fontWeight:pStatus===k?700:400,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",lineHeight:1.5,transition:"all 0.1s"}}>
-                  <div style={{fontSize:15,marginBottom:3}}>{v.emoji}</div>
-                  {v.label}
-                </button>
-              ))}
-            </div>
+          <div className="tfx-eyebrow bm-label">How does it feel?</div>
+          <div className="bm-status-row">
+            {Object.entries(STATUS).map(([k,v])=>(
+              <button key={k} className={"bm-statusbtn tfx-press"+(pStatus===k?" is-on":"")} style={{"--c":UI[k]}}
+                onClick={()=>{setPStatus(k);if(k==="good")setPPain(0);}} aria-pressed={pStatus===k}>
+                <i/>{{good:"All good",sore:"Sore",pain:"In pain"}[k]||v.label}
+              </button>
+            ))}
           </div>
 
           {pStatus!=="good"&&(
-            <div style={{marginBottom:14}}>
-              <div style={{fontSize:9,color:"#3a3a3a",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>Pain Level{pPain>0?" — "+pPain+"/10":""}</div>
-              <div style={{display:"flex",gap:3}}>
-                {[1,2,3,4,5,6,7,8,9,10].map(n=>{
-                  const sel=pPain===n;
-                  const c=n<=3?GREEN:n<=6?SORE:RED;
-                  return(
-                    <button key={n} onClick={()=>setPPain(n)} style={{flex:1,height:32,borderRadius:6,border:"1px solid "+(sel?c+"66":"#1e1e1e"),background:sel?c+"22":"#0a0a0a",color:sel?c:"#333",fontSize:10,fontWeight:sel?800:400,cursor:"pointer",padding:0,transition:"all 0.1s"}}>
-                      {n}
-                    </button>
-                  );
-                })}
+            <>
+              <div className="tfx-eyebrow bm-label">Pain level{pPain>0?<b className="tfx-num" style={{color:painTone(pPain)}}> · {pPain}/10</b>:""}</div>
+              <div className="bm-pain">
+                {[1,2,3,4,5,6,7,8,9,10].map(n=>(
+                  <button key={n} className={"tfx-press"+(pPain===n?" is-on":"")+(pPain>=n&&pPain>0?" is-fill":"")} style={{"--c":painTone(n)}} onClick={()=>setPPain(n)} aria-label={"Pain "+n+" of 10"}>{n}</button>
+                ))}
               </div>
-            </div>
+            </>
           )}
 
-          <div style={{marginBottom:14}}>
-            <div style={{fontSize:9,color:"#3a3a3a",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>
-              Describe it
-              {pStatus!=="good"&&!descEnough&&<span style={{color:SORE,marginLeft:6,textTransform:"none",letterSpacing:0,fontSize:9,fontWeight:400}}> · 10+ chars to unlock stretches</span>}
-            </div>
-            <textarea
-              value={pDesc}
-              onChange={e=>setPDesc(e.target.value)}
-              placeholder="Where does it hurt, what it feels like, how it happened..."
-              style={{width:"100%",minHeight:76,padding:"10px 12px",borderRadius:8,border:"1px solid "+(pDesc.length>5?"#2a2a2a":"#1a1a1a"),fontSize:13,fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",background:"#0a0a0a",color:"#ccc",lineHeight:1.6,outline:"none"}}
-            />
+          <div className="tfx-eyebrow bm-label">
+            Describe it{pStatus!=="good"&&!descEnough&&<span className="bm-unlock"> · a few words unlocks stretches</span>}
           </div>
+          <textarea className="tfx-field bm-desc" value={pDesc} onChange={e=>setPDesc(e.target.value)} rows={3}
+            placeholder="Where it hurts, what it feels like, how it happened…"/>
 
           {pStatus!=="good"&&(
-            <div style={{marginBottom:14,display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>setNotifyCoach(v=>!v)}>
-              <div style={{width:30,height:17,borderRadius:9,background:notifyCoach?"#5e4444":"#1e1e1e",border:"1px solid "+(notifyCoach?RED+"44":"#2a2a2a"),position:"relative",transition:"background 0.2s",flexShrink:0}}>
-                <div style={{position:"absolute",top:2,left:notifyCoach?13:2,width:11,height:11,borderRadius:"50%",background:notifyCoach?RED:"#444",transition:"all 0.2s"}}/>
-              </div>
-              <div style={{fontSize:11,color:notifyCoach?"#aaa":"#3a3a3a"}}>Notify coach</div>
-            </div>
-          )}
-
-          <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",gap:10}}>
-            {saved&&<div style={{fontSize:11,color:GREEN,fontWeight:700}}>Saved{notifyCoach&&pStatus!=="good"?" · coach notified":""}</div>}
-            {saveErr&&<div style={{fontSize:11,color:RED,fontWeight:700}}>Save failed</div>}
-            <button onClick={savePart} disabled={saving} style={{padding:"9px 22px",borderRadius:8,border:"none",background:saving?"#1a1a1a":"#2a2a2a",color:saving?"#333":"#ccc",fontSize:12,fontWeight:700,cursor:saving?"default":"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>
-              {saving?"Saving…":"Save"}
+            <button className={"bm-switch"+(notifyCoach?" is-on":"")} onClick={()=>setNotifyCoach(v=>!v)} role="switch" aria-checked={notifyCoach}>
+              <span className="bm-switch-track"><span className="bm-switch-knob"/></span>
+              Let Coach Ant know
             </button>
+          )}
+
+          <div className="bm-save-row">
+            {saved&&<span className="bm-ok">Saved{notifyCoach&&pStatus!=="good"?" · coach notified":""}</span>}
+            {saveErr&&<span className="bm-bad">Didn't save — try again</span>}
+            <button className="tfx-btn tfx-press bm-save" onClick={savePart} disabled={saving}>{saving?"Saving…":"Save"}</button>
           </div>
         </div>
       )}
 
       {/* Stretches locked */}
       {showStretches&&!descEnough&&!readOnly&&(
-        <div style={{background:"#111",borderRadius:12,padding:"14px 16px",marginBottom:12,border:"1px solid #222",display:"flex",alignItems:"center",gap:12}}>
-          <div style={{fontSize:18,flexShrink:0}}>🔒</div>
-          <div>
-            <div style={{fontSize:12,fontWeight:700,color:"#888",marginBottom:2}}>Stretches locked</div>
-            <div style={{fontSize:11,color:"#3a3a3a",lineHeight:1.5}}>Describe the injury (10+ chars) to unlock.</div>
-          </div>
+        <div className="tfx-card bm-locked">
+          <span aria-hidden="true">🔒</span>
+          <div><b>Stretches for {selName}</b><p>Describe what you're feeling (10+ characters) to unlock them.</p></div>
         </div>
       )}
 
       {/* Stretches */}
       {showStretches&&(descEnough||readOnly)&&(
-        <div style={{background:"#111",borderRadius:14,padding:"16px",marginBottom:12,border:"1px solid #222"}}>
-          <div style={{fontSize:13,fontWeight:800,color:"#ccc",marginBottom:3,letterSpacing:"-0.01em"}}>Stretches — {selName}</div>
-          <div style={{fontSize:10,color:"#3a3a3a",marginBottom:14,lineHeight:1.6}}>
-            Stop any stretch that increases pain. General mobility only — check with Coach Ant before training on an injury.
-          </div>
+        <div className="tfx-card bm-panel bm-stretches tfx-rise" style={{"--c":UI[pStatus]}}>
+          <div className="bm-panel-head"><h3>Stretches · {selName}</h3></div>
+          <p className="bm-muted">Stop any stretch that increases pain. General mobility only — check with Coach Ant before training on an injury.</p>
           {stretches.map((s,i)=>(
-            <div key={i} style={{marginBottom:8,padding:"12px",borderRadius:10,background:"#0a0a0a",border:"1px solid #1e1e1e"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4,gap:8}}>
-                <div style={{fontSize:12,fontWeight:700,color:"#ccc"}}>{s.name}</div>
-                <div style={{fontSize:9,color:"#555",background:"#1a1a1a",padding:"2px 8px",borderRadius:8,whiteSpace:"nowrap",flexShrink:0}}>{s.duration}</div>
-              </div>
-              <div style={{fontSize:11,color:"#555",lineHeight:1.6,marginBottom:8}}>{s.desc}</div>
-              <a href={ytUrl(s.name)} target="_blank" rel="noopener noreferrer"
-                style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:10,color:"#cc3333",textDecoration:"none",background:"#1a0808",padding:"4px 10px",borderRadius:6,border:"1px solid #2a1010"}}>
-                ▶ Watch on YouTube
-              </a>
+            <div key={i} className="bm-stretch">
+              <div><b>{s.name}</b><span>{s.duration}</span></div>
+              <p>{s.desc}</p>
+              <a href={ytUrl(s.name)} target="_blank" rel="noopener noreferrer" className="bm-yt">▶ Watch how</a>
             </div>
           ))}
         </div>
