@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import { nowEST } from "../lib/dates";
 import { loadSeason, seasonStart, seasonEnd, seasonWeeks, isBeforeSeason, firstClassAt, fmtFirstClass } from "../lib/season";
 import Icon from "../components/Icon";
+import { useMood } from "../lib/ambient";
 
 const GOLD="#D4AF37";
 const RED="#C0392B";
@@ -39,6 +40,7 @@ const PROGRAM_DAYS=[
 ];
 
 export default function Landing(){
+  useMood("base");
   const[qrDataUrl,setQrDataUrl]=useState("");
   const[qrFullscreen,setQrFullscreen]=useState(false);
   const[qrUnlocked,setQrUnlocked]=useState(false);
@@ -254,7 +256,7 @@ export default function Landing(){
         <meta name="theme-color" content="#080808"/>
         <link rel="manifest" href="/manifest.json"/>
       </Head>
-      <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",fontFamily:"Georgia,serif",position:"relative",overflowX:"hidden",color:"#fff"}}>
+      <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia,serif",position:"relative",overflowX:"hidden",color:"#fff"}}>
 
         {/* Ambient glows */}
         <div style={{position:"fixed",top:-160,left:-120,width:420,height:420,borderRadius:"50%",background:ORANGE,opacity:0.06,filter:"blur(120px)",pointerEvents:"none",zIndex:0}}/>

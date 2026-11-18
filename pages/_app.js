@@ -1,6 +1,8 @@
 import '../styles/globals.css'
+import '../styles/forge.css'
 import Head from 'next/head'
 import { useEffect } from 'react'
+import Ambient from '../components/Ambient'
 
 export default function App({ Component, pageProps }) {
   useEffect(()=>{
@@ -42,7 +44,10 @@ export default function App({ Component, pageProps }) {
         <meta name="twitter:image" content="https://tfcollegegroup.com/og-image.jpg" />
       </Head>
       <div style={{position:"fixed",top:0,left:0,right:0,height:"env(safe-area-inset-top)",background:"#080808",zIndex:9999,pointerEvents:"none"}}/>
-      <Component {...pageProps} />
+      <Ambient />
+      <div className="tf-app">
+        <Component {...pageProps} />
+      </div>
     </>
   )
 }

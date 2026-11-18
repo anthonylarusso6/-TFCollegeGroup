@@ -5,6 +5,7 @@ import { ATHLETE_SAFE_COLS } from "../lib/constants";
 import { nowEST } from "../lib/dates";
 import Icon from "../components/Icon";
 import { hTap, hSuccess } from "../lib/haptics";
+import { useMood } from "../lib/ambient";
 
 const RED="#C0392B";
 const GREEN="#2FA869";
@@ -28,6 +29,7 @@ const estToday=()=>{const n=nowEST();return n.getFullYear()+"-"+String(n.getMont
 const logDate=(ts)=>{if(!ts)return"";const d=new Date(ts);const e=new Date(d.toLocaleString("en-US",{timeZone:"America/New_York"}));return e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0");};
 
 export default function Callout(){
+  useMood("callouts");
   const[athletes,setAthletes]=useState([]);
   const[step,setStep]=useState("athlete");
   const[selected,setSelected]=useState(null);
@@ -106,7 +108,7 @@ export default function Callout(){
   });
 
   if(loading) return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <div style={{minHeight:"100vh",background:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
         <Icon name="anvil" size={40} color={GOLD} style={{filter:"drop-shadow(0 0 14px "+GOLD+"66)"}}/>
         <div style={{fontSize:13,color:"rgba(255,255,255,0.4)",fontFamily:"Georgia,serif",letterSpacing:"0.08em"}}>Loading…</div>
@@ -119,7 +121,7 @@ export default function Callout(){
   return(
     <>
       <Head><title>Call-Out Station — TF College Group</title></Head>
-      <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",fontFamily:"Georgia,serif",color:"#fff",position:"relative"}}>
+      <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia,serif",color:"#fff",position:"relative"}}>
 
         {/* Ambient glow */}
         <div style={{position:"fixed",top:-100,right:-100,width:300,height:300,borderRadius:"50%",background:RED,opacity:0.06,filter:"blur(100px)",pointerEvents:"none"}}/>

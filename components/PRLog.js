@@ -6,6 +6,7 @@ import { nowEST } from "../lib/dates";
 import Icon from "./Icon";
 import { Skeleton, SkeletonList } from "./Skeleton";
 import { hSuccess } from "../lib/haptics";
+import { pulseMood } from "../lib/ambient";
 import EmptyState from "./EmptyState";
 
 const DAYS=["Mon","Tue","Thu","Fri"];
@@ -297,6 +298,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
       if(prHit){
         try{if(navigator.vibrate)navigator.vibrate([0,45,55,45,55,90]);}catch(e){}
         setCelebrate({lift:liftName,value:prHit.value,unit:prHit.unit});
+        pulseMood("celebrate",3400); // the whole room flashes gold
         setTimeout(()=>setCelebrate(c=>(c&&c.lift===liftName?null:c)),3400);
       }
       // End of workout? If this set finished the last programmed lift, prompt weight + habits.

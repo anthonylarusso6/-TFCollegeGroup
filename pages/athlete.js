@@ -36,6 +36,7 @@ import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import { ensurePushSync } from "../lib/push";
 import { loadSeason, isBeforeSeason, fmtFirstClass } from "../lib/season";
+import { setMood } from "../lib/ambient";
 
 const LC=["#534AB7","#0F6E56","#854F0B","#993556"];
 const LB=["#EEEDFE","#E1F5EE","#FAEEDA","#FBEAF0"];
@@ -307,6 +308,19 @@ export default function Athlete(){
   // Season the coach set — before its first class, don't tell athletes "class today"
   const[seasonInfo,setSeasonInfo]=useState(null);
   useEffect(()=>{loadSeason().then(setSeasonInfo).catch(()=>{});},[]);
+
+  // Room light: tint the living background to the current screen / tab / check-in result
+  useEffect(()=>{
+    const TAB_MOOD={prs:"iron",habits:"habits",weight:"weight",stretching:"stretch",goals:"goals",body:"body",
+      verse:"faith",prayer:"faith",notes:"faith",bracelets:"faith",mygroup:"faith",private:"faith",mcastles:"faith",
+      prfeed:"social",leaderboard:"social",anvil:"social",badges:"social",recap:"social",events:"social",
+      callouts:"callouts",surprise:"celebrate"};
+    if(screen==="checkin"){
+      const ci=checkinInfo;
+      setMood(!ci?"base":ci.already?"already":ci.status==="late"?"late":"early");
+    }else if(screen==="profile")setMood(TAB_MOOD[tab]||"base");
+    else setMood("base");
+  },[screen,tab,checkinInfo]);
 
   // End the guided post-check-in flow the moment they navigate off weight/habits
   useEffect(()=>{
@@ -691,7 +705,7 @@ export default function Athlete(){
   const isForge=selectedAthlete?.role==="forge";
 
   if(loading)return(
-    <div style={{minHeight:"100vh",background:"#080808",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+    <div style={{minHeight:"100vh",background:"transparent",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",top:"40%",left:"50%",transform:"translate(-50%,-50%)",width:600,height:400,background:"radial-gradient(ellipse,#E8720C10 0%,transparent 65%)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",position:"relative"}}>
         <div style={{width:100,height:100,borderRadius:28,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:52,boxShadow:"0 0 80px #E8720C55,0 0 160px #E8720C22,inset 0 1px 0 rgba(255,255,255,0.1)"}}>⚒</div>
@@ -703,14 +717,14 @@ export default function Athlete(){
   if(screen==="roster")return(
     <>
       <Head><title>TF College Group — Athlete</title></Head>
-      <div style={{minHeight:"100vh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflowX:"hidden"}}>
+      <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflowX:"hidden"}}>
         {/* Ambient fire glow top */}
         <div style={{position:"fixed",top:-120,left:"50%",transform:"translateX(-50%)",width:500,height:400,borderRadius:"50%",background:"radial-gradient(ellipse,#E8720C22 0%,transparent 70%)",pointerEvents:"none"}}/>
         {/* Ambient bottom */}
         <div style={{position:"fixed",bottom:-80,right:-80,width:300,height:300,borderRadius:"50%",background:"#C0392B0a",filter:"blur(60px)",pointerEvents:"none"}}/>
 
         {/* Hero Banner */}
-        <div style={{background:"linear-gradient(180deg,#0e0600 0%,#080808 100%)",borderBottom:"1px solid #1a0a00",padding:"2rem 1.5rem 1.5rem",textAlign:"center",position:"relative"}}>
+        <div style={{background:"transparent",borderBottom:"1px solid rgba(232,114,12,0.14)",padding:"2rem 1.5rem 1.5rem",textAlign:"center",position:"relative"}}>
           <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent 0%,#E8720C 30%,#C0392B 70%,transparent 100%)"}}/>
           {/* Nav */}
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:"1.5rem"}}>
@@ -812,9 +826,9 @@ export default function Athlete(){
   if(screen==="signup")return(
     <>
       <Head><title>Create Your Profile — TF College Group</title></Head>
-      <div style={{minHeight:"100dvh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflowX:"hidden",padding:"0 0 3rem"}}>
+      <div style={{minHeight:"100dvh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflowX:"hidden",padding:"0 0 3rem"}}>
         <div style={{position:"fixed",top:-120,left:"50%",transform:"translateX(-50%)",width:500,height:400,borderRadius:"50%",background:"radial-gradient(ellipse,#E8720C22 0%,transparent 70%)",pointerEvents:"none"}}/>
-        <div style={{background:"linear-gradient(180deg,#0e0600 0%,#080808 100%)",borderBottom:"1px solid #1a0a00",padding:"1.5rem 1.5rem 1.75rem",position:"relative"}}>
+        <div style={{background:"transparent",borderBottom:"1px solid rgba(232,114,12,0.14)",padding:"1.5rem 1.5rem 1.75rem",position:"relative"}}>
           <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent 0%,#E8720C 30%,#C0392B 70%,transparent 100%)"}}/>
           <button onClick={()=>setScreen("roster")} style={{background:"#0e0e0e",border:"0.5px solid #1e1e1e",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"7px 14px",borderRadius:10,marginBottom:18}}>← Back</button>
           <div style={{width:72,height:72,borderRadius:22,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:38,boxShadow:"0 0 60px #E8720C44",marginBottom:14}}>⚒</div>
@@ -886,7 +900,7 @@ export default function Athlete(){
   if(screen==="login")return(
     <>
       <Head><title>Sign In — TF College Group</title></Head>
-      <div style={{height:"100dvh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",textAlign:"center",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 1.5rem",overflow:"hidden"}}>
+      <div style={{height:"100dvh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",textAlign:"center",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 1.5rem",overflow:"hidden"}}>
         <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:560,height:400,background:"radial-gradient(ellipse at top,"+(isForge?"#C0392B18":"#4a5a6618")+" 0%,transparent 65%)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+(isForge?"#C0392B,#E8720C":"#505a66,#8a9aa4")+",transparent)"}}/>
         <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:16,left:16,background:"#111",border:"0.5px solid #222",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia, serif",padding:"7px 14px",borderRadius:10}}>← Back</button>
@@ -999,7 +1013,7 @@ export default function Athlete(){
     return(
       <>
         <Head><title>Check In — TF College Group</title></Head>
-        <div style={{minHeight:"100vh",background:bgGrad,fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",padding:"3rem 1.5rem 2rem",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+        <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",padding:"3rem 1.5rem 2rem",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
           {/* Top accent line */}
           <div style={{position:"fixed",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+accentColor+",transparent)",maxWidth:480,margin:"0 auto"}}/>
           {/* Big ambient glow */}
@@ -1202,9 +1216,9 @@ export default function Athlete(){
             </div>
           </div>
         )}
-        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{minHeight:"100vh",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
+        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
           {/* Profile header */}
-          <div style={{background:"linear-gradient(180deg,#0e0e1c 0%,#0a0a14 100%)",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
+          <div className="tfx-glassbar" style={{borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
             {/* Top accent */}
             <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+(isForge?"rgba(232,114,12,0.9),rgba(192,57,43,0.8)":"rgba(96,106,117,0.8),rgba(138,154,164,0.9)")+",transparent)"}}/>
             {/* Ambient glow */}

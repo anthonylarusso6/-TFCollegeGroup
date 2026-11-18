@@ -91,7 +91,7 @@ export default function CheckIn(){
     return(
       <>
         <Head><title>Check-in failed</title></Head>
-        <div style={{minHeight:"100vh",background:BG_GRAD,fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",textAlign:"center",color:"#fff"}}>
+        <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",textAlign:"center",color:"#fff"}}>
           <div style={{width:100,height:100,borderRadius:"50%",background:RED+"1c",border:"2px solid "+RED+"66",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20,boxShadow:"0 0 40px "+RED+"44"}}>
             <Icon name="clock" size={46} color={RED}/>
           </div>
@@ -114,7 +114,7 @@ export default function CheckIn(){
     return(
       <>
         <Head><title>Checked In!</title></Head>
-        <div style={{minHeight:"100vh",background:BG_GRAD,fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",textAlign:"center",position:"relative",overflow:"hidden",color:"#fff"}}>
+        <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",textAlign:"center",position:"relative",overflow:"hidden",color:"#fff"}}>
           <div style={{position:"absolute",inset:0,background:"radial-gradient(circle at 50% 38%, "+accent+"22, transparent 60%)",pointerEvents:"none"}}/>
           {isEarly&&!done.already&&(
             <div style={{position:"absolute",top:"32%",left:"50%",width:0,height:0,pointerEvents:"none",zIndex:2}}>
@@ -165,7 +165,7 @@ export default function CheckIn(){
     return(
       <>
         <Head><title>Check In — TF College Group</title></Head>
-        <div style={{minHeight:"100vh",background:BG_GRAD,fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",textAlign:"center",color:"#fff"}}>
+        <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia,serif",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",textAlign:"center",color:"#fff"}}>
           <div style={{width:84,height:84,borderRadius:"50%",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20}}>
             <Icon name="calendar" size={36} color="rgba(255,255,255,0.4)"/>
           </div>
@@ -181,7 +181,7 @@ export default function CheckIn(){
   return(
     <>
       <Head><title>Check In — TF College Group</title></Head>
-      <div style={{minHeight:"100vh",background:BG_GRAD,fontFamily:"Georgia,serif",maxWidth:480,margin:"0 auto",color:"#fff"}}>
+      <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia,serif",maxWidth:480,margin:"0 auto",color:"#fff"}}>
         {/* Header */}
         <div style={{background:"rgba(10,10,16,0.92)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",padding:"20px 18px 16px",borderBottom:"1px solid rgba(255,255,255,0.08)",position:"sticky",top:0,zIndex:10}}>
           <div style={{textAlign:"center",marginBottom:14}}>

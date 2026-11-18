@@ -33,6 +33,7 @@ import CultureEvents from "../components/CultureEvents";
 import Icon from "../components/Icon";
 import EmptyState from "../components/EmptyState";
 import { hTap } from "../lib/haptics";
+import { useMood } from "../lib/ambient";
 import TeamsView from "../components/TeamsView";
 
 const COACH_PIN="1803";
@@ -41,6 +42,7 @@ const COACH_PIN="1803";
 
 
 export default function Coach(){
+  useMood("coach");
   const[authed,setAuthed]=useState(false);
   const[coachRole,setCoachRole]=useState("ant");
   const[selectedCoach,setSelectedCoach]=useState(null); // "ant" or "kevin"
@@ -566,7 +568,7 @@ export default function Coach(){
   if(!authed) return(
     <>
       <Head><title>Coach — TF College Group</title></Head>
-      <div style={{height:"100dvh",background:"#080808",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 1.25rem",position:"relative",overflow:"hidden"}}>
+      <div style={{height:"100dvh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 1.25rem",position:"relative",overflow:"hidden"}}>
         <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:600,height:400,background:"radial-gradient(ellipse at top,#E8720C10 0%,transparent 70%)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#E8720C,#C0392B,transparent)"}}/>
         <div style={{textAlign:"center",width:"100%",position:"relative"}}>
@@ -703,7 +705,7 @@ export default function Coach(){
   );
 
   if(loading) return(
-    <div style={{minHeight:"100vh",background:"#080808",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
+    <div style={{minHeight:"100vh",background:"transparent",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
       <div style={{position:"absolute",top:"40%",left:"50%",transform:"translate(-50%,-50%)",width:600,height:400,background:"radial-gradient(ellipse,#E8720C10 0%,transparent 65%)",pointerEvents:"none"}}/>
       <div style={{textAlign:"center",position:"relative"}}>
         <div style={{width:80,height:80,borderRadius:22,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto 20px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:42,boxShadow:"0 0 80px #E8720C55,0 0 160px #E8720C22"}}>⚒</div>
@@ -731,9 +733,9 @@ export default function Coach(){
     <>
       <style>{`@keyframes tfSlideFromRight{from{transform:translateX(52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfJiggle{0%{transform:rotate(-1.5deg) scale(1.03)}100%{transform:rotate(1.5deg) scale(1.03)}}`}</style>
       <Head><title>Coach Dashboard — TF College Group</title></Head>
-      <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"linear-gradient(160deg,#06060f 0%,#0a0608 50%,#080808 100%)",minHeight:"100vh"}}>
+      <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"transparent",minHeight:"100vh"}}>
 
-        <div style={{background:isLight?"linear-gradient(180deg,#ffffff,#f3f4f7)":"linear-gradient(180deg,#0e0e1c 0%,#0a0a14 100%)",borderBottom:isLight?"1px solid rgba(0,0,0,0.10)":"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
+        <div className="tfx-glassbar" style={{borderBottom:isLight?"1px solid rgba(0,0,0,0.10)":"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(232,114,12,0.9),rgba(192,57,43,0.8),transparent)"}}/>
           <div style={{position:"absolute",top:-40,right:-40,width:200,height:200,borderRadius:"50%",background:"rgba(232,114,12,0.05)",filter:"blur(50px)",pointerEvents:"none"}}/>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
