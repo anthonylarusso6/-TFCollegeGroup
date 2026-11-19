@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
-import { getTier, BRACELETS } from "../lib/teams";
+import { getTier, BRACELETS, GROUP_COLORS } from "../lib/teams";
 import { SkeletonList } from "./Skeleton";
 
-const GC=["#534AB7","#C0392B","#1E6B3A","#D4AF37","#E8720C","#1A4F8A"];
+const GC=GROUP_COLORS;
 const TIER_LABEL={1:"Tier 1",2:"Tier 2",3:"Tier 3"};
 
 export default function TeamsView({athletes=[]}){

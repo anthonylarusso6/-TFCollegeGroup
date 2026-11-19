@@ -8,99 +8,7 @@ import { Skeleton, SkeletonList } from "./Skeleton";
 import { hSuccess } from "../lib/haptics";
 import { pulseMood } from "../lib/ambient";
 import { smoothPath } from "../lib/chart";
-
-const DAYS=["Mon","Tue","Thu","Fri"];
-const DAY_LABELS={Mon:"Monday",Tue:"Tuesday",Thu:"Thursday",Fri:"Friday"};
-// Tier = how the coach ranks the lift. Shown as a colored stripe + chip.
-const TIERS={
-  1:{c:"#8e7cf0",chip:"T1 · Primary",short:"T1"},
-  2:{c:"#3fa577",chip:"T2 · Secondary",short:"T2"},
-  3:{c:"#d9822b",chip:"T3 · Accessory",short:"T3"},
-  circuit:{c:"#d9534f",chip:"Circuit · 3 rounds · 30s on / 15s off",short:"Circuit"},
-  guns_and_glory:{c:"#c9a640",chip:"Guns & Glory",short:"G&G"},
-};
-
-// "2026-11-16" → local date. new Date("2026-11-16") is UTC midnight, which
-// shows as the previous day on phones in Eastern time.
-const pd=(s)=>{const[y,m,d]=String(s).slice(0,10).split("-").map(Number);return new Date(y,m-1,d);};
-const fmtD=(s,o={month:"short",day:"numeric"})=>pd(s).toLocaleDateString("en-US",o);
-
-// Band resistance colors — orange (lightest) → red → black → green → blue (max)
-const BAND_COLORS=[
-  {id:"orange",label:"Orange",hex:"#E8720C",resistance:"Lightest"},
-  {id:"red",   label:"Red",   hex:"#C0392B",resistance:"Light"},
-  {id:"black", label:"Black", hex:"#222",   resistance:"Medium"},
-  {id:"green", label:"Green", hex:"#1E6B3A",resistance:"Heavy"},
-  {id:"blue",  label:"Blue",  hex:"#1A4F8A",resistance:"Max"},
-];
-
-// Medicine ball preset weights (lbs)
-const MB_WEIGHTS=[6,8,10,12,14,16,20];
-
-// Kettlebell color → weight (lbs)
-const KB_COLORS=[
-  {id:"white",  label:"White",  hex:"#e8e8e8", textColor:"#222", weight:8.8},
-  {id:"pink",   label:"Pink",   hex:"#e91e8c", textColor:"#fff", weight:17.6},
-  {id:"blue",   label:"Blue",   hex:"#1A4F8A", textColor:"#fff", weight:26.4},
-  {id:"yellow", label:"Yellow", hex:"#f5c518", textColor:"#222", weight:35.2},
-  {id:"purple", label:"Purple", hex:"#7B2D8B", textColor:"#fff", weight:44.1},
-  {id:"green",  label:"Green",  hex:"#1E6B3A", textColor:"#fff", weight:52.9},
-  {id:"orange", label:"Orange", hex:"#E8720C", textColor:"#fff", weight:61.7},
-  {id:"red",    label:"Red",    hex:"#C0392B", textColor:"#fff", weight:70.5},
-  {id:"gray",   label:"Gray",   hex:"#708090", textColor:"#fff", weight:79.4},
-];
-
-const DEFAULT_PROGRAM={
-  Mon:[
-    {name:"BB Front Squat / Pitshark",    tier:1,sets:"8 (4x5)",                inputType:"weight"},
-    {name:"Seated Cable Rows",             tier:1,sets:"12, 8, 8 (2:2:0)",       inputType:"weight"},
-    {name:"DB Curl to Press",              tier:1,sets:"3x8",                    inputType:"weight"},
-    {name:"DB Incline Bench Press",        tier:2,sets:"12, 10, 10, 8",          inputType:"weight"},
-    {name:"ISOphit Copenhagen Holds",      tier:2,sets:"3x20s ea",               inputType:"bodyweight"},
-    {name:"KB Swing Switches",             tier:2,sets:"3x7e",                   inputType:"kb"},
-    {name:"KB SA Situp",                   tier:3,sets:"3x6e",                   inputType:"kb"},
-    {name:"KB Banded Deadbug",             tier:3,sets:"3x9e",                   inputType:"band_kb"},
-    {name:"DB Birddog Row on Bench",       tier:3,sets:"3x10e",                  inputType:"weight"},
-  ],
-  Tue:[
-    {name:"BB Hang Cleans",                tier:1,sets:"4x6",                    inputType:"weight"},
-    {name:"LM Banded Push Press",          tier:1,sets:"4x10",                   inputType:"band_weight"},
-    {name:"TRX T,Y,I",                     tier:1,sets:"3x6e",                   inputType:"bodyweight"},
-    {name:"SL/Pistol Squat",               tier:2,sets:"3x7e",                   inputType:"weight_kb"},
-    {name:"DB/KB Kickstand Hinge",         tier:2,sets:"3x8e",                   inputType:"kb"},
-    {name:"DB Chest Supported Row",        tier:2,sets:"3x10e",                  inputType:"weight"},
-    {name:"Cable Rope Trunk Rotation",     tier:3,sets:"3x10e",                  inputType:"weight"},
-    {name:"Dragon Flag",                   tier:3,sets:"3x9",                    inputType:"bodyweight"},
-    {name:"KB Farmer & Waiter Carry",      tier:3,sets:"3x20 yards",               inputType:"kb2_yards"},
-  ],
-  Thu:[
-    {name:"SA Banded Rot. Jammer Press",   tier:1,sets:"4x5e",                   inputType:"band_weight"},
-    {name:"SA Lat Pull Down",              tier:1,sets:"4x14e",                  inputType:"weight"},
-    {name:"DB Pronated Trap Raise",        tier:1,sets:"3x15",                   inputType:"weight"},
-    {name:"Heavy Prowler Sprint",          tier:2,sets:"4x20 yards",               inputType:"weight_yards"},
-    {name:"Weighted Plank Holds",          tier:2,sets:"3x30s",                  inputType:"weight"},
-    {name:"KB Shrugs",                     tier:2,sets:"3x15",                   inputType:"kb"},
-    {name:"Battle Rope Waves",             tier:"circuit",sets:"30s",            inputType:"bodyweight"},
-    {name:"Wall Sit w/ Band Pull Apart",   tier:"circuit",sets:"30s",            inputType:"bodyweight"},
-    {name:"Dead Hangs",                    tier:"circuit",sets:"30s",            inputType:"bodyweight"},
-    {name:"TRX Bicep Curl",                tier:"circuit",sets:"30s",            inputType:"bodyweight"},
-    {name:"SL Box Jumps",                  tier:"circuit",sets:"30s",            inputType:"bodyweight"},
-    {name:"DB Lat Box Step Ups",           tier:"circuit",sets:"30s",            inputType:"weight"},
-  ],
-  Fri:[
-    {name:"BB Deadlifts",                  tier:1,sets:"8,4,4,3",               inputType:"weight"},
-    {name:"DB RFESS (3:0:0)",              tier:1,sets:"4x6e",                   inputType:"weight"},
-    {name:"MB Rot Wall Toss",              tier:1,sets:"3x8e",                   inputType:"mb"},
-    {name:"BB Push Press",                 tier:2,sets:"4x7e",                   inputType:"weight"},
-    {name:"SA DB Bent Over Row",           tier:2,sets:"15e,13e,11e,9e",         inputType:"weight"},
-    {name:"Banded Cable Pallof Press",     tier:2,sets:"3x12e",                  inputType:"band_pallof"},
-    {name:"DB ISO Hammer Curl",            tier:"guns_and_glory",sets:"3x12e",   inputType:"weight"},
-    {name:"DB Bench Skull Crusher",        tier:"guns_and_glory",sets:"15,13,12",inputType:"weight"},
-    {name:"DB Crazy 8's",                  tier:"guns_and_glory",sets:"3x8e",    inputType:"weight",note:"Front · Upright · Lat · Rear Delt"},
-  ],
-};
-
-const epley=(w,r)=>r===1?w:Math.round(w*(1+r/30));
+import { DAYS, DAY_LABELS, TIERS, pd, fmtD, BAND_COLORS, MB_WEIGHTS, KB_COLORS, epley, VERT_LIFTS, isVert, loadProgram, parseSets, todayET } from "../lib/lifting";
 
 // Gender-specific T&F reference standards
 const CATS_M=[
@@ -116,9 +24,7 @@ const CATS_F=[
   {id:"hinge", label:"Hinge",      ref:225, w:0.35},
 ];
 
-const VERT_LIFTS=new Set(["pvc max vert"]);
 const EXCLUDED_CATS=new Set(["weighted box dips","ab rollout","mb slam to shotput","mb oh sit up throw"]);
-const isVert=(name)=>VERT_LIFTS.has((name||"").toLowerCase());
 
 const getCat=(name)=>{
   const n=(name||"").toLowerCase();
@@ -171,35 +77,14 @@ export default function PRLog({athleteId,gender,onNavigate}){
   const[teamLoaded,setTeamLoaded]=useState(false);
   const[bwDone,setBwDone]=useState({});
   const[showPriorPhase,setShowPriorPhase]=useState(false);
-  const[sessionDone,setSessionDone]=useState(()=>new Set()); // "day|lift" logged this session (fills the progress ring)
+  const[sessionDone,setSessionDone]=useState(()=>new Set()); // lifts finished early ("Finish lift") this session
+  const[reopened,setReopened]=useState(()=>new Set()); // completed lifts opened again to add/fix a set
   const[celebrate,setCelebrate]=useState(null); // {lift,value,unit} → PR confetti overlay
   const[showSessionEnd,setShowSessionEnd]=useState(false); // end-of-workout → log weight/habits
   const[sessionEndAcked,setSessionEndAcked]=useState(false); // only prompt once per session
 
   useEffect(()=>{
-    (async()=>{
-      try{
-        const{data}=await supabase.from("announcements").select("*").eq("type","program").eq("active",true)
-          .order("created_at",{ascending:false}).limit(1);
-        if(data&&data[0]){
-          const p=JSON.parse(data[0].message||"{}");
-          if(p.days){
-            // Merge inputType from DEFAULT_PROGRAM by name so DB-loaded programs get the right input UI
-            const merged={};
-            Object.keys(p.days).forEach(day=>{
-              merged[day]=(p.days[day]||[]).map(lift=>{
-                const def=(DEFAULT_PROGRAM[day]||[]).find(d=>d.name===lift.name);
-                return{...lift,inputType:lift.inputType||def?.inputType||"weight"};
-              });
-            });
-            setProgram(merged);setPhase(p.phase||"");
-          } else if(p.lifts){
-            const spread={Mon:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Tue:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Thu:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3})),Fri:p.lifts.map((l,i)=>({name:l,tier:i<2?1:i<4?2:3}))};
-            setProgram(spread);setPhase(p.phase||"");
-          }else{setProgram(DEFAULT_PROGRAM);setPhase("Current Program");}
-        }else{setProgram(DEFAULT_PROGRAM);setPhase("Current Program");}
-      }catch(e){setProgram(DEFAULT_PROGRAM);}
-    })();
+    (async()=>{const r=await loadProgram();setProgram(r.program);setPhase(r.phase);})();
   },[]);
 
   useEffect(()=>{
@@ -248,14 +133,39 @@ export default function PRLog({athleteId,gender,onNavigate}){
   },[athleteId]);
 
   const todayLifts=(program&&program[activeDay])||[];
-  const doneCount=todayLifts.filter(l=>sessionDone.has(activeDay+"|"+l.name)||bwDone[l.name]).length;
+  const todayStr=todayET();
+
+  // ── Sets ─────────────────────────────────────────────────────────
+  // Every set is its own pr_log row (set_num 1..n). Progress is counted from
+  // today's saved rows, so a set logged at the rack shows up here too.
+  const setsOf=(lift)=>{const p=parseSets(lift.sets);return p.length?p:[{target:null,label:"Set"}];};
+  const todayRows=(name)=>(logs[name]||[]).filter(h=>String(h.date).slice(0,10)===todayStr)
+    .slice().sort((a,b)=>(a.set_num||0)-(b.set_num||0)||String(a.created_at||"").localeCompare(String(b.created_at||"")));
+  // Previous session (before today) — "last time" numbers, set by set
+  const lastSession=(name)=>{
+    const prior=(logs[name]||[]).filter(h=>String(h.date).slice(0,10)<todayStr);
+    if(!prior.length)return[];
+    const d=String(prior[0].date).slice(0,10);
+    return prior.filter(h=>String(h.date).slice(0,10)===d).slice().sort((a,b)=>(a.set_num||0)-(b.set_num||0));
+  };
+  const keyOf=(name)=>activeDay+"|"+name;
+  const isLiftDone=(lift)=>{
+    if(bwDone[lift.name])return true;
+    if(reopened.has(keyOf(lift.name)))return false;
+    if(sessionDone.has(keyOf(lift.name)))return true;
+    return todayRows(lift.name).length>=setsOf(lift).length;
+  };
+  const totalSets=todayLifts.reduce((n,l)=>n+setsOf(l).length,0);
+  const setsDone=todayLifts.reduce((n,l)=>n+(isLiftDone(l)?setsOf(l).length:Math.min(todayRows(l.name).length,setsOf(l).length)),0);
+  const doneCount=todayLifts.filter(isLiftDone).length;
 
   const setInput=(liftName,field,val)=>{
     setInputs(prev=>({...prev,[liftName]:{...prev[liftName],[field]:val}}));
   };
   // Step a numeric input up/down (weight in 5s, reps in 1s), floored at 0.
-  const bump=(liftName,field,dir,step)=>{
-    const cur=parseFloat((inputs[liftName]||{})[field])||0;
+  const bump=(liftName,field,dir,step,base=0)=>{
+    const raw=(inputs[liftName]||{})[field];
+    const cur=raw===""||raw==null?(parseFloat(base)||0):(parseFloat(raw)||0);
     const next=Math.max(0,Math.round((cur+dir*step)*100)/100);
     setInput(liftName,field,String(next));
   };
@@ -268,9 +178,10 @@ export default function PRLog({athleteId,gender,onNavigate}){
     });
   };
 
-  const saveLog=async(liftName,tier)=>{
+  const saveLog=async(liftName,tier,targetReps)=>{
     const inp=inputs[liftName]||{};
     if(!inp.weight)return;
+    const repsVal=inp.reps||(targetReps!=null?String(targetReps):"");
     // Snapshot the current best BEFORE inserting, so we can tell if this set is a PR.
     const prevOrmPR=getOrmPR(liftName);
     const prevWeightPR=getPR(liftName);
@@ -281,22 +192,22 @@ export default function PRLog({athleteId,gender,onNavigate}){
     const higherIsBetter=vertLift||it==="rsi"||it==="vert_lr";
     const metricUnit=it==="rsi"?"RSI":(it==="vert_lr"||vertLift)?"in":"lbs";
     const newWeight=parseFloat(inp.weight)||0;
-    const newReps=parseInt(inp.reps)||1;
+    const newReps=parseInt(repsVal)||1;
     const newOrm=epley(newWeight,newReps);
     setSaving(liftName);
-    const estNow=nowEST();
-    const today=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
     const tierNum=typeof tier==="number"?tier:3; // "circuit"/"guns_and_glory" → 3
+    const setNum=todayRows(liftName).length+1;
     const entry={
       athlete_id:athleteId,lift:liftName,weight:parseFloat(inp.weight),
-      reps:parseInt(inp.reps)||1,date:today,day:activeDay,tier:tierNum,
+      reps:parseInt(repsVal)||1,date:todayStr,day:activeDay,tier:tierNum,set_num:setNum,
     };
     try{
       const{data,error}=await supabase.from("pr_log").insert(entry).select().single();
       if(error){setLoadError(error.message);setSaving(null);return;}
       setLogs(prev=>{const existing=prev[liftName]||[];return{...prev,[liftName]:[data,...existing]};});
-      setInputs(prev=>({...prev,[liftName]:{weight:"",reps:""}}));
-      setSessionDone(s=>{const n=new Set(s);n.add(activeDay+"|"+liftName);return n;});
+      // Keep the weight (and kettlebell/band pick) for the next set; reps reset to the next target
+      setInputs(prev=>({...prev,[liftName]:{...(prev[liftName]||{}),reps:""}}));
+      if(liftObj&&setNum>=setsOf(liftObj).length)setReopened(s=>{const n=new Set(s);n.delete(keyOf(liftName));return n;});
       setSaving(null);setSaved(liftName);setTimeout(()=>setSaved(null),2000);hSuccess();
       // 🏆 New PR? Only celebrate when beating an existing best (avoids confetti on every first-ever log).
       let prHit=null;
@@ -309,20 +220,18 @@ export default function PRLog({athleteId,gender,onNavigate}){
         setTimeout(()=>setCelebrate(c=>(c&&c.lift===liftName?null:c)),3400);
       }
       // End of workout? If this set finished the last programmed lift, prompt weight + habits.
-      const doneAfter=todayLifts.filter(l=>{const k=activeDay+"|"+l.name;return sessionDone.has(k)||bwDone[l.name]||l.name===liftName;}).length;
-      if(todayLifts.length>0&&doneAfter>=todayLifts.length&&!sessionEndAcked){
+      const allDone=todayLifts.length>0&&todayLifts.every(l=>l.name===liftName?(setNum>=setsOf(l).length||bwDone[l.name]):isLiftDone(l));
+      if(allDone&&!sessionEndAcked){
         setSessionEndAcked(true);
         setTimeout(()=>setShowSessionEnd(true),prHit?2800:1000);
+        // One nudge per session (not per set) if they haven't weighed in today
+        try{
+          const{data:wLog}=await supabase.from("weight_log").select("id").eq("athlete_id",athleteId).eq("date",todayStr).maybeSingle();
+          if(!wLog){
+            fetch("/api/send-notification",{method:"POST",headers:{"Content-Type":"application/json","x-app-secret":process.env.NEXT_PUBLIC_APP_ACTION_SECRET||""},body:JSON.stringify({athleteId,title:"💪 Great session!",body:"Don't forget to log your weight today ⚖️",url:"/athlete"})}).catch(()=>{});
+          }
+        }catch(e){}
       }
-      // Nudge athlete to log weight if they haven't today
-      try{
-        const estNow=nowEST();
-        const todayStr=estNow.getFullYear()+"-"+String(estNow.getMonth()+1).padStart(2,"0")+"-"+String(estNow.getDate()).padStart(2,"0");
-        const{data:wLog}=await supabase.from("weight_log").select("id").eq("athlete_id",athleteId).eq("date",todayStr).maybeSingle();
-        if(!wLog){
-          fetch("/api/send-notification",{method:"POST",headers:{"Content-Type":"application/json","x-app-secret":process.env.NEXT_PUBLIC_APP_ACTION_SECRET||""},body:JSON.stringify({athleteId,title:"💪 Great session!",body:"Don't forget to log your weight today ⚖️",url:"/athlete"})}).catch(()=>{});
-        }
-      }catch(e){}
     }catch(e){setLoadError(e.message);setSaving(null);}
   };
 
@@ -478,7 +387,13 @@ export default function PRLog({athleteId,gender,onNavigate}){
 
   // Trend for the selected lift (oldest → newest)
   const selMetric=selLift?metricOf(selLift):"orm";
-  const selEntries=selLift?(logs[selLift]||[]).slice().reverse().sort((a,b)=>String(a.date)<String(b.date)?-1:String(a.date)>String(b.date)?1:0):[];
+  // One point per session: that day's best set (every set is its own row now)
+  const selEntries=(()=>{
+    if(!selLift)return[];
+    const best={};
+    (logs[selLift]||[]).forEach(e=>{const d=String(e.date).slice(0,10);if(!best[d]||valOf(e,selMetric)>valOf(best[d],selMetric))best[d]=e;});
+    return Object.keys(best).sort().map(d=>best[d]);
+  })();
   const selVals=selEntries.map(e=>valOf(e,selMetric));
 
   // Radar — outer ring = ELITE (1.4× team avg), team avg ring shown at 71% of RR
@@ -512,10 +427,10 @@ export default function PRLog({athleteId,gender,onNavigate}){
       <div className={"ir-field"+(readOnly?" is-ro":"")}>
         <div className="ir-flabel"><span>{label}</span>{extra}</div>
         <div className="ir-stepper">
-          {step&&!readOnly&&<button type="button" className="ir-step tfx-press" onClick={()=>bump(liftName,key,-1,step)} aria-label={"Decrease "+label}>−</button>}
+          {step&&!readOnly&&<button type="button" className="ir-step tfx-press" onClick={()=>bump(liftName,key,-1,step,placeholder)} aria-label={"Decrease "+label}>−</button>}
           <input type="number" inputMode={decimal?"decimal":"numeric"} step={decimal?"any":"1"} value={v} readOnly={readOnly}
             onChange={e=>!readOnly&&setInput(liftName,key,e.target.value)} placeholder={placeholder||"0"} aria-label={label}/>
-          {step&&!readOnly&&<button type="button" className="ir-step tfx-press" onClick={()=>bump(liftName,key,1,step)} aria-label={"Increase "+label}>+</button>}
+          {step&&!readOnly&&<button type="button" className="ir-step tfx-press" onClick={()=>bump(liftName,key,1,step,placeholder)} aria-label={"Increase "+label}>+</button>}
         </div>
       </div>
     );
@@ -601,8 +516,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
       {view==="log"&&(
         <div className="ir-stack">
           {(()=>{
-            const total=todayLifts.length||1;
-            const pct=Math.min(1,doneCount/total);
+            const pct=totalSets?Math.min(1,setsDone/totalSets):0;
             const R=30,C=2*Math.PI*R;
             const isToday=isClassDay&&activeDay===today;
             return(
@@ -619,7 +533,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
                       <circle cx="35" cy="35" r={R} className="track"/>
                       <circle cx="35" cy="35" r={R} className="arc" strokeDasharray={C} strokeDashoffset={C*(1-pct)} transform="rotate(-90 35 35)"/>
                     </svg>
-                    <div className="ir-ring-num"><b className="tfx-num">{doneCount}<i>/{todayLifts.length}</i></b><small>done</small></div>
+                    <div className="ir-ring-num"><b className="tfx-num">{setsDone}<i>/{totalSets}</i></b><small>sets</small></div>
                   </div>
                 </div>
                 <div className="ir-seg ir-days" role="tablist" aria-label="Training day">
@@ -645,35 +559,59 @@ export default function PRLog({athleteId,gender,onNavigate}){
             const liftHistory=logs[lift.name]||[];
             const isExpanded=expanded===lift.name;
             const itype=lift.inputType||"weight";
-            const done=sessionDone.has(activeDay+"|"+lift.name)||!!bwDone[lift.name];
-            const ormNow=inp.weight&&inp.reps?epley(parseFloat(inp.weight)||0,parseInt(inp.reps)||1):0;
+            const done=isLiftDone(lift);
+            const sets=setsOf(lift);
+            const rowsToday=todayRows(lift.name);
+            const nextIdx=rowsToday.length;
+            const nextSet=sets[Math.min(nextIdx,sets.length-1)];
+            const target=nextSet&&!nextSet.timed?nextSet.target:null;
+            const prevSess=lastSession(lift.name);
+            const lastSet=prevSess.find(r=>r.set_num===nextIdx+1)||prevSess[Math.min(nextIdx,prevSess.length-1)]||null;
+            const lastW=lastSet?String(lastSet.weight):getLast(lift.name)?String(getLast(lift.name)):"";
+            const tgtPh=target!=null?String(target):"0";
+            const repsEff=inp.reps||(target!=null?String(target):"");
+            const ormNow=inp.weight&&repsEff?epley(parseFloat(inp.weight)||0,parseInt(repsEff)||1):0;
+            const setNoun=itype==="rsi"?"trial":"set";
+            const setLabel=nextIdx<sets.length?`Log ${setNoun} ${nextIdx+1} of ${sets.length}`:`Log extra ${setNoun}`;
             const hot=!done&&itype!=="bodyweight"&&itype!=="vert_lr"&&((pr&&parseFloat(inp.weight||0)>pr)||(ormPR&&ormNow>ormPR));
             const prUnit=itype==="rsi"?"RSI":(itype==="vert_lr"||isVert(lift.name))?"in":"lbs";
             const yardsType=itype==="kb2_yards"||itype==="weight_yards";
             const entryText=(h)=>itype==="rsi"?("RSI "+h.weight):itype==="vert_lr"?("L "+h.weight+"″ · R "+(h.reps||0)+"″"):isVert(lift.name)?(h.weight+" in"):(h.weight+" × "+(h.reps||1)+(yardsType?" yds":""));
+            const chipText=(h)=>itype==="rsi"?String(h.weight):itype==="vert_lr"?(h.weight+"/"+(h.reps||0)):isVert(lift.name)?(h.weight+"″"):(h.weight+"×"+(h.reps||1));
+            const setStrip=(
+              <div className="ir-sets" aria-label={`${rowsToday.length} of ${sets.length} sets logged`}>
+                {sets.map((st,si)=>{const r=rowsToday[si];const state=r?" is-done":si===nextIdx&&itype!=="bodyweight"&&itype!=="band"?" is-next":"";
+                  return <span key={si} className={"ir-set"+state}><em>Set {si+1}</em><b className="tfx-num">{r?chipText(r):st.label}</b></span>;})}
+                {rowsToday.slice(sets.length).map((r,xi)=><span key={"x"+xi} className="ir-set is-done"><em>Extra</em><b className="tfx-num">{chipText(r)}</b></span>)}
+              </div>
+            );
 
             // ── Done: collapse to a slim row ──
             if(done){
-              const le=liftHistory[0];
               const isBw=!!bwDone[lift.name];
+              const top=rowsToday.reduce((b,h)=>!b||epley(parseFloat(h.weight)||0,parseInt(h.reps)||1)>epley(parseFloat(b.weight)||0,parseInt(b.reps)||1)?h:b,null);
               return(
                 <div key={lift.name+i} className="tfx-card ir-done tfx-rise" style={{"--t":tier.c}}>
                   <span className="ir-done-check" aria-hidden="true">✓</span>
                   <div className="ir-done-txt">
                     <b>{lift.name}</b>
-                    <small>{isBw?"Sets complete":!le?"Logged":entryText(le)+(itype==="weight"||itype==="kb"||itype==="band_kb"||itype==="band_weight"||itype==="band_pallof"||itype==="mb"||itype==="weight_kb"?" lbs":"")}</small>
+                    <small>{isBw?"Sets complete":!top?"Finished":`${rowsToday.length} set${rowsToday.length!==1?"s":""} · top ${entryText(top)}`}</small>
                   </div>
-                  <button className="ir-mini tfx-press" onClick={()=>{if(isBw){setBwDone(p=>({...p,[lift.name]:false}));}else{setSessionDone(s=>{const n=new Set(s);n.delete(activeDay+"|"+lift.name);return n;});}}}>Edit</button>
+                  <button className="ir-mini tfx-press" onClick={()=>{if(isBw){setBwDone(p=>({...p,[lift.name]:false}));}else{setSessionDone(s=>{const n=new Set(s);n.delete(keyOf(lift.name));return n;});setReopened(s=>new Set(s).add(keyOf(lift.name)));}}}>Edit</button>
                 </div>
               );
             }
 
-            const logBtn=(disabled,label="Log set")=>(
-              <button className={"tfx-btn tfx-press ir-log"+(isSaved?" is-saved":"")} disabled={disabled||isSaving} onClick={()=>saveLog(lift.name,lift.tier)}>
+            const usesTarget=!(itype==="rsi"||itype==="vert_lr"||isVert(lift.name));
+            const logBtn=(disabled,label=setLabel)=>(<>
+              <button className={"tfx-btn tfx-press ir-log"+(isSaved?" is-saved":"")} disabled={disabled||isSaving} onClick={()=>saveLog(lift.name,lift.tier,usesTarget?target:null)}>
                 {isSaved?"✓ Logged":isSaving?"Saving…":label}
               </button>
-            );
-            const ormReadout=()=>inp.weight&&inp.reps?(
+              {rowsToday.length>0&&nextIdx<sets.length&&(
+                <button className="ir-finish" onClick={()=>{setSessionDone(s=>new Set(s).add(keyOf(lift.name)));setReopened(s=>{const n=new Set(s);n.delete(keyOf(lift.name));return n;});}}>Done with this lift · skip {sets.length-nextIdx} set{sets.length-nextIdx!==1?"s":""}</button>
+              )}
+            </>);
+            const ormReadout=()=>inp.weight&&repsEff?(
               <div className="ir-readout">Est. 1RM <b className="tfx-num">{ormNow} lbs</b>{prChip(ormPR&&ormNow>ormPR)}</div>
             ):null;
             const markDone=(extra)=>(
@@ -689,13 +627,13 @@ export default function PRLog({athleteId,gender,onNavigate}){
             }else if(itype==="rsi"){
               body=(<>
                 <div className="ir-fields is-1">{field(lift.name,"weight",{label:"Average RSI",decimal:true,placeholder:pr?String(pr):"2.35"})}</div>
-                {logBtn(!inp.weight,"Log RSI")}
+                {logBtn(!inp.weight)}
                 {inp.weight&&<div className="ir-readout">RSI <b className="tfx-num">{inp.weight}</b>{pr&&<span className="ir-dim">best {pr}</span>}{prChip(pr&&parseFloat(inp.weight)>pr,"New best")}</div>}
               </>);
             }else if(itype==="vert_lr"){
               body=(<>
                 <div className="ir-fields">{field(lift.name,"weight",{label:"Left leg (in)",decimal:true})}{field(lift.name,"reps",{label:"Right leg (in)",decimal:true})}</div>
-                {logBtn(!inp.weight||!inp.reps,"Log jump")}
+                {logBtn(!inp.weight||!inp.reps)}
               </>);
             }else if(itype==="band"){
               body=(<>{swatches(BAND_COLORS,inp.bandColor,pickBand,{label:"Band",kind:"band"})}{markDone(selBand?selBand.label+" band":"")}</>);
@@ -705,20 +643,20 @@ export default function PRLog({athleteId,gender,onNavigate}){
                   <div className="ir-flabel"><span>Med ball</span></div>
                   <div className="ir-chips">{MB_WEIGHTS.map(w=><button key={w} type="button" className={"tfx-chipbtn tfx-press"+(inp.weight===String(w)?" is-on":"")} style={{"--c":tier.c}} onClick={()=>setInput(lift.name,"weight",String(w))}>{w} lbs</button>)}</div>
                 </div>
-                <div className="ir-fields is-1">{field(lift.name,"reps",{label:"Reps",step:1})}</div>
+                <div className="ir-fields is-1">{field(lift.name,"reps",{label:"Reps",step:1,placeholder:tgtPh})}</div>
                 {logBtn(!inp.weight)}
               </>);
             }else if(itype==="band_weight"||itype==="band_pallof"){
               body=(<>
                 {swatches(BAND_COLORS,inp.bandColor,pickBand,{label:"Band",kind:"band"})}
-                <div className="ir-fields">{field(lift.name,"weight",{label:itype==="band_pallof"?"Cable lbs":"Weight (lbs)",step:5,decimal:true,placeholder:getLast(lift.name)||"0"})}{field(lift.name,"reps",{label:"Reps",step:1})}</div>
+                <div className="ir-fields">{field(lift.name,"weight",{label:itype==="band_pallof"?"Cable lbs":"Weight (lbs)",step:5,decimal:true,placeholder:lastW||"0"})}{field(lift.name,"reps",{label:"Reps",step:1,placeholder:tgtPh})}</div>
                 {logBtn(!inp.weight)}
               </>);
             }else if(itype==="band_kb"){
               body=(<>
                 {swatches(BAND_COLORS,inp.bandColor,pickBand,{label:"Band",kind:"band"})}
                 {swatches(KB_COLORS,inp.kbColor,pickKB,{label:"Kettlebell",kind:"kb"})}
-                <div className="ir-fields is-1">{field(lift.name,"reps",{label:"Reps",step:1})}</div>
+                <div className="ir-fields is-1">{field(lift.name,"reps",{label:"Reps",step:1,placeholder:tgtPh})}</div>
                 {logBtn(!inp.weight)}
                 {ormReadout()}
               </>);
@@ -735,14 +673,14 @@ export default function PRLog({athleteId,gender,onNavigate}){
               body=(<>
                 {swatches(KB_COLORS,inp.kbColor,pickHand("kbColor"),{label:"Farmer hand",kind:"kb"})}
                 {swatches(KB_COLORS,inp.kbColor2,pickHand("kbColor2"),{label:"Waiter hand",kind:"kb"})}
-                <div className="ir-fields is-1">{field(lift.name,"reps",{label:"Yards",step:5})}</div>
-                {logBtn(!inp.weight||!inp.reps)}
+                <div className="ir-fields is-1">{field(lift.name,"reps",{label:"Yards",step:5,placeholder:tgtPh})}</div>
+                {logBtn(!inp.weight||!repsEff)}
                 {k1&&k2&&inp.reps&&<div className="ir-readout">{k1.label} + {k2.label} <b className="tfx-num">{inp.weight} lbs</b><span className="ir-dim">× {inp.reps} yds</span></div>}
               </>);
             }else if(itype==="kb"){
               body=(<>
                 {swatches(KB_COLORS,inp.kbColor,pickKB,{label:"Kettlebell",kind:"kb"})}
-                <div className="ir-fields is-1">{field(lift.name,"reps",{label:"Reps",step:1})}</div>
+                <div className="ir-fields is-1">{field(lift.name,"reps",{label:"Reps",step:1,placeholder:tgtPh})}</div>
                 {logBtn(!inp.weight)}
                 {ormReadout()}
               </>);
@@ -750,7 +688,7 @@ export default function PRLog({athleteId,gender,onNavigate}){
               const rsi=inp.weight&&inp.ctTime&&parseFloat(inp.ctTime)>0?parseFloat(((parseFloat(inp.weight)*0.0254)/(parseFloat(inp.ctTime)/1000)).toFixed(2)):null;
               body=(<>
                 <div className="ir-fields">{field(lift.name,"weight",{label:"Height (in)",decimal:true,placeholder:getLast(lift.name)||"28"})}{field(lift.name,"ctTime",{label:"Contact ms (optional)",placeholder:"250"})}</div>
-                {logBtn(!inp.weight,"Log jump")}
+                {logBtn(!inp.weight)}
                 {inp.weight&&<div className="ir-readout">Jump <b className="tfx-num">{inp.weight} in</b>{rsi&&<span className="ir-dim">RSI {rsi}</span>}{prChip(pr&&parseFloat(inp.weight)>pr)}</div>}
               </>);
             }else if(itype==="weight_kb"){
@@ -762,23 +700,24 @@ export default function PRLog({athleteId,gender,onNavigate}){
                 </div>
                 {useKB?swatches(KB_COLORS,inp.kbColor,pickKB,{label:"Kettlebell",kind:"kb"}):null}
                 <div className={"ir-fields"+(useKB?" is-1":"")}>
-                  {!useKB&&field(lift.name,"weight",{label:"Weight",step:inp.bw?null:5,decimal:true,readOnly:!!inp.bw,placeholder:inp.bw&&!latestBW?"Log weight first":getLast(lift.name)||"0",extra:bwChip(lift.name)})}
-                  {field(lift.name,"reps",{label:"Reps",step:1})}
+                  {!useKB&&field(lift.name,"weight",{label:"Weight",step:inp.bw?null:5,decimal:true,readOnly:!!inp.bw,placeholder:inp.bw&&!latestBW?"Log weight first":lastW||"0",extra:bwChip(lift.name)})}
+                  {field(lift.name,"reps",{label:"Reps",step:1,placeholder:tgtPh})}
                 </div>
                 {logBtn(!inp.weight)}
                 {ormReadout()}
               </>);
             }else if(itype==="weight_yards"){
               body=(<>
-                <div className="ir-fields">{field(lift.name,"weight",{label:"Weight (lbs)",step:10,decimal:true,placeholder:getLast(lift.name)||"0"})}{field(lift.name,"reps",{label:"Yards",step:5})}</div>
-                {logBtn(!inp.weight||!inp.reps)}
+                <div className="ir-fields">{field(lift.name,"weight",{label:"Weight (lbs)",step:10,decimal:true,placeholder:lastW||"0"})}{field(lift.name,"reps",{label:"Yards",step:5,placeholder:tgtPh})}</div>
+                {logBtn(!inp.weight||!repsEff)}
               </>);
             }else{
               body=(<>
                 <div className="ir-fields">
-                  {field(lift.name,"weight",{label:"Weight",step:inp.bw?null:5,decimal:true,readOnly:!!inp.bw,placeholder:inp.bw&&!latestBW?"Log weight first":getLast(lift.name)||"0",extra:bwChip(lift.name)})}
-                  {field(lift.name,"reps",{label:"Reps",step:1})}
+                  {field(lift.name,"weight",{label:"Weight",step:inp.bw?null:5,decimal:true,readOnly:!!inp.bw,placeholder:inp.bw&&!latestBW?"Log weight first":lastW||"0",extra:bwChip(lift.name)})}
+                  {field(lift.name,"reps",{label:"Reps",step:1,placeholder:tgtPh})}
                 </div>
+                {!inp.weight&&!inp.bw&&lastW&&<button type="button" className="ir-uselast tfx-press" onClick={()=>setInput(lift.name,"weight",lastW)}>Same as last time · {lastW} lbs</button>}
                 {logBtn(!inp.weight)}
                 {ormReadout()}
               </>);
@@ -799,39 +738,51 @@ export default function PRLog({athleteId,gender,onNavigate}){
                     <div className="ir-best">
                       <div className="tfx-eyebrow">{itype==="vert_lr"?"Best L / R":"PR"}</div>
                       <b className="tfx-num">{vlr?vlr.l+"/"+vlr.r:pr}<small>{prUnit}</small></b>
-                      {liftHistory[0]&&<span>last {entryText(liftHistory[0])}</span>}
+                      {lastSet&&<span>last time {entryText(lastSet)}</span>}
                     </div>
                   )}
                 </header>
+                {setStrip}
                 <div className="ir-body">{body}</div>
-                {liftHistory.length>0&&itype!=="bodyweight"&&(
-                  <div className="ir-hist">
-                    <button className="ir-hist-toggle" onClick={()=>setExpanded(isExpanded?null:lift.name)} aria-expanded={isExpanded}>
-                      <span>History <em>{liftHistory.length} session{liftHistory.length!==1?"s":""}</em></span><i>{isExpanded?"Hide":"Show"}</i>
-                    </button>
-                    {isExpanded&&(
-                      <div className="ir-hist-list">
-                        {liftHistory.slice(0,5).map((h,hi)=>(
-                          <div key={h.id||hi} className="ir-hrow">
-                            <span className="ir-hdate">{fmtD(h.date)}</span>
-                            <b className="tfx-num">{entryText(h)}</b>
-                            {parseFloat(h.weight)===pr&&<span className="ir-hpr">PR</span>}
-                            <span className="ir-hacts">
-                              {confirmDelete===h.id?(
-                                <>
-                                  <button className="ir-mini is-danger tfx-press" onClick={()=>deleteLog(h.id,lift.name)} disabled={deleting===h.id}>{deleting===h.id?"…":"Delete"}</button>
-                                  <button className="ir-mini tfx-press" onClick={()=>setConfirmDelete(null)}>Keep</button>
-                                </>
-                              ):(
-                                <button className="ir-mini ir-x tfx-press" onClick={()=>setConfirmDelete(h.id)} aria-label={"Delete "+fmtD(h.date)+" entry"}>✕</button>
-                              )}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {liftHistory.length>0&&itype!=="bodyweight"&&(()=>{
+                  // Group sets by day (newest first)
+                  const days=[];
+                  liftHistory.forEach(h=>{const d=String(h.date).slice(0,10);let g=days.find(x=>x.d===d);if(!g){g={d,rows:[]};days.push(g);}g.rows.push(h);});
+                  days.forEach(g=>g.rows.sort((a,b)=>(a.set_num||0)-(b.set_num||0)));
+                  return(
+                    <div className="ir-hist">
+                      <button className="ir-hist-toggle" onClick={()=>setExpanded(isExpanded?null:lift.name)} aria-expanded={isExpanded}>
+                        <span>History <em>{days.length} session{days.length!==1?"s":""}</em></span><i>{isExpanded?"Hide":"Show"}</i>
+                      </button>
+                      {isExpanded&&(
+                        <div className="ir-hist-list">
+                          {days.slice(0,4).map(g=>(
+                            <div key={g.d} className="ir-hday">
+                              <div className="ir-hday-head">{g.d===todayStr?"Today":fmtD(g.d,{weekday:"short",month:"short",day:"numeric"})}<span>{g.rows.length} set{g.rows.length!==1?"s":""}</span></div>
+                              {g.rows.map((h,hi)=>(
+                                <div key={h.id||hi} className="ir-hrow">
+                                  <span className="ir-hdate">{h.set_num?"Set "+h.set_num:"Logged"}</span>
+                                  <b className="tfx-num">{entryText(h)}</b>
+                                  {parseFloat(h.weight)===pr&&<span className="ir-hpr">PR</span>}
+                                  <span className="ir-hacts">
+                                    {confirmDelete===h.id?(
+                                      <>
+                                        <button className="ir-mini is-danger tfx-press" onClick={()=>deleteLog(h.id,lift.name)} disabled={deleting===h.id}>{deleting===h.id?"…":"Delete"}</button>
+                                        <button className="ir-mini tfx-press" onClick={()=>setConfirmDelete(null)}>Keep</button>
+                                      </>
+                                    ):(
+                                      <button className="ir-mini ir-x tfx-press" onClick={()=>setConfirmDelete(h.id)} aria-label={"Delete "+fmtD(h.date)+" set "+(h.set_num||"")}>✕</button>
+                                    )}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </section>
             );
           })}
@@ -940,8 +891,10 @@ export default function PRLog({athleteId,gender,onNavigate}){
                 const isSel=selLift===name;
                 const rel=relStrength[name];
                 const rank=catId&&catRanks[catId];
-                const vals=(logs[name]||[]).map(e=>valOf(e,m));
-                const deltaRaw=vals.length>1?vals[0]-vals[1]:null;
+                const dayBest={};
+                (logs[name]||[]).forEach(e=>{const d=String(e.date).slice(0,10);const v=valOf(e,m);if(dayBest[d]==null||v>dayBest[d])dayBest[d]=v;});
+                const dayVals=Object.keys(dayBest).sort().reverse().map(d=>dayBest[d]);
+                const deltaRaw=dayVals.length>1?dayVals[0]-dayVals[1]:null;
                 const delta=deltaRaw==null?null:(m==="rsi"?Math.round(deltaRaw*100)/100:Math.round(deltaRaw*10)/10);
                 const excl=EXCLUDED_CATS.has(name.toLowerCase());
                 const sub=m==="orm"?`${best.weight}×${best.reps||1} · est. 1RM`:m==="rsi"?"Best RSI":m==="vert"?"Best jump":m==="vert_lr"?`L ${best.weight}″ · R ${best.reps||0}″`:`${best.weight} lbs × ${best.reps||0} yds`;

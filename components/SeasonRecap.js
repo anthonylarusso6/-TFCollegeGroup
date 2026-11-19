@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { prEvents } from "../lib/lifting";
 import { loadSeason, defaultSeason, isBeforeSeason, fmtFirstClass } from "../lib/season";
 
 const GOLD = "#D4AF37", ORANGE = "#E8720C", GREEN = "#3FCB7F", BLUE = "#4DC8F5", PUR = "#9A8CF0", RED = "#E8635B", STEEL = "#8CA0B0";
@@ -63,8 +64,14 @@ export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
         if (data) out.bestStreak = data.best_streak || 0;
       } catch (e) {}
       try {
-        const { data } = await supabase.from("pr_log").select("weight,reps").eq("athlete_id", athleteId).gte("date", SEASON_START);
-        if (data) { out.prs = data.length; out.totalLbs = data.reduce((sum, r) => sum + (Number(r.weight) || 0) * (Number(r.reps) || 1), 0); }
+        // PRs = real records (a lift's best beating everything before it, once per day) —
+        // all of this athlete's history is needed so the first season log isn't a "PR".
+        const { data } = await supabase.from("pr_log").select("id,athlete_id,lift,weight,reps,date,created_at").eq("athlete_id", athleteId);
+        if (data) {
+          const season = data.filter(r => String(r.date || "") >= SEASON_START);
+          out.prs = prEvents(data).filter(e => String(e.date || "") >= SEASON_START).length;
+          out.totalLbs = season.reduce((sum, r) => sum + (Number(r.weight) || 0) * (Number(r.reps) || 1), 0);
+        }
       } catch (e) {}
       try {
         if (athleteName) { const { data } = await supabase.from("anvil").select("id").eq("athlete_name", athleteName); if (data) out.anvilWins = data.length; }

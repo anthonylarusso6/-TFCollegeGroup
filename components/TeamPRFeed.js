@@ -2,13 +2,9 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { GOLD, GREEN, RED, STEEL } from "../lib/constants";
 import { Skeleton, SkeletonList } from "./Skeleton";
+import { prEvents } from "../lib/lifting";
 
-// Same PR math as the Iron Room so the feed agrees with the celebration.
-const epley = (w, r) => (r === 1 ? w : Math.round(w * (1 + r / 30)));
-const VERT = new Set(["pvc max vert"]);
-const isVert = (n) => VERT.has((n || "").toLowerCase());
-// Lifts whose logged number isn't a weight/e1RM (RSI value, split-leg jump) — keep them out of the feed.
-const FEED_SKIP = new Set(["10/5 rsi", "standing sl vert"]);
+// PR math lives in lib/lifting (prEvents) so the feed, My Season and the Iron Room agree.
 
 function relTime(dateStr, createdAt) {
   const base = createdAt ? new Date(createdAt) : new Date((dateStr || "") + "T12:00:00");
@@ -37,24 +33,8 @@ export default function TeamPRFeed({ athletes = [], currentAthleteId = null, com
           .order("created_at", { ascending: true });
         if (!alive) return;
         if (error) { setEvents([]); return; }
-        // Walk chronologically, tracking each athlete+lift running best.
-        // An entry that beats the prior best is a PR event (matches the celebration rule).
-        const best = {};
-        const ev = [];
-        for (const row of (data || [])) {
-          if (FEED_SKIP.has((row.lift || "").toLowerCase())) continue;
-          const w = parseFloat(row.weight) || 0;
-          const r = parseInt(row.reps) || 1;
-          if (!w) continue;
-          const vert = isVert(row.lift);
-          const metric = vert ? w : epley(w, r);
-          const key = row.athlete_id + "|" + (row.lift || "").toLowerCase();
-          const prev = best[key];
-          if (prev != null && metric > prev) {
-            ev.push({ id: row.id, athlete_id: row.athlete_id, lift: row.lift, metric, unit: vert ? "in" : "lbs", delta: Math.round(metric - prev), date: row.date, created_at: row.created_at });
-          }
-          if (prev == null || metric > prev) best[key] = metric;
-        }
+        // One PR per athlete + lift + day (every set is logged now), shared with My Season.
+        const ev = prEvents(data || []);
         ev.reverse(); // most recent first
         setEvents(ev);
       } catch (e) { if (alive) setEvents([]); }
