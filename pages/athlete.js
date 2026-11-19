@@ -144,6 +144,17 @@ export default function Athlete(){
   // Remember scroll position per tab so switching away and back returns you
   // to where you were instead of jumping to the top (home/profile view).
   const tabScrollRef=useRef({});
+  // The All Tabs drawer remounts each time it opens — remember its scroll so
+  // it reopens where you left it instead of back at the top.
+  const drawerScrollRef=useRef(null);
+  const drawerRef=(el)=>{
+    if(!el||el.dataset.restored)return;
+    el.dataset.restored="1";
+    if(drawerScrollRef.current!=null){el.scrollTop=drawerScrollRef.current;return;}
+    // First open: bring the current tab into view
+    const on=el.querySelector('[data-active="1"]');
+    if(on)el.scrollTop=Math.max(0,on.offsetTop-el.clientHeight/2);
+  };
   useEffect(()=>{
     if(screen!=="profile")return;
     const onScroll=()=>{tabScrollRef.current[tab]=window.scrollY;};
@@ -1956,7 +1967,7 @@ export default function Athlete(){
                   <>
                   <style>{`@keyframes tfDrawerIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
                   <div onClick={()=>setShowTabPicker(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.62)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",zIndex:9999,display:"flex"}}>
-                    <div onClick={e=>e.stopPropagation()} style={{width:"min(84vw,300px)",height:"100%",overflowY:"auto",background:"rgba(10,10,18,0.98)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRight:"1px solid rgba(255,255,255,0.12)",boxShadow:"24px 0 60px rgba(0,0,0,0.7)",paddingBottom:40,animation:"tfDrawerIn 0.26s cubic-bezier(0.22,1,0.36,1)",WebkitOverflowScrolling:"touch"}}>
+                    <div ref={drawerRef} onScroll={e=>{drawerScrollRef.current=e.currentTarget.scrollTop;}} onClick={e=>e.stopPropagation()} style={{width:"min(84vw,300px)",height:"100%",overflowY:"auto",background:"rgba(10,10,18,0.98)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRight:"1px solid rgba(255,255,255,0.12)",boxShadow:"24px 0 60px rgba(0,0,0,0.7)",paddingBottom:40,animation:"tfDrawerIn 0.26s cubic-bezier(0.22,1,0.36,1)",WebkitOverflowScrolling:"touch"}}>
                       <div style={{position:"sticky",top:0,background:"rgba(10,10,18,0.98)",padding:"18px 16px 12px",zIndex:1,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"0.5px solid rgba(255,255,255,0.08)"}}>
                         <div style={{fontSize:17,fontWeight:900,color:"#fff",letterSpacing:"-0.01em"}}>All Tabs</div>
                         <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)",fontSize:14,cursor:"pointer",width:30,height:30,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>✕</button>
@@ -1992,7 +2003,7 @@ export default function Athlete(){
                             const active=tab===id;
                             const pinned=validPinned.includes(id);
                             return(
-                              <button key={id} onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}
+                              <button key={id} data-active={active?"1":"0"} onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}
                                 style={{width:"100%",display:"flex",alignItems:"center",gap:13,padding:"12px 18px",background:active?col+"1f":"transparent",borderLeft:"3px solid "+(active?col:"transparent"),borderTop:"none",borderRight:"none",borderBottom:"none",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",transition:"background 0.12s"}}>
                                 <span style={{width:24,height:24,borderRadius:8,background:active?col+"22":"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{renderTabIcon(id,17,active)}</span>
                                 <span style={{fontSize:14.5,fontWeight:active?800:500,color:active?col:"rgba(255,255,255,0.72)",letterSpacing:active?"0.01em":"0"}}>{t.label}</span>

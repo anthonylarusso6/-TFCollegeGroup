@@ -447,8 +447,8 @@ html:not([data-theme="light"]) :is(
 /* ════════════════════════════════════════════════════════════════════
    BODY CHECK-IN  (components/InjuryBodyMap.js)
    ════════════════════════════════════════════════════════════════════ */
-:root { --bm-sil: rgba(255, 255, 255, 0.05); --bm-m: rgba(255, 255, 255, 0.17); --bm-m-hover: rgba(255, 255, 255, 0.3); --bm-line: rgba(255, 255, 255, 0.08); }
-html[data-theme="light"] { --bm-sil: rgba(20, 24, 40, 0.06); --bm-m: rgba(20, 24, 40, 0.17); --bm-m-hover: rgba(20, 24, 40, 0.3); --bm-line: rgba(255, 255, 255, 0.7); }
+:root { --bm-sil: #1d1c24; --bm-m: #3a3946; --bm-m-hover: #4a4858; }
+html[data-theme="light"] { --bm-sil: #aeb3c1; --bm-m: #dfe2ea; --bm-m-hover: #cfd3de; }
 
 .bm { display: grid; gap: 14px; }
 .bm-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 4px 4px 0; }
@@ -468,26 +468,25 @@ html[data-theme="light"] { --bm-sil: rgba(20, 24, 40, 0.06); --bm-m: rgba(20, 24
 
 .bm-scan { position: relative; overflow: hidden; padding: 14px 14px 16px; }
 .bm-scan::before { content: ""; position: absolute; left: 50%; top: 52%; width: 300px; height: 300px; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, color-mix(in srgb, var(--violet) 22%, transparent), transparent 68%); }
+  background: radial-gradient(circle, color-mix(in srgb, var(--tx) 6%, transparent), transparent 68%); }
 .bm-seg { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--field); border: 1px solid var(--glass-line); }
 .bm-seg button { padding: 10px 0; border-radius: 11px; border: 0; cursor: pointer; background: transparent; color: var(--tx2); font-family: var(--font-ui); font-size: 14px; font-weight: 600; }
 .bm-seg button.is-on { background: var(--glass-strong); color: var(--tx); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25), inset 0 1px 0 var(--glass-hi); }
-.bm-figure { position: relative; z-index: 1; margin: 14px auto 6px; max-width: 240px; animation: bmTurn 0.5s var(--ease-out) both; }
-@keyframes bmTurn { from { opacity: 0; transform: perspective(600px) rotateY(55deg) scale(0.96); } to { opacity: 1; transform: none; } }
-.bm-sweep { position: absolute; left: -10%; right: -10%; height: 70px; top: -70px; pointer-events: none;
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--violet) 22%, transparent), transparent); animation: bmSweep 5.5s ease-in-out 1s infinite; }
-@keyframes bmSweep { 0% { top: -70px; opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 85%, 100% { top: 100%; opacity: 0; } }
-
-.bm-svg { display: block; width: 100%; max-width: 240px; margin: 0 auto; overflow: visible; }
+.bm-figure { position: relative; z-index: 1; margin: 16px auto 8px; max-width: 230px; animation: bmTurn 0.35s var(--ease-out) both; }
+@keyframes bmTurn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: none; } }
+.bm-svg { display: block; width: 100%; max-width: 230px; margin: 0 auto; overflow: visible; }
 .bm-sil { fill: var(--bm-sil); }
-.bm-m { fill: var(--bm-m); stroke: var(--bm-line); stroke-width: 0.6; cursor: pointer; transition: fill 0.2s ease; -webkit-tap-highlight-color: transparent; }
+/* Regions: the stroke is the silhouette color, so neighbours read as
+   separate pieces with a thin gap between them. */
+.bm-m { fill: var(--bm-m); stroke: var(--bm-sil); stroke-width: 2.6; stroke-linejoin: round; cursor: pointer; transition: fill 0.2s ease; -webkit-tap-highlight-color: transparent; outline: none; }
 .bm-m:hover { fill: var(--bm-m-hover); }
-.bm-m.is-sore { fill: #c98a1c; stroke: #f2b84b; }
-.bm-m.is-pain { fill: #b8262c; stroke: #ff6b70; animation: bmPulse 2.4s ease-in-out infinite; }
-.bm-m.is-sel { fill: #8e7cf0; stroke: #d6ceff; stroke-width: 1.1; filter: drop-shadow(0 0 4px rgba(142, 124, 240, 0.85)); }
-.bm-m.is-sel.is-sore { fill: #e8a33c; filter: drop-shadow(0 0 5px rgba(232, 163, 60, 0.9)); }
-.bm-m.is-sel.is-pain { fill: #e5484d; }
-@keyframes bmPulse { 0%, 100% { filter: drop-shadow(0 0 1.5px rgba(229, 72, 77, 0.45)); } 50% { filter: drop-shadow(0 0 6px rgba(229, 72, 77, 0.95)); } }
+.bm-m:focus-visible { fill: var(--bm-m-hover); }
+.bm-m.is-sore { fill: #d9962a; }
+.bm-m.is-pain { fill: #d93a40; animation: bmPulse 2.6s ease-in-out infinite; }
+.bm-m.is-sel { fill: #8e7cf0; }
+.bm-m.is-sel.is-sore { fill: #eaa83f; }
+.bm-m.is-sel.is-pain { fill: #ef5257; }
+@keyframes bmPulse { 0%, 100% { fill-opacity: 1; } 50% { fill-opacity: 0.72; } }
 
 .bm-legend { position: relative; z-index: 1; display: flex; justify-content: center; gap: 16px; font-family: var(--font-ui); font-size: 12.5px; color: var(--tx2); }
 .bm-legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -542,7 +541,7 @@ html[data-theme="light"] { --bm-sil: rgba(20, 24, 40, 0.06); --bm-m: rgba(20, 24
 .bm-stretch span { flex-shrink: 0; padding: 3px 9px; border-radius: 999px; font-family: var(--font-ui); font-size: 11.5px; font-weight: 600; color: var(--tx2); background: var(--glass); border: 1px solid var(--glass-line); }
 .bm-stretch p { margin: 6px 0 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.5; color: var(--tx2); }
 .bm-yt { display: inline-flex; margin-top: 10px; padding: 7px 12px; border-radius: 999px; font-family: var(--font-ui); font-size: 12.5px; font-weight: 650; text-decoration: none; color: var(--tx); background: color-mix(in srgb, var(--red) 18%, transparent); border: 1px solid color-mix(in srgb, var(--red) 40%, transparent); }
-@media (prefers-reduced-motion: reduce) { .bm-figure, .bm-sweep, .bm-m.is-pain { animation: none; } .bm-sweep { display: none; } }
+@media (prefers-reduced-motion: reduce) { .bm-figure, .bm-m.is-pain { animation: none; } }
 
 /* ════════════════════════════════════════════════════════════════════
    WEIGHT — one hero (number · chart · log), goal, consistency, history
