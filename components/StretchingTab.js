@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import { pulseMood } from "../lib/ambient";
+import { hSuccess, hTap } from "../lib/haptics";
+import { todayET } from "../lib/lifting";
 
 const CATS={
   neck:{l:"Neck",i:"🔝",c:"#534AB7",s:[
@@ -101,7 +104,9 @@ const CATS={
 const KEYS=Object.keys(CATS);
 
 // ── Guided post-workout cool-down: hamstrings, hips, shoulders (~11 min) ──
-const AREA_COLORS={Shoulders:"#C0392B",Hips:"#0F6E56",Hamstrings:"#854F0B"};
+// Calmer per-area tones (the category data above keeps its original colors unused)
+const TONE={neck:"#7c74c9",shoulders:"#c96a5a",chest:"#4f9a6e",back:"#b89a4a",glutes:"#d08a4a",quads:"#9a6fc0",hips:"#3f9488",hamstrings:"#b07a48",calves:"#5a86b8",knees:"#4f9a8a",ankles:"#a8845a"};
+const AREA_COLORS={Shoulders:TONE.shoulders,Hips:TONE.hips,Hamstrings:TONE.hamstrings};
 const FLOW=[
   {n:"Cross-Body Shoulder",area:"Shoulders",side:"Left",d:30,c:"Pull the arm across your chest with the opposite forearm. Feel it in the rear delt and upper back. Keep the shoulder down, away from your ear."},
   {n:"Cross-Body Shoulder",area:"Shoulders",side:"Right",d:30,c:"Switch sides. Same relaxed shoulder, steady breathing."},
@@ -124,141 +129,134 @@ const FLOW=[
 const FLOW_TOTAL=FLOW.reduce((s,x)=>s+x.d,0);
 
 export default function StretchingTab(){
-  const[cat,setCat]=useState("neck");
-  // Detect light/dark so the stretch cards are readable without relying on CSS color-mapping.
-  // The app has its own theme toggle: light is data-theme="light", anything else is dark.
-  // It deliberately ignores the phone's system setting, so this must too — otherwise an
-  // iPhone in system light mode gets white cards inside the dark app.
-  const[isLight,setIsLight]=useState(false);
-  useEffect(()=>{
-    if(typeof document==="undefined")return;
-    const check=()=>setIsLight(document.documentElement.getAttribute("data-theme")==="light");
-    check();
-    const mo=new MutationObserver(check);
-    mo.observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
-    return()=>mo.disconnect();
-  },[]);
+  const[cat,setCat]=useState("hamstrings");
   const[open,setOpen]=useState(null);
-  const[done,setDone]=useState(new Set());
-  const[timerName,setTimerName]=useState("");
-  const[timerSecs,setTimerSecs]=useState(0);
-  const[timerTotal,setTimerTotal]=useState(0);
-  const[timerColor,setTimerColor]=useState("#E8720C");
-  const timerRef=useRef(null);
-  // Guided cool-down flow: null = not running, 0..N-1 = current step, N = complete
-  const[flowIdx,setFlowIdx]=useState(null);
+  const[done,setDone]=useState(()=>new Set());
+  const[timer,setTimer]=useState(null); // {key,name,total,secs,color}
+  const[toast,setToast]=useState("");
+  const[flowIdx,setFlowIdx]=useState(null); // null = not running, 0..N-1 = step, N = complete
   const[flowSecs,setFlowSecs]=useState(0);
   const[flowPaused,setFlowPaused]=useState(false);
+  const wakeRef=useRef(null);
+  const storeKey="tf_stretch_"+todayET();
 
-  useEffect(()=>{ if(flowIdx!=null&&flowIdx<FLOW.length)setFlowSecs(FLOW[flowIdx].d); },[flowIdx]);
+  // Today's checkmarks survive leaving the tab (this phone only)
+  useEffect(()=>{try{const raw=localStorage.getItem(storeKey);if(raw)setDone(new Set(JSON.parse(raw)));}catch(e){}},[]);
+  const saveDone=(set)=>{try{localStorage.setItem(storeKey,JSON.stringify([...set]));}catch(e){}};
+  const toggleDone=(key)=>{hTap();setDone(prev=>{const n=new Set(prev);n.has(key)?n.delete(key):n.add(key);saveDone(n);return n;});};
+  const markDone=(key)=>setDone(prev=>{if(prev.has(key))return prev;const n=new Set(prev);n.add(key);saveDone(n);return n;});
+
+  // Keep the screen awake while a guided flow or hold timer runs
+  const wantAwake=(flowIdx!=null&&flowIdx<FLOW.length&&!flowPaused)||!!timer;
+  useEffect(()=>{
+    let cancelled=false;
+    (async()=>{
+      try{
+        if(wantAwake&&!wakeRef.current&&navigator.wakeLock){const l=await navigator.wakeLock.request("screen");if(cancelled){l.release();return;}wakeRef.current=l;}
+        if(!wantAwake&&wakeRef.current){await wakeRef.current.release();wakeRef.current=null;}
+      }catch(e){}
+    })();
+    return()=>{cancelled=true;};
+  },[wantAwake]);
+  useEffect(()=>()=>{try{wakeRef.current&&wakeRef.current.release();}catch(e){}},[]);
+
+  // Guided flow clock
+  const goStep=(i)=>{setFlowIdx(i);if(i!=null&&i<FLOW.length)setFlowSecs(FLOW[i].d);};
   useEffect(()=>{
     if(flowIdx==null||flowIdx>=FLOW.length||flowPaused)return;
     const id=setInterval(()=>{
       setFlowSecs(s=>{
-        if(s<=1){clearInterval(id);try{if(navigator.vibrate)navigator.vibrate(35);}catch(e){}setFlowIdx(i=>i+1);return 0;}
+        if(s<=1){
+          clearInterval(id);try{if(navigator.vibrate)navigator.vibrate(35);}catch(e){}
+          const nxt=flowIdx+1;setFlowIdx(nxt);
+          return nxt<FLOW.length?FLOW[nxt].d:0;
+        }
         return s-1;
       });
     },1000);
     return()=>clearInterval(id);
   },[flowIdx,flowPaused]);
+  useEffect(()=>{ if(flowIdx===FLOW.length){hSuccess();pulseMood("celebrate",2600);} },[flowIdx]);
 
+  // Single hold timer — finishing it checks the stretch off
   useEffect(()=>{
-    if(timerName){
-      clearInterval(timerRef.current);
-      timerRef.current=setInterval(()=>{
-        setTimerSecs(s=>{
-          if(s<=1){clearInterval(timerRef.current);setTimerName("");return 0;}
-          return s-1;
-        });
-      },1000);
-    }
-    return()=>clearInterval(timerRef.current);
-  },[timerName]);
-
-  const startTimer=(secs,name,color)=>{
-    clearInterval(timerRef.current);
-    setTimerTotal(secs);setTimerSecs(secs);setTimerName(name);setTimerColor(color||"#E8720C");
-  };
-
-  const toggleDone=(key)=>{
-    setDone(prev=>{const n=new Set(prev);n.has(key)?n.delete(key):n.add(key);return n;});
-  };
+    if(!timer)return;
+    const id=setInterval(()=>{
+      setTimer(t=>{
+        if(!t)return t;
+        if(t.secs<=1){
+          clearInterval(id);
+          try{if(navigator.vibrate)navigator.vibrate([0,60,60,60]);}catch(e){}
+          markDone(t.key);hSuccess();setToast(t.name+" ✓");setTimeout(()=>setToast(""),2400);
+          return null;
+        }
+        return{...t,secs:t.secs-1};
+      });
+    },1000);
+    return()=>clearInterval(id);
+  },[timer&&timer.key]);
+  const startTimer=(key,secs,name,color)=>{hTap();setTimer({key,name,total:secs,secs,color});};
 
   // ── GUIDED COOL-DOWN PLAYER ──
   if(flowIdx!=null){
     const exit=()=>{setFlowIdx(null);setFlowPaused(false);};
-    // Completion screen
     if(flowIdx>=FLOW.length){
       return(
-        <div style={{fontFamily:"Georgia,serif",minHeight:"70vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"}}>
-          <div style={{width:"100%",maxWidth:420,textAlign:"center",background:"linear-gradient(160deg,#141414,#0b0b0b)",borderRadius:24,padding:"36px 24px 30px",border:"1px solid "+"#D4AF37"+"55",boxShadow:"0 0 40px "+"#D4AF37"+"22"}}>
-            <div style={{fontSize:66,lineHeight:1,marginBottom:10}}>🧘</div>
-            <div style={{fontSize:11,letterSpacing:"0.28em",textTransform:"uppercase",color:"#D4AF37",fontWeight:800}}>Cool-Down Complete</div>
-            <div style={{fontSize:24,fontWeight:900,color:"#fdf6ec",marginTop:8,letterSpacing:"-0.02em"}}>Recovery in the bank 💪</div>
-            <div style={{fontSize:13,color:"#a89a86",marginTop:8,lineHeight:1.5}}>{Math.round(FLOW_TOTAL/60)} min · hamstrings, hips &amp; shoulders. That's how you stay durable.</div>
-            <div style={{display:"flex",gap:10,marginTop:24}}>
-              <button onClick={()=>{setFlowIdx(0);setFlowPaused(false);}} style={{flex:1,padding:"14px",borderRadius:13,border:"1px solid rgba(255,255,255,0.16)",background:"transparent",color:"#fdf6ec",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>↺ Again</button>
-              <button onClick={exit} style={{flex:1,padding:"14px",borderRadius:13,border:"none",background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif"}}>Done →</button>
+        <div className="tfx st">
+          <section className="tfx-card st-complete">
+            <div className="st-complete-ring" aria-hidden="true">✓</div>
+            <div className="tfx-eyebrow">Cool-down complete</div>
+            <h2>Recovery in the bank</h2>
+            <p>{Math.round(FLOW_TOTAL/60)} min · hamstrings, hips and shoulders. That's how you stay durable.</p>
+            <div className="st-complete-acts">
+              <button className="tfx-btn-ghost tfx-press" onClick={()=>{goStep(0);setFlowPaused(false);}}>↺ Again</button>
+              <button className="tfx-btn tfx-press" onClick={exit}>Done</button>
             </div>
-          </div>
+          </section>
         </div>
       );
     }
     const step=FLOW[flowIdx];
-    const col=AREA_COLORS[step.area]||"#E8720C";
-    const remaining=flowSecs+FLOW.slice(flowIdx+1).reduce((s,x)=>s+x.d,0);
-    const overallPct=Math.round(((FLOW_TOTAL-remaining)/FLOW_TOTAL)*100);
+    const col=AREA_COLORS[step.area]||"#d08a4a";
+    const remaining=flowSecs+FLOW.slice(flowIdx+1).reduce((t,x)=>t+x.d,0);
+    const overall=(FLOW_TOTAL-remaining)/FLOW_TOTAL;
     const mm=Math.floor(remaining/60),ss=remaining%60;
-    const R=52,CIRC=2*Math.PI*R;
+    const R=78,C=2*Math.PI*R;
+    const next=FLOW[flowIdx+1];
     return(
-      <div style={{fontFamily:"Georgia,serif",minHeight:"70vh"}}>
-        <div style={{background:"linear-gradient(160deg,#141414,#0b0b0b)",borderRadius:22,padding:"18px 18px 22px",border:"1px solid "+col+"66",position:"relative",overflow:"hidden",boxShadow:"0 0 40px "+col+"22"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+col+",transparent)"}}/>
-          {/* Header */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,position:"relative"}}>
+      <div className="tfx st" style={{"--c":col}}>
+        <section className="tfx-card st-player">
+          <header className="st-player-head">
             <div>
-              <div style={{fontSize:9.5,letterSpacing:"0.2em",textTransform:"uppercase",color:col,fontWeight:800}}>Cool-Down Flow</div>
-              <div style={{fontSize:12,color:"#a89a86",marginTop:2}}>Step {flowIdx+1} of {FLOW.length} · {mm}:{String(ss).padStart(2,"0")} left</div>
+              <div className="tfx-eyebrow">Cool-down · step {flowIdx+1} of {FLOW.length}</div>
+              <span className="tfx-num">{mm}:{String(ss).padStart(2,"0")} left</span>
             </div>
-            <button onClick={exit} style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.14)",color:"#bbb",fontSize:15,cursor:"pointer",padding:"6px 11px",borderRadius:10,lineHeight:1}}>✕</button>
+            <button className="att-nav tfx-press" onClick={exit} aria-label="End cool-down">✕</button>
+          </header>
+          <div className="st-overall" aria-hidden="true"><i style={{"--p":overall}}/></div>
+          <div className={"st-dial"+(flowSecs<=3?" is-ending":"")}>
+            <svg viewBox="0 0 180 180" aria-hidden="true">
+              <circle cx="90" cy="90" r={R} className="track"/>
+              <circle cx="90" cy="90" r={R} className="arc" strokeDasharray={C} strokeDashoffset={C*(1-flowSecs/(step.d||1))} transform="rotate(-90 90 90)"/>
+            </svg>
+            <div className="st-dial-num"><b className="tfx-num">{flowSecs}</b><small>{flowPaused?"paused":"seconds"}</small></div>
           </div>
-          {/* Overall progress */}
-          <div style={{height:4,background:"rgba(255,255,255,0.1)",borderRadius:3,overflow:"hidden",marginBottom:20}}>
-            <div style={{height:"100%",width:overallPct+"%",background:"linear-gradient(90deg,"+col+","+col+"aa)",borderRadius:3,transition:"width 0.9s linear"}}/>
+          <div className="st-step">
+            <span className="st-area">{step.area}</span>
+            <h2>{step.n}{step.side&&<em> · {step.side}</em>}</h2>
+            <p>{step.c}</p>
           </div>
-          {/* Ring timer */}
-          <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
-            <div style={{position:"relative",width:150,height:150}}>
-              <svg width="150" height="150" viewBox="0 0 120 120" style={{transform:"rotate(-90deg)"}}>
-                <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="8"/>
-                <circle cx="60" cy="60" r={R} fill="none" stroke={flowSecs<=3?"#ff5555":col} strokeWidth="8" strokeLinecap="round" strokeDasharray={CIRC} strokeDashoffset={CIRC*(1-flowSecs/(step.d||1))} style={{transition:"stroke-dashoffset 1s linear,stroke 0.3s"}}/>
-              </svg>
-              <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-                <div style={{fontSize:44,fontWeight:900,color:flowSecs<=3?"#ff6b6b":"#fdf6ec",lineHeight:1}}>{flowSecs}</div>
-                <div style={{fontSize:9,color:"#a89a86",textTransform:"uppercase",letterSpacing:"0.14em",marginTop:2}}>{flowPaused?"paused":"hold"}</div>
-              </div>
-            </div>
+          <div className="st-controls">
+            <button className="tfx-btn-ghost tfx-press" onClick={()=>goStep(Math.max(0,flowIdx-1))} disabled={flowIdx===0}>‹ Back</button>
+            <button className="tfx-btn tfx-press st-pause" onClick={()=>setFlowPaused(p=>!p)}>{flowPaused?"▶ Resume":"❚❚ Pause"}</button>
+            <button className="tfx-btn-ghost tfx-press" onClick={()=>goStep(flowIdx+1)}>Skip ›</button>
           </div>
-          {/* Stretch name + area */}
-          <div style={{textAlign:"center",marginBottom:14}}>
-            <span style={{fontSize:9.5,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",color:col,background:col+"1f",padding:"3px 10px",borderRadius:6,border:"0.5px solid "+col+"55"}}>{step.area}</span>
-            <div style={{fontSize:22,fontWeight:900,color:"#fdf6ec",letterSpacing:"-0.02em",marginTop:9,lineHeight:1.15}}>{step.n}{step.side?<span style={{color:col}}> · {step.side}</span>:null}</div>
-          </div>
-          {/* Cue */}
-          <div style={{fontSize:13,color:"#c9c0b4",lineHeight:1.65,textAlign:"center",padding:"0 6px",marginBottom:20,minHeight:52}}>{step.c}</div>
-          {/* Controls */}
-          <div style={{display:"flex",gap:9,alignItems:"stretch"}}>
-            <button onClick={()=>setFlowIdx(i=>Math.max(0,i-1))} disabled={flowIdx===0} style={{flex:1,padding:"14px",borderRadius:13,border:"1px solid rgba(255,255,255,0.14)",background:"transparent",color:flowIdx===0?"#555":"#fdf6ec",fontSize:14,fontWeight:700,cursor:flowIdx===0?"default":"pointer",fontFamily:"Georgia,serif"}}>‹ Prev</button>
-            <button onClick={()=>setFlowPaused(p=>!p)} style={{flex:1.4,padding:"14px",borderRadius:13,border:"none",background:"linear-gradient(135deg,"+col+","+col+"bb)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 4px 16px "+col+"44"}}>{flowPaused?"▶ Resume":"⏸ Pause"}</button>
-            <button onClick={()=>setFlowIdx(i=>i+1)} style={{flex:1,padding:"14px",borderRadius:13,border:"1px solid rgba(255,255,255,0.14)",background:"transparent",color:"#fdf6ec",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>Skip ›</button>
-          </div>
-        </div>
-        {/* Up next */}
-        {flowIdx+1<FLOW.length&&(
-          <div style={{display:"flex",alignItems:"center",gap:10,marginTop:12,padding:"11px 14px",background:"#141414",borderRadius:12,border:"0.5px solid #262626"}}>
-            <span style={{fontSize:9,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.1em",color:"#777"}}>Up next</span>
-            <span style={{fontSize:13,color:"#cfcfcf",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{FLOW[flowIdx+1].n}{FLOW[flowIdx+1].side?" · "+FLOW[flowIdx+1].side:""}</span>
-            <span style={{marginLeft:"auto",fontSize:12,color:"#777"}}>{FLOW[flowIdx+1].d}s</span>
+        </section>
+        {next&&(
+          <div className="tfx-card st-next">
+            <span className="tfx-eyebrow">Up next</span>
+            <b>{next.n}{next.side?" · "+next.side:""}</b>
+            <span className="tfx-num">{next.d}s</span>
           </div>
         )}
       </div>
@@ -266,248 +264,90 @@ export default function StretchingTab(){
   }
 
   const c=CATS[cat];
+  const tone=TONE[cat]||"#d08a4a";
+  const centerChip=(row)=>{if(!row)return;const on=row.querySelector(".st-chip.is-on");if(on)row.scrollLeft=on.offsetLeft-(row.clientWidth-on.clientWidth)/2;};
   const totalDone=done.size;
-  const totalAll=KEYS.reduce((s,k)=>s+CATS[k].s.length,0);
   const catDone=c.s.filter((_,i)=>done.has(cat+"-"+i)).length;
-  const catPct=Math.round((catDone/c.s.length)*100);
-  const circumference=2*Math.PI*26;
+  const flowAreas=["Hamstrings","Hips","Shoulders"];
 
   return(
-    <div style={{fontFamily:"Georgia,serif",minHeight:"60vh"}}>
-
-      {/* ── GUIDED COOL-DOWN FLOW ── */}
-      <button onClick={()=>{setFlowIdx(0);setFlowPaused(false);}} style={{width:"100%",textAlign:"left",display:"flex",alignItems:"center",gap:14,padding:"16px 18px",marginBottom:16,borderRadius:18,border:"1px solid #E8720C55",background:"linear-gradient(135deg,#1c1206,#160d04)",cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 4px 20px #00000060"}}>
-        <div style={{width:46,height:46,borderRadius:14,flexShrink:0,background:"linear-gradient(145deg,#E8720C,#C0392B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,boxShadow:"0 0 18px #E8720C44"}}>🧘</div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:15,fontWeight:900,color:"#fdf6ec",letterSpacing:"-0.01em"}}>Post-Workout Cool-Down</div>
-          <div style={{fontSize:11.5,color:"#a89a86",marginTop:2}}>Hamstrings · Hips · Shoulders · ~{Math.round(FLOW_TOTAL/60)} min guided</div>
+    <div className="tfx st">
+      <header className="tfx-hb-head">
+        <div>
+          <div className="tfx-eyebrow">Stretch</div>
+          <h2>Recover right</h2>
         </div>
-        <div style={{flexShrink:0,padding:"9px 15px",borderRadius:11,background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:13,fontWeight:800,whiteSpace:"nowrap"}}>Start ▶</div>
+        {totalDone>0&&<span className="tfx-hb-streak"><b className="tfx-num">{totalDone}</b> done today</span>}
+      </header>
+
+      <button className="tfx-card st-hero tfx-press" onClick={()=>{setTimer(null);goStep(0);setFlowPaused(false);}}>
+        <div className="st-hero-txt">
+          <div className="tfx-eyebrow">Guided · {Math.round(FLOW_TOTAL/60)} min · {FLOW.length} holds</div>
+          <b>Post-workout cool-down</b>
+          <span className="st-hero-areas">{flowAreas.map(a=><i key={a} style={{"--c":AREA_COLORS[a]}}>{a}</i>)}</span>
+        </div>
+        <span className="st-hero-go" aria-hidden="true">▶</span>
       </button>
 
-      {/* ── ACTIVE TIMER ── */}
-      {timerName&&(
-        <div style={{
-          background:"linear-gradient(135deg,#1a1a1a,#111)",
-          borderRadius:18,padding:"14px 16px",marginBottom:16,
-          border:"1.5px solid "+timerColor+"66",
-          boxShadow:"0 0 24px "+timerColor+"22,0 4px 16px #00000080",
-          position:"relative",overflow:"hidden",
-        }}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+timerColor+",transparent)"}}/>
-          <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at top right,"+timerColor+"0a,transparent 70%)",pointerEvents:"none"}}/>
-          <div style={{display:"flex",alignItems:"center",gap:16,position:"relative"}}>
-            <div style={{position:"relative",flexShrink:0}}>
-              <svg viewBox="0 0 60 60" style={{width:68,height:68,transform:"rotate(-90deg)",filter:"drop-shadow(0 0 6px "+timerColor+"55)"}}>
-                <circle cx="30" cy="30" r="26" fill="none" stroke="#252525" strokeWidth="5"/>
-                <circle cx="30" cy="30" r="26" fill="none" stroke={timerSecs<=5?"#ff4444":timerColor}
-                  strokeWidth="5"
-                  strokeDasharray={`${(timerSecs/timerTotal)*circumference} ${circumference}`}
-                  strokeLinecap="round"
-                  style={{transition:"stroke-dasharray 1s linear,stroke 0.3s"}}
-                />
-              </svg>
-              <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                <span style={{fontSize:19,fontWeight:900,color:timerSecs<=5?"#ff4444":"#fff",lineHeight:1,textShadow:timerSecs<=5?"0 0 8px #ff444488":"none"}}>{timerSecs}</span>
-              </div>
-            </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:9,color:timerColor,textTransform:"uppercase",letterSpacing:"0.14em",marginBottom:4,fontWeight:700}}>Holding Now</div>
-              <div style={{fontSize:15,fontWeight:800,color:"#fff",marginBottom:10,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:"-0.01em"}}>{timerName}</div>
-              <div style={{height:4,background:"#252525",borderRadius:3,overflow:"hidden"}}>
-                <div style={{height:"100%",width:(timerSecs/timerTotal*100)+"%",background:timerSecs<=5?"#ff4444":timerColor,borderRadius:3,transition:"width 1s linear",boxShadow:"0 0 8px "+(timerSecs<=5?"#ff444488":timerColor+"88")}}/>
-              </div>
-            </div>
-            <button onClick={()=>{clearInterval(timerRef.current);setTimerName("");}}
-              style={{background:"#222",border:"1px solid #333",color:"#888",fontSize:16,cursor:"pointer",padding:"6px 8px",borderRadius:8,lineHeight:1,flexShrink:0}}>✕</button>
-          </div>
-        </div>
-      )}
-
-      {/* ── OVERALL PROGRESS ── */}
-      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
-        <div style={{flex:1,height:5,background:"#222",borderRadius:3,overflow:"hidden"}}>
-          <div style={{height:"100%",width:(totalDone/totalAll*100)+"%",background:"linear-gradient(90deg,#534AB7,#E8720C)",borderRadius:3,transition:"width 0.4s",boxShadow:totalDone>0?"0 0 8px #E8720C44":undefined}}/>
-        </div>
-        <div style={{fontSize:11,color:totalDone>0?"#bbb":"#444",fontWeight:700,minWidth:52,textAlign:"right"}}>
-          {totalDone}<span style={{color:"#444",fontWeight:400}}> / {totalAll}</span>
-        </div>
-      </div>
-
-      {/* ── CATEGORY TABS ── */}
-      <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:6,marginBottom:14,scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+      <div className="st-sec-head"><div className="tfx-eyebrow">Target an area</div></div>
+      <div className="st-areas" role="tablist" aria-label="Muscle group" ref={el=>{if(el&&el.dataset.cat!==cat){el.dataset.cat=cat;centerChip(el);}}}>
         {KEYS.map(k=>{
           const cc=CATS[k];
-          const isA=cat===k;
           const kd=cc.s.filter((_,i)=>done.has(k+"-"+i)).length;
-          const allD=kd===cc.s.length;
+          const on=cat===k;
           return(
-            <button key={k} onClick={()=>{setCat(k);setOpen(null);}}
-              style={{
-                display:"flex",flexDirection:"column",alignItems:"center",gap:3,
-                padding:"10px 12px",borderRadius:12,
-                border:"1.5px solid "+(isA?cc.c:allD?cc.c+"66":(isLight?"rgba(0,0,0,0.12)":"#2d2d2d")),
-                background:isA?"linear-gradient(160deg,"+cc.c+"ee,"+cc.c+"bb)":allD?cc.c+"18":(isLight?"#ffffff":"#181818"),
-                cursor:"pointer",flexShrink:0,fontFamily:"Georgia,serif",
-                position:"relative",
-                boxShadow:isA?"0 0 16px "+cc.c+"44,0 2px 8px #00000060":allD?"0 0 8px "+cc.c+"22":"none",
-                transition:"all 0.15s",
-              }}>
-              {allD&&!isA&&<div style={{position:"absolute",top:4,right:4,width:6,height:6,borderRadius:"50%",background:cc.c,boxShadow:"0 0 6px "+cc.c}}/>}
-              <span style={{fontSize:20}}>{cc.i}</span>
-              <span style={{fontSize:9,color:isA?"#fff":allD?cc.c:(isLight?"#4e545e":"#aaa"),whiteSpace:"nowrap",fontWeight:isA?900:500,textTransform:"uppercase",letterSpacing:"0.06em"}}>{cc.l}</span>
-              {kd>0&&!allD&&<span style={{fontSize:8,color:cc.c,fontWeight:700}}>{kd}/{cc.s.length}</span>}
+            <button key={k} role="tab" aria-selected={on} className={"st-chip tfx-press"+(on?" is-on":"")+(kd===cc.s.length?" is-full":"")} style={{"--c":TONE[k]}} onClick={()=>{setCat(k);setOpen(null);}}>
+              <i/>{cc.l}{kd>0&&<small className="tfx-num">{kd}/{cc.s.length}</small>}
             </button>
           );
         })}
       </div>
 
-      {/* ── CATEGORY HERO ── */}
-      <div style={{
-        background:"linear-gradient(135deg,"+c.c+"28,"+c.c+"0e,#0d0d0d)",
-        borderRadius:16,padding:"20px",marginBottom:12,
-        border:"1px solid "+c.c+"55",
-        position:"relative",overflow:"hidden",
-        boxShadow:"0 0 32px "+c.c+"18,0 4px 20px #00000060",
-      }}>
-        <div style={{position:"absolute",right:-16,top:-16,fontSize:100,opacity:0.1,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>{c.i}</div>
-        <div style={{position:"absolute",top:0,left:0,width:"60%",height:2,background:"linear-gradient(90deg,"+c.c+",transparent)"}}/>
-        <div style={{position:"absolute",bottom:0,right:0,width:"40%",height:1,background:"linear-gradient(270deg,"+c.c+"44,transparent)"}}/>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative"}}>
+      <section className="tfx-card st-list" style={{"--c":tone}}>
+        <header className="st-list-head">
           <div>
-            <div style={{fontSize:9,color:c.c,textTransform:"uppercase",letterSpacing:"0.16em",fontWeight:800,marginBottom:6,textShadow:"0 0 12px "+c.c+"88"}}>{c.l} · Muscle Group</div>
-            <div style={{fontSize:28,fontWeight:900,color:"#fff",letterSpacing:"-0.03em",lineHeight:1,marginBottom:6,textShadow:"0 2px 12px #00000080"}}>{c.l}</div>
-            <div style={{fontSize:12,color:"#888",letterSpacing:"0.02em"}}>{catDone} of {c.s.length} complete</div>
-            {catPct===100&&<div style={{fontSize:12,color:c.c,fontWeight:800,marginTop:5,textShadow:"0 0 8px "+c.c+"88"}}>✓ All done</div>}
+            <h3>{c.l}</h3>
+            <span>{catDone===c.s.length?"All done 💪":`${catDone} of ${c.s.length} done`}</span>
           </div>
-          <div style={{position:"relative",flexShrink:0}}>
-            <svg viewBox="0 0 60 60" style={{width:64,height:64,transform:"rotate(-90deg)",filter:"drop-shadow(0 0 8px "+c.c+"44)"}}>
-              <circle cx="30" cy="30" r="24" fill="none" stroke="#222" strokeWidth="5"/>
-              <circle cx="30" cy="30" r="24" fill="none" stroke={c.c}
-                strokeWidth="5"
-                strokeDasharray={`${catPct*1.508} 150.8`}
-                strokeLinecap="round"
-                style={{transition:"stroke-dasharray 0.4s"}}
-              />
-            </svg>
-            <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <span style={{fontSize:13,fontWeight:900,color:catPct===100?c.c:"#fff",textShadow:catPct===100?"0 0 8px "+c.c:"none"}}>{catPct}%</span>
-            </div>
-          </div>
+          <div className="st-mini" aria-hidden="true"><i style={{"--p":catDone/c.s.length}}/></div>
+        </header>
+        <ul>
+          {c.s.map((st,i)=>{
+            const key=cat+"-"+i;
+            const isDone=done.has(key);
+            const isOpen=open===i;
+            const running=timer&&timer.key===key;
+            return(
+              <li key={key} className={"st-row"+(isDone?" is-done":"")+(isOpen?" is-open":"")+(running?" is-running":"")}>
+                <div className="st-row-main" onClick={()=>setOpen(isOpen?null:i)}>
+                  <button className="st-check tfx-press" onClick={e=>{e.stopPropagation();toggleDone(key);}} aria-pressed={isDone} aria-label={(isDone?"Undo ":"Mark done: ")+st.n}>{isDone?"✓":""}</button>
+                  <span className="st-name"><b>{st.n}</b><small className="tfx-num">{running?`${timer.secs}s left`:`${st.d}s hold`}</small></span>
+                  <button className="st-play tfx-press" onClick={e=>{e.stopPropagation();running?setTimer(null):startTimer(key,st.d,st.n,tone);}} aria-label={(running?"Stop timer for ":"Start timer for ")+st.n}>{running?"■":"▶"}</button>
+                </div>
+                {running&&<div className="st-run" aria-hidden="true"><i style={{"--p":timer.secs/timer.total}}/></div>}
+                {isOpen&&(
+                  <div className="st-more">
+                    <p>{st.t}</p>
+                    <div className="st-acts">
+                      <a className="st-watch tfx-press" href={"https://www.youtube.com/results?search_query="+encodeURIComponent(st.n+" stretch tutorial")} target="_blank" rel="noreferrer">▶ Watch how</a>
+                      <button className="tfx-btn-ghost tfx-press" onClick={()=>{toggleDone(key);setOpen(null);}}>{isDone?"Undo":"Mark done"}</button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      {timer&&(
+        <div className="st-float" role="timer" style={{"--c":timer.color}}>
+          <svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" className="track"/><circle cx="18" cy="18" r="15" className="arc" strokeDasharray={2*Math.PI*15} strokeDashoffset={2*Math.PI*15*(1-timer.secs/timer.total)} transform="rotate(-90 18 18)"/></svg>
+          <span className="st-float-txt"><b>{timer.name}</b><small className="tfx-num">{timer.secs}s left</small></span>
+          <button onClick={()=>setTimer(null)} aria-label="Stop timer">✕</button>
         </div>
-      </div>
-
-      {/* ── STRETCH CARDS ── */}
-      <div style={{display:"flex",flexDirection:"column",gap:7}}>
-        {c.s.map((s,i)=>{
-          const key=cat+"-"+i;
-          const isDone=done.has(key);
-          const isOpen=open===i;
-          const isTimerHere=timerName===s.n;
-          return(
-            <div key={i} style={{
-              background:isDone?(isLight?"#e8f4ea":"#0f160f"):isOpen?(isLight?"#eef0f4":"#1c1c1c"):(isLight?"#f6f7f9":"#181818"),
-              borderRadius:14,
-              border:"1px solid "+(isDone?c.c+"55":isOpen?c.c+"88":(isLight?"rgba(0,0,0,0.12)":"#2d2d2d")),
-              overflow:"hidden",
-              borderLeft:"3px solid "+(isDone?c.c:isOpen?c.c:(isLight?"rgba(0,0,0,0.18)":"#404040")),
-              boxShadow:isOpen?"0 0 16px "+c.c+"18,0 2px 12px "+(isLight?"rgba(0,0,0,0.12)":"#00000060"):isDone?"0 0 8px "+c.c+"12":undefined,
-              transition:"all 0.15s",
-            }}>
-              <div onClick={()=>setOpen(isOpen?null:i)}
-                style={{display:"flex",alignItems:"center",gap:12,padding:"13px 14px 13px 12px",cursor:"pointer",userSelect:"none"}}>
-                <button onClick={e=>{e.stopPropagation();toggleDone(key);}}
-                  style={{
-                    width:26,height:26,borderRadius:"50%",
-                    border:"2px solid "+(isDone?c.c:"#3a3a3a"),
-                    background:isDone?"linear-gradient(135deg,"+c.c+","+c.c+"cc)":"transparent",
-                    flexShrink:0,cursor:"pointer",
-                    display:"flex",alignItems:"center",justifyContent:"center",
-                    color:"#fff",fontSize:11,fontWeight:900,
-                    boxShadow:isDone?"0 0 8px "+c.c+"66":undefined,
-                    transition:"all 0.15s",
-                  }}>
-                  {isDone?"✓":""}
-                </button>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:14,fontWeight:isDone?500:700,color:isDone?(isLight?"#98929a":"#555"):(isLight?"#16191f":"#fff"),textDecoration:isDone?"line-through":"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",letterSpacing:"-0.01em"}}>{s.n}</div>
-                  <div style={{fontSize:11,color:isTimerHere?c.c:"#666",marginTop:2,fontWeight:isTimerHere?700:400}}>
-                    {isTimerHere?"⏳ Timer running...":s.d+"s hold"}
-                  </div>
-                </div>
-                <button onClick={e=>{e.stopPropagation();startTimer(s.d,s.n,c.c);}}
-                  style={{
-                    width:36,height:36,borderRadius:10,
-                    border:"1.5px solid "+(isTimerHere?c.c:c.c+"44"),
-                    background:isTimerHere?"linear-gradient(135deg,"+c.c+","+c.c+"bb)":c.c+"18",
-                    flexShrink:0,cursor:"pointer",
-                    display:"flex",alignItems:"center",justifyContent:"center",
-                    fontSize:16,
-                    boxShadow:isTimerHere?"0 0 10px "+c.c+"66":undefined,
-                    transition:"all 0.15s",
-                  }}>
-                  ⏱
-                </button>
-                <span style={{fontSize:12,color:"#555",flexShrink:0,display:"inline-block",transform:isOpen?"rotate(180deg)":"none",transition:"transform 0.2s"}}>▾</span>
-              </div>
-
-              {isOpen&&(
-                <div style={{borderTop:"1px solid "+(isLight?"rgba(0,0,0,0.1)":"#252525"),padding:"14px 14px 16px"}}>
-                  <p style={{
-                    fontSize:13,color:isLight?"#464c56":"#aaa",lineHeight:1.85,margin:"0 0 14px",
-                    paddingLeft:12,
-                    borderLeft:"3px solid "+c.c+"55",
-                    fontStyle:"italic",
-                    background:c.c+"08",
-                    padding:"10px 12px",
-                    borderRadius:"0 8px 8px 0",
-                  }}>{s.t}</p>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-                    <button onClick={()=>startTimer(s.d,s.n,c.c)}
-                      style={{
-                        borderRadius:12,border:"1.5px solid "+c.c+"44",
-                        background:"linear-gradient(160deg,"+c.c+"18,"+c.c+"0a)",
-                        padding:"12px 4px",cursor:"pointer",fontFamily:"Georgia,serif",
-                        display:"flex",flexDirection:"column",alignItems:"center",gap:4,
-                        transition:"all 0.15s",
-                      }}>
-                      <span style={{fontSize:20}}>⏱</span>
-                      <span style={{fontSize:11,fontWeight:800,color:c.c}}>{s.d}s</span>
-                    </button>
-                    <a href={"https://www.youtube.com/results?search_query="+encodeURIComponent(s.n+" stretch tutorial")} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()}
-                      style={{
-                        borderRadius:12,border:"1.5px solid #C0392B55",
-                        background:"linear-gradient(160deg,#C0392B18,#C0392B0a)",
-                        padding:"12px 4px",cursor:"pointer",textDecoration:"none",
-                        display:"flex",flexDirection:"column",alignItems:"center",gap:4,
-                      }}>
-                      <span style={{fontSize:20}}>▶️</span>
-                      <span style={{fontSize:11,fontWeight:800,color:"#C0392B"}}>Video</span>
-                    </a>
-                    <button onClick={()=>{toggleDone(key);setOpen(null);}}
-                      style={{
-                        borderRadius:12,
-                        border:"1.5px solid "+(isDone?"#1E6B3A55":c.c+"44"),
-                        background:"linear-gradient(160deg,"+(isDone?"#1E6B3A18":""+c.c+"18")+","+(isDone?"#1E6B3A0a":""+c.c+"0a")+")",
-                        padding:"12px 4px",cursor:"pointer",fontFamily:"Georgia,serif",
-                        display:"flex",flexDirection:"column",alignItems:"center",gap:4,
-                        transition:"all 0.15s",
-                      }}>
-                      <span style={{fontSize:20}}>{isDone?"↩":"✓"}</span>
-                      <span style={{fontSize:11,fontWeight:800,color:isDone?"#1E6B3A":c.c}}>{isDone?"Undo":"Done"}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div style={{textAlign:"center",padding:"2.5rem 0 0.5rem"}}>
-        <div style={{fontSize:12,color:"#444",fontStyle:"italic",letterSpacing:"0.04em"}}>"As iron sharpens iron"</div>
-        <div style={{fontSize:10,color:"#333",marginTop:3}}>Proverbs 27:17</div>
-      </div>
+      )}
+      {toast&&!timer&&<div className="st-float is-toast" role="status"><span className="st-float-txt"><b>{toast}</b></span></div>}
     </div>
   );
 }
