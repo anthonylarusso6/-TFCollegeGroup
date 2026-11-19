@@ -1147,3 +1147,10 @@ html[data-theme="light"] .cir-list li.is-first .cir-val b { color: #a8841f; }
 }
 .ir-uselast { justify-self: stretch; padding: 11px 12px; border-radius: 14px; cursor: pointer; font-family: var(--font-ui); font-size: 13.5px; font-weight: 650; color: var(--tx);
   background: transparent; border: 1px dashed color-mix(in srgb, var(--t) 55%, var(--field-line)); }
+/* Body figure depth: light from the left, soft falloff to the right */
+.bm-shade { pointer-events: none; }
+.bm-shade-a { stop-color: #fff; stop-opacity: 0.09; }
+.bm-shade-b { stop-color: #fff; stop-opacity: 0; }
+.bm-shade-c { stop-color: #000; stop-opacity: 0.16; }
+html[data-theme="light"] .bm-shade-a { stop-opacity: 0.35; }
+html[data-theme="light"] .bm-shade-c { stop-opacity: 0.07; }
