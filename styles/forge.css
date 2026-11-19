@@ -1154,3 +1154,118 @@ html[data-theme="light"] .cir-list li.is-first .cir-val b { color: #a8841f; }
 .bm-shade-c { stop-color: #000; stop-opacity: 0.16; }
 html[data-theme="light"] .bm-shade-a { stop-opacity: 0.35; }
 html[data-theme="light"] .bm-shade-c { stop-opacity: 0.07; }
+
+/* ════════════════════════════════════════════════════════════════════
+   ATTENDANCE — athlete record + coach day sheet
+   ════════════════════════════════════════════════════════════════════ */
+.att, .catt { display: grid; gap: 14px; min-width: 0; }
+.att > *, .catt > * { min-width: 0; }
+.att .is-early, .catt .is-early { --c: var(--green); }
+.att .is-late, .catt .is-late { --c: #e8a33c; }
+.att .is-excused, .catt .is-excused { --c: var(--violet); }
+.att .is-missed { --c: var(--red); }
+.att .is-upcoming { --c: var(--tx3); }
+.catt .is-none { --c: var(--tx3); }
+.att-loading { padding: 28px 16px; text-align: center; font-family: var(--font-ui); font-size: 14px; color: var(--tx2); }
+.att-empty { margin: 6px 0 4px; font-family: var(--font-ui); font-size: 13.5px; line-height: 1.5; color: var(--tx2); }
+
+.att-hero { padding: 18px; }
+.att-hero-row { display: flex; align-items: center; gap: 18px; }
+.att-dial { position: relative; width: 132px; height: 132px; flex-shrink: 0; }
+.att-dial svg { width: 100%; height: 100%; }
+.att-dial .track { fill: none; stroke: var(--track); stroke-width: 11; }
+.att-dial .arc { fill: none; stroke: var(--green); stroke-width: 11; stroke-linecap: round; transition: stroke-dashoffset 0.9s var(--ease-out); }
+.att-dial-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.att-dial-num b { font-size: 34px; font-weight: 750; color: var(--tx); }
+.att-dial-num b i { font-style: normal; font-size: 17px; color: var(--tx3); }
+.att-dial-num small { margin-top: 4px; font-family: var(--font-ui); font-size: 11px; font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx3); }
+.att-legend { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 0; display: grid; gap: 7px; }
+.att-legend li { display: flex; align-items: center; gap: 8px; font-family: var(--font-ui); font-size: 14px; color: var(--tx2); }
+.att-legend li i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); flex-shrink: 0; }
+.att-legend li b { margin-left: auto; font-size: 16px; font-weight: 700; color: var(--tx); }
+.att-legend .att-legend-note { margin-top: 2px; font-size: 12px; line-height: 1.4; color: var(--tx3); }
+.att-pre { display: flex; align-items: center; gap: 16px; }
+.att-pre-num { flex-shrink: 0; display: grid; justify-items: center; min-width: 96px; padding: 14px 10px; border-radius: 20px; background: var(--field); border: 1px solid var(--glass-line); font-size: 42px; font-weight: 750; line-height: 1; color: var(--tx); }
+.att-pre-num small { margin-top: 4px; font-family: var(--font-ui); font-size: 11px; font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx3); }
+.att-pre-txt b { display: block; margin-top: 4px; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; color: var(--tx); }
+.att-pre-txt p { margin: 5px 0 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.45; color: var(--tx2); }
+
+.att-cal { padding: 16px; }
+.att-cal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.att-cal-head > div { display: grid; justify-items: center; gap: 2px; text-align: center; }
+.att-cal-head b { font-size: 18px; font-weight: 800; color: var(--tx); }
+.att-cal-head span { font-family: var(--font-ui); font-size: 12.5px; color: var(--tx3); }
+.att-nav { width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; cursor: pointer; font-size: 22px; line-height: 1; color: var(--tx); background: var(--field); border: 1px solid var(--glass-line); }
+.att-nav:disabled { opacity: 0.3; cursor: default; }
+.att-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.att-dow { margin-bottom: 6px; }
+.att-dow span { text-align: center; font-family: var(--font-ui); font-size: 11px; font-weight: 700; color: var(--tx3); }
+.att-day { display: grid; place-items: center; aspect-ratio: 1 / 1; max-height: 46px; border-radius: 12px; font-family: var(--font-num); font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--tx3); border: 1px solid transparent; }
+.att-day.is-off { opacity: 0.45; }
+.att-day.is-class { color: var(--tx2); background: var(--field); }
+.att-day.is-early, .att-day.is-late { color: #fff; background: var(--c); }
+.att-day.is-late { color: #2a1a00; }
+.att-day.is-excused { color: var(--tx); background: color-mix(in srgb, var(--c) 24%, transparent); border-color: color-mix(in srgb, var(--c) 55%, transparent); }
+.att-day.is-missed { color: var(--tx); background: color-mix(in srgb, var(--c) 12%, transparent); border-color: color-mix(in srgb, var(--c) 45%, transparent); }
+.att-day.is-upcoming { color: var(--tx2); border: 1px dashed var(--field-line); }
+.att-day.is-today { box-shadow: 0 0 0 2px var(--gold); }
+.att-keys { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin-top: 14px; font-family: var(--font-ui); font-size: 12px; color: var(--tx2); }
+.att-keys span { display: inline-flex; align-items: center; gap: 6px; }
+.att-keys i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+.att-keys .is-missed i { background: color-mix(in srgb, var(--c) 25%, transparent); border: 1px solid var(--c); }
+.att-keys .is-upcoming i { background: transparent; border: 1px dashed var(--tx3); }
+
+.att-hist, .catt-missed { padding: 16px; }
+.att-hist-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.att-hist-head span { font-family: var(--font-ui); font-size: 12px; color: var(--tx3); }
+.att-hist ul, .catt-missed ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.att-hist li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--field); }
+.att-h-date { flex: 1; font-size: 15px; font-weight: 650; color: var(--tx); }
+.att-h-time { font-size: 13px; color: var(--tx3); }
+.att-pill { min-width: 66px; text-align: center; padding: 4px 10px; border-radius: 999px; font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: var(--tx);
+  background: color-mix(in srgb, var(--c) 18%, transparent); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); }
+
+/* Coach */
+.catt-head { padding: 16px; display: grid; gap: 14px; }
+.catt-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.catt-top h2 { margin: 4px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; color: var(--tx); }
+.catt-top p { margin: 3px 0 0; font-family: var(--font-ui); font-size: 13px; color: var(--tx2); }
+.catt-nav { display: flex; align-items: center; gap: 6px; }
+.catt-date { width: auto; padding: 9px 10px; border-radius: 12px; font-size: 14px; }
+.catt-week { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.catt-wd { display: grid; justify-items: center; gap: 1px; padding: 9px 4px; border-radius: 14px; cursor: pointer; background: var(--field); border: 1px solid var(--glass-line); color: var(--tx2); font-family: var(--font-ui); }
+.catt-wd span { font-size: 12px; font-weight: 700; }
+.catt-wd b { font-size: 20px; font-weight: 750; color: var(--green); }
+.catt-wd small { font-size: 11px; color: var(--tx3); }
+.catt-wd.is-today span { color: var(--gold); }
+.catt-wd.is-on { background: color-mix(in srgb, var(--green) 16%, var(--glass-strong)); border-color: var(--green); box-shadow: 0 0 0 1px var(--green); color: var(--tx); }
+.catt-sum { padding: 16px; }
+.catt-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.catt-stats > div { display: grid; gap: 2px; padding: 10px; border-radius: 14px; background: color-mix(in srgb, var(--c) 10%, var(--field)); border: 1px solid color-mix(in srgb, var(--c) 30%, var(--glass-line)); }
+.catt-stats b { font-size: 24px; font-weight: 750; line-height: 1.05; color: var(--tx); }
+.catt-stats span { font-family: var(--font-ui); font-size: 11.5px; color: var(--tx2); }
+.catt-bar { display: flex; height: 8px; margin-top: 12px; border-radius: 999px; overflow: hidden; background: var(--track); }
+.catt-bar i { width: calc(var(--p) * 100%); background: var(--c); transition: width 0.5s var(--ease-out); }
+.catt-list { padding: 14px 10px 10px; }
+.catt-filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 0 6px 10px; }
+.catt-filters::-webkit-scrollbar { display: none; }
+.catt-filters .tfx-chipbtn { flex-shrink: 0; }
+.catt-filters .tfx-chipbtn span { margin-left: 3px; color: var(--tx3); }
+.catt-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.catt-list li { display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 14px; transition: opacity 0.2s ease; }
+.catt-list li.is-waiting { background: color-mix(in srgb, var(--gold) 9%, transparent); }
+.catt-list li.is-busy { opacity: 0.55; }
+.catt-who { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.catt-who b { font-size: 14.5px; font-weight: 700; color: var(--tx); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.catt-who b em { margin-left: 6px; font-style: normal; font-family: var(--font-ui); font-size: 11.5px; color: var(--gold); }
+.catt-who small { font-family: var(--font-ui); font-size: 12px; color: var(--tx3); }
+.catt-list li.is-waiting .catt-who small { color: color-mix(in srgb, var(--gold) 80%, var(--tx)); }
+.catt-seg { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; padding: 3px; border-radius: 12px; background: var(--field); border: 1px solid var(--glass-line); }
+.catt-seg button { min-width: 44px; padding: 7px 6px; border: 0; border-radius: 9px; cursor: pointer; background: transparent; font-family: var(--font-ui); font-size: 12px; font-weight: 650; color: var(--tx2); }
+.catt-seg button.is-on { color: #fff; background: var(--c); }
+.catt-seg button.is-late.is-on { color: #2a1a00; }
+.catt-seg button:disabled { cursor: wait; }
+.catt-seg .catt-clear { min-width: 26px; color: var(--tx3); }
+.catt-missed li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--field); font-family: var(--font-ui); font-size: 14px; color: var(--tx); }
+.catt-missed li b { font-size: 13px; color: var(--red); }
+@media (max-width: 400px) { .catt-seg button { min-width: 38px; padding: 7px 4px; font-size: 11.5px; } .catt-stats b { font-size: 20px; } }

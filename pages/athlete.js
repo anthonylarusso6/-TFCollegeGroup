@@ -14,7 +14,7 @@ import AnvilHistory from "../components/AnvilHistory";
 import VerseOfDay from "../components/VerseOfDay";
 import StretchingTab from "../components/StretchingTab";
 import PRLog from "../components/PRLog";
-import AttendanceCalendar from "../components/AttendanceCalendar";
+import AttendanceTab from "../components/AttendanceTab";
 import NotesTab from "../components/NotesTab";
 import DailyWord from "../components/DailyWord";
 import ClassCountdown from "../components/ClassCountdown";
@@ -1727,40 +1727,7 @@ export default function Athlete(){
 
             {tab==="events"&&<AthleteEventsTab athleteName={selectedAthlete.name}/>}
 
-            {tab==="attendance"&&(
-              <div>
-                <AttendanceCalendar athleteId={selectedAthlete.id}/>
-                <div style={{borderRadius:20,marginTop:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+ORANGE+"33"}}>
-                  <div style={{background:"linear-gradient(140deg,"+ORANGE+"30,"+ORANGE+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+ORANGE+","+ORANGE+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="calendar" size={66} color="#fff"/></div>
-                    <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+ORANGE+"12,transparent 70%)",pointerEvents:"none"}}/>
-                    <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+ORANGE+"33"}}>📅</div>
-                      <div>
-                        <div style={{fontSize:8,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Your record</div>
-                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Check-in History</div>
-                        <div style={{fontSize:11,color:"#555",marginTop:1}}>{attendance.length} session{attendance.length!==1?"s":""} logged</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{background:"#0e0e0e",padding:"0 18px"}}>
-                    {attendance.length===0&&<div style={{fontSize:12,color:"#444",textAlign:"center",padding:"1.5rem 0"}}>No check-ins yet.</div>}
-                    {attendance.slice(0,30).map((rec,i)=>(
-                      <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0",borderBottom:i<Math.min(attendance.length,30)-1?"0.5px solid #1a1a1a":"none"}}>
-                        <div>
-                          <div style={{fontSize:13,fontWeight:600,color:"#ddd"}}>{rec.day} · {rec.date}</div>
-                          <div style={{fontSize:11,color:"#555",marginTop:2}}>{rec.time_logged||""}</div>
-                        </div>
-                        <span style={{fontSize:10,padding:"4px 12px",borderRadius:8,background:rec.status==="early"?GREEN+"22":rec.status==="late"?GOLD+"22":RED+"22",color:rec.status==="early"?GREEN:rec.status==="late"?GOLD:RED,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.08em",border:"0.5px solid "+(rec.status==="early"?GREEN:rec.status==="late"?GOLD:RED)+"44"}}>
-                          {rec.status==="early"?"Early":rec.status==="late"?"Late":"No show"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+            {tab==="attendance"&&<AttendanceTab athleteId={selectedAthlete.id}/>}
 
 
             {tab==="prs"&&<PRLog athleteId={selectedAthlete.id} gender={selectedAthlete.gender} onNavigate={(t)=>{slideDirRef.current=0;setTab(t);}}/>}
