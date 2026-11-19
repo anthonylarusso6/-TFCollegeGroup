@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { passkeyAvailable, passkeySignIn, passkeyRegister, rememberPasskey, isCancel, passkeyErrorText } from "../lib/passkey";
 // useLayoutEffect warns during SSR; fall back to useEffect on the server.
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE, ATHLETE_SAFE_COLS } from "../lib/constants";
@@ -68,6 +69,7 @@ export default function Athlete(){
   const[bioCredId,setBioCredId]=useState(null);
   const[bioDeclined,setBioDeclined]=useState(false);
   const[showBioOffer,setShowBioOffer]=useState(false);
+  const[bioMsg,setBioMsg]=useState(""); // Face ID problem to show the athlete (empty = none)
   const[pendingNav,setPendingNav]=useState(null);
   const[bioRegistering,setBioRegistering]=useState(false);
   const[bioRegResult,setBioRegResult]=useState(null);
@@ -201,6 +203,7 @@ export default function Athlete(){
   // Keep ref in sync with state
   useEffect(()=>{athleteIdRef.current=selectedAthlete?.id;},[selectedAthlete]);
 
+  useEffect(()=>{passkeyAvailable().then(setBioAvail);},[]);
   // Check biometric availability and stored credential when athlete is selected
   useEffect(()=>{
     if(!selectedAthlete?.id)return;
@@ -222,64 +225,56 @@ export default function Athlete(){
     })();
   },[selectedAthlete?.id]);
 
-  const authenticateWithBiometric=async(ath)=>{
-    const athlete=ath||selectedAthlete;
-    try{
-      const raw=localStorage.getItem("tf_bio_"+athlete.id);
-      if(!raw)return false;
-      const stored=JSON.parse(raw);
-      const challenge=crypto.getRandomValues(new Uint8Array(32));
-      const credIdBytes=Uint8Array.from(atob(stored.credId),c=>c.charCodeAt(0));
-      const assertion=await navigator.credentials.get({
-        publicKey:{
-          challenge,
-          rpId:stored.rpId||window.location.hostname,
-          allowCredentials:[{type:"public-key",id:credIdBytes,transports:["internal"]}],
-          userVerification:"required",
-          hints:["client-device"], // prefer the on-device Face ID / Apple Passwords authenticator
-          timeout:60000,
-        }
-      });
-      if(assertion){
-        const info=await doCheckin(athlete);
-        setCheckinInfo(info);setPin("");
-        if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
-        else setScreen("profile");
-        return true;
-      }
-    }catch(e){/* user cancelled — fall through to PIN */}
-    return false;
+  // Face ID sign-in. `expected` is the athlete whose name was tapped, or null
+  // from the roster's "Sign in with Face ID" (whoever the passkey belongs to).
+  // Must be called straight from a tap: passkeySignIn() runs before any await.
+  const authenticateWithBiometric=async(expected)=>{
+    const exp=expected===undefined?selectedAthlete:expected;
+    let res;
+    try{res=await passkeySignIn();}
+    catch(e){if(!isCancel(e))setBioMsg(passkeyErrorText(e));return false;}
+    setBioMsg("");
+    // Who is this passkey for? Registered with user.id = athlete id.
+    let id=res.userHandle;
+    if(!id){
+      try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);
+        if(k&&k.startsWith("tf_bio_")&&!k.startsWith("tf_bio_declined_")&&!k.startsWith("tf_bio_coach_")){
+          const v=JSON.parse(localStorage.getItem(k)||"{}");if(v.credId===res.credId){id=k.slice(7);break;}}}}catch(e){}
+    }
+    if(!id&&exp)id=exp.id;
+    let athlete=(athletes||[]).find(x=>String(x.id)===String(id))||(exp&&String(exp.id)===String(id)?exp:null);
+    if(!athlete&&id){try{const{data}=await supabase.from("athletes").select(ATHLETE_SAFE_COLS).eq("id",id).maybeSingle();if(data&&data.status!=="archived")athlete=data;}catch(e){}}
+    if(!athlete){setBioMsg("That Face ID isn't linked to anyone on the roster. Tap your name and use your PIN.");return false;}
+    if(exp&&String(exp.id)!==String(athlete.id)){setBioMsg("That Face ID is saved for "+(athlete.name||"someone else").split(" ")[0]+". Use your PIN, then turn on Face ID in your profile.");return false;}
+    // Repair this browser's hint (storage may have been cleared) so the UI shows Face ID as on
+    rememberPasskey("tf_bio_"+athlete.id,res.credId);
+    setBioCredId(res.credId);
+    if(!exp)primeAthlete(athlete);
+    const info=await doCheckin(athlete);
+    setCheckinInfo(info);setPin("");setPinError("");
+    if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
+    else setScreen("profile");
+    return true;
   };
 
+  // Turn on Face ID for the signed-in athlete. Returns "ok" | "cancel" | "error".
   const registerBiometric=async(fromProfile=false)=>{
+    let status="ok";
     try{
-      const challenge=crypto.getRandomValues(new Uint8Array(32));
-      const credential=await navigator.credentials.create({
-        publicKey:{
-          challenge,
-          rp:{name:"TF College Group",id:window.location.hostname},
-          user:{
-            id:new TextEncoder().encode(String(selectedAthlete.id)),
-            name:selectedAthlete.name,
-            displayName:selectedAthlete.name,
-          },
-          pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
-          // platform + client-device hint keeps this on the built-in authenticator
-          // (Face ID → Apple Passwords / iCloud Keychain), not Google or a cross-device passkey.
-          authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"required"},
-          hints:["client-device"],
-          timeout:60000,
-        }
-      });
-      const credId=btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-      localStorage.setItem("tf_bio_"+selectedAthlete.id,JSON.stringify({credId,rpId:window.location.hostname}));
-      setBioCredId(credId);
-    }catch(e){}
-    if(!fromProfile){
+      const credId=await passkeyRegister({userId:selectedAthlete.id,name:selectedAthlete.name});
+      rememberPasskey("tf_bio_"+selectedAthlete.id,credId);
+      try{localStorage.removeItem("tf_bio_declined_"+selectedAthlete.id);}catch(e){}
+      setBioCredId(credId);setBioMsg("");
+    }catch(e){
+      status=isCancel(e)?"cancel":"error";
+      if(status==="error")setBioMsg(passkeyErrorText(e,"turn on"));
+    }
+    if(fromProfile!==true&&status!=="error"){
       const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
       if(nav?.screen==="checkin"){setScreen("checkin");if(nav.milestone)setMilestone(nav.milestone);}
       else setScreen("profile");
     }
+    return status;
   };
 
   // Check if athlete already logged weight today (only matters on Mon/Fri weigh-in days)
@@ -578,14 +573,9 @@ export default function Athlete(){
     return{status,time:timeStr,milestoneHit};
   };
 
-  const selectAthlete=async(a)=>{
-    // Fire Face ID FIRST, synchronously within the tap gesture — no awaits before
-    // navigator.credentials.get() so iOS keeps the user-activation and the prompt
-    // appears instantly (an await here makes the sheet sluggish or require a 2nd tap).
-    let bioRaw=null;try{bioRaw=localStorage.getItem("tf_bio_"+a.id);}catch(e){}
-    const bioPromise=bioRaw?authenticateWithBiometric(a):null;
-
-    setSelectedAthlete(a);
+  // Set up everything for a signed-in (or signing-in) athlete
+  const primeAthlete=(a)=>{
+    setSelectedAthlete(a);setBioMsg("");
     setPin("");setPinError("");setPinStep("enter");setPinConfirm("");
     setFeedbackText("");setFeedbackSent(false);
     setPrayerText("");setPrayerSent(false);
@@ -605,17 +595,23 @@ export default function Athlete(){
     }catch(e){setPinnedTabs(["prs","attendance","weight","callouts"]);}
     const defaultOrder=["profile","mcastles","events","verse","notes","attendance","mygroup","anvil","weight","body","prs","prfeed","callouts","stretching","leaderboard","prayer","bracelets","photos","habits","private"];
     try{const storedOrder=localStorage.getItem("tf_more_order_"+a.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});const newTabs=defaultOrder.filter(id=>!seen.has(id));const fullOrder=[...initOrder,...newTabs];setMoreOrder(fullOrder);moreOrderRef.current=fullOrder;}catch(e){setMoreOrder(defaultOrder);moreOrderRef.current=defaultOrder;}
-
-    // Show the PIN pad immediately as the base layer so it's already there if
-    // Face ID is cancelled or unavailable (no awaited jump — matches coach).
-    // If Face ID succeeds, authenticateWithBiometric navigates away over the top.
-    setScreen("login");
-
-    // Load supporting data in the background while Face ID is scanning.
+    // Load supporting data in the background
     Promise.all([
       loadAttendance(a.id),
       (async()=>{try{const{data}=await supabase.from("athletes").select("*").eq("id",a.id).maybeSingle();if(data)setSelectedAthlete(data);}catch(e){}})(),
     ]).catch(()=>{});
+  };
+
+  const selectAthlete=async(a)=>{
+    // Fire Face ID FIRST, synchronously within the tap gesture — no awaits before
+    // navigator.credentials.get() so iOS keeps the user-activation and the prompt
+    // appears instantly. Only when this phone has used Face ID for this athlete;
+    // otherwise the PIN pad (with a Face ID button) is enough.
+    let bioRaw=null;try{bioRaw=localStorage.getItem("tf_bio_"+a.id);}catch(e){}
+    const bioPromise=bioRaw?authenticateWithBiometric(a):null;
+    primeAthlete(a);
+    // PIN pad is the base layer; a successful Face ID navigates away over the top.
+    setScreen("login");
     if(bioPromise)bioPromise.catch(()=>{});
   };
 
@@ -767,6 +763,20 @@ export default function Athlete(){
                 <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:2,fontWeight:700}}>This week's Anvil</div>
                 <div style={{fontSize:16,fontWeight:800,color:GOLD}}>{anvilWinner.athlete_name}</div>
               </div>
+            </div>
+          )}
+
+          {/* One-tap Face ID: works even if this phone forgot who's signed in */}
+          {bioAvail&&(
+            <div style={{marginBottom:12}}>
+              <button onClick={()=>{setBioMsg("");authenticateWithBiometric(null);}} className="tfx-press"
+                style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:"14px",borderRadius:14,
+                  border:"1px solid rgba(232,114,12,0.35)",background:"linear-gradient(135deg,rgba(232,114,12,0.14),rgba(192,57,43,0.08))",
+                  color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.01em"}}>
+                <Icon name="faceId" size={22} color="#E8720C"/>
+                <span>Sign in with {(()=>{const ua=(typeof navigator!=="undefined"&&navigator.userAgent)||"";return/iPhone|iPad|iPod/.test(ua)?"Face ID":/Mac/.test(ua)?"Touch ID":/Android/.test(ua)?"fingerprint":"Face ID";})()}</span>
+              </button>
+              {bioMsg&&<div role="alert" style={{marginTop:8,fontSize:12,lineHeight:1.5,color:"#E8A33C",textAlign:"center"}}>{bioMsg}</div>}
             </div>
           )}
 
@@ -935,9 +945,9 @@ export default function Athlete(){
         </div>
 
         {/* Biometric shortcut — shown when credential stored */}
-        {bioCredId&&!showBioOffer&&(
+        {bioAvail&&!showBioOffer&&(
           <div style={{marginBottom:22,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-            <button onClick={()=>authenticateWithBiometric()}
+            <button onClick={()=>{setBioMsg("");authenticateWithBiometric(selectedAthlete);}}
               style={{display:"flex",alignItems:"center",gap:10,padding:"14px 28px",
                 borderRadius:16,border:"1px solid "+(isForge?RED:STEEL)+"44",
                 background:(isForge?RED:STEEL)+"12",color:"#fff",fontSize:15,fontWeight:700,
@@ -946,13 +956,8 @@ export default function Athlete(){
               <Icon name="faceId" size={24} color="#fff"/>
               <span>Use {(()=>{const ua=navigator.userAgent||"";return/iPhone|iPad|iPod/.test(ua)?"Face ID / Touch ID":/Mac/.test(ua)?"Touch ID":/Android/.test(ua)?"Fingerprint":"Biometrics";})()}</span>
             </button>
-            <button onClick={()=>{
-              try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
-              setBioCredId(null);
-            }} style={{background:"transparent",border:"none",color:"#333",fontSize:11,
-              cursor:"pointer",fontFamily:"Georgia,serif",textDecoration:"underline",padding:"2px 8px"}}>
-              Remove saved login
-            </button>
+            {bioMsg&&<div role="alert" style={{maxWidth:300,fontSize:12,lineHeight:1.5,color:"#E8A33C",textAlign:"center"}}>{bioMsg}</div>}
+            {!bioCredId&&!bioMsg&&<div style={{fontSize:11,color:"#666"}}>Set up before? Tap to use it. New? Enter your PIN first.</div>}
           </div>
         )}
 
@@ -964,7 +969,7 @@ export default function Athlete(){
             <div style={{fontSize:12,color:"#555",marginBottom:28,lineHeight:1.6}}>
               Skip the PIN next time. Sign in instantly with your fingerprint or face.
             </div>
-            <button onClick={registerBiometric}
+            <button onClick={()=>registerBiometric(false)}
               style={{width:"100%",padding:"14px",borderRadius:12,border:"none",
                 background:"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",
                 color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",
@@ -972,6 +977,7 @@ export default function Athlete(){
                 boxShadow:"0 4px 24px "+(isForge?RED:STEEL)+"44"}}>
               Enable Biometrics
             </button>
+            {bioMsg&&<div role="alert" style={{fontSize:12,lineHeight:1.5,color:"#E8A33C",marginBottom:12}}>{bioMsg}</div>}
             <button onClick={()=>{
               try{localStorage.setItem("tf_bio_declined_"+selectedAthlete.id,"1");}catch(e){}
               setBioDeclined(true);
@@ -1336,16 +1342,15 @@ export default function Athlete(){
                         try{localStorage.removeItem("tf_bio_declined_"+selectedAthlete.id);}catch(e){}
                         try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
                         setBioDeclined(false);setBioCredId(null);
-                        await registerBiometric(true);
-                        const stored=localStorage.getItem("tf_bio_"+selectedAthlete.id);
-                        if(stored){setBioRegResult("success");}else{setBioRegResult("failed");}
+                        const st=await registerBiometric(true);
+                        setBioRegResult(st==="ok"?"success":st==="error"?"failed":null);
                         setBioRegistering(false);
                       }} style={{padding:"8px 14px",borderRadius:10,border:"none",background:bioRegistering?"#222":"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",color:bioRegistering?"#555":"#fff",fontSize:12,fontWeight:700,cursor:bioRegistering?"default":"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0}}>
                         {bioRegistering?"Setting up…":"Enable"}
                       </button>
                     </div>
                     {bioRegResult==="success"&&<div style={{fontSize:11,color:GREEN,fontWeight:700,marginTop:8}}>✓ Face ID enabled — use it next time you log in</div>}
-                    {bioRegResult==="failed"&&<div style={{fontSize:11,color:"#e05",marginTop:8}}>Setup failed — make sure Face ID is enabled in your phone settings and try again</div>}
+                    {bioRegResult==="failed"&&<div style={{fontSize:11,color:"#e05",marginTop:8,lineHeight:1.5}}>{bioMsg||"Setup failed — make sure Face ID is on and try again."}</div>}
                   </div>
                 )}
                 {bioAvail&&bioCredId&&(
@@ -1360,16 +1365,15 @@ export default function Athlete(){
                         try{localStorage.removeItem("tf_bio_declined_"+selectedAthlete.id);}catch(e){}
                         try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
                         setBioDeclined(false);setBioCredId(null);
-                        await registerBiometric(true);
-                        const stored=localStorage.getItem("tf_bio_"+selectedAthlete.id);
-                        if(stored){setBioRegResult("success");}else{setBioRegResult("failed");}
+                        const st=await registerBiometric(true);
+                        setBioRegResult(st==="ok"?"success":st==="error"?"failed":null);
                         setBioRegistering(false);
                       }} style={{padding:"8px 14px",borderRadius:10,border:"none",background:bioRegistering?"#222":"#1a1a1a",color:bioRegistering?"#555":"#888",fontSize:12,fontWeight:700,cursor:bioRegistering?"default":"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,border:"0.5px solid #333"}}>
                         {bioRegistering?"Resetting…":"Reset →"}
                       </button>
                     </div>
                     {bioRegResult==="success"&&<div style={{fontSize:11,color:GREEN,fontWeight:700,marginTop:8}}>✓ Face ID re-registered with Apple Passwords</div>}
-                    {bioRegResult==="failed"&&<div style={{fontSize:11,color:"#e05",marginTop:8}}>Setup failed — make sure Face ID is enabled in your phone settings and try again</div>}
+                    {bioRegResult==="failed"&&<div style={{fontSize:11,color:"#e05",marginTop:8,lineHeight:1.5}}>{bioMsg||"Setup failed — make sure Face ID is on and try again."}</div>}
                   </div>
                 )}
                 <DailyWord announcement={announcement}/>

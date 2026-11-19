@@ -1,5 +1,6 @@
 // v1776642403
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { passkeyAvailable, passkeySignIn, passkeyRegister, rememberPasskey, isCancel, passkeyErrorText } from "../lib/passkey";
 // useLayoutEffect warns during SSR; fall back to useEffect on the server.
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
@@ -135,6 +136,8 @@ export default function Coach(){
     try{localStorage.setItem("tf_inbox_seen_"+coachRole,JSON.stringify([...inboxSeenRef.current].slice(-500)));}catch(e){}
   },[tab,inbox,coachRole]);
 
+  // Face ID support is checked on load so Quick Sign In shows before a name is picked
+  useEffect(()=>{passkeyAvailable().then(setBioAvail);},[]);
   useEffect(()=>{
     if(!selectedCoach)return;
     setBioCredId(null);setShowBioOffer(false);
@@ -417,77 +420,39 @@ export default function Coach(){
     try{const storedOrder=localStorage.getItem("tf_more_order_coach_"+role);const defaultOrder=ALL_TABS.map(t=>t.id);const raw=storedOrder?JSON.parse(storedOrder):defaultOrder;const seen=new Set();const initOrder=raw.filter(id=>{if(seen.has(id))return false;seen.add(id);return true;});const newTabs=defaultOrder.filter(id=>!seen.has(id));const fullOrder=[...initOrder,...newTabs];setMoreOrder(fullOrder);moreOrderRef.current=fullOrder;}catch(e){}
   };
 
+  const COACH_IDS=["ant","kevin","mcastles"];
+  // Discoverable Face ID: iOS offers any passkey saved for this site and we
+  // read which coach it belongs to from its user handle ("coach_<id>").
+  // Must be called straight from a tap (no await before passkeySignIn).
   const authenticateWithBiometric=async(cid)=>{
-    const fallbackCoach=cid||selectedCoach||"ant";
-    try{
-      const challenge=crypto.getRandomValues(new Uint8Array(32));
-      // Discoverable flow: let Apple present ANY valid passkey for this site
-      // (resolved back to the right coach below). This is immune to a stale
-      // stored credId — the previous "target one credId" approach broke when
-      // the saved passkey lived in Google instead of Apple.
-      const assertion=await navigator.credentials.get({
-        publicKey:{
-          challenge,
-          rpId:window.location.hostname,
-          allowCredentials:[],
-          userVerification:"required",
-          timeout:60000,
-          hints:["client-device"], // prefer platform authenticator (Face ID → iCloud Keychain)
-        }
-      });
-      if(assertion){
-        // Identify coach from userHandle (set during registration)
-        let resolvedCoach=fallbackCoach;
-        if(assertion.response.userHandle){
-          const handle=new TextDecoder().decode(assertion.response.userHandle);
-          const parsed=handle.replace("coach_","");
-          if(["ant","kevin","mcastles"].includes(parsed))resolvedCoach=parsed;
-        }
-        // If userHandle didn't resolve it, match by rawId
-        if(resolvedCoach===fallbackCoach){
-          const credB64=btoa(String.fromCharCode(...new Uint8Array(assertion.rawId)));
-          for(const c of["ant","kevin","mcastles"]){
-            const raw=localStorage.getItem("tf_bio_coach_"+c);
-            if(raw&&JSON.parse(raw).credId===credB64){resolvedCoach=c;break;}
-          }
-        }
-        // If we couldn't identify the coach from the passkey and no coach was pre-selected, refuse
-        if(resolvedCoach===fallbackCoach&&!cid&&!selectedCoach)return false;
-        const nav=coachNavFor(resolvedCoach);
-        completeCoachAuth(nav.role,nav.tab);
-        return true;
-      }
-    }catch(e){/* cancelled — fall through to PIN */}
-    return false;
+    const picked=cid||selectedCoach||null;
+    let res;
+    try{res=await passkeySignIn();}
+    catch(e){if(!isCancel(e))setBioSetupMsg(passkeyErrorText(e));return false;}
+    let resolved=null;
+    if(res.userHandle&&res.userHandle.startsWith("coach_")){const id=res.userHandle.slice(6);if(COACH_IDS.includes(id))resolved=id;}
+    if(!resolved){
+      for(const c of COACH_IDS){try{const raw=localStorage.getItem("tf_bio_coach_"+c);if(raw&&JSON.parse(raw).credId===res.credId){resolved=c;break;}}catch(e){}}
+    }
+    if(!resolved&&res.userHandle){setBioSetupMsg("That Face ID belongs to an athlete account. Pick your name and use your PIN.");return false;}
+    if(!resolved)resolved=picked;
+    if(!resolved){setBioSetupMsg("Couldn't tell which coach that Face ID is for. Pick your name and use your PIN.");return false;}
+    rememberPasskey("tf_bio_coach_"+resolved,res.credId); // repair this browser's hint
+    setBioSetupMsg("");
+    const nav=coachNavFor(resolved);
+    completeCoachAuth(nav.role,nav.tab);
+    return true;
   };
 
   const registerBiometric=async()=>{
     const c=coaches.find(x=>x.id===selectedCoach);
     try{
-      const challenge=crypto.getRandomValues(new Uint8Array(32));
-      const credential=await navigator.credentials.create({
-        publicKey:{
-          challenge,
-          rp:{name:"TF College Group",id:window.location.hostname},
-          user:{
-            id:new TextEncoder().encode("coach_"+selectedCoach),
-            name:c?.name||selectedCoach,
-            displayName:c?.name||selectedCoach,
-          },
-          pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
-          authenticatorSelection:{
-            authenticatorAttachment:"platform", // forces Face ID/Touch ID → iCloud Keychain, not Chrome PM
-            userVerification:"required",
-            residentKey:"required",
-          },
-          hints:["client-device"], // bias to the built-in authenticator (Apple Passwords), not Google/cross-device
-          timeout:60000,
-        }
-      });
-      const credId=btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-      localStorage.setItem("tf_bio_coach_"+selectedCoach,JSON.stringify({credId,rpId:window.location.hostname}));
-      setBioCredId(credId);
-    }catch(e){}
+      const credId=await passkeyRegister({userId:"coach_"+selectedCoach,name:c?.name||selectedCoach});
+      rememberPasskey("tf_bio_coach_"+selectedCoach,credId);
+      setBioCredId(credId);setBioSetupMsg("");
+    }catch(e){
+      if(!isCancel(e)){setBioSetupMsg(passkeyErrorText(e,"turn on"));return;} // stay on the offer so the message is seen
+    }
     const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
     completeCoachAuth(nav?.role||"ant",nav?.tab||"overview");
   };
@@ -500,24 +465,12 @@ export default function Coach(){
     const c=coaches.find(x=>x.id===selectedCoach);
     setBioSetupMsg("Opening Face ID…");
     try{
-      const challenge=crypto.getRandomValues(new Uint8Array(32));
-      const credential=await navigator.credentials.create({
-        publicKey:{
-          challenge,
-          rp:{name:"TF College Group",id:window.location.hostname},
-          user:{id:new TextEncoder().encode("coach_"+selectedCoach),name:c?.name||selectedCoach,displayName:c?.name||selectedCoach},
-          pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
-          authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"required"},
-          hints:["client-device"],
-          timeout:60000,
-        }
-      });
-      const credId=btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-      localStorage.setItem("tf_bio_coach_"+selectedCoach,JSON.stringify({credId,rpId:window.location.hostname}));
+      const credId=await passkeyRegister({userId:"coach_"+selectedCoach,name:c?.name||selectedCoach});
+      rememberPasskey("tf_bio_coach_"+selectedCoach,credId);
       setBioCredId(credId);
-      setBioSetupMsg("✓ Face ID enabled — saved to Apple Passwords. Tap “Use Face ID” to test it.");
+      setBioSetupMsg("✓ Face ID is on, saved to Apple Passwords. Tap “Use Face ID” to test it.");
     }catch(e){
-      setBioSetupMsg("Couldn’t set up Face ID ("+(e?.name||"error")+"). Make sure Face ID is on and, in iOS Settings → General → AutoFill & Passwords, iCloud Passwords & Keychain is turned on.");
+      setBioSetupMsg(isCancel(e)?"":passkeyErrorText(e,"turn on"));
     }
   };
 
@@ -580,7 +533,7 @@ export default function Coach(){
               <div style={{fontSize:24,fontWeight:900,color:"#fff",marginBottom:4,letterSpacing:"-0.02em",textTransform:"uppercase"}}>Coach Login</div>
               <div style={{fontSize:12,color:"#555",marginBottom:20,letterSpacing:"0.04em"}}>Select your name to continue</div>
               {/* Quick Sign In — appears when any passkey is stored for this site */}
-              {bioAvail&&(()=>{const anyStored=["ant","kevin","mcastles"].some(c=>{try{return!!localStorage.getItem("tf_bio_coach_"+c);}catch(e){return false;}});return anyStored;})()&&(
+              {bioAvail&&(
                 <button onClick={()=>authenticateWithBiometric(null)}
                   style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
                     padding:"15px",borderRadius:14,border:"1px solid rgba(232,114,12,0.35)",
@@ -591,6 +544,7 @@ export default function Coach(){
                   <span>Quick Sign In</span>
                 </button>
               )}
+              {bioSetupMsg&&!bioSetupMsg.startsWith("Opening")&&<div role="alert" style={{margin:"-6px 0 14px",fontSize:12,lineHeight:1.5,color:"#E8A33C",textAlign:"center"}}>{bioSetupMsg}</div>}
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 {coaches.map(c=>(
                   <button key={c.id} onClick={()=>{
