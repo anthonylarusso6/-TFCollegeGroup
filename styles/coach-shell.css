@@ -1,1 +1,55 @@
 /* Coach shell, coach login and athlete login portal. */
+
+/* ════════════════════════════════════════════════════════════════════
+   SIGN-IN (coach now; athlete portal reuses the same lg-* pieces)
+   ════════════════════════════════════════════════════════════════════ */
+.lg { min-height: 100dvh; display: flex; justify-content: center; padding: 0 20px; }
+.lg-col { position: relative; width: 100%; max-width: 400px; min-height: 100dvh; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 28px 0 40px; }
+.lg-brand { display: inline-flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: var(--tx); }
+.lg-brand img { width: 32px; height: 32px; border-radius: 10px; background: #fff; }
+.lg-head { margin-top: 10px; }
+.lg-head h1, .lg-who h1 { margin: 4px 0 0; font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; color: var(--tx); }
+.lg-head p, .lg-who p { margin: 6px 0 0; font-family: var(--font-ui); font-size: 15px; color: var(--tx2); }
+.lg-faceid { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 54px; padding: 12px 16px; border-radius: 16px; cursor: pointer;
+  font-family: var(--font-ui); font-size: 15.5px; font-weight: 700; color: var(--tx);
+  background: color-mix(in srgb, var(--ember) 14%, var(--glass)); border: 1px solid color-mix(in srgb, var(--ember) 45%, transparent); }
+.lg-faceid svg { color: var(--ember); }
+.lg-list { display: grid; gap: 10px; }
+.lg-row { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 16px; cursor: pointer; text-align: left; color: var(--tx); font-family: var(--font-brand); }
+.lg-av { display: grid; place-items: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 50%; font-size: 22px; line-height: 1;
+  background: color-mix(in srgb, var(--c) 30%, var(--field)); border: 2px solid color-mix(in srgb, var(--c) 70%, transparent); }
+.lg-av.is-big { width: 80px; height: 80px; font-size: 36px; box-shadow: 0 0 0 6px color-mix(in srgb, var(--c) 14%, transparent); }
+.lg-row-txt { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.lg-row-txt b { font-size: 17px; font-weight: 750; }
+.lg-row-txt small { font-family: var(--font-ui); font-size: 13px; color: var(--tx2); }
+.lg-chev { font-size: 24px; color: var(--tx3); }
+.lg-link { align-self: center; margin-top: 6px; font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: var(--tx2); text-decoration: none; }
+.lg-link.is-btn { border: 0; background: transparent; cursor: pointer; padding: 8px 10px; text-decoration: underline; text-underline-offset: 3px; text-align: center; }
+.lg-link.is-quiet { margin-top: 0; font-size: 12px; color: var(--tx3); }
+.lg-back { align-self: flex-start; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-family: var(--font-ui); font-size: 14px; font-weight: 650; color: var(--tx2);
+  background: var(--field); border: 1px solid var(--glass-line); }
+.lg-who { display: grid; justify-items: center; text-align: center; margin: 4px 0 6px; }
+.lg-who h1 { margin-top: 14px; font-size: 28px; }
+.lg-msg { font-family: var(--font-ui); font-size: 13px; line-height: 1.5; text-align: center; color: var(--tx2); }
+.lg-msg.is-warn { color: color-mix(in srgb, #e8a33c 85%, var(--tx)); }
+.lg-msg.is-ok { color: var(--green); font-weight: 650; }
+.lg-msg.is-error { align-self: center; padding: 7px 14px; border-radius: 999px; font-weight: 650; color: var(--tx);
+  background: color-mix(in srgb, var(--red) 16%, transparent); border: 1px solid color-mix(in srgb, var(--red) 45%, transparent); }
+.lg-dots { display: flex; justify-content: center; gap: 16px; margin: 6px 0 4px; }
+.lg-dots i { width: 15px; height: 15px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--c) 60%, var(--tx3)); transition: background 0.15s ease, transform 0.2s var(--spring); }
+.lg-dots i.is-on { background: var(--c); border-color: var(--c); transform: scale(1.08); }
+.lg-dots.is-error { animation: lgShake 0.4s ease; }
+@keyframes lgShake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+.lg-pad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; max-width: 300px; margin: 8px auto 0; }
+.lg-pad button { height: 66px; border-radius: 20px; cursor: pointer; font-family: var(--font-num); font-size: 27px; font-weight: 500; color: var(--tx);
+  background: var(--glass); border: 1px solid var(--glass-line); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.lg-pad button:active { background: var(--glass-hi); }
+.lg-pad button.is-del { font-size: 22px; color: var(--tx2); background: transparent; border-color: transparent; }
+.lg-offer { display: grid; justify-items: center; gap: 10px; padding: 24px 20px 18px; text-align: center; }
+.lg-offer > svg { color: var(--c); }
+.lg-offer b { font-size: 20px; font-weight: 800; color: var(--tx); }
+.lg-offer p { margin: 0 0 6px; max-width: 30ch; font-family: var(--font-ui); font-size: 14px; line-height: 1.5; color: var(--tx2); }
+.lg-wide { width: 100%; }
+.lg-loading { min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 14px; }
+.lg-loading img { width: 72px; height: 72px; border-radius: 20px; background: #fff; animation: tfxPulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .lg-dots.is-error, .lg-loading img { animation: none; } }

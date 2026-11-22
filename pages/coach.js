@@ -518,36 +518,30 @@ export default function Coach(){
     {id:"mcastles",name:"MCastles",sub:"Motivator · Full Access",color:ORANGE,emoji:"🍑🚀"},
   ];
 
+  const selCoach=coaches.find(x=>x.id===selectedCoach);
   if(!authed) return(
     <>
       <Head><title>Coach — TF College Group</title></Head>
-      <div style={{height:"100dvh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 1.25rem",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:600,height:400,background:"radial-gradient(ellipse at top,#E8720C10 0%,transparent 70%)",pointerEvents:"none"}}/>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#E8720C,#C0392B,transparent)"}}/>
-        <div style={{textAlign:"center",width:"100%",position:"relative"}}>
-
-          {/* Step 1 — Select coach */}
+      <div className="tfx lg">
+        <div className="lg-col">
+          {/* Step 1 — pick a coach */}
           {pinStep==="select"&&(
             <>
-              <div style={{width:72,height:72,borderRadius:20,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto 1.5rem",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36,boxShadow:"0 0 60px #E8720C55,0 0 120px #E8720C22"}}>⚒</div>
-              <div style={{fontSize:24,fontWeight:900,color:"#fff",marginBottom:4,letterSpacing:"-0.02em",textTransform:"uppercase"}}>Coach Login</div>
-              <div style={{fontSize:12,color:"#555",marginBottom:20,letterSpacing:"0.04em"}}>Select your name to continue</div>
-              {/* Quick Sign In — appears when any passkey is stored for this site */}
+              <div className="lg-brand"><img src="/icon.png" alt=""/><span>TF College Group</span></div>
+              <div className="lg-head">
+                <div className="tfx-eyebrow">Coach</div>
+                <h1>Sign in</h1>
+                <p>Pick your name to continue.</p>
+              </div>
               {bioAvail&&(
-                <button onClick={()=>authenticateWithBiometric(null)}
-                  style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,
-                    padding:"15px",borderRadius:14,border:"1px solid rgba(232,114,12,0.35)",
-                    background:"linear-gradient(135deg,rgba(232,114,12,0.12),rgba(192,57,43,0.08))",
-                    color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",
-                    marginBottom:16,boxShadow:"0 0 24px rgba(232,114,12,0.15)",letterSpacing:"0.01em"}}>
-                  <Icon name="faceId" size={22} color="#E8720C"/>
-                  <span>Quick Sign In</span>
+                <button className="lg-faceid tfx-press" onClick={()=>authenticateWithBiometric(null)}>
+                  <Icon name="faceId" size={22} color="currentColor"/><span>Quick sign in with {getBioLabel()}</span>
                 </button>
               )}
-              {bioSetupMsg&&!bioSetupMsg.startsWith("Opening")&&<div role="alert" style={{margin:"-6px 0 14px",fontSize:12,lineHeight:1.5,color:"#E8A33C",textAlign:"center"}}>{bioSetupMsg}</div>}
-              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              {bioSetupMsg&&!bioSetupMsg.startsWith("Opening")&&<div role="alert" className="lg-msg is-warn">{bioSetupMsg}</div>}
+              <div className="lg-list">
                 {coaches.map(c=>(
-                  <button key={c.id} onClick={()=>{
+                  <button key={c.id} className="tfx-card lg-row tfx-press" style={{"--c":c.color}} onClick={()=>{
                     // Fire Face ID instantly within the tap gesture (no awaits before
                     // credentials.get) so the prompt appears immediately on iOS.
                     let bioRaw=null;try{bioRaw=localStorage.getItem("tf_bio_coach_"+c.id);}catch(e){}
@@ -556,101 +550,63 @@ export default function Coach(){
                     setPin("");setPinError("");
                     const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="mcastles"&&getMCastlesPin());
                     setPinStep(hasPin?"enter":"create");
-                  }} style={{width:"100%",padding:0,borderRadius:14,border:"1px solid #1e1e1e",background:"linear-gradient(135deg,#0e0e0e,#131313)",color:"#fff",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"stretch",textAlign:"left",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)"}}>
-                    <div style={{width:4,background:"linear-gradient(180deg,"+c.color+","+c.color+"88)",flexShrink:0}}/>
-                    <div style={{padding:"14px 14px",display:"flex",alignItems:"center",gap:14,flex:1}}>
-                      <div style={{width:44,height:44,borderRadius:"50%",background:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,boxShadow:"0 0 20px "+c.color+"55"}}>{c.emoji}</div>
-                      <div>
-                        <div style={{fontSize:15,fontWeight:700,letterSpacing:"-0.01em"}}>{c.name}</div>
-                        <div style={{fontSize:12,color:"#555"}}>{c.sub}</div>
-                      </div>
-                      <div style={{marginLeft:"auto",color:"#2a2a2a",fontSize:18,paddingRight:4}}>›</div>
-                    </div>
+                  }}>
+                    <span className="lg-av">{c.emoji}</span>
+                    <span className="lg-row-txt"><b>{c.name}</b><small>{c.sub}</small></span>
+                    <span className="lg-chev" aria-hidden="true">›</span>
                   </button>
                 ))}
               </div>
-              <a href="/" style={{display:"block",marginTop:24,fontSize:11,color:"#333",letterSpacing:"0.04em"}}>← Back to home</a>
+              <a href="/" className="lg-link">← Back to home</a>
             </>
           )}
 
-          {/* Step 2 — PIN entry / create */}
-          {pinStep!=="select"&&(
+          {/* Step 2 — PIN entry / create / confirm */}
+          {pinStep!=="select"&&selCoach&&(
             <>
-              <button onClick={()=>{setPinStep("select");setPin("");setPinError("");setSelectedCoach(null);}} style={{position:"absolute",top:20,left:20,background:isLight?"#ffffff":"#111",border:isLight?"0.5px solid rgba(0,0,0,0.18)":"0.5px solid #1e1e1e",color:isLight?"#16191f":"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia, serif",padding:"6px 14px",borderRadius:10}}>← Back</button>
-              {(() => {
-                const c=coaches.find(x=>x.id===selectedCoach);
-                return(
-                  <div style={{position:"relative",display:"inline-block",marginBottom:14}}>
-                    <div style={{position:"absolute",inset:-6,borderRadius:"50%",border:"1px solid "+c.color+"33",pointerEvents:"none"}}/>
-                    <div style={{width:68,height:68,borderRadius:"50%",background:c.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,boxShadow:"0 0 40px "+c.color+"44"}}>{c.emoji}</div>
-                  </div>
-                );
-              })()}
-              <div style={{fontSize:22,fontWeight:900,color:isLight?"#16191f":"#fff",marginBottom:4,letterSpacing:"-0.01em",textTransform:"uppercase"}}>{coaches.find(x=>x.id===selectedCoach)?.name}</div>
-              <div style={{fontSize:12,color:isLight?"#646b75":"#555",marginBottom:20,letterSpacing:"0.04em"}}>
-                {pinStep==="create"?"Create your 4-digit PIN":pinStep==="confirm"?"Confirm your PIN":"Enter your PIN"}
+              <button className="lg-back tfx-press" onClick={()=>{setPinStep("select");setPin("");setPinError("");setSelectedCoach(null);}}>‹ Back</button>
+              <div className="lg-who" style={{"--c":selCoach.color}}>
+                <span className="lg-av is-big">{selCoach.emoji}</span>
+                <h1>{selCoach.name}</h1>
+                <p>{pinStep==="create"?"Create your 4-digit PIN":pinStep==="confirm"?"Enter it once more to confirm":"Enter your PIN"}</p>
               </div>
 
-              {/* Bio shortcut button — above PIN dots when credential stored */}
               {bioCredId&&pinStep==="enter"&&!showBioOffer&&(
-                <button onClick={()=>authenticateWithBiometric()}
-                  style={{marginBottom:20,display:"flex",alignItems:"center",gap:10,padding:"13px 24px",
-                    borderRadius:14,border:"1px solid "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"44",
-                    background:isLight?"#ffffff":(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"12",
-                    color:isLight?"#16191f":"#fff",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",
-                    letterSpacing:"0.02em",margin:"0 auto 20px",boxShadow:isLight?"0 1px 4px rgba(0,0,0,0.10)":"0 0 20px "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"22"}}>
-                  <Icon name="faceId" size={22} color={isLight?"#16191f":"#fff"}/>
-                  <span>Use {getBioLabel()}</span>
+                <button className="lg-faceid tfx-press" onClick={()=>authenticateWithBiometric()}>
+                  <Icon name="faceId" size={22} color="currentColor"/><span>Use {getBioLabel()}</span>
                 </button>
               )}
 
               {showBioOffer?(
-                <div style={{width:"100%",maxWidth:300,textAlign:"center",margin:"0 auto"}}>
-                  <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><Icon name="faceId" size={42} color={coaches.find(x=>x.id===selectedCoach)?.color||GOLD}/></div>
-                  <div style={{fontSize:17,fontWeight:800,color:"#fff",marginBottom:8,letterSpacing:"-0.01em"}}>Enable {getBioLabel()}?</div>
-                  <div style={{fontSize:12,color:"#555",marginBottom:24,lineHeight:1.6}}>
-                    Skip the PIN next time and sign in instantly with your fingerprint or face.
-                  </div>
-                  <button onClick={registerBiometric}
-                    style={{width:"100%",padding:"14px",borderRadius:12,border:"none",
-                      background:"linear-gradient(135deg,"+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+","+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"aa)",
-                      color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",
-                      fontFamily:"Georgia,serif",letterSpacing:"0.04em",marginBottom:12,
-                      boxShadow:"0 4px 24px "+(coaches.find(x=>x.id===selectedCoach)?.color||GOLD)+"44"}}>
-                    Enable {getBioLabel()}
-                  </button>
-                  <button onClick={()=>{
+                <div className="tfx-card lg-offer" style={{"--c":selCoach.color}}>
+                  <Icon name="faceId" size={40} color="currentColor"/>
+                  <b>Turn on {getBioLabel()}?</b>
+                  <p>Skip the PIN next time and sign in with your face or fingerprint.</p>
+                  {bioSetupMsg&&!bioSetupMsg.startsWith("Opening")&&<div role="alert" className="lg-msg is-warn">{bioSetupMsg}</div>}
+                  <button className="tfx-btn tfx-press lg-wide" onClick={registerBiometric}>Turn on {getBioLabel()}</button>
+                  <button className="tfx-btn-ghost tfx-press lg-wide" onClick={()=>{
                     const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
                     completeCoachAuth(nav?.role||"ant",nav?.tab||"overview");
-                  }} style={{width:"100%",padding:"12px",borderRadius:12,border:"0.5px solid #222",
-                    background:"transparent",color:"#444",fontSize:13,fontWeight:500,
-                    cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                    Not now
-                  </button>
+                  }}>Not now</button>
                 </div>
               ):(
-              <>
-              <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:16}}>
-                {[0,1,2,3].map(i=>{const cc=coaches.find(x=>x.id===selectedCoach)?.color||GOLD;return(<div key={i} style={{width:14,height:14,borderRadius:"50%",border:"2px solid "+cc+(i<pin.length?"":"44"),background:i<pin.length?cc:"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 10px "+cc+"88":"none"}}/>);})}
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,maxWidth:240,margin:"0 auto"}}>
-                {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
-                  <button key={i} onClick={()=>handlePinKey(k)} style={{padding:"14px 8px",borderRadius:12,border:"0.5px solid "+(k===null?"transparent":isLight?"rgba(0,0,0,0.22)":"#1a1a1a"),background:k===null?"transparent":isLight?(k==="⌫"?"#eef0f4":"#ffffff"):(k==="⌫"?"#141414":"#111"),fontSize:20,fontWeight:300,cursor:k===null?"default":"pointer",color:k==="⌫"?(isLight?"#767d87":"#555"):(isLight?"#16191f":"#e0e0e0"),fontFamily:"sans-serif",transition:"background 0.1s",boxShadow:k===null?"none":isLight?"0 1px 3px rgba(0,0,0,0.08)":"none"}}>
-                    {k===null?"":k}
-                  </button>
-                ))}
-              </div>
-              <div style={{marginTop:10,fontSize:10,color:isLight?"#8a909a":"#2a2a2a",textAlign:"center",letterSpacing:"0.04em"}}>Tap to enter your PIN</div>
-              {bioAvail&&(
-                <button onClick={setupCoachBiometric} style={{marginTop:14,display:"block",width:"100%",maxWidth:300,margin:"14px auto 0",padding:"11px",borderRadius:12,border:"1px solid "+(isLight?"rgba(0,0,0,0.15)":"rgba(255,255,255,0.14)"),background:isLight?"#ffffff":"rgba(255,255,255,0.05)",color:isLight?"#16191f":"#ddd",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>
-                  {bioCredId?"Re-enable Face ID (save to Apple)":"Set up Face ID on this device"}
-                </button>
+                <>
+                  <div className={"lg-dots"+(pinError?" is-error":"")} style={{"--c":selCoach.color}} aria-label={pin.length+" of 4 digits entered"}>
+                    {[0,1,2,3].map(i=><i key={i} className={i<pin.length?"is-on":""}/>)}
+                  </div>
+                  {pinError&&<div role="alert" className="lg-msg is-error">{pinError}</div>}
+                  <div className="lg-pad">
+                    {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>k===null?<span key={i}/>:(
+                      <button key={i} className={"tfx-press"+(k==="⌫"?" is-del":"")} onClick={()=>handlePinKey(k)} aria-label={k==="⌫"?"Delete":String(k)}>{k}</button>
+                    ))}
+                  </div>
+                  {bioAvail&&(
+                    <button className="lg-link is-btn" onClick={setupCoachBiometric}>{bioCredId?"Re-enable "+getBioLabel()+" (save to Apple Passwords)":"Set up "+getBioLabel()+" on this device"}</button>
+                  )}
+                  {bioSetupMsg&&<div className={"lg-msg"+(bioSetupMsg.startsWith("✓")?" is-ok":bioSetupMsg.startsWith("Opening")?"":" is-warn")}>{bioSetupMsg}</div>}
+                  {bioCredId&&<button className="lg-link is-btn is-quiet" onClick={()=>{try{localStorage.removeItem("tf_bio_coach_"+selectedCoach);}catch(e){}setBioCredId(null);setBioSetupMsg("");}}>Reset saved passkey</button>}
+                </>
               )}
-              {bioSetupMsg&&<div style={{marginTop:10,fontSize:11,color:bioSetupMsg.startsWith("✓")?"#3AD17A":(bioSetupMsg.startsWith("Opening")?(isLight?"#8a909a":"#888"):"#E8720C"),textAlign:"center",lineHeight:1.5,maxWidth:320,margin:"10px auto 0"}}>{bioSetupMsg}</div>}
-              {bioCredId&&<button onClick={()=>{try{localStorage.removeItem("tf_bio_coach_"+selectedCoach);}catch(e){}setBioCredId(null);setBioSetupMsg("");}} style={{marginTop:12,background:"transparent",border:"none",color:isLight?"#8a909a":"#2a2a2a",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em"}}>Reset saved passkey</button>}
-              {pinError&&<div style={{marginTop:12,fontSize:12,color:"#ff5555",padding:"8px 16px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
-            </>
-            )}
             </>
           )}
         </div>
@@ -659,13 +615,7 @@ export default function Coach(){
   );
 
   if(loading) return(
-    <div style={{minHeight:"100vh",background:"transparent",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:"40%",left:"50%",transform:"translate(-50%,-50%)",width:600,height:400,background:"radial-gradient(ellipse,#E8720C10 0%,transparent 65%)",pointerEvents:"none"}}/>
-      <div style={{textAlign:"center",position:"relative"}}>
-        <div style={{width:80,height:80,borderRadius:22,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto 20px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:42,boxShadow:"0 0 80px #E8720C55,0 0 160px #E8720C22"}}>⚒</div>
-        <div style={{fontSize:11,color:"#E8720C",letterSpacing:"0.25em",textTransform:"uppercase",fontWeight:700}}>Coach Dashboard</div>
-      </div>
-    </div>
+    <div className="tfx lg"><div className="lg-loading"><img src="/icon.png" alt=""/><span className="tfx-eyebrow">Loading the coach dashboard…</span></div></div>
   );
 
   const fixedTabForSwipe=coachRole==="kevin"?"roster":"overview";
