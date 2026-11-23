@@ -3,7 +3,6 @@ import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 import { nowEST } from "../lib/dates";
 import { SkeletonList } from "./Skeleton";
-import EmptyState from "./EmptyState";
 import Icon from "./Icon";
 import { hTap } from "../lib/haptics";
 
@@ -30,6 +29,17 @@ const DEFAULT_TEMPLATES=[
   {id:"hype",label:"Hype",text:`LET'S GO TF COLLEGE GROUP! ⚒🔥\n\nThis week we go harder. Iron sharpens iron — let's remind each other what that means.\n\nEarly is the standard. Excellence is the expectation. Faith is the foundation.\n\nSee you Monday. Come ready.\n\n— Coach Ant`},
   {id:"reminder",label:"Reminder",text:`TF College Group reminder 📲\n\nClass tomorrow — Mon/Fri at 9am, Tue/Thu at 9:30am.\n\nEarly only. Late = 50 crunches. No show = shred mill.\n\nThe standard doesn't change. See you there.\n\n— Coach Ant`},
 ];
+
+// "2026-06-20" -> { mon:"Jun", day:20, wd:"Sat" }; anything else (free text) -> null
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const WEEKDAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const dateParts=(s)=>{
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"").trim());
+  if(!m)return null;
+  const d=new Date(+m[1],+m[2]-1,+m[3]);
+  if(isNaN(d))return null;
+  return{mon:MONTHS[d.getMonth()],day:d.getDate(),wd:WEEKDAYS[d.getDay()]};
+};
 
 export default function CultureEvents({athletes=[]}){
   const[events,setEvents]=useState([]);
@@ -170,235 +180,259 @@ export default function CultureEvents({athletes=[]}){
   if(loading)return<div style={{paddingTop:8}}><SkeletonList rows={4}/></div>;
 
   return(
-    <div>
+    <div className="tfx cc">
 
       {/* Upcoming events */}
-      <div style={{...glass({borderRadius:16}),padding:"1.25rem",marginBottom:12,position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+",transparent)"}}/>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-          <Icon name="calendar" size={14} color={GOLD}/>
-          <span style={{fontSize:13,fontWeight:700,color:"#fff"}}>Upcoming Events</span>
+      <section className="tfx-card cc-head">
+        <div className="cc-top">
+          <div>
+            <div className="tfx-eyebrow">Culture</div>
+            <h2>Upcoming events</h2>
+            <p>{events.length} {events.length===1?"event":"events"} · RSVPs, GroupMe and photos</p>
+          </div>
         </div>
 
         {events.length===0&&(
-          <EmptyState icon="calendar" color={GOLD} title="No events yet" hint="Add one below to start tracking team culture activities." />
+          <div className="cc-empty is-gold">
+            <span className="cc-empty-ico"><Icon name="calendar" size={22}/></span>
+            <b>No events yet</b>
+            <p>Add one below to start tracking team culture activities.</p>
+          </div>
         )}
 
-        {events.map(e=>{
-          const days=daysUntil(e.date);
-          const rsvps=rsvpMap[e.id]||[];
-          return(
-            <div key={e.id} style={{padding:"12px 0",borderBottom:"0.5px solid rgba(255,255,255,0.07)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10}}>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                    <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{e.name}</div>
-                    {days!==null&&days>=0&&(
-                      <span style={{fontSize:9.5,padding:"2px 7px",borderRadius:5,background:days<=3?"rgba(192,57,43,0.2)":days<=7?"rgba(133,79,11,0.2)":"rgba(30,107,58,0.18)",color:days<=3?RED:days<=7?ORANGE:GREEN,fontWeight:700,border:"1px solid "+(days<=3?RED+"44":days<=7?ORANGE+"44":GREEN+"44")}}>
-                        {days===0?"Today!":days===1?"Tomorrow":"In "+days+"d"}
-                      </span>
-                    )}
-                    {rsvps.length>0&&<span style={{fontSize:10,color:PUR,fontWeight:600}}>✓ {rsvps.length} coming</span>}
+        {events.length>0&&(
+          <div className="cc-evs">
+            {events.map(e=>{
+              const days=daysUntil(e.date);
+              const rsvps=rsvpMap[e.id]||[];
+              const dp=dateParts(e.date);
+              return(
+                <article key={e.id} className={"cc-ev"+(days!==null&&days>=0&&days<=1?" is-soon":"")}>
+                  <div className="cc-ev-main">
+                    <div className={"cc-date"+(dp?"":" is-none")} aria-hidden="true">
+                      {dp?<><small>{dp.mon}</small><b className="tfx-num">{dp.day}</b></>:<b>—</b>}
+                    </div>
+                    <div className="cc-ev-txt">
+                      <h3 className="cc-ev-name">{e.name}</h3>
+                      {((days!==null&&days>=0)||rsvps.length>0)&&(
+                        <div className="cc-ev-pills">
+                          {days!==null&&days>=0&&(
+                            <span className={"cc-pill "+(days<=3?"is-red":days<=7?"is-amber":"is-green")}>
+                              {days===0?"Today!":days===1?"Tomorrow":"In "+days+"d"}
+                            </span>
+                          )}
+                          {rsvps.length>0&&<span className="cc-pill is-violet">✓ {rsvps.length} coming</span>}
+                        </div>
+                      )}
+                      {e.date&&<div className="cc-ev-meta"><Icon name="clock" size={14}/><span>{dp?dp.wd+", "+dp.mon+" "+dp.day:e.date}{e.time&&" · "+e.time}</span></div>}
+                      {e.location&&<div className="cc-ev-meta"><Icon name="mapPin" size={14}/><span>{e.location}</span></div>}
+                      {e.notes&&<p className="cc-ev-notes">{e.notes}</p>}
+                    </div>
                   </div>
-                  {e.date&&<div style={{fontSize:11,color:"#555",marginTop:3}}>{e.date}{e.time&&" · "+e.time}</div>}
-                  {e.location&&<div style={{fontSize:11,color:"#555"}}>{e.location}</div>}
-                  {e.notes&&<div style={{fontSize:11,color:"#444",fontStyle:"italic",marginTop:2}}>{e.notes}</div>}
-                </div>
-                <div style={{display:"flex",gap:5,flexShrink:0}}>
-                  <button onClick={()=>{hTap();setExpandRsvp(expandRsvp===e.id?null:e.id);}} style={{padding:"4px 9px",borderRadius:7,border:"1px solid "+PUR+"55",background:"transparent",color:PUR,fontSize:10,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>RSVP</button>
-                  <button onClick={()=>{hTap();setActiveEvent(activeEvent===e.id?null:e.id);}} style={{padding:"4px 9px",borderRadius:7,border:"1px solid rgba(255,255,255,0.1)",background:"transparent",color:"#666",fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif"}}>Edit</button>
-                  <button onClick={()=>deleteEvent(e.id)} style={{padding:"4px 7px",borderRadius:7,border:"1px solid "+RED+"44",background:"transparent",color:RED,fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif"}}>✕</button>
-                </div>
-              </div>
-
-              {expandRsvp===e.id&&(
-                <div style={{marginTop:10,padding:"12px",background:"rgba(255,255,255,0.04)",borderRadius:10,border:"1px solid rgba(255,255,255,0.07)"}}>
-                  <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}}>Who's coming?</div>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-                    {(athletes||[]).filter(a=>a.status==="active").map(a=>{
-                      const isIn=(rsvpMap[e.id]||[]).includes(a.name);
-                      return(
-                        <button key={a.id} onClick={()=>{hTap();toggleRsvp(e.id,a.name);}}
-                          style={{padding:"7px 4px",borderRadius:9,border:"1px solid "+(isIn?GREEN+"55":"rgba(255,255,255,0.08)"),background:isIn?"rgba(30,107,58,0.2)":"rgba(255,255,255,0.04)",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",transition:"all 0.15s"}}>
-                          <div style={{width:26,height:26,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,margin:"0 auto 4px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:500,color:"#fff"}}>
-                            {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
-                          </div>
-                          <div style={{fontSize:10,color:isIn?GREEN:"#888",fontWeight:isIn?600:400}}>{(a.name||"").split(" ")[0]}</div>
-                        </button>
-                      );
-                    })}
+                  <div className="cc-ev-acts">
+                    <button className="cc-mini is-tint is-violet tfx-press" aria-expanded={expandRsvp===e.id} onClick={()=>{hTap();setExpandRsvp(expandRsvp===e.id?null:e.id);}}>RSVP</button>
+                    <button className="cc-mini tfx-press" aria-expanded={activeEvent===e.id} onClick={()=>{hTap();setActiveEvent(activeEvent===e.id?null:e.id);}}>Edit</button>
+                    <button className="cc-ico is-del" onClick={()=>deleteEvent(e.id)} aria-label={"Delete "+(e.name||"event")} title="Delete event">✕</button>
                   </div>
-                  {rsvps.length>0&&<div style={{fontSize:11,color:GREEN,marginTop:8,fontWeight:600}}>✓ {rsvps.join(", ")}</div>}
-                </div>
-              )}
 
-              {activeEvent===e.id&&(
-                <div style={{marginTop:10,padding:"12px",background:"rgba(255,255,255,0.04)",borderRadius:10,border:"1px solid rgba(255,255,255,0.07)"}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:7}}>
-                    <input value={e.date} onChange={async ev=>{setEvents(p=>p.map(x=>x.id===e.id?{...x,date:ev.target.value}:x));await supabase.from("culture_events").update({date:ev.target.value}).eq("id",e.id);}} placeholder="Date" style={{padding:"7px 9px",fontSize:12,borderRadius:8,fontFamily:"Georgia,serif"}}/>
-                    <input value={e.time} onChange={async ev=>{setEvents(p=>p.map(x=>x.id===e.id?{...x,time:ev.target.value}:x));await supabase.from("culture_events").update({time:ev.target.value}).eq("id",e.id);}} placeholder="Time" style={{padding:"7px 9px",fontSize:12,borderRadius:8,fontFamily:"Georgia,serif"}}/>
-                  </div>
-                  <input value={e.location} onChange={async ev=>{setEvents(p=>p.map(x=>x.id===e.id?{...x,location:ev.target.value}:x));await supabase.from("culture_events").update({location:ev.target.value}).eq("id",e.id);}} placeholder="Location" style={{width:"100%",padding:"7px 9px",fontSize:12,borderRadius:8,fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:7}}/>
-                  <textarea value={e.notes} onChange={async ev=>{setEvents(p=>p.map(x=>x.id===e.id?{...x,notes:ev.target.value}:x));await supabase.from("culture_events").update({notes:ev.target.value}).eq("id",e.id);}} placeholder="Notes..." style={{width:"100%",minHeight:50,padding:"7px 9px",fontSize:12,borderRadius:8,fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}/>
-                </div>
-              )}
-            </div>
-          );
-        })}
+                  {expandRsvp===e.id&&(
+                    <div className="cc-panel">
+                      <div className="tfx-eyebrow">Who's coming?</div>
+                      <div className="cc-rsvps">
+                        {(athletes||[]).filter(a=>a.status==="active").map(a=>{
+                          const isIn=(rsvpMap[e.id]||[]).includes(a.name);
+                          return(
+                            <button key={a.id} className={"cc-rsvp tfx-press"+(isIn?" is-in":"")} aria-pressed={isIn} onClick={()=>{hTap();toggleRsvp(e.id,a.name);}}>
+                              <span className="rk-av cc-av is-sm" style={{"--c":a.role==="forge"?RED:STEEL}}>
+                                {a.photo_url?<img src={a.photo_url} alt=""/>:(a.name||"?")[0]}
+                              </span>
+                              <span>{(a.name||"").split(" ")[0]}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {rsvps.length>0&&<p className="cc-going">✓ {rsvps.join(", ")}</p>}
+                    </div>
+                  )}
 
-        {/* Add event form */}
-        <div style={{marginTop:14,paddingTop:14,borderTop:"0.5px solid rgba(255,255,255,0.07)"}}>
-          <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Add new event</div>
-
-          {/* AI prompt input */}
-          <div style={{marginBottom:10}}>
-            <textarea
-              value={promptText}
-              onChange={e=>setPromptText(e.target.value)}
-              onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();parseEventPrompt();}}}
-              placeholder="Describe the event… e.g. Top Golf Saturday June 21 at 2pm, meet at the parking lot"
-              style={{width:"100%",minHeight:64,padding:"10px 12px",fontSize:13,borderRadius:10,border:"1px solid rgba(255,255,255,0.1)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box",lineHeight:1.55}}
-            />
-            <button onClick={parseEventPrompt} disabled={parsing||!promptText.trim()}
-              style={{width:"100%",padding:"9px",borderRadius:9,border:"none",background:parsing||!promptText.trim()?"rgba(255,255,255,0.07)":"linear-gradient(135deg,"+PUR+",#3a32a0)",color:parsing||!promptText.trim()?"rgba(255,255,255,0.2)":"#fff",fontSize:12,fontWeight:700,cursor:parsing||!promptText.trim()?"not-allowed":"pointer",fontFamily:"Georgia,serif",marginTop:5}}>
-              {parsing?"Parsing…":"✦ Fill in details →"}
-            </button>
-            {parseErr&&<div style={{fontSize:11,color:RED,marginTop:5,textAlign:"center"}}>Couldn't parse — fill in the fields below manually</div>}
+                  {activeEvent===e.id&&(
+                    <div className="cc-panel">
+                      <div className="cc-grid2">
+                        <input className="cc-in" value={e.date} onChange={async ev=>{setEvents(p=>p.map(x=>x.id===e.id?{...x,date:ev.target.value}:x));await supabase.from("culture_events").update({date:ev.target.value}).eq("id",e.id);}} placeholder="Date" aria-label="Date"/>
+                        <input className="cc-in" value={e.time} onChange={async ev=>{setEvents(p=>p.map(x=>x.id===e.id?{...x,time:ev.target.value}:x));await supabase.from("culture_events").update({time:ev.target.value}).eq("id",e.id);}} placeholder="Time" aria-label="Time"/>
+                      </div>
+                      <input className="cc-in" value={e.location} onChange={async ev=>{setEvents(p=>p.map(x=>x.id===e.id?{...x,location:ev.target.value}:x));await supabase.from("culture_events").update({location:ev.target.value}).eq("id",e.id);}} placeholder="Location" aria-label="Location"/>
+                      <textarea className="cc-in" value={e.notes} onChange={async ev=>{setEvents(p=>p.map(x=>x.id===e.id?{...x,notes:ev.target.value}:x));await supabase.from("culture_events").update({notes:ev.target.value}).eq("id",e.id);}} placeholder="Notes..." aria-label="Notes"/>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </div>
+        )}
+      </section>
 
-          {/* Detail fields (auto-filled or manual) */}
-          <div style={{background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"10px 10px 6px",border:"1px solid rgba(255,255,255,0.06)",marginBottom:8}}>
-            <div style={{fontSize:9,color:"#444",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Details</div>
-            <input value={newEvent.name} onChange={e=>setNewEvent(p=>({...p,name:e.target.value}))} placeholder="Event name" style={{width:"100%",padding:"8px 10px",fontSize:13,borderRadius:9,border:"1px solid rgba(255,255,255,0.09)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:6}}/>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:6}}>
-              <input type="date" value={newEvent.date} onChange={e=>setNewEvent(p=>({...p,date:e.target.value}))} style={{padding:"7px 9px",fontSize:12,borderRadius:8,border:"1px solid rgba(255,255,255,0.09)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif"}}/>
-              <input value={newEvent.time} onChange={e=>setNewEvent(p=>({...p,time:e.target.value}))} placeholder="Time" style={{padding:"7px 9px",fontSize:12,borderRadius:8,border:"1px solid rgba(255,255,255,0.09)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif"}}/>
-            </div>
-            <input value={newEvent.location} onChange={e=>setNewEvent(p=>({...p,location:e.target.value}))} placeholder="Location" style={{width:"100%",padding:"8px 10px",fontSize:12,borderRadius:9,border:"1px solid rgba(255,255,255,0.09)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:6}}/>
-            <textarea value={newEvent.notes} onChange={e=>setNewEvent(p=>({...p,notes:e.target.value}))} placeholder="Notes (optional)" style={{width:"100%",minHeight:48,padding:"8px 10px",fontSize:12,borderRadius:9,border:"1px solid rgba(255,255,255,0.09)",background:"rgba(255,255,255,0.05)",color:"#fff",fontFamily:"Georgia,serif",resize:"none",boxSizing:"border-box"}}/>
+      {/* Add event form */}
+      <section className="tfx-card cc-sec">
+        <div className="cc-sec-head">
+          <div>
+            <div className="tfx-eyebrow">New event</div>
+            <h3>Add new event</h3>
           </div>
-
-          <button onClick={addEvent} disabled={!newEvent.name.trim()}
-            style={{width:"100%",padding:"11px",borderRadius:10,border:"none",background:newEvent.name.trim()?"linear-gradient(135deg,"+GOLD+","+ORANGE+")":"rgba(255,255,255,0.07)",color:newEvent.name.trim()?"#1a1a1a":"rgba(255,255,255,0.2)",fontSize:13,fontWeight:700,cursor:newEvent.name.trim()?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
-            Add event →
-          </button>
         </div>
-      </div>
+
+        {/* AI prompt input */}
+        <div className="cc-form">
+          <textarea
+            className="cc-in"
+            value={promptText}
+            onChange={e=>setPromptText(e.target.value)}
+            onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();parseEventPrompt();}}}
+            placeholder="Describe the event… e.g. Top Golf Saturday June 21 at 2pm, meet at the parking lot"
+            aria-label="Describe the event"
+          />
+          <button className="tfx-btn-ghost tfx-press cc-btn cc-wide cc-tint is-violet" onClick={parseEventPrompt} disabled={parsing||!promptText.trim()}>
+            {parsing?"Parsing…":"✦ Fill in details →"}
+          </button>
+          {parseErr&&<div className="cc-err" role="alert">Couldn't parse — fill in the fields below manually</div>}
+        </div>
+
+        {/* Detail fields (auto-filled or manual) */}
+        <div className="cc-box">
+          <div className="tfx-eyebrow">Details</div>
+          <input className="cc-in" value={newEvent.name} onChange={e=>setNewEvent(p=>({...p,name:e.target.value}))} placeholder="Event name" aria-label="Event name"/>
+          <div className="cc-grid2">
+            <input className="cc-in" type="date" value={newEvent.date} onChange={e=>setNewEvent(p=>({...p,date:e.target.value}))} aria-label="Date"/>
+            <input className="cc-in" value={newEvent.time} onChange={e=>setNewEvent(p=>({...p,time:e.target.value}))} placeholder="Time" aria-label="Time"/>
+          </div>
+          <input className="cc-in" value={newEvent.location} onChange={e=>setNewEvent(p=>({...p,location:e.target.value}))} placeholder="Location" aria-label="Location"/>
+          <textarea className="cc-in" value={newEvent.notes} onChange={e=>setNewEvent(p=>({...p,notes:e.target.value}))} placeholder="Notes (optional)" aria-label="Notes"/>
+        </div>
+
+        <button className="tfx-btn tfx-press cc-wide" onClick={addEvent} disabled={!newEvent.name.trim()}>
+          Add event →
+        </button>
+      </section>
 
       {/* GroupMe composer */}
-      <div style={{...glass({borderRadius:16}),padding:"1.25rem",marginBottom:12,position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+",transparent)"}}/>
-        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-          <Icon name="megaphone" size={14} color={GREEN}/>
-          <span style={{fontSize:13,fontWeight:700,color:"#fff"}}>GroupMe Composer</span>
+      <section className="tfx-card cc-sec is-green">
+        <div className="cc-sec-head">
+          <div>
+            <div className="tfx-eyebrow">Group message</div>
+            <h3>GroupMe composer</h3>
+          </div>
+          <span className="cc-gico"><Icon name="megaphone" size={16}/></span>
         </div>
 
-        <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10}}>
-          {templates.map(t=>(
-            <div key={t.id} style={{display:"flex",alignItems:"center",gap:3}}>
-              <button onClick={()=>{hTap();setMsgType(t.id);}}
-                style={{padding:"6px 11px",borderRadius:8,border:"1px solid "+(msgType===t.id?GREEN+"55":"rgba(255,255,255,0.08)"),background:msgType===t.id?"rgba(30,107,58,0.2)":"rgba(255,255,255,0.04)",color:msgType===t.id?GREEN:"#888",fontSize:11,fontWeight:msgType===t.id?600:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+        <div className="cc-chips is-wrap" role="tablist" aria-label="Templates">
+          {templates.map(t=>{
+            const custom=!DEFAULT_TEMPLATES.find(d=>d.id===t.id);
+            const chip=(
+              <button key={t.id} role="tab" aria-selected={msgType===t.id} className={"tfx-chipbtn tfx-press"+(msgType===t.id?" is-on":"")} onClick={()=>{hTap();setMsgType(t.id);}}>
                 {t.label}
               </button>
-              {!DEFAULT_TEMPLATES.find(d=>d.id===t.id)&&(
-                <button onClick={()=>deleteTemplate(t)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.25)",fontSize:10,cursor:"pointer",padding:"0 2px"}}>✕</button>
-              )}
-            </div>
-          ))}
-          <button onClick={()=>setShowAddTemplate(!showAddTemplate)}
-            style={{padding:"6px 11px",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",color:"#666",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+            );
+            return custom?(
+              <span key={t.id} className="cc-tpl">
+                {chip}
+                <button className="cc-tpl-x" onClick={()=>deleteTemplate(t)} aria-label={"Delete template "+t.label}>✕</button>
+              </span>
+            ):chip;
+          })}
+          <button className="tfx-chipbtn tfx-press" aria-expanded={showAddTemplate} onClick={()=>setShowAddTemplate(!showAddTemplate)}>
             + New
           </button>
         </div>
 
         {showAddTemplate&&(
-          <div style={{background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"12px",marginBottom:10,border:"1px solid rgba(255,255,255,0.08)"}}>
-            <input value={newTemplate.label} onChange={e=>setNewTemplate(p=>({...p,label:e.target.value}))} placeholder="Template name..." style={{width:"100%",padding:"7px 9px",fontSize:12,borderRadius:8,fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:7}}/>
-            <textarea value={newTemplate.text} onChange={e=>setNewTemplate(p=>({...p,text:e.target.value}))} placeholder="Write your template..." style={{width:"100%",minHeight:80,padding:"7px 9px",fontSize:12,borderRadius:8,fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",marginBottom:7}}/>
-            <div style={{display:"flex",gap:7}}>
-              <button onClick={saveTemplate} style={{flex:1,padding:"7px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+GREEN+",#0e4a20)",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>Save template</button>
-              <button onClick={()=>setShowAddTemplate(false)} style={{padding:"7px 14px",borderRadius:8,border:"1px solid rgba(255,255,255,0.1)",background:"transparent",color:"#666",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
+          <div className="cc-box">
+            <input className="cc-in" value={newTemplate.label} onChange={e=>setNewTemplate(p=>({...p,label:e.target.value}))} placeholder="Template name..." aria-label="Template name"/>
+            <textarea className="cc-in" value={newTemplate.text} onChange={e=>setNewTemplate(p=>({...p,text:e.target.value}))} placeholder="Write your template..." aria-label="Template text"/>
+            <div className="cc-row">
+              <button className="tfx-btn tfx-press cc-btn cc-accent" onClick={saveTemplate}>Save template</button>
+              <button className="tfx-btn-ghost tfx-press cc-btn" onClick={()=>setShowAddTemplate(false)}>Cancel</button>
             </div>
           </div>
         )}
 
-        <button onClick={()=>setGroupMsg(activeTemplate?.text||"")}
-          style={{width:"100%",padding:"10px",borderRadius:10,border:"none",background:"linear-gradient(135deg,"+PUR+",#3a32a0)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",marginBottom:10}}>
+        <button className="tfx-btn-ghost tfx-press cc-btn cc-wide" onClick={()=>setGroupMsg(activeTemplate?.text||"")}>
           Load template →
         </button>
         {groupMsg&&(
           <>
-            <textarea value={groupMsg} onChange={e=>setGroupMsg(e.target.value)}
-              style={{width:"100%",minHeight:140,padding:"10px",fontSize:13,borderRadius:10,fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",marginBottom:8}}/>
-            <button onClick={()=>{navigator.clipboard.writeText(groupMsg);setCopied(true);setTimeout(()=>setCopied(false),2000);}}
-              style={{width:"100%",padding:"11px",borderRadius:10,border:"none",background:copied?"linear-gradient(135deg,"+GREEN+",#0e4a20)":"linear-gradient(135deg,"+STEEL+",#4a5568)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+            <textarea className="cc-in cc-compose" value={groupMsg} onChange={e=>setGroupMsg(e.target.value)} aria-label="Message"/>
+            <button className={"tfx-btn tfx-press cc-wide cc-copy"+(copied?" is-copied cc-accent":"")} onClick={()=>{navigator.clipboard.writeText(groupMsg);setCopied(true);setTimeout(()=>setCopied(false),2000);}}>
               {copied?"Copied! Paste into GroupMe ✓":"Copy message →"}
             </button>
           </>
         )}
-      </div>
+      </section>
 
       {/* Event photo wall */}
-      <div style={{...glass({borderRadius:16}),padding:"1.25rem",marginBottom:12,position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+",transparent)"}}/>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+      <section className="tfx-card cc-sec">
+        <div className="cc-sec-head">
           <div>
-            <div style={{fontSize:13,fontWeight:700,color:"#fff",display:"flex",alignItems:"center",gap:8}}>
-              <Icon name="camera" size={13} color={STEEL}/> Event Photos
-            </div>
-            <div style={{fontSize:11,color:"#555",marginTop:2}}>Top Golf, cookouts, workouts, culture moments</div>
+            <div className="tfx-eyebrow">Gallery</div>
+            <h3>Event photos</h3>
+            <p>Top Golf, cookouts, workouts, culture moments</p>
           </div>
-          <label style={{padding:"7px 13px",borderRadius:9,border:"1px solid "+STEEL+"55",background:"rgba(255,255,255,0.04)",color:STEEL,fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+          <label className="cc-mini cc-upload">
             + Upload
-            <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(f)uploadPhoto(f,"");}}/>
+            <input type="file" accept="image/*" className="cc-hide" onChange={e=>{const f=e.target.files[0];if(f)uploadPhoto(f,"");}}/>
           </label>
         </div>
 
-        {selectedPhoto&&(
-          <div onClick={()=>setSelectedPhoto(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.96)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}>
-            <img src={selectedPhoto.photo_url} style={{maxWidth:"90vw",maxHeight:"80vh",borderRadius:12,objectFit:"contain"}} alt=""/>
-            {selectedPhoto.caption&&<div style={{fontSize:13,color:"#fff"}}>{selectedPhoto.caption}</div>}
-            <button onClick={e=>{e.stopPropagation();deletePhoto(selectedPhoto.id);setSelectedPhoto(null);}}
-              style={{padding:"7px 18px",borderRadius:9,border:"1px solid rgba(255,255,255,0.15)",background:"rgba(255,255,255,0.06)",color:"#888",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-              Delete photo
-            </button>
-          </div>
-        )}
-
         {photos.length===0?(
-          <EmptyState icon="camera" color={STEEL} title="No photos yet" hint="Tap Upload to add event photos — cookouts, golf, culture moments." />
+          <div className="cc-empty is-muted">
+            <span className="cc-empty-ico"><Icon name="camera" size={22}/></span>
+            <b>No photos yet</b>
+            <p>Tap Upload to add event photos — cookouts, golf, culture moments.</p>
+          </div>
         ):(
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+          <div className="cc-wall">
             {photos.map((p,i)=>(
-              <div key={i} onClick={()=>setSelectedPhoto(p)} style={{cursor:"pointer",borderRadius:10,overflow:"hidden",aspectRatio:"1",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)"}}>
-                <img src={p.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>
-              </div>
+              <button key={i} className="cc-thumb tfx-press" onClick={()=>setSelectedPhoto(p)} aria-label={"Open photo"+(p.caption?" — "+p.caption:"")}>
+                <img src={p.photo_url} alt=""/>
+              </button>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       {/* Recurring events reference */}
-      <div style={{...glass({borderRadius:16}),padding:"1.25rem",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+",transparent)"}}/>
-        <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
-          <Icon name="compass" size={13} color={PUR}/> Recurring Culture Events
+      <section className="tfx-card cc-sec">
+        <div className="cc-sec-head">
+          <div>
+            <div className="tfx-eyebrow">Ideas</div>
+            <h3>Recurring culture events</h3>
+          </div>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <div className="cc-ideas">
           {RECURRING.map((r,i)=>(
-            <div key={i} style={{background:"rgba(255,255,255,0.04)",borderRadius:10,padding:"11px 12px",border:"1px solid rgba(255,255,255,0.07)"}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:5}}>
-                <Icon name={r.icon} size={16} color={PUR}/>
+            <div key={i} className="cc-idea">
+              <div className="cc-idea-top">
+                <span><Icon name={r.icon} size={16}/></span>
                 <div>
-                  <div style={{fontSize:12,fontWeight:600,color:"#ddd"}}>{r.label}</div>
-                  <div style={{fontSize:10,color:PUR,fontWeight:600}}>{r.freq}</div>
+                  <b>{r.label}</b>
+                  <small>{r.freq}</small>
                 </div>
               </div>
-              <div style={{fontSize:10,color:"#555",lineHeight:1.5}}>{r.notes}</div>
+              <p>{r.notes}</p>
             </div>
           ))}
         </div>
-      </div>
+      </section>
+
+      {/* Lightbox lives outside the cards so position:fixed covers the screen */}
+      {selectedPhoto&&(
+        <div className="cc-lightbox" onClick={()=>setSelectedPhoto(null)} role="dialog" aria-label="Event photo">
+          <img src={selectedPhoto.photo_url} alt=""/>
+          {selectedPhoto.caption&&<p>{selectedPhoto.caption}</p>}
+          <button onClick={e=>{e.stopPropagation();deletePhoto(selectedPhoto.id);setSelectedPhoto(null);}}>
+            Delete photo
+          </button>
+        </div>
+      )}
 
     </div>
   );
