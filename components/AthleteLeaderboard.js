@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { BG, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
 import { SkeletonList } from "./Skeleton";
-import EmptyState from "./EmptyState";
+import Icon from "./Icon";
 
 const CLASS_DAYS=["Mon","Tue","Thu","Fri"];
 
@@ -116,17 +115,43 @@ export default function AthleteLeaderboard({athleteId}){
   const myRank=displayLb.findIndex(r=>r.athlete_id===athleteId)+1;
   const myRow=displayLb.find(r=>r.athlete_id===athleteId);
   const maxEarly=displayLb.length>0?Math.max(...displayLb.map(r=>view==="week"?r.earlyWeek:r.earlyAll),1):1;
-  const podiumColors=[GOLD,"#C0C0C0","#CD7F32"];
+  const tone=(p)=>p>=80?"af-good":p>=50?"af-mid":"af-low";
+  const av=(r,cls="")=>(
+    <span className={"af-av"+(r.role==="forge"?" is-forge":"")+(cls?" "+cls:"")}>
+      {r.photo_url?<img src={r.photo_url} alt=""/>:(r.name||"?")[0]}
+      {r.role==="forge"&&<i className="af-forge" aria-label="Forge">⚒</i>}
+    </span>
+  );
 
-  if(loading)return<div style={{paddingTop:8}}><SkeletonList rows={6}/></div>;
-  if(displayLb.length===0)return <EmptyState icon="trophy" color={GOLD} title="No check-ins yet" hint="Be the first to show up early and earn your spot on the leaderboard." />;
+  const Head=()=>(
+    <header className="tfx-hb-head">
+      <div>
+        <div className="tfx-eyebrow">Leaderboard</div>
+        <h2>Early arrivals</h2>
+      </div>
+    </header>
+  );
+
+  if(loading)return<div className="tfx af af-lb"><Head/><SkeletonList rows={6}/></div>;
+  if(displayLb.length===0)return(
+    <div className="tfx af af-lb">
+      <Head/>
+      <section className="tfx-card af-empty" style={{"--c":"var(--gold)"}}>
+        <span className="af-empty-ic"><Icon name="trophy" size={24}/></span>
+        <b>No check-ins yet</b>
+        <p>Be the first to show up early and earn your spot on the leaderboard.</p>
+      </section>
+    </div>
+  );
 
   return(
-    <div>
+    <div className="tfx af af-lb">
+      <Head/>
+
       {/* View toggle */}
-      <div style={{display:"flex",gap:6,marginBottom:12}}>
-        {[{id:"all",label:"All Time"},{id:"week",label:"This Week"}].map(v=>(
-          <button key={v.id} onClick={()=>setView(v.id)} style={{flex:1,padding:"8px",borderRadius:8,border:"1px solid "+(view===v.id?GOLD:"#222"),background:view===v.id?GOLD:"#111",color:view===v.id?"#1a1a1a":"#555",fontSize:12,fontWeight:view===v.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+      <div className="ir-seg" role="tablist" aria-label="Leaderboard range">
+        {[{id:"all",label:"All time"},{id:"week",label:"This week"}].map(v=>(
+          <button key={v.id} role="tab" aria-selected={view===v.id} className={view===v.id?"is-on":""} onClick={()=>setView(v.id)}>
             {v.label}
           </button>
         ))}
@@ -134,121 +159,106 @@ export default function AthleteLeaderboard({athleteId}){
 
       {/* My rank hero */}
       {myRow&&(
-        <div style={{background:BG,borderRadius:16,padding:"1.5rem",marginBottom:12,border:"1px solid "+GOLD+"44",position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+RED+")"}}/>
-          <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:12}}>
-            <div style={{textAlign:"center"}}>
-              <div style={{fontSize:48,fontWeight:900,color:GOLD,lineHeight:1}}>#{myRank}</div>
-              <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:2}}>Your rank</div>
+        <section className="tfx-card af-lb-me">
+          <div className="af-lb-me-top">
+            <div className="af-lb-rank">
+              <b className="tfx-num">#{myRank}</b>
+              <small>Your rank</small>
             </div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:15,fontWeight:700,color:"#fff",marginBottom:8}}>{myRow.name}</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+            <div className="af-lb-me-txt">
+              <b>{myRow.name}</b>
+              <div className="af-lb-stats">
                 {[
-                  {label:"Early",val:view==="week"?myRow.earlyWeek:myRow.earlyAll,color:GREEN},
-                  {label:"Streak",val:myRow.currentStreak,color:ORANGE},
-                  {label:"Best",val:myRow.bestStreak,color:GOLD},
+                  {label:"Early",val:view==="week"?myRow.earlyWeek:myRow.earlyAll},
+                  {label:"Streak",val:myRow.currentStreak},
+                  {label:"Best",val:myRow.bestStreak},
                 ].map(s=>(
-                  <div key={s.label} style={{background:"#1a1a1a",borderRadius:8,padding:"6px",textAlign:"center"}}>
-                    <div style={{fontSize:18,fontWeight:900,color:s.color}}>{s.val}</div>
-                    <div style={{fontSize:9,color:"#555",marginTop:1}}>{s.label}</div>
+                  <div key={s.label} className="af-lb-stat">
+                    <b className="tfx-num">{s.val}</b>
+                    <span>{s.label}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
           {/* Attendance % */}
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-            <div style={{fontSize:10,color:"#555"}}>Early %</div>
-            <div style={{fontSize:11,fontWeight:700,color:myRow.attPct>=80?GREEN:myRow.attPct>=50?ORANGE:RED}}>{myRow.attPct}%</div>
-          </div>
-          <div style={{height:4,background:"#222",borderRadius:2,overflow:"hidden"}}>
-            <div style={{height:"100%",width:myRow.attPct+"%",background:myRow.attPct>=80?GREEN:myRow.attPct>=50?ORANGE:RED,borderRadius:2}}/>
+          <div className={"af-lb-pct "+tone(myRow.attPct)}>
+            <div className="af-lb-pct-row"><span>Early %</span><b className="tfx-num">{myRow.attPct}%</b></div>
+            <div className="af-meter"><i style={{width:myRow.attPct+"%"}}/></div>
           </div>
           {/* Gap to next rank */}
           {myRank>1&&(()=>{
             const above=displayLb[myRank-2];
             const gap=(view==="week"?above.earlyWeek:above.earlyAll)-(view==="week"?myRow.earlyWeek:myRow.earlyAll);
-            return gap>0?<div style={{fontSize:11,color:"#555",marginTop:8,textAlign:"center"}}>
+            return gap>0?<p className="af-lb-gap">
               {gap} more early arrival{gap>1?"s":""} to reach #{myRank-1}
-            </div>:null;
+            </p>:null;
           })()}
-        </div>
+        </section>
       )}
 
       {/* Top 3 podium */}
       {displayLb.length>=2&&(
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1.2fr 1fr",gap:8,marginBottom:12,alignItems:"flex-end"}}>
+        <section className="tfx-card af-lb-podium" aria-label="Top three">
           {[1,0,2].map(rank=>{
             const r=displayLb[rank];
             if(!r)return<div key={rank}/>;
             const isMe=r.athlete_id===athleteId;
-            const isForge=r.role==="forge";
-            const heights=["100px","80px","60px"];
+            const heights=["104px","88px","74px"];
             const earlyCount=view==="week"?r.earlyWeek:r.earlyAll;
             return(
-              <div key={rank} style={{textAlign:"center"}}>
-                <div style={{position:"relative",display:"inline-block",margin:"0 auto 6px"}}>
-                  <div style={{width:44,height:44,borderRadius:"50%",background:isForge?RED:STEEL,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:600,color:"#fff",border:"2px solid "+podiumColors[rank],boxShadow:"0 0 10px "+podiumColors[rank]+"66"}}>
-                    {r.photo_url?<img src={r.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(r.name||"?")[0]}
-                  </div>
-                  {isForge&&<div style={{position:"absolute",bottom:-2,right:-2,width:16,height:16,borderRadius:"50%",background:RED,border:"1px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8}}>⚒</div>}
-                </div>
-                <div style={{fontSize:11,fontWeight:isMe?700:500,color:isMe?GOLD:"#ccc",marginBottom:4}}>
-                  {r.name?.split(" ")[0]}{isMe?" ⭐":""}
-                </div>
-                <div style={{background:podiumColors[rank],borderRadius:"8px 8px 0 0",height:heights[rank],display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",padding:"8px 4px"}}>
-                  <div style={{fontSize:18,fontWeight:800,color:"#1a1a1a"}}>{rank===0?"🥇":rank===1?"🥈":"🥉"}</div>
-                  <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a"}}>{earlyCount}</div>
-                  <div style={{fontSize:9,color:"#333"}}>early</div>
+              <div key={rank} className={"af-pod is-r"+(rank+1)}>
+                {av(r,"is-lg")}
+                <div className="af-pod-name"><span>{r.name?.split(" ")[0]}</span>{isMe&&<span className="af-pill af-you">You</span>}</div>
+                <div className="af-pod-block" style={{height:heights[rank]}}>
+                  <small>{rank===0?"1st":rank===1?"2nd":"3rd"}</small>
+                  <b className="tfx-num">{earlyCount}</b>
+                  <small>early</small>
                 </div>
               </div>
             );
           })}
-        </div>
+        </section>
       )}
 
       {/* Full list */}
-      <div style={{background:"#111",borderRadius:12,border:"0.5px solid #1e1e1e",overflow:"hidden"}}>
-        {displayLb.map((r,i)=>{
-          const isMe=r.athlete_id===athleteId;
-          const isForge=r.role==="forge";
-          const earlyCount=view==="week"?r.earlyWeek:r.earlyAll;
-          const trend=r.trend||0;
-          return(
-            <div key={r.athlete_id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderBottom:i<displayLb.length-1?"0.5px solid #1a1a1a":"none",background:isMe?"#1a1200":"#111"}}>
-              {/* Rank */}
-              <div style={{fontSize:12,fontWeight:700,color:i<3?podiumColors[i]:"#aaa",minWidth:22,textAlign:"center"}}>
-                {i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`}
-              </div>
-              {/* Trend */}
-              <div style={{fontSize:11,minWidth:16,textAlign:"center",color:trend>0?GREEN:trend<0?RED:"#ddd"}}>
-                {trend>0?"↑":trend<0?"↓":"—"}
-              </div>
-              {/* Avatar */}
-              <div style={{position:"relative",flexShrink:0}}>
-                <div style={{width:34,height:34,borderRadius:"50%",background:isForge?RED:STEEL,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:600,color:"#fff",border:isForge?"2px solid "+RED:"none"}}>
-                  {r.photo_url?<img src={r.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(r.name||"?")[0]}
+      <section className="tfx-card af-lb-list">
+        <div className="af-sec-head"><div className="tfx-eyebrow">Standings</div><span>{displayLb.length} athletes · early check-ins</span></div>
+        <ol>
+          {displayLb.map((r,i)=>{
+            const isMe=r.athlete_id===athleteId;
+            const isForge=r.role==="forge";
+            const earlyCount=view==="week"?r.earlyWeek:r.earlyAll;
+            const trend=r.trend||0;
+            return(
+              <li key={r.athlete_id} className={"af-lb-row"+(isMe?" is-me":"")}>
+                {/* Rank */}
+                <span className={"af-lb-pos"+(i<3?" is-r"+(i+1):"")}>{i+1}</span>
+                {/* Trend */}
+                <span className={"af-trend"+(trend>0?" is-up":trend<0?" is-down":"")} aria-label={trend>0?"Moving up this week":trend<0?"Moving down this week":"No change"}>
+                  {trend>0?"↑":trend<0?"↓":"–"}
+                </span>
+                {/* Avatar */}
+                {av(r)}
+                {/* Name + stats */}
+                <div className="af-lb-who">
+                  <div className="af-lb-name">
+                    <span>{r.name}</span>
+                    {isMe&&<span className="af-pill af-you">You</span>}
+                  </div>
+                  <div className="af-lb-meta">
+                    <span>🔥 {r.currentStreak}</span>
+                    <span>Best {r.bestStreak}</span>
+                    <em className={tone(r.attPct)}>{r.attPct}%</em>
+                  </div>
                 </div>
-                {isForge&&<div style={{position:"absolute",bottom:-1,right:-1,width:12,height:12,borderRadius:"50%",background:RED,border:"1px solid #fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:7}}>⚒</div>}
-              </div>
-              {/* Name + stats */}
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:isMe?700:500,color:isMe?GOLD:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                  {r.name}{isMe?" ⭐":""}{isForge?" 🔴":""}
-                </div>
-                <div style={{display:"flex",gap:8,marginTop:2}}>
-                  <span style={{fontSize:10,color:"#aaa"}}>🔥{r.currentStreak}</span>
-                  <span style={{fontSize:10,color:"#aaa"}}>⭐{r.bestStreak}</span>
-                  <span style={{fontSize:10,color:r.attPct>=80?GREEN:r.attPct>=50?ORANGE:RED}}>{r.attPct}%</span>
-                </div>
-              </div>
-              {/* Early count */}
-              <div style={{fontSize:14,fontWeight:700,color:isMe?GOLD:GREEN,minWidth:20,textAlign:"right"}}>{earlyCount}</div>
-            </div>
-          );
-        })}
-      </div>
+                {/* Early count */}
+                <b className="af-lb-count tfx-num">{earlyCount}</b>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
     </div>
   );
 }

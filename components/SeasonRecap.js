@@ -4,7 +4,6 @@ import { prEvents } from "../lib/lifting";
 import { loadSeason, defaultSeason, isBeforeSeason, fmtFirstClass } from "../lib/season";
 
 const GOLD = "#D4AF37", ORANGE = "#E8720C", GREEN = "#3FCB7F", BLUE = "#4DC8F5", PUR = "#9A8CF0", RED = "#E8635B", STEEL = "#8CA0B0";
-const INK = "#fdf6ec"; // warm white, collision-safe against the light-mode text flip
 
 
 // Count a number up from 0 → value on mount (respects reduced motion).
@@ -90,7 +89,7 @@ export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
     return () => { alive = false; };
   }, [athleteId, athleteName]);
 
-  if (!s) return <div style={{ padding: "3rem 1rem", textAlign: "center", color: "#888", fontFamily: "Georgia,serif" }}>Building your season…</div>;
+  if (!s) return <div className="tfx af af-rc"><div className="tfx-card att-loading">Building your season…</div></div>;
 
   const earlyPct = s.sessions ? Math.round((s.early / s.sessions) * 100) : 0;
   const first = (athleteName || "").split(" ")[0];
@@ -99,10 +98,10 @@ export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
   const tiles = [
     { label: "Sessions",   num: s.sessions,  color: GOLD },
     { label: "Early %",    num: earlyPct, suffix: "%", color: GREEN },
-    { label: "Best Streak",num: s.bestStreak, sub: "days", color: ORANGE },
-    { label: "PRs Set",    num: s.prs,     color: BLUE },
-    { label: "Anvil Wins", num: s.anvilWins, color: GOLD },
-    { label: "Early Reps", num: s.early,   color: PUR },
+    { label: "Best streak",num: s.bestStreak, sub: "days", color: ORANGE },
+    { label: "PRs set",    num: s.prs,     color: BLUE },
+    { label: "Anvil wins", num: s.anvilWins, color: GOLD },
+    { label: "Early reps", num: s.early,   color: PUR },
   ];
 
   const share = async () => {
@@ -112,89 +111,76 @@ export default function SeasonRecap({ athleteId, athleteName, photoUrl }) {
   };
 
   return (
-    <div className="tf-fade-up" style={{ fontFamily: "Georgia,serif" }}>
-      <div style={{
-        borderRadius: 22, overflow: "hidden", position: "relative", padding: "26px 20px 22px",
-        // Solid dark base under the glow: the gradient is see-through at the top, so
-        // without it the light-mode page bleeds through and washes out the header.
-        background: "radial-gradient(130% 80% at 50% 0%, rgba(232,114,12,0.32) 0%, rgba(212,175,55,0.14) 32%, rgba(14,9,2,0.99) 74%), #0e0902",
-        border: "1px solid " + GOLD + "44", boxShadow: "0 0 60px rgba(232,114,12,0.18), 0 20px 50px rgba(0,0,0,0.55)",
-      }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg,transparent," + ORANGE + "," + GOLD + ",transparent)" }} />
-        {["10%,14%,0.9s", "82%,20%,1.4s", "20%,72%,1.1s", "88%,64%,1.7s"].map((p, i) => {
-          const [l, t, d] = p.split(",");
-          return <span key={i} style={{ position: "absolute", left: l, top: t, fontSize: 12, opacity: 0.6, animation: "tfSpark 3.2s ease-in-out " + d + " infinite" }}>✨</span>;
-        })}
-
+    <div className="tfx af af-rc tf-fade-up">
+      <section className="tfx-card af-rc-card">
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 14, position: "relative" }}>
-          <div style={{ fontSize: 10, letterSpacing: "0.34em", textTransform: "uppercase", color: GOLD, fontWeight: 700, marginBottom: 12 }}>My Season</div>
-          <div style={{ width: 76, height: 76, borderRadius: "50%", margin: "0 auto 10px", overflow: "hidden", border: "2px solid " + GOLD + "88", boxShadow: "0 0 26px " + GOLD + "55", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, color: GOLD, fontWeight: 800 }}>
-            {photoUrl ? <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (first ? first[0] : "?")}
-          </div>
-          <div style={{ fontSize: 23, fontWeight: 900, color: INK, letterSpacing: "-0.01em", textShadow: "0 2px 18px rgba(0,0,0,0.5)" }}>{athleteName || "Athlete"}</div>
-          <div style={{ fontSize: 12, color: GOLD, letterSpacing: "0.14em", textTransform: "uppercase", marginTop: 2 }}>{SEASON_LABEL}</div>
-          {season.upcoming && <div style={{ fontSize: 11.5, color: "#c9b48a", marginTop: 6 }}>{season.upcoming} — this card resets then</div>}
+        <div className="af-rc-top">
+          <div className="tfx-eyebrow">My season</div>
+          <span className="af-av is-xl" style={{ "--c": "#4a4540" }}>
+            {photoUrl ? <img src={photoUrl} alt="" /> : (first ? first[0] : "?")}
+          </span>
+          <h2>{athleteName || "Athlete"}</h2>
+          <div className="af-rc-season">{SEASON_LABEL}</div>
+          {season.upcoming && <div className="af-rc-upcoming">{season.upcoming} — this card resets then</div>}
         </div>
 
         {/* Archetype reveal */}
-        <div className="tf-pop" style={{ textAlign: "center", borderRadius: 16, padding: "14px 12px", margin: "0 auto 16px", maxWidth: 320, background: "linear-gradient(145deg," + type.color + "26," + type.color + "0a)", border: "1px solid " + type.color + "55", boxShadow: "0 0 24px " + type.color + "26" }}>
-          <div style={{ fontSize: 9, letterSpacing: "0.24em", textTransform: "uppercase", color: type.color, fontWeight: 700, marginBottom: 4 }}>Your Season Type</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: INK, lineHeight: 1.05 }}>{type.emoji} {type.name}</div>
-          <div style={{ fontSize: 12, color: type.color, marginTop: 3, fontWeight: 600 }}>{type.tag}</div>
+        <div className="af-rc-type tf-pop" style={{ "--c": type.color }}>
+          <div className="tfx-eyebrow">Your season type</div>
+          <b>{type.emoji} {type.name}</b>
+          <small>{type.tag}</small>
         </div>
 
         {/* Total weight moved — hero */}
         {s.totalLbs > 0 && (
-          <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <div style={{ fontSize: 34, fontWeight: 900, color: GOLD, lineHeight: 1, letterSpacing: "-0.02em", textShadow: "0 2px 20px " + GOLD + "44" }}><CountUp value={s.totalLbs} /> </div>
-            <div style={{ fontSize: 10, color: INK, opacity: 0.7, letterSpacing: "0.16em", textTransform: "uppercase", marginTop: 4 }}>Total pounds moved 🏋️</div>
+          <div className="af-rc-lbs">
+            <b className="tfx-num"><CountUp value={s.totalLbs} /></b>
+            <div className="tfx-eyebrow">Total pounds moved</div>
           </div>
         )}
 
         {/* Stat grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 9, marginBottom: 14 }}>
+        <div className="af-rc-tiles">
           {tiles.map(t => (
-            <div key={t.label} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 14, padding: "13px 6px", textAlign: "center", border: "1px solid rgba(212,175,55,0.22)" }}>
-              <div style={{ fontSize: 23, fontWeight: 900, color: t.color, lineHeight: 1 }}><CountUp value={t.num} suffix={t.suffix || ""} /></div>
-              {t.sub && <div style={{ fontSize: 8, color: INK, opacity: 0.5, marginTop: 1 }}>{t.sub}</div>}
-              <div style={{ fontSize: 9, color: INK, opacity: 0.72, marginTop: 5, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600 }}>{t.label}</div>
+            <div key={t.label} className="af-rc-tile" style={{ "--c": t.color }}>
+              <b className="tfx-num"><CountUp value={t.num} suffix={t.suffix || ""} />{t.sub && <small>{t.sub}</small>}</b>
+              <span><i aria-hidden="true" />{t.label}</span>
             </div>
           ))}
         </div>
 
         {/* Season at a glance — one cell per session */}
         {s.cells && s.cells.length > 0 && (
-          <div style={{ marginBottom: 14 }}>
-            <div style={{ fontSize: 9, color: INK, opacity: 0.6, letterSpacing: "0.14em", textTransform: "uppercase", textAlign: "center", marginBottom: 7 }}>Your season, session by session</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>
+          <div className="af-rc-strip">
+            <div className="tfx-eyebrow">Your season, session by session</div>
+            <div className="af-rc-cells">
               {s.cells.map((st, i) => (
-                <span key={i} title={st} style={{ width: 12, height: 12, borderRadius: 3, background: st === "early" ? GOLD : st === "late" ? ORANGE : "rgba(255,255,255,0.18)", boxShadow: st === "early" ? "0 0 6px " + GOLD + "66" : "none" }} />
+                <span key={i} title={st} className={st === "early" ? "is-early" : st === "late" ? "is-late" : ""} />
               ))}
             </div>
-            <div style={{ display: "flex", gap: 14, justifyContent: "center", marginTop: 8, fontSize: 9, color: INK, opacity: 0.6 }}>
-              <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: GOLD, marginRight: 4, verticalAlign: "middle" }} />Early</span>
-              <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: ORANGE, marginRight: 4, verticalAlign: "middle" }} />Late</span>
+            <div className="af-rc-key">
+              <span className="is-early"><i />Early</span>
+              <span className="is-late"><i />Late</span>
             </div>
           </div>
         )}
 
         {/* Rank line */}
         {s.rankPct != null && s.rankPct > 0 && (
-          <div style={{ textAlign: "center", fontSize: 12, color: INK, opacity: 0.9, marginBottom: 14, fontWeight: 600 }}>
-            🏆 You showed up early more than <span style={{ color: GOLD, fontWeight: 800 }}>{s.rankPct}%</span> of the team.
-          </div>
+          <p className="af-rc-rank">
+            You showed up early more than <b>{s.rankPct}%</b> of the team.
+          </p>
         )}
 
         {/* Footer */}
-        <div style={{ textAlign: "center", borderTop: "1px solid rgba(212,175,55,0.2)", paddingTop: 13 }}>
-          <div style={{ fontSize: 12, color: INK, opacity: 0.85, fontStyle: "italic", lineHeight: 1.6, marginBottom: 8 }}>“As iron sharpens iron, so one person sharpens another.”</div>
-          <div style={{ fontSize: 9, color: GOLD, letterSpacing: "0.2em", textTransform: "uppercase" }}>Faith · Family · Fitness · TF College Group</div>
+        <div className="af-rc-verse">
+          <p>“As iron sharpens iron, so one person sharpens another.”</p>
+          <div className="tfx-eyebrow">Faith · Family · Fitness · TF College Group</div>
         </div>
-      </div>
+      </section>
 
-      <button onClick={share} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", marginTop: 14, padding: "13px", borderRadius: 14, border: "none", background: "linear-gradient(135deg," + ORANGE + "," + GOLD + ")", color: "#1a1200", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "Georgia,serif", letterSpacing: "0.02em", boxShadow: "0 6px 24px " + ORANGE + "44" }}>Share my season →</button>
-      <div style={{ textAlign: "center", fontSize: 11, color: "#666", marginTop: 10, lineHeight: 1.5 }}>Screenshot the card above to post it, or tap Share.</div>
+      <button className="tfx-btn tfx-press af-rc-share" onClick={share}>Share my season →</button>
+      <p className="af-foot">Screenshot the card above to post it, or tap Share.</p>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { BG, GOLD, STEEL, RED, GREEN, ORANGE } from "../lib/constants";
+import { GOLD, STEEL, GREEN } from "../lib/constants";
+import Icon from "./Icon";
 import { supabase } from "../lib/supabase";
 
 const ANVIL_CATS=[
@@ -83,195 +84,177 @@ export default function AnvilHistory({athleteId,athleteName}){
   const pendingPrizeObj=PRIZES.find(p=>p.id===pendingPrize);
   const canSave=pendingPrize&&(!pendingPrizeObj?.sizes||pendingSize)&&(!pendingPrizeObj?.freeText||pendingText.trim());
 
+  const avatar=(name,ath,cls)=>(
+    <span className={"af-av "+cls} style={{"--c":"#4a4540"}}>
+      {ath?.photo_url?<img src={ath.photo_url} alt={name}/>:(name||"?")[0]}
+    </span>
+  );
+
   return(
-    <div>
+    <div className="tfx af af-anv">
+      <header className="tfx-hb-head">
+        <div>
+          <div className="tfx-eyebrow">The Anvil</div>
+          <h2>Anvil winners</h2>
+          <p className="af-sub">Awarded every two weeks to the one athlete who did what nobody else did.</p>
+        </div>
+      </header>
+
       {/* No winners yet */}
       {anvils.length===0&&(
-        <div style={{background:"linear-gradient(135deg,#1f1700,#2a2000)",borderRadius:16,padding:"2rem",marginBottom:12,border:"1px solid "+GOLD+"44",textAlign:"center"}}>
-          <div style={{fontSize:52,marginBottom:8,filter:"drop-shadow(0 0 16px "+GOLD+"44)"}}>⚒</div>
-          <div style={{fontSize:15,fontWeight:700,color:GOLD,marginBottom:4}}>The Anvil</div>
-          <div style={{fontSize:12,color:"#555",lineHeight:1.6}}>Awarded every two weeks to the one athlete<br/>who did what nobody else did.</div>
-          <div style={{fontSize:10,color:"#444",marginTop:12,fontStyle:"italic",letterSpacing:"0.06em"}}>EARNED. NOT GIVEN.</div>
-        </div>
+        <section className="tfx-card af-empty" style={{"--c":"var(--gold)"}}>
+          <span className="af-empty-ic"><Icon name="anvil" size={24}/></span>
+          <b>No winner yet</b>
+          <div className="af-motto">Earned. Not given.</div>
+        </section>
       )}
 
       {/* Current champion hero */}
       {latest&&(
-        <div style={{borderRadius:20,marginBottom:14,overflow:"hidden",boxShadow:"0 12px 48px "+GOLD+"22",border:"1px solid "+GOLD+"44",position:"relative"}}>
-          <div style={{height:3,background:"linear-gradient(90deg,transparent,"+GOLD+","+GOLD+"88,transparent)"}}/>
-          <div style={{background:"linear-gradient(160deg,#1f1700 0%,#0f0e00 60%,#0d0d0d 100%)",padding:"20px 18px 18px",position:"relative",overflow:"hidden"}}>
-            <div style={{position:"absolute",bottom:-12,right:-4,fontSize:100,opacity:0.06,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒</div>
-            <div style={{fontSize:9,color:GOLD,textTransform:"uppercase",letterSpacing:"0.22em",fontWeight:900,marginBottom:14,display:"flex",alignItems:"center",gap:8}}>
-              <span>⚡</span><span>Current Anvil Winner</span>
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:14}}>
-              <div style={{width:72,height:72,borderRadius:"50%",flexShrink:0,border:"3px solid "+GOLD,overflow:"hidden",background:"#333",boxShadow:"0 0 32px "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:700,color:GOLD}}>
-                {latestAth?.photo_url?
-                  <img src={latestAth.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={latest.athlete_name}/>
-                  :(latest.athlete_name||"?")[0]
-                }
-              </div>
-              <div>
-                <div style={{fontSize:24,fontWeight:900,color:GOLD,letterSpacing:"-0.02em",lineHeight:1.1}}>{latest.athlete_name}</div>
-                <div style={{fontSize:11,color:"#888",marginTop:2}}>{latest.date_awarded}</div>
-                {latestCat&&(
-                  <div style={{marginTop:6}}>
-                    <span style={{fontSize:11,background:latestCat.color+"22",color:latestCat.color,padding:"3px 10px",borderRadius:20,fontWeight:700,border:"0.5px solid "+latestCat.color+"44"}}>
-                      {latestCat.emoji} {latestCat.id}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            {latest.note&&(
-              <div style={{background:"rgba(212,175,55,0.06)",borderRadius:10,padding:"12px 14px",border:"1px solid "+GOLD+"22",position:"relative"}}>
-                <div style={{fontSize:9,color:GOLD+"88",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:6}}>Why they earned it</div>
-                <div style={{fontSize:14,color:"#e8d5a0",lineHeight:1.7,fontStyle:"italic",fontFamily:"Georgia,serif"}}>
-                  &#8220;{latest.note}&#8221;
-                </div>
-              </div>
-            )}
-            <div style={{marginTop:14,fontSize:10,color:"#444",letterSpacing:"0.1em",fontWeight:700,textTransform:"uppercase",textAlign:"center"}}>
-              &#8212;&nbsp;&nbsp;Earned. Not given.&nbsp;&nbsp;&#8212;
+        <section className="tfx-card af-anv-hero">
+          <div className="tfx-eyebrow">Current Anvil winner</div>
+          <div className="af-anv-who">
+            {avatar(latest.athlete_name,latestAth,"is-xl")}
+            <div>
+              <h3>{latest.athlete_name}</h3>
+              <small>{latest.date_awarded}</small>
+              {latestCat&&latestCat.id&&(
+                <span className="af-pill" style={{"--c":latestCat.color}}>{latestCat.id}</span>
+              )}
             </div>
           </div>
-        </div>
+          {latest.note&&(
+            <blockquote className="af-quote">
+              <div className="tfx-eyebrow">Why they earned it</div>
+              <p>&#8220;{latest.note}&#8221;</p>
+            </blockquote>
+          )}
+          <div className="af-motto">Earned. Not given.</div>
+        </section>
       )}
 
       {/* Prize picker — only shown to the current winner */}
       {isCurrentWinner&&(
-        <div style={{borderRadius:20,marginBottom:14,overflow:"hidden",border:"1px solid "+GOLD+"33",background:"#0f0f0f"}}>
-          <div style={{height:3,background:"linear-gradient(90deg,"+GOLD+","+ORANGE+","+GOLD+"44)"}}/>
-          <div style={{padding:"16px 16px 14px"}}>
+        <section className="tfx-card af-prize">
 
-            {/* Already selected — locked-in state */}
-            {prizeSelection&&!pendingPrize&&(
-              <div>
-                <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:10}}>Your Prize</div>
-                <div style={{background:"linear-gradient(135deg,#1f1700,#1a1200)",borderRadius:14,padding:"14px 16px",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",gap:14}}>
-                  <div style={{fontSize:36,filter:"drop-shadow(0 0 10px "+GOLD+"66)"}}>{PRIZES.find(p=>p.id===prizeSelection.prize)?.emoji||"🎁"}</div>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:15,fontWeight:800,color:GOLD}}>{prizeSelection.label}</div>
-                    {prizeSelection.size&&<div style={{fontSize:12,color:"#888",marginTop:2}}>{PRIZES.find(p=>p.id===prizeSelection.prize)?.optionLabel||"Size"}: <span style={{color:"#fff",fontWeight:600}}>{prizeSelection.size}</span></div>}
-                    <div style={{fontSize:10,color:GREEN,marginTop:4,fontWeight:600}}>✓ Coach has been notified</div>
-                  </div>
-                  <button onClick={()=>{
-                    const p=PRIZES.find(pr=>pr.id===prizeSelection.prize);
-                    setPendingPrize(prizeSelection.prize);
-                    if(p?.freeText){setPendingText(prizeSelection.size||"");setPendingSize(null);}
-                    else{setPendingSize(prizeSelection.size);setPendingText("");}
-                  }}
-                    style={{fontSize:11,color:"#555",background:"none",border:"none",cursor:"pointer",padding:"4px 8px"}}>Change</button>
+          {/* Already selected — locked-in state */}
+          {prizeSelection&&!pendingPrize&&(
+            <>
+              <div className="tfx-eyebrow">Your prize</div>
+              <div className="af-prize-locked">
+                <span className="af-prize-ic">{PRIZES.find(p=>p.id===prizeSelection.prize)?.emoji||"🎁"}</span>
+                <div className="af-prize-txt">
+                  <b>{prizeSelection.label}</b>
+                  {prizeSelection.size&&<small>{PRIZES.find(p=>p.id===prizeSelection.prize)?.optionLabel||"Size"}: <strong>{prizeSelection.size}</strong></small>}
+                  <span className="af-prize-ok">✓ Coach has been notified</span>
                 </div>
-                {prizeSaved&&(
-                  <div style={{fontSize:12,color:GREEN,textAlign:"center",marginTop:10,fontWeight:600}}>🎉 Prize locked in!</div>
-                )}
+                <button className="tfx-btn-ghost tfx-press af-prize-change" onClick={()=>{
+                  const p=PRIZES.find(pr=>pr.id===prizeSelection.prize);
+                  setPendingPrize(prizeSelection.prize);
+                  if(p?.freeText){setPendingText(prizeSelection.size||"");setPendingSize(null);}
+                  else{setPendingSize(prizeSelection.size);setPendingText("");}
+                }}>Change</button>
               </div>
-            )}
+              {prizeSaved&&(
+                <div className="af-prize-saved" role="status">Prize locked in!</div>
+              )}
+            </>
+          )}
 
-            {/* Picker — not yet selected or changing */}
-            {(!prizeSelection||pendingPrize)&&(
-              <div>
-                <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:4}}>Claim Your Prize</div>
-                <div style={{fontSize:11,color:"#555",marginBottom:14}}>You earned it — pick what you want.</div>
+          {/* Picker — not yet selected or changing */}
+          {(!prizeSelection||pendingPrize)&&(
+            <>
+              <div className="af-prize-head">
+                <div className="tfx-eyebrow">Claim your prize</div>
+                <p>You earned it — pick what you want.</p>
+              </div>
 
-                {/* Prize options */}
-                <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
-                  {PRIZES.map(p=>{
-                    const isSelected=pendingPrize===p.id;
-                    return(
-                      <button key={p.id} onClick={()=>{setPendingPrize(p.id);setPendingSize(null);setPendingText("");}}
-                        style={{display:"flex",alignItems:"center",gap:14,padding:"12px 14px",borderRadius:12,border:"1.5px solid "+(isSelected?GOLD+"88":"#1e1e1e"),background:isSelected?"linear-gradient(135deg,#1f1700,#1a1200)":"#161616",cursor:"pointer",textAlign:"left",width:"100%",transition:"all 0.1s"}}>
-                        <span style={{fontSize:28,filter:isSelected?"drop-shadow(0 0 8px "+GOLD+"66)":"none"}}>{p.emoji}</span>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:14,fontWeight:isSelected?700:500,color:isSelected?GOLD:"#ccc"}}>{p.label}</div>
-                          {p.sizes&&<div style={{fontSize:10,color:"#555",marginTop:1}}>Choose size below</div>}
-                        </div>
-                        <div style={{width:20,height:20,borderRadius:"50%",border:"2px solid "+(isSelected?GOLD:"#333"),background:isSelected?GOLD:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                          {isSelected&&<div style={{width:8,height:8,borderRadius:"50%",background:"#1a1200"}}/>}
-                        </div>
-                      </button>
-                    );
-                  })}
+              {/* Prize options */}
+              <div className="af-prize-opts" role="radiogroup" aria-label="Prize">
+                {PRIZES.map(p=>{
+                  const isSelected=pendingPrize===p.id;
+                  return(
+                    <button key={p.id} role="radio" aria-checked={isSelected} className={"af-prize-opt tfx-press"+(isSelected?" is-on":"")} onClick={()=>{setPendingPrize(p.id);setPendingSize(null);setPendingText("");}}>
+                      <span className="af-prize-ic">{p.emoji}</span>
+                      <span className="af-prize-txt">
+                        <b>{p.label}</b>
+                        {p.sizes&&<small>Choose size below</small>}
+                      </span>
+                      <span className="af-radio"/>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Size picker — for tee/shorts */}
+              {pendingPrizeObj?.sizes&&(
+                <div>
+                  <div className="tfx-eyebrow">Select {pendingPrizeObj.optionLabel||"size"}</div>
+                  <div className="af-prize-sizes">
+                    {pendingPrizeObj.sizes.map(sz=>{
+                      const isSz=pendingSize===sz;
+                      return(
+                        <button key={sz} className={"tfx-chipbtn tfx-press"+(isSz?" is-on":"")} aria-pressed={isSz} onClick={()=>setPendingSize(sz)}>
+                          {sz}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+              )}
 
-                {/* Size picker — for tee/shorts */}
-                {pendingPrizeObj?.sizes&&(
-                  <div style={{marginBottom:14}}>
-                    <div style={{fontSize:10,color:"#666",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.08em"}}>Select {pendingPrizeObj.optionLabel||"size"}</div>
-                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                      {pendingPrizeObj.sizes.map(sz=>{
-                        const isSz=pendingSize===sz;
-                        return(
-                          <button key={sz} onClick={()=>setPendingSize(sz)}
-                            style={{padding:"10px 16px",borderRadius:10,border:"2px solid "+(isSz?GOLD:"#252525"),background:isSz?"linear-gradient(135deg,"+GOLD+"22,"+GOLD+"11)":"#1a1a1a",color:isSz?GOLD:"#666",fontSize:13,fontWeight:isSz?800:400,cursor:"pointer",fontFamily:"Georgia,serif",minWidth:52,transition:"all 0.1s",boxShadow:isSz?"0 0 12px "+GOLD+"33":"none"}}>
-                            {sz}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+              {/* Free-text — for restaurant gift card */}
+              {pendingPrizeObj?.freeText&&(
+                <label>
+                  <div className="tfx-eyebrow">Which restaurant?</div>
+                  <input
+                    className="tfx-field af-prize-field"
+                    value={pendingText}
+                    onChange={e=>setPendingText(e.target.value)}
+                    placeholder="Type the restaurant name..."
+                  />
+                </label>
+              )}
 
-                {/* Free-text — for restaurant gift card */}
-                {pendingPrizeObj?.freeText&&(
-                  <div style={{marginBottom:14}}>
-                    <div style={{fontSize:10,color:"#666",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.08em"}}>Which restaurant?</div>
-                    <input
-                      value={pendingText}
-                      onChange={e=>setPendingText(e.target.value)}
-                      placeholder="Type the restaurant name..."
-                      style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"1.5px solid "+(pendingText.trim()?GOLD+"66":"#252525"),background:"#1a1a1a",color:"#fff",fontSize:13,fontFamily:"Georgia,serif",outline:"none",boxSizing:"border-box",transition:"border-color 0.15s"}}
-                    />
-                  </div>
-                )}
-
-                <button onClick={savePrize} disabled={!canSave||savingPrize}
-                  style={{width:"100%",padding:"14px",borderRadius:12,border:"none",background:canSave?"linear-gradient(135deg,"+GOLD+","+GOLD+"cc)":"#1a1a1a",color:canSave?"#1a1200":"#444",fontSize:14,fontWeight:800,cursor:canSave?"pointer":"not-allowed",fontFamily:"Georgia,serif",letterSpacing:"0.04em",boxShadow:canSave?"0 4px 20px "+GOLD+"44":"none"}}>
-                  {savingPrize?"Saving...":(canSave?"🎁 Claim Prize":"Select a prize above")}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+              <button className="tfx-btn tfx-press af-gold-btn" onClick={savePrize} disabled={!canSave||savingPrize}>
+                {savingPrize?"Saving...":(canSave?"Claim prize":"Select a prize above")}
+              </button>
+            </>
+          )}
+        </section>
       )}
 
       {/* Previous winners */}
       {anvils.length>1&&(
-        <div style={{background:"#0e0e0e",borderRadius:16,overflow:"hidden",border:"0.5px solid #1e1e1e"}}>
-          <div style={{padding:"12px 16px",borderBottom:"0.5px solid #1a1a1a",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{fontSize:11,fontWeight:700,color:"#777",textTransform:"uppercase",letterSpacing:"0.1em"}}>Previous winners</div>
-            <div style={{fontSize:10,color:"#444"}}>{anvils.length-1} before this</div>
+        <section className="tfx-card af-card af-past">
+          <div className="af-sec-head">
+            <div className="tfx-eyebrow">Previous winners</div>
+            <span>{anvils.length-1} before this</span>
           </div>
-          {anvils.slice(1).map((a,i)=>{
-            const ath=athletes[a.athlete_name];
-            const cat=catInfo(a.athlete_role);
-            const timesWon=anvils.filter(x=>x.athlete_name===a.athlete_name).length;
-            return(
-              <div key={i} style={{padding:"12px 16px",borderBottom:i<anvils.length-2?"0.5px solid #171717":"none"}}>
-                <div style={{display:"flex",alignItems:"center",gap:12}}>
-                  <div style={{width:40,height:40,borderRadius:"50%",overflow:"hidden",background:"#1a1a1a",border:"1.5px solid #2a2a2a",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,color:"#666"}}>
-                    {ath?.photo_url?
-                      <img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt={a.athlete_name}/>
-                      :(a.athlete_name||"?")[0]
-                    }
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3,flexWrap:"wrap"}}>
-                      <div style={{fontSize:13,fontWeight:600,color:"#ddd"}}>{a.athlete_name}</div>
-                      <span style={{fontSize:9,background:cat.color+"18",color:cat.color,padding:"2px 7px",borderRadius:20,border:"0.5px solid "+cat.color+"33"}}>{cat.emoji} {cat.id}</span>
-                      {timesWon>1&&<span style={{fontSize:9,color:"#555"}}>⚒ ×{timesWon}</span>}
+          <ul>
+            {anvils.slice(1).map((a,i)=>{
+              const ath=athletes[a.athlete_name];
+              const cat=catInfo(a.athlete_role);
+              const timesWon=anvils.filter(x=>x.athlete_name===a.athlete_name).length;
+              return(
+                <li key={i}>
+                  {avatar(a.athlete_name,ath,"")}
+                  <div className="af-past-txt">
+                    <div className="af-past-top">
+                      <b>{a.athlete_name}</b>
+                      {cat.id&&<span className="af-pill" style={{"--c":cat.color}}>{cat.id}</span>}
+                      {timesWon>1&&<small>⚒ ×{timesWon}</small>}
                     </div>
                     {a.note&&(
-                      <div style={{fontSize:11,color:"#888",fontStyle:"italic",lineHeight:1.5}}>&#8220;{a.note}&#8221;</div>
+                      <p>&#8220;{a.note}&#8221;</p>
                     )}
-                    <div style={{fontSize:10,color:"#444",marginTop:2}}>{a.date_awarded}</div>
+                    <small>{a.date_awarded}</small>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
     </div>
   );
