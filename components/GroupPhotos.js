@@ -1,8 +1,5 @@
 import { useState, useEffect } from "react";
-import { GOLD, ORANGE } from "../lib/constants";
 import { supabase } from "../lib/supabase";
-import { Skeleton } from "./Skeleton";
-import EmptyState from "./EmptyState";
 import Icon from "./Icon";
 
 export default function GroupPhotos(){
@@ -28,88 +25,89 @@ export default function GroupPhotos(){
   },[]);
 
   if(loading)return(
-    <div>
-      <Skeleton height={64} radius={12} style={{marginBottom:12}}/>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-        {Array.from({length:4}).map((_,i)=><Skeleton key={i} height={150} radius={12}/>)}
+    <div className="tfx ae ae-gold" aria-label="Loading">
+      <div className="ae-skel" style={{height:64}}/>
+      <div className="ae-ph-grid-skel">
+        {Array.from({length:4}).map((_,i)=><div key={i} className="ae-skel" style={{height:150}}/>)}
       </div>
     </div>
   );
 
   return(
-    <div>
-      {/* Drive links — glass card */}
-      {driveLinks.length>0&&(
-        <div style={{background:"rgba(255,255,255,0.045)",borderRadius:14,padding:"1.25rem",marginBottom:12,border:"1px solid rgba(255,255,255,0.08)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)",position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+ORANGE+",transparent)"}}/>
-          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-            <Icon name="fileText" size={14} color={GOLD}/>
-            <span style={{fontSize:13,fontWeight:700,color:"#fff"}}>Program Documents</span>
-          </div>
-          <div style={{fontSize:11,color:"#555",marginBottom:12}}>Tap to open in Google Drive</div>
-          {driveLinks.map((link,i)=>{
-            const d=JSON.parse(link.message||"{}");
-            return(
-              <button key={i} onClick={()=>window.open(d.url,"_blank")}
-                style={{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.04)",cursor:"pointer",fontFamily:"Georgia,serif",marginBottom:8,textAlign:"left",transition:"background 0.15s"}}>
-                <div style={{width:40,height:40,borderRadius:10,background:"linear-gradient(135deg,#1a66cc,#4285f4)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <Icon name="fileText" size={18} color="#fff"/>
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:600,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d.title||"Program Document"}</div>
-                  <div style={{fontSize:11,color:"#555",marginTop:2}}>{d.description||"Tap to view in Google Drive"}</div>
-                </div>
-                <Icon name="chevronRight" size={14} color="rgba(255,255,255,0.3)"/>
-              </button>
-            );
-          })}
+    <div className="tfx ae ae-gold">
+      <header className="ae-head">
+        <div>
+          <div className="tfx-eyebrow">Group</div>
+          <h2>Photos</h2>
+          <p>{photos.length>0?<>{photos.length} photo{photos.length!==1?"s":""} · tap to expand</>:"Group photos and program documents."}</p>
         </div>
+      </header>
+
+      {/* Drive links */}
+      {driveLinks.length>0&&(
+        <section className="tfx-card ae-card">
+          <div className="ae-sec is-stack">
+            <div className="tfx-eyebrow">Program documents</div>
+            <span>Tap to open in Google Drive</span>
+          </div>
+          <div className="ae-docs">
+            {driveLinks.map((link,i)=>{
+              const d=JSON.parse(link.message||"{}");
+              return(
+                <button key={i} type="button" className="ae-doc tfx-press" onClick={()=>window.open(d.url,"_blank")}>
+                  <span className="ae-doc-ico"><Icon name="fileText" size={18}/></span>
+                  <span className="ae-doc-txt">
+                    <b>{d.title||"Program Document"}</b>
+                    <small>{d.description||"Tap to view in Google Drive"}</small>
+                  </span>
+                  <span className="ae-chev"><Icon name="chevronRight" size={16}/></span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {/* Photos grid */}
       {photos.length>0?(
-        <>
-          <div style={{fontSize:11,color:"#555",marginBottom:10,paddingLeft:2,display:"flex",alignItems:"center",gap:6}}>
-            <Icon name="camera" size={12} color="#555"/>
-            {photos.length} photo{photos.length!==1?"s":""} · tap to expand
-          </div>
-          <div style={{columns:2,columnGap:8}}>
-            {photos.map((p,i)=>{
-              const caption=p.message||"";
-              const url=p.day;
-              const dateStr=new Date(p.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
-              return(
-                <div key={i} onClick={()=>setSelected({url,caption,date:dateStr})}
-                  style={{breakInside:"avoid",marginBottom:8,borderRadius:12,overflow:"hidden",cursor:"pointer",position:"relative",display:"block",border:"1px solid rgba(255,255,255,0.08)"}}>
-                  <img src={url} style={{width:"100%",display:"block"}} alt=""/>
-                  <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"22px 10px 8px",background:"linear-gradient(to top,rgba(0,0,0,0.75),transparent)"}}>
-                    {caption&&<div style={{fontSize:10,color:"#fff",lineHeight:1.3,fontWeight:600,textShadow:"0 1px 4px rgba(0,0,0,0.7)"}}>{caption}</div>}
-                    <div style={{fontSize:9,color:"rgba(255,255,255,0.45)",marginTop:caption?2:0}}>{dateStr}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
+        <div className="ae-masonry">
+          {photos.map((p,i)=>{
+            const caption=p.message||"";
+            const url=p.day;
+            const dateStr=new Date(p.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+            return(
+              <button key={i} type="button" className="ae-ph" onClick={()=>setSelected({url,caption,date:dateStr})} aria-label={caption?"Open photo: "+caption:"Open photo from "+dateStr}>
+                <img src={url} alt=""/>
+                <span className="ae-ph-cap">
+                  {caption&&<b>{caption}</b>}
+                  <span>{dateStr}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       ):(
-        <EmptyState icon="camera" color={GOLD} title="No photos yet" hint="Coach Ant will post group photos here. Check back soon!" />
+        <section className="tfx-card ae-empty">
+          <span className="ae-empty-ico"><Icon name="camera" size={24}/></span>
+          <b>No photos yet</b>
+          <p>Coach Ant will post group photos here. Check back soon!</p>
+        </section>
       )}
 
       {/* Fullscreen lightbox */}
       {selected&&(
-        <div onClick={()=>setSelected(null)}
-          style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.97)",zIndex:200,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,padding:"1.5rem"}}>
-          <img src={selected.url} style={{maxWidth:"95vw",maxHeight:"72vh",borderRadius:12,objectFit:"contain"}} alt=""/>
+        <div className="ae-lb" onClick={()=>setSelected(null)} role="dialog" aria-modal="true" aria-label="Photo">
+          <button type="button" className="ae-lb-x" onClick={()=>setSelected(null)} aria-label="Close photo">✕</button>
+          <img src={selected.url} alt=""/>
           {selected.caption&&(
-            <div style={{fontSize:13,color:"#fff",textAlign:"center",maxWidth:"80vw",lineHeight:1.5,fontWeight:500}}>{selected.caption}</div>
+            <div className="ae-lb-cap">{selected.caption}</div>
           )}
-          <div style={{fontSize:11,color:"#555"}}>{selected.date}</div>
-          <a href={selected.url} download target="_blank" rel="noopener noreferrer"
-            onClick={e=>e.stopPropagation()}
-            style={{display:"inline-flex",alignItems:"center",gap:7,padding:"10px 22px",borderRadius:22,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.16)",color:"#fff",fontSize:12,fontWeight:600,textDecoration:"none",cursor:"pointer"}}>
-            <Icon name="camera" size={13} color="#fff"/> Save Photo
+          <div className="ae-lb-date">{selected.date}</div>
+          <a className="ae-lb-save" href={selected.url} download target="_blank" rel="noopener noreferrer"
+            onClick={e=>e.stopPropagation()}>
+            <Icon name="camera" size={15}/> Save photo
           </a>
-          <div style={{fontSize:10,color:"#444"}}>Tap anywhere to close</div>
+          <div className="ae-lb-hint">Tap anywhere to close</div>
         </div>
       )}
     </div>

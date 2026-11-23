@@ -95,20 +95,22 @@ export default function NotesTab({athleteId}){
   const catLabel=category==="mindset"?"Mindset Monday":"Fellowship Friday";
 
   return(
-    <div>
+    <div className="tfx ae ae-notes">
+      <header className="ae-head">
+        <div>
+          <div className="tfx-eyebrow">Study notes</div>
+          <h2>{catLabel}</h2>
+          <p>Write your personal takeaway. Only you can see these.</p>
+        </div>
+      </header>
+
       {/* Category switcher */}
-      <div style={{display:"flex",gap:8,marginBottom:12,background:"#111",borderRadius:12,padding:4}}>
+      <div className="ir-seg" role="tablist" aria-label="Notes category">
         {[{id:"mindset",label:"Mindset Monday",color:GOLD},{id:"fellowship",label:"Fellowship Friday",color:"#C0392B"}].map(c=>(
-          <button key={c.id} onClick={()=>setCategory(c.id)} style={{flex:1,padding:"10px",borderRadius:10,border:"none",background:category===c.id?"linear-gradient(135deg,"+c.color+"cc,"+c.color+"88)":"transparent",color:category===c.id?"#fff":"#555",fontSize:12,fontWeight:category===c.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
+          <button key={c.id} type="button" role="tab" aria-selected={category===c.id} className={category===c.id?"is-on":""} onClick={()=>setCategory(c.id)}>
             {c.label}
           </button>
         ))}
-      </div>
-
-      {/* Header */}
-      <div style={{background:"#111",borderRadius:12,padding:"1rem 1.25rem",marginBottom:12,border:"1px solid "+catColor+"33",borderLeft:"3px solid "+catColor}}>
-        <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:2}}>{catLabel} — Your Notes</div>
-        <div style={{fontSize:12,color:"#555"}}>Write your personal takeaway. Only you can see these.</div>
       </div>
 
       {/* Week cards */}
@@ -120,36 +122,40 @@ export default function NotesTab({athleteId}){
         const isSaving=saving===key;
         const isSaved=saved===key;
         const isError=saveError===key;
+        const state=isError?" is-err":isDirty?" is-dirty":isSaved?" is-saved":"";
         return(
-          <div key={i} style={{background:"#111",borderRadius:14,padding:"14px",marginBottom:10,border:"1px solid "+(isError?RED+"55":isDirty?"#333":isSaved?GREEN+"44":"#1a1a1a"),borderLeft:"3px solid "+w.color,transition:"border-color 0.2s"}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-              <div style={{fontSize:10,color:w.color,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.08em"}}>Week {w.week}</div>
-              {isSaved&&<div style={{fontSize:10,color:GREEN,fontWeight:700}}>✓ Saved</div>}
-              {isSaving&&<div style={{fontSize:10,color:"#555"}}>Saving...</div>}
-              {isError&&<div style={{fontSize:10,color:RED,fontWeight:700}}>Save failed — try again</div>}
-              {saved_val&&!isSaving&&!isSaved&&!isError&&<div style={{fontSize:10,color:"#444"}}>✓ saved</div>}
+          <section key={i} className={"tfx-card ae-week"+state} style={{"--c":w.color}}>
+            <div className="ae-week-top">
+              <div className="tfx-eyebrow"><i aria-hidden="true"/>Week {w.week}</div>
+              {isSaved&&<span className="ae-status is-saved">✓ Saved</span>}
+              {isSaving&&<span className="ae-status">Saving...</span>}
+              {isError&&<span className="ae-status is-err">Save failed — try again</span>}
+              {saved_val&&!isSaving&&!isSaved&&!isError&&<span className="ae-status">✓ saved</span>}
             </div>
-            <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:6,letterSpacing:"-0.01em"}}>{w.title}</div>
-            <div style={{background:w.color+"12",borderRadius:8,padding:"8px 12px",marginBottom:8,borderLeft:"2px solid "+w.color+"44"}}>
-              <div style={{fontSize:10,color:w.color,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>{w.scripture}</div>
-              <div style={{fontSize:12,color:"#bbb",fontStyle:"italic",lineHeight:1.7}}>"{w.verse}"</div>
+            <h3>{w.title}</h3>
+            <div className="ae-scrip">
+              <span className="ae-ref">{w.scripture}</span>
+              <p className="ae-quote">“{w.verse}”</p>
             </div>
-            <div style={{fontSize:11,color:"#555",fontStyle:"italic",marginBottom:8}}>Key idea: {w.takeaway}</div>
+            <p className="ae-key">Key idea: <b>{w.takeaway}</b></p>
             <textarea
+              className="tfx-field ae-ta is-grow"
               value={draft}
               onChange={e=>setDrafts(prev=>({...prev,[key]:e.target.value}))}
               placeholder="Your personal takeaway from this session..."
-              style={{width:"100%",minHeight:72,padding:"10px",borderRadius:8,border:"1px solid "+(isDirty?catColor+"66":"#222"),fontSize:13,fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",background:"#0e0e0e",color:"#ddd",lineHeight:1.6,transition:"border-color 0.2s"}}
+              aria-label={"Your notes for week "+w.week}
             />
-            <div style={{display:"flex",justifyContent:"flex-end",marginTop:8}}>
+            <div className="ae-week-act">
               <button
+                type="button"
+                className={(isDirty?"tfx-btn ae-btn":"tfx-btn-ghost")+" tfx-press ae-save"+(isSaved?" is-saved":"")}
+                style={{"--c":catColor}}
                 onClick={()=>saveNote(key,draft)}
-                disabled={!isDirty&&!!saved_val||isSaving}
-                style={{padding:"9px 20px",borderRadius:8,border:"none",background:isDirty?"linear-gradient(135deg,"+catColor+","+catColor+"cc)":isSaved?GREEN:"#1a1a1a",color:isDirty||isSaved?"#fff":"#444",fontSize:12,fontWeight:700,cursor:isDirty?"pointer":"default",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:isDirty?"0 4px 14px "+catColor+"44":"none"}}>
-                {isSaving?"Saving...":isSaved?"✓ Saved":saved_val?"Update":"Save Note"}
+                disabled={!isDirty&&!!saved_val||isSaving}>
+                {isSaving?"Saving...":isSaved?"✓ Saved":saved_val?"Update":"Save note"}
               </button>
             </div>
-          </div>
+          </section>
         );
       })}
     </div>

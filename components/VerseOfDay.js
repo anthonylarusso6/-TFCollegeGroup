@@ -1,8 +1,3 @@
-import { useState, useEffect, useRef } from "react";
-import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
-import { supabase } from "../lib/supabase";
-
-
 export default function VerseOfDay(){
   const VERSES=[
     {ref:"Proverbs 27:17",text:"As iron sharpens iron, so one person sharpens another."},
@@ -22,23 +17,35 @@ export default function VerseOfDay(){
   ];
   const dayIdx=new Date().getDay()+Math.floor(new Date().getDate()/7);
   const verse=VERSES[dayIdx%VERSES.length];
-  const PUR="#534AB7",BG="#0f0f0f";
   return(
-    <div>
-      <div style={{background:BG,borderRadius:12,padding:"2rem",marginBottom:12,border:"0.5px solid "+PUR+"44",textAlign:"center"}}>
-        <div style={{fontSize:11,color:PUR,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:16}}>Verse of the Day</div>
-        <div style={{fontSize:16,color:"#fff",fontStyle:"italic",lineHeight:1.8,marginBottom:16}}>"{verse.text}"</div>
-        <div style={{fontSize:13,fontWeight:500,color:PUR}}>{verse.ref}</div>
-      </div>
-      <div style={{background:"rgba(255,255,255,0.045)",borderRadius:12,padding:"1.25rem",border:"1px solid rgba(255,255,255,0.08)",boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)"}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:12}}>More scriptures</div>
-        {VERSES.filter((_,i)=>i!==dayIdx%VERSES.length).slice(0,6).map((v,i)=>(
-          <div key={i} style={{padding:"10px 0",borderBottom:i<5?"0.5px solid rgba(255,255,255,0.06)":"none"}}>
-            <div style={{fontSize:11,fontWeight:500,color:PUR,marginBottom:3}}>{v.ref}</div>
-            <div style={{fontSize:12,color:"#aaa",fontStyle:"italic",lineHeight:1.6}}>"{v.text}"</div>
-          </div>
-        ))}
-      </div>
+    <div className="tfx ae ae-violet">
+      <header className="ae-head">
+        <div>
+          <div className="tfx-eyebrow">Scripture</div>
+          <h2>Verse of the day</h2>
+        </div>
+      </header>
+
+      <section className="tfx-card ae-votd">
+        <div className="tfx-eyebrow">Today</div>
+        <p className="ae-quote">“{verse.text}”</p>
+        <div className="ae-votd-rule" aria-hidden="true"/>
+        <div className="ae-ref">{verse.ref}</div>
+      </section>
+
+      <section className="tfx-card ae-card">
+        <div className="ae-sec">
+          <div className="tfx-eyebrow">More scriptures</div>
+        </div>
+        <ul className="ae-more-list">
+          {VERSES.filter((_,i)=>i!==dayIdx%VERSES.length).slice(0,6).map((v,i)=>(
+            <li key={i}>
+              <span className="ae-ref">{v.ref}</span>
+              <p className="ae-quote">“{v.text}”</p>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }
