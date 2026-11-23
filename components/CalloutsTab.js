@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { nowEST } from "../lib/dates";
 import Icon from "./Icon";
-import { RED, GREEN, GOLD, STEEL } from "../lib/constants";
+import { RED, STEEL } from "../lib/constants";
 
 export default function CalloutsTab(){
   const[calloutLogs,setCalloutLogs]=useState(null);
@@ -36,7 +36,7 @@ export default function CalloutsTab(){
               setBroadcastSending(false);
               setTimeout(()=>setBroadcastResult(null),4000);
             };
-            if(calloutLoading||!calloutLogs){return(<div style={{textAlign:"center",padding:"40px",color:"#555",fontSize:13}}>Loading callout log...</div>);}
+            if(calloutLoading||!calloutLogs){return(<div className="tfx cb"><div className="tfx-card att-loading">Loading callout log...</div></div>);}
             const filtered=(calloutLogs||[]).filter(l=>!calloutAthFilter||l.athletes?.name?.toLowerCase().includes(calloutAthFilter.toLowerCase()));
             const todayLogs=filtered.filter(l=>logDate(l.logged_at)===estToday);
             const todayCrunches=todayLogs.reduce((s,l)=>s+(l.crunches||0),0);
@@ -44,76 +44,87 @@ export default function CalloutsTab(){
             filtered.forEach(l=>{const d=logDate(l.logged_at);if(!grouped[d])grouped[d]=[];grouped[d].push(l);});
             const sortedDates=Object.keys(grouped).sort((a,b)=>b.localeCompare(a));
             return(
-              <div>
+              <div className="tfx cb cb-calls">
                 {/* Broadcast push notification */}
-                <div style={{background:"#0e0e0e",borderRadius:14,padding:"14px 16px",marginBottom:14,border:"1px solid #1e2a3a"}}>
-                  <div style={{fontSize:9,color:GOLD,textTransform:"uppercase",letterSpacing:"0.18em",fontWeight:900,marginBottom:10}}>Send Push Notification</div>
-                  <input value={broadcastTitle} onChange={e=>setBroadcastTitle(e.target.value)} placeholder="Title (e.g. Practice Update)" maxLength={80} style={{width:"100%",padding:"9px 12px",borderRadius:9,border:"0.5px solid #2a2a2a",background:"#111",color:"#ddd",fontSize:13,fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:8,outline:"none"}}/>
-                  <input value={broadcastBody} onChange={e=>setBroadcastBody(e.target.value)} placeholder="Message (optional)" maxLength={150} style={{width:"100%",padding:"9px 12px",borderRadius:9,border:"0.5px solid #2a2a2a",background:"#111",color:"#ddd",fontSize:13,fontFamily:"Georgia,serif",boxSizing:"border-box",marginBottom:8,outline:"none"}}/>
-                  <button onClick={sendBroadcast} disabled={broadcastSending||!broadcastTitle.trim()} style={{width:"100%",padding:"10px",borderRadius:9,border:"none",background:(!broadcastTitle.trim()||broadcastSending)?"#1a1a1a":GOLD,color:(!broadcastTitle.trim()||broadcastSending)?"#444":"#000",fontSize:13,fontWeight:900,cursor:(!broadcastTitle.trim()||broadcastSending)?"default":"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.04em",transition:"all 0.15s"}}>
-                    {broadcastSending?"Sending…":"Send to All Athletes"}
+                <section className="tfx-card cb-sec cb-push">
+                  <div className="cb-sec-head">
+                    <div>
+                      <div className="tfx-eyebrow cb-eb-gold">Broadcast</div>
+                      <h3>Send push notification</h3>
+                    </div>
+                    <Icon name="bell" size={20}/>
+                  </div>
+                  <input className="tfx-field cb-field" value={broadcastTitle} onChange={e=>setBroadcastTitle(e.target.value)} placeholder="Title (e.g. Practice Update)" maxLength={80} aria-label="Notification title"/>
+                  <input className="tfx-field cb-field" value={broadcastBody} onChange={e=>setBroadcastBody(e.target.value)} placeholder="Message (optional)" maxLength={150} aria-label="Notification message"/>
+                  <button className="tfx-btn cb-btn-gold cb-btn-block tfx-press" onClick={sendBroadcast} disabled={broadcastSending||!broadcastTitle.trim()}>
+                    {broadcastSending?"Sending…":"Send to all athletes"}
                   </button>
                   {broadcastResult&&(
-                    <div style={{marginTop:8,fontSize:12,color:broadcastResult.startsWith("Error")?RED:GREEN,fontWeight:700,textAlign:"center"}}>{broadcastResult}</div>
+                    <p className={"cb-status "+(broadcastResult.startsWith("Error")?"is-err":"is-ok")} role="status">{broadcastResult}</p>
                   )}
-                </div>
-                <div style={{borderRadius:20,marginBottom:16,overflow:"hidden",border:"1px solid "+RED+"33",boxShadow:"0 8px 32px #00000060"}}>
-                  <div style={{background:"linear-gradient(140deg,"+RED+"30,"+RED+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+RED+","+RED+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="alertTriangle" size={66} color="#fff"/></div>
-                    <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+RED+"44,"+RED+"22)",border:"1px solid "+RED+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>⚠️</div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:8,color:RED,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Weight Room</div>
-                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Callout Log</div>
-                        <div style={{fontSize:11,color:"#666",marginTop:1}}>Today: {todayLogs.length} violation{todayLogs.length!==1?"s":""} · {todayCrunches} crunches owed</div>
-                      </div>
-                      <button onClick={()=>{setCalloutLogs(null);loadCalloutLogs();}} style={{padding:"6px 10px",borderRadius:10,border:"1px solid #222",background:"transparent",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>{calloutLoading?"...":"↻"}</button>
+                </section>
+
+                {/* Callout log header + filter */}
+                <section className="tfx-card cb-head">
+                  <div className="cb-head-top">
+                    <div>
+                      <div className="tfx-eyebrow cb-eb-red">Weight room</div>
+                      <h2>Callout log</h2>
+                      <p>Today: {todayLogs.length} violation{todayLogs.length!==1?"s":""} · {todayCrunches} crunches owed</p>
                     </div>
+                    <button className="att-nav tfx-press cb-refresh" aria-label="Refresh callout log" onClick={()=>{setCalloutLogs(null);loadCalloutLogs();}}>
+                      {calloutLoading?"…":<Icon name="refreshCw" size={17}/>}
+                    </button>
                   </div>
-                </div>
-                <div style={{position:"relative",marginBottom:12}}>
-                  <input value={calloutAthFilter} onChange={e=>setCalloutAthFilter(e.target.value)} placeholder="Filter by athlete..." style={{width:"100%",padding:"10px 12px 10px 34px",borderRadius:10,border:"0.5px solid #2a2a2a",fontSize:13,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",boxSizing:"border-box"}}/>
-                  <div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:13,color:"#555"}}><Icon name="search" size={15} color="rgba(255,255,255,0.4)"/></div>
-                  {calloutAthFilter&&<button onClick={()=>setCalloutAthFilter("")} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:14,color:"#aaa",cursor:"pointer"}}>✕</button>}
-                </div>
+                  <div className="cb-search">
+                    <Icon name="search" size={16}/>
+                    <input className="tfx-field" value={calloutAthFilter} onChange={e=>setCalloutAthFilter(e.target.value)} placeholder="Filter by athlete..." aria-label="Filter by athlete"/>
+                    {calloutAthFilter&&<button className="cb-x" aria-label="Clear filter" onClick={()=>setCalloutAthFilter("")}>✕</button>}
+                  </div>
+                </section>
+
                 {filtered.length===0&&(
-                  <div style={{textAlign:"center",padding:"3rem",color:"#555",fontSize:12,fontStyle:"italic"}}>No callouts logged yet.</div>
+                  <div className="tfx-card att-loading">No callouts logged yet.</div>
                 )}
-                {sortedDates.map(dateStr=>{
-                  const dayLogs=grouped[dateStr];
-                  const isToday=dateStr===estToday;
-                  const dayCrunches=dayLogs.reduce((s,l)=>s+(l.crunches||0),0);
-                  const[y,m,d]=dateStr.split("-");
-                  const label=isToday?"Today":new Date(Number(y),Number(m)-1,Number(d)).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
-                  return(
-                    <div key={dateStr} style={{marginBottom:14}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                        <div style={{fontSize:10,fontWeight:700,color:isToday?RED:"#555",textTransform:"uppercase",letterSpacing:"0.08em"}}>{label}</div>
-                        <div style={{flex:1,height:"0.5px",background:"#1e1e1e"}}/>
-                        <div style={{fontSize:10,color:RED,fontWeight:700}}>{dayCrunches} crunches</div>
-                      </div>
-                      {dayLogs.map((l,li)=>{
-                        const ath=l.athletes;
-                        return(
-                          <div key={li} style={{background:"#111",borderRadius:12,marginBottom:6,padding:"10px 14px",border:"1px solid "+(isToday?RED+"22":"#1a1a1a"),display:"flex",alignItems:"center",gap:10}}>
-                            <div style={{width:34,height:34,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
-                              {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(ath?.name||"?")[0]}
-                            </div>
-                            <div style={{flex:1,minWidth:0}}>
-                              <div style={{fontSize:13,fontWeight:600,color:"#ddd"}}>{ath?.name||"Unknown"}</div>
-                              <div style={{fontSize:11,color:"#555",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{l.violation}{l.count>1?" · "+l.count+"x":""}</div>
-                            </div>
-                            <div style={{textAlign:"right",flexShrink:0}}>
-                              <div style={{fontSize:14,fontWeight:800,color:RED}}>{l.crunches}</div>
-                              <div style={{fontSize:9,color:l.type==="selfreport"?GREEN:"#555",fontWeight:l.type==="selfreport"?700:400}}>{l.type==="selfreport"?"self":"called out"}</div>
-                            </div>
+                {sortedDates.length>0&&(
+                  <section className="tfx-card cb-log">
+                    {sortedDates.map(dateStr=>{
+                      const dayLogs=grouped[dateStr];
+                      const isToday=dateStr===estToday;
+                      const dayCrunches=dayLogs.reduce((s,l)=>s+(l.crunches||0),0);
+                      const[y,m,d]=dateStr.split("-");
+                      const label=isToday?"Today":new Date(Number(y),Number(m)-1,Number(d)).toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+                      return(
+                        <div key={dateStr} className={"cb-day"+(isToday?" is-today":"")}>
+                          <div className="cb-day-head">
+                            <b>{label}</b>
+                            <span>{dayCrunches} crunches</span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
+                          <ul className="cb-list">
+                            {dayLogs.map((l,li)=>{
+                              const ath=l.athletes;
+                              return(
+                                <li key={li} className="cb-row is-pad">
+                                  <span className="rk-av" style={{"--c":ath?.role==="forge"?RED:STEEL}}>
+                                    {ath?.photo_url?<img src={ath.photo_url} alt=""/>:(ath?.name||"?")[0]}
+                                  </span>
+                                  <span className="cb-who">
+                                    <b>{ath?.name||"Unknown"}</b>
+                                    <small>{l.violation}{l.count>1?" · "+l.count+"x":""}</small>
+                                  </span>
+                                  <span className="cb-amt">
+                                    <b>{l.crunches}</b>
+                                    <small className={l.type==="selfreport"?"is-self":""}>{l.type==="selfreport"?"self":"called out"}</small>
+                                  </span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      );
+                    })}
+                  </section>
+                )}
               </div>
             );
 }

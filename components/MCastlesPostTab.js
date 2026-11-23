@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { RED, GREEN, GOLD, ORANGE } from "../lib/constants";
+import Icon from "./Icon";
 
 export default function MCastlesPostTab(){
   const[mcCurrentPhoto,setMcCurrentPhoto]=useState(null);
@@ -71,43 +71,42 @@ export default function MCastlesPostTab(){
     setMcUploading(false);
   };
 
+  const canPost=!(mcUploading||(!mcFile&&!mcCaption.trim()));
+
   return (
-            <div>
-              {/* Hero banner */}
-              <div style={{borderRadius:16,marginBottom:14,overflow:"hidden",border:"1px solid "+ORANGE+"44",position:"relative"}}>
-                <div style={{background:"linear-gradient(140deg,#1a0800,#0f0600)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+ORANGE+","+GOLD+",transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.07,lineHeight:1,userSelect:"none"}}>🍑</div>
-                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                    <div style={{width:52,height:52,borderRadius:14,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0,boxShadow:"0 0 20px "+ORANGE+"33"}}>🍑🚀</div>
-                    <div>
-                      <div style={{fontSize:9,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.22em",fontWeight:900,marginBottom:2}}>MCASTLES</div>
-                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Photo of the Week</div>
-                      <div style={{fontSize:11,color:"#555",marginTop:1}}>Upload · Motivate · Inspire</div>
-                    </div>
-                  </div>
+            <div className="tfx cb cb-mc">
+              {/* Header */}
+              <section className="tfx-card cb-head">
+                <div>
+                  <div className="tfx-eyebrow cb-eb-ember">MCastles</div>
+                  <h2>Photo of the week</h2>
+                  <p>Upload · Motivate · Inspire</p>
                 </div>
-              </div>
+              </section>
 
               {/* Currently live */}
               {mcCurrentPhoto&&(
-                <div style={{background:"#111",borderRadius:14,padding:"14px",marginBottom:14,border:"0.5px solid #1e1e1e"}}>
-                  <div style={{fontSize:10,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.15em",fontWeight:700,marginBottom:8}}>Currently Live</div>
-                  {mcCurrentPhoto.week_label&&<div style={{fontSize:11,color:"#777",marginBottom:6}}>{mcCurrentPhoto.week_label}</div>}
-                  {mcCurrentPhoto.day&&<img src={mcCurrentPhoto.day} alt="Current motivational" style={{width:"100%",borderRadius:10,marginBottom:8,display:"block"}}/>}
-                  {mcCurrentPhoto.message&&<div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>&ldquo;{mcCurrentPhoto.message}&rdquo;</div>}
-                </div>
+                <section className="tfx-card cb-sec">
+                  <div className="cb-sec-head">
+                    <div>
+                      <div className="cb-live"><i className="tfx-livedot"/><span className="tfx-eyebrow">Currently live</span></div>
+                      {mcCurrentPhoto.week_label&&<h3>{mcCurrentPhoto.week_label}</h3>}
+                    </div>
+                  </div>
+                  {mcCurrentPhoto.day&&<img className="cb-live-img" src={mcCurrentPhoto.day} alt="Current motivational"/>}
+                  {mcCurrentPhoto.message&&<p className="cb-caption">&ldquo;{mcCurrentPhoto.message}&rdquo;</p>}
+                </section>
               )}
 
               {/* Post form */}
-              <div style={{background:"#111",borderRadius:14,padding:"16px",border:"0.5px solid "+ORANGE+"33"}}>
-                <div style={{fontSize:12,fontWeight:700,color:ORANGE,marginBottom:14,textTransform:"uppercase",letterSpacing:"0.1em"}}>Post New Photo of the Week</div>
+              <section className="tfx-card cb-sec">
+                <div className="cb-sec-head"><h3>Post new photo of the week</h3></div>
 
                 {/* Photo picker */}
-                <div style={{marginBottom:12}}>
-                  <div style={{fontSize:11,color:"#666",marginBottom:6}}>Photo</div>
-                  <label style={{display:"block",cursor:"pointer"}}>
-                    <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
+                <div className="cb-fld">
+                  <div className="cb-lbl">Photo</div>
+                  <label className="cb-photo">
+                    <input type="file" accept="image/*" className="cb-file" onChange={e=>{
                       const f=e.target.files?.[0];
                       if(!f)return;
                       setMcFile(f);
@@ -115,42 +114,40 @@ export default function MCastlesPostTab(){
                       setMcSuccess(false);setMcError("");
                     }}/>
                     {mcPreview?(
-                      <div style={{position:"relative"}}>
-                        <img src={mcPreview} style={{width:"100%",borderRadius:10,maxHeight:200,objectFit:"cover",display:"block"}}/>
-                        <div style={{position:"absolute",bottom:6,right:6,background:"rgba(0,0,0,0.7)",borderRadius:6,padding:"3px 8px",fontSize:11,color:ORANGE}}>tap to change</div>
-                      </div>
+                      <span className="cb-preview">
+                        <img src={mcPreview} alt="Selected photo"/>
+                        <span>Tap to change</span>
+                      </span>
                     ):(
-                      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"18px",borderRadius:10,border:"1px dashed "+ORANGE+"55",background:"#0f0600",color:ORANGE,fontSize:13,fontWeight:600}}>
-                        📸 Tap to choose photo
-                      </div>
+                      <span className="cb-drop">
+                        <Icon name="camera" size={20}/> Tap to choose photo
+                      </span>
                     )}
                   </label>
                 </div>
 
                 {/* Week label */}
-                <div style={{marginBottom:10}}>
-                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Week label</div>
-                  <input value={mcWeek} onChange={e=>setMcWeek(e.target.value)} placeholder='e.g. "Week 3 — May 2026"'
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",fontSize:13,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
-                </div>
+                <label className="cb-fld">
+                  <span className="cb-lbl">Week label</span>
+                  <input className="tfx-field cb-field" value={mcWeek} onChange={e=>setMcWeek(e.target.value)} placeholder='e.g. "Week 3 — May 2026"'/>
+                </label>
 
                 {/* Caption */}
-                <div style={{marginBottom:14}}>
-                  <div style={{fontSize:11,color:"#666",marginBottom:4}}>Caption / message</div>
-                  <textarea value={mcCaption} onChange={e=>setMcCaption(e.target.value)} placeholder="Write something motivational..." rows={3}
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #2a2a2a",fontSize:13,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box"}}/>
-                </div>
+                <label className="cb-fld">
+                  <span className="cb-lbl">Caption / message</span>
+                  <textarea className="tfx-field cb-field" value={mcCaption} onChange={e=>setMcCaption(e.target.value)} placeholder="Write something motivational..." rows={3}/>
+                </label>
 
-                {mcError&&<div style={{fontSize:12,color:RED,marginBottom:10,padding:"8px 10px",background:"#1a0808",borderRadius:6,border:"0.5px solid "+RED+"33"}}>{mcError}</div>}
-                {mcSuccess&&<div style={{fontSize:12,color:GREEN,marginBottom:10,padding:"8px 10px",background:"#081a0d",borderRadius:6,border:"0.5px solid "+GREEN+"33"}}>✓ Posted! Athletes can see it now.</div>}
+                {mcError&&<div className="ir-err" role="alert">{mcError}</div>}
+                {mcSuccess&&<div className="cb-ok" role="status">✓ Posted! Athletes can see it now.</div>}
 
                 <button
+                  className={"tfx-btn cb-btn-block tfx-press"+(canPost?"":" is-off")}
                   disabled={mcUploading||(!mcFile&&!mcCaption.trim())}
-                  onClick={()=>postMcPhoto(mcFile||null)}
-                  style={{width:"100%",padding:"14px",borderRadius:10,border:"none",background:mcUploading?"#333":ORANGE,color:"#fff",fontSize:15,fontWeight:800,cursor:mcUploading?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:(mcUploading||(!mcFile&&!mcCaption.trim()))?0.5:1,letterSpacing:"0.02em"}}>
-                  {mcUploading?"⏳ Posting...":"🍑🚀 Post Photo of the Week"}
+                  onClick={()=>postMcPhoto(mcFile||null)}>
+                  {mcUploading?"Posting...":"Post photo of the week"}
                 </button>
-              </div>
+              </section>
             </div>
   );
 }

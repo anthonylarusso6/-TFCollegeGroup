@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { GOLD, GREEN, STEEL, RED } from "../lib/constants";
+import Icon from "./Icon";
 
 export default function AnvilTab({ athletes=[], anvil=[], setAnvil, anvilPrizes={}, loadAll }){
   const[anvilWinner,setAnvilWinner]=useState("");
@@ -30,85 +31,81 @@ export default function AnvilTab({ athletes=[], anvil=[], setAnvil, anvilPrizes=
   ];
   const catInfo=(id)=>ANVIL_CATS.find(c=>c.id===id)||ANVIL_CATS[0];
   const indivAnvil=anvil.filter(a=>a.type==="individual");
+  const face=(a,name)=>a?.photo_url?<img src={a.photo_url} alt=""/>:(name||"?")[0];
+  const winnerWins=indivAnvil.filter(w=>w.athlete_name===anvilWinner).length;
+  const canAward=!!(anvilWinner&&anvilNote.trim());
   return(
-  <div>
+  <div className="tfx cb cb-anvil">
     {/* Award form */}
-    <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
-      <div style={{background:"linear-gradient(140deg,"+GOLD+"30,"+GOLD+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
-        <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒</div>
-        <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GOLD+"12,transparent 70%)",pointerEvents:"none"}}/>
-        <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-          <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>⚒️</div>
-          <div>
-            <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Bi-Weekly Honor</div>
-            <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Award the Anvil</div>
-            <div style={{fontSize:11,color:"#666",marginTop:1}}>Earned. Not given. The highest individual honor in TF College Group.</div>
-          </div>
-        </div>
+    <section className="tfx-card cb-sec cb-award">
+      <div className="cb-intro">
+        <div className="tfx-eyebrow cb-eb-gold">Bi-weekly honor</div>
+        <h2>Award the Anvil</h2>
+        <p>Earned. Not given. The highest individual honor in TF College Group.</p>
       </div>
-      <div style={{background:"#111",padding:"16px 18px"}}>
-        <div style={{fontSize:11,color:"#666",marginBottom:8}}>Tap to select athlete</div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,marginBottom:12}}>
+
+      <div className="cb-fld">
+        <div className="cb-lbl">Tap to select athlete</div>
+        <div className="cb-agrid is-4">
           {athletes.filter(a=>a.status==="active").map(a=>{
             const isSelected=anvilWinner===a.name;
             const timesWon=indivAnvil.filter(w=>w.athlete_name===a.name).length;
             return(
-              <button key={a.id} onClick={()=>setAnvilWinner(isSelected?"":a.name)} style={{padding:"8px 4px",borderRadius:10,border:"2px solid "+(isSelected?GOLD:"#252525"),background:isSelected?"#1f1700":"#1a1a1a",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",position:"relative"}}>
-                <div style={{width:40,height:40,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,margin:"0 auto 4px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:500,color:"#fff",border:isSelected?"2px solid "+GOLD:"none"}}>
-                  {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
-                </div>
-                <div style={{fontSize:10,fontWeight:500,color:isSelected?GOLD:"#aaa",lineHeight:1.2}}>{(a.name||"").split(" ")[0]}</div>
-                {timesWon>0&&<div style={{fontSize:9,color:GOLD}}>⚒ ×{timesWon}</div>}
-                {isSelected&&<div style={{position:"absolute",top:3,right:3,fontSize:12}}>⭐</div>}
+              <button key={a.id} aria-pressed={isSelected} className={"cb-ath tfx-press"+(isSelected?" is-sel":"")} onClick={()=>setAnvilWinner(isSelected?"":a.name)}>
+                <span className="rk-av cb-av-m" style={{"--c":a.role==="forge"?RED:STEEL}}>{face(a,a.name)}</span>
+                <b>{(a.name||"").split(" ")[0]}</b>
+                {timesWon>0&&<small className="cb-won"><Icon name="anvil" size={12}/>×{timesWon}</small>}
+                {isSelected&&<span className="cb-badge is-gold" aria-hidden="true">✓</span>}
               </button>
             );
           })}
         </div>
-        {anvilWinner&&(
-          <div style={{background:"#1f1700",borderRadius:10,padding:"10px 12px",marginBottom:12,border:"0.5px solid "+GOLD+"44",display:"flex",alignItems:"center",gap:8}}>
-            <div style={{fontSize:20}}>⚒</div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:13,color:GOLD,fontWeight:700}}>{anvilWinner}</div>
-              <div style={{fontSize:11,color:"#888",marginTop:1}}>
-                {indivAnvil.filter(w=>w.athlete_name===anvilWinner).length>0
-                  ?"Won it "+(indivAnvil.filter(w=>w.athlete_name===anvilWinner).length)+" time"+(indivAnvil.filter(w=>w.athlete_name===anvilWinner).length!==1?"s":"")+" before"
-                  :"First time winner — make it count"}
-              </div>
-            </div>
-          </div>
-        )}
-        <div style={{marginBottom:10}}>
-          <div style={{fontSize:11,color:"#666",marginBottom:6}}>Reason category</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-            {ANVIL_CATS.map(c=>(
-              <button key={c.id} onClick={()=>setAnvilCategory(c.id)} style={{padding:"8px 10px",borderRadius:10,border:"1.5px solid "+(anvilCategory===c.id?c.color+"88":"#252525"),background:anvilCategory===c.id?c.color+"18":"#1a1a1a",cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontSize:16}}>{c.emoji}</span>
-                <div>
-                  <div style={{fontSize:11,fontWeight:700,color:anvilCategory===c.id?c.color:"#aaa"}}>{c.id}</div>
-                  <div style={{fontSize:9,color:"#555"}}>{c.desc}</div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-        <div style={{marginBottom:8}}>
-          <div style={{fontSize:11,color:"#666",marginBottom:4}}>Week / date</div>
-          <input value={anvilDate} onChange={e=>setAnvilDate(e.target.value)} placeholder="e.g. Week 1 · June 2" style={{width:"100%",padding:"8px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",boxSizing:"border-box"}}/>
-        </div>
-        <div style={{marginBottom:12}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-            <div style={{fontSize:11,color:"#666"}}>Why they earned it <span style={{color:RED}}>*</span></div>
-            <div style={{fontSize:10,color:anvilNote.length>20?GOLD:"#444"}}>{anvilNote.length} chars</div>
-          </div>
-          <textarea value={anvilNote} onChange={e=>setAnvilNote(e.target.value)} placeholder="Be specific. What did they do that nobody else did this week? This becomes part of their permanent record." style={{width:"100%",minHeight:80,padding:"10px",fontSize:13,border:"0.5px solid "+(anvilNote.length>10?"#444":"#333"),borderRadius:8,background:"#1a1a1a",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.6}}/>
-          <div style={{fontSize:10,color:"#444",marginTop:4,fontStyle:"italic"}}>Athletes can see exactly what you write here.</div>
-        </div>
-        <button onClick={awardAnvil} disabled={!anvilWinner||!anvilNote.trim()} style={{width:"100%",padding:"13px",borderRadius:8,border:"none",background:(anvilWinner&&anvilNote.trim())?"linear-gradient(135deg,"+GOLD+","+GOLD+"cc)":"#252525",color:(anvilWinner&&anvilNote.trim())?"#1a1a1a":"#555",fontSize:14,fontWeight:700,cursor:(anvilWinner&&anvilNote.trim())?"pointer":"not-allowed",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>
-          ⚒ Award The Anvil
-        </button>
       </div>
-    </div>
+
+      {anvilWinner&&(
+        <div className="cb-pick">
+          <span className="cb-pick-ico"><Icon name="anvil" size={20}/></span>
+          <div>
+            <b>{anvilWinner}</b>
+            <small>
+              {winnerWins>0
+                ?"Won it "+winnerWins+" time"+(winnerWins!==1?"s":"")+" before"
+                :"First time winner — make it count"}
+            </small>
+          </div>
+        </div>
+      )}
+
+      <div className="cb-fld">
+        <div className="cb-lbl">Reason category</div>
+        <div className="cb-cats">
+          {ANVIL_CATS.map(c=>(
+            <button key={c.id} aria-pressed={anvilCategory===c.id} className={"cb-cat tfx-press"+(anvilCategory===c.id?" is-on":"")} style={{"--c":c.color}} onClick={()=>setAnvilCategory(c.id)}>
+              <i/>
+              <span><b>{c.id}</b><small>{c.desc}</small></span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <label className="cb-fld">
+        <span className="cb-lbl">Week / date</span>
+        <input className="tfx-field cb-field" value={anvilDate} onChange={e=>setAnvilDate(e.target.value)} placeholder="e.g. Week 1 · June 2"/>
+      </label>
+
+      <div className="cb-fld">
+        <div className="cb-lbl">
+          <label htmlFor="cb-anvil-note">Why they earned it <span className="cb-req">*</span></label>
+          <em className={anvilNote.length>20?"is-good":""}>{anvilNote.length} chars</em>
+        </div>
+        <textarea id="cb-anvil-note" className="tfx-field cb-field" value={anvilNote} onChange={e=>setAnvilNote(e.target.value)} placeholder="Be specific. What did they do that nobody else did this week? This becomes part of their permanent record."/>
+        <p className="cb-hint">Athletes can see exactly what you write here.</p>
+      </div>
+
+      <button className="tfx-btn cb-btn-gold cb-btn-block tfx-press" onClick={awardAnvil} disabled={!canAward}>
+        <Icon name="anvil" size={18}/> Award the Anvil
+      </button>
+    </section>
 
     {/* Never won section */}
     {(()=>{
@@ -116,87 +113,87 @@ export default function AnvilTab({ athletes=[], anvil=[], setAnvil, anvilPrizes=
       const neverWon=athletes.filter(a=>a.status==="active"&&!winners.has(a.name));
       if(!neverWon.length)return null;
       return(
-        <div style={{background:"#111",borderRadius:20,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525"}}>
-          <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:2}}>Yet to be recognized</div>
-          <div style={{fontSize:12,color:"#555",marginBottom:10}}>{neverWon.length} athlete{neverWon.length!==1?"s":""} still waiting for their first</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+        <section className="tfx-card cb-sec">
+          <div className="cb-sec-head">
+            <div>
+              <h3>Yet to be recognized</h3>
+              <p>{neverWon.length} athlete{neverWon.length!==1?"s":""} still waiting for their first</p>
+            </div>
+          </div>
+          <div className="cb-chips">
             {neverWon.map((a,i)=>(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",borderRadius:20,background:"#1a1a1a",border:"0.5px solid #252525"}}>
-                <div style={{width:22,height:22,borderRadius:"50%",background:a.role==="forge"?RED:STEEL,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,color:"#fff",fontWeight:500,flexShrink:0}}>
-                  {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(a.name||"?")[0]}
-                </div>
-                <span style={{fontSize:12,color:"#ddd"}}>{(a.name||"").split(" ")[0]}</span>
-              </div>
+              <span key={i} className="cb-chip is-static">
+                <span className="rk-av" style={{"--c":a.role==="forge"?RED:STEEL}}>{face(a,a.name)}</span>
+                {(a.name||"").split(" ")[0]}
+              </span>
             ))}
           </div>
-        </div>
+        </section>
       );
     })()}
 
     {/* Hall of Fame */}
-    <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
-      <div style={{background:"linear-gradient(140deg,"+GOLD+"20,"+GOLD+"08,#0d0d0d)",padding:"14px 18px",borderBottom:"0.5px solid #1e1e1e",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+    <section className="tfx-card cb-sec">
+      <div className="cb-sec-head">
         <div>
-          <div style={{fontSize:10,fontWeight:700,color:GOLD,textTransform:"uppercase",letterSpacing:"0.14em"}}>Hall of Fame</div>
-          <div style={{fontSize:11,color:"#555",marginTop:1}}>Every winner. Every reason.</div>
+          <div className="tfx-eyebrow cb-eb-gold">Hall of fame</div>
+          <h3>Every winner. Every reason.</h3>
         </div>
-        <div style={{fontSize:10,color:"#444"}}>{indivAnvil.length} award{indivAnvil.length!==1?"s":""}</div>
+        <span className="cb-pill is-gold">{indivAnvil.length} award{indivAnvil.length!==1?"s":""}</span>
       </div>
-      <div style={{background:"#0e0e0e"}}>
-        {indivAnvil.length===0&&<div style={{fontSize:13,color:"#444",textAlign:"center",padding:"2rem 1rem"}}>No Anvil winners yet. The first one will be earned on the floor.</div>}
-        {indivAnvil.map((w,i)=>{
-          const ath=athletes.find(a=>a.name===w.athlete_name);
-          const timesWon=indivAnvil.filter(x=>x.athlete_name===w.athlete_name).length;
-          const prevWinner=i>0?indivAnvil[i-1]:null;
-          const isStreak=prevWinner&&prevWinner.athlete_name===w.athlete_name;
-          const cat=catInfo(w.athlete_role);
-          const isCurrent=i===0;
-          return(
-            <div key={i} style={{padding:"14px 18px",borderBottom:"0.5px solid #1a1a1a",background:isCurrent?"#0f0e00":"transparent"}}>
-              <div style={{display:"flex",alignItems:"flex-start",gap:12}}>
-                <div style={{width:44,height:44,borderRadius:"50%",background:isCurrent?"#1f1700":"#111",border:"2px solid "+(isCurrent?GOLD:"#2a2a2a"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:isCurrent?GOLD:"#666",fontWeight:600,flexShrink:0,overflow:"hidden",boxShadow:isCurrent?"0 0 16px "+GOLD+"44":"none"}}>
-                  {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(w.athlete_name||"?")[0]}
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap",marginBottom:4}}>
-                    <div style={{fontSize:14,fontWeight:700,color:isCurrent?GOLD:"#ddd"}}>{w.athlete_name}</div>
-                    {isCurrent&&<span style={{fontSize:9,background:GOLD+"22",color:GOLD,padding:"2px 7px",borderRadius:20,fontWeight:700,letterSpacing:"0.05em"}}>⚡ CURRENT</span>}
-                    {isStreak&&<span style={{fontSize:9,background:"#2a1000",color:"#E8720C",padding:"2px 7px",borderRadius:20}}>🔥 Back to back</span>}
-                    {timesWon>1&&<span style={{fontSize:9,background:"#1a1a1a",color:"#888",padding:"2px 7px",borderRadius:20}}>⚒ ×{timesWon}</span>}
+      {indivAnvil.length===0&&<p className="cb-none">No Anvil winners yet. The first one will be earned on the floor.</p>}
+      {indivAnvil.length>0&&(
+        <ul className="cb-hof-list">
+          {indivAnvil.map((w,i)=>{
+            const ath=athletes.find(a=>a.name===w.athlete_name);
+            const timesWon=indivAnvil.filter(x=>x.athlete_name===w.athlete_name).length;
+            const prevWinner=i>0?indivAnvil[i-1]:null;
+            const isStreak=prevWinner&&prevWinner.athlete_name===w.athlete_name;
+            const cat=catInfo(w.athlete_role);
+            const isCurrent=i===0;
+            return(
+              <li key={i} className={isCurrent?"is-current":""}>
+                <span className="rk-av cb-av-l">{face(ath,w.athlete_name)}</span>
+                <div className="cb-hof-main">
+                  <div className="cb-hof-name">
+                    <b>{w.athlete_name}</b>
+                    {isCurrent&&<span className="cb-pill is-gold">Current</span>}
+                    {isStreak&&<span className="cb-pill is-ember">🔥 Back to back</span>}
+                    {timesWon>1&&<span className="cb-pill is-plain"><Icon name="anvil" size={12}/>×{timesWon}</span>}
                   </div>
-                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
-                    <span style={{fontSize:10,background:cat.color+"20",color:cat.color,padding:"2px 8px",borderRadius:20,fontWeight:600,border:"0.5px solid "+cat.color+"44"}}>{cat.emoji} {cat.id}</span>
-                    <span style={{fontSize:10,color:"#555"}}>{w.date_awarded}</span>
+                  <div className="cb-hof-meta">
+                    <span className="cb-pill" style={{"--c":cat.color}}><i/>{cat.id}</span>
+                    <span>{w.date_awarded}</span>
                   </div>
                   {w.note&&(
-                    <div style={{background:isCurrent?GOLD+"0D":"#111",borderRadius:8,padding:"8px 10px",borderLeft:"2px solid "+(isCurrent?GOLD:"#333"),marginBottom:anvilPrizes[String(w.id)]?6:0}}>
-                      <div style={{fontSize:9,color:isCurrent?GOLD+"88":"#444",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Why they earned it</div>
-                      <div style={{fontSize:12,color:isCurrent?"#e8d5a0":"#aaa",lineHeight:1.6,fontStyle:"italic"}}>"{w.note}"</div>
+                    <div className={"cb-quote"+(isCurrent?" is-current":"")}>
+                      <div className="tfx-eyebrow">Why they earned it</div>
+                      <p>&ldquo;{w.note}&rdquo;</p>
                     </div>
                   )}
                   {anvilPrizes[String(w.id)]&&(()=>{
                     const ps=anvilPrizes[String(w.id)];
                     const PRIZE_EMOJIS={tee:"🎽",shorts:"🩳",dicks:"🏪",food_gc:"🍽️"};
                     return(
-                      <div style={{display:"inline-flex",alignItems:"center",gap:6,background:isCurrent?GOLD+"15":"#161616",borderRadius:8,padding:"5px 10px",border:"1px solid "+(isCurrent?GOLD+"44":"#252525"),marginTop:2}}>
-                        <span style={{fontSize:14}}>{PRIZE_EMOJIS[ps.prize]||"🎁"}</span>
-                        <span style={{fontSize:11,color:isCurrent?GOLD:"#888",fontWeight:600}}>{ps.label}</span>
-                        {ps.size&&<span style={{fontSize:10,color:"#555"}}>· {ps.size}</span>}
-                      </div>
+                      <span className={"cb-prize"+(isCurrent?" is-current":"")}>
+                        <span aria-hidden="true">{PRIZE_EMOJIS[ps.prize]||"🎁"}</span>
+                        <b>{ps.label}</b>
+                        {ps.size&&<small>· {ps.size}</small>}
+                      </span>
                     );
                   })()}
                 </div>
-                <button onClick={async()=>{
+                <button className="cb-x" aria-label={"Remove "+w.athlete_name+"'s Anvil award"} onClick={async()=>{
                   if(!window.confirm("Remove this Anvil award?"))return;
                   try{await supabase.from("anvil").delete().eq("id",w.id);}catch(e){}
                   setAnvil(p=>p.filter(x=>x.id!==w.id));
-                }} style={{background:"transparent",border:"none",color:"#333",cursor:"pointer",fontSize:14,padding:"4px",flexShrink:0}}>✕</button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+                }}>✕</button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   </div>
   );
 }
