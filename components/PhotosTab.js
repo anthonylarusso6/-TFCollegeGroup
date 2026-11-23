@@ -226,7 +226,7 @@ export default function PhotosTab({ athletes, setAthletes, uploadAthletePhoto })
           {activeAthletes.map((a,i)=>(
             <li key={i} className={a.photo_url?"":"is-missing"}>
               <span className="rk-av cc-av is-md" style={{"--c":STEEL}}>
-                {a.photo_url?<img src={a.photo_url} onError={ev=>{ev.target.style.display="none";}} alt=""/>:a.name[0]}
+                {a.photo_url?<img src={a.photo_url} onError={ev=>{ev.target.style.display="none";}} alt=""/>:(a.name||"?")[0]}
               </span>
               <span className="cc-who">
                 <b>{a.name}</b>

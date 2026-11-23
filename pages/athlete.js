@@ -107,6 +107,7 @@ export default function Athlete(){
   const[loading,setLoading]=useState(true);
   const[feedbackText,setFeedbackText]=useState("");
   const[feedbackSent,setFeedbackSent]=useState(false);
+  const[sendErr,setSendErr]=useState({feedback:"",prayer:""});
   const[prayerText,setPrayerText]=useState("");
   const[prayerSent,setPrayerSent]=useState(false);
   const[injuryOpen,setInjuryOpen]=useState(false);
@@ -693,8 +694,8 @@ export default function Athlete(){
     try{
       const{error}=await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"message",message:feedbackText});
       if(error)throw error;
-      setFeedbackSent(true);
-    }catch(e){console.error("Feedback send:",e);}
+      setFeedbackSent(true);setSendErr(x=>({...x,feedback:""}));
+    }catch(e){setSendErr(x=>({...x,feedback:"Didn't send. Check your connection and try again."}));}
   };
 
   const sendPrayer=async()=>{
@@ -702,8 +703,8 @@ export default function Athlete(){
     try{
       const{error}=await supabase.from("inbox").insert({athlete_id:selectedAthlete.id,type:"prayer",message:prayerText});
       if(error)throw error;
-      setPrayerSent(true);
-    }catch(e){console.error("Prayer send:",e);}
+      setPrayerSent(true);setSendErr(x=>({...x,prayer:""}));
+    }catch(e){setSendErr(x=>({...x,prayer:"Didn't send. Check your connection and try again."}));}
   };
 
   const sendInjury=async()=>{
@@ -1131,7 +1132,7 @@ export default function Athlete(){
             <div className="cs-head-in ag-head-in">
               <div className="ag-id">
                 <button className="ag-av tfx-press" style={{"--c":roleC}} onClick={openEditProfile} aria-label="Edit profile">
-                  {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} alt="" onError={e=>{e.target.style.display="none";}}/>:selectedAthlete.name[0]}
+                  {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} alt="" onError={e=>{e.target.style.display="none";}}/>:(selectedAthlete.name||"?")[0]}
                   <i className="ag-av-edit" aria-hidden="true">✎</i>
                 </button>
                 <div className="ag-who">
@@ -1562,6 +1563,7 @@ export default function Athlete(){
                     <>
                       <textarea className="tfx-field ag-area" value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="Type your message to Coach Ant..." aria-label="Message to Coach Ant"/>
                       <button className={"ag-send tfx-press"+(feedbackText.trim()?"":" is-off")} onClick={sendFeedback}>Send to Coach Ant →</button>
+                      {sendErr.feedback&&<div className="ir-err" role="alert">{sendErr.feedback}</div>}
                     </>
                   )}
                 </div>
@@ -1575,6 +1577,7 @@ export default function Athlete(){
                     <>
                       <textarea className="tfx-field ag-area" value={prayerText} onChange={e=>setPrayerText(e.target.value)} placeholder="Share your prayer request here..." aria-label="Prayer request"/>
                       <button className={"ag-send tfx-press"+(prayerText.trim()?"":" is-off")} onClick={sendPrayer}>Submit prayer request →</button>
+                      {sendErr.prayer&&<div className="ir-err" role="alert">{sendErr.prayer}</div>}
                     </>
                   )}
                 </div>

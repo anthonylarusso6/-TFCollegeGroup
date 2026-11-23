@@ -142,7 +142,7 @@ export default function Callout(){
   const todayLog=log.filter(l=>logDate(l.logged_at)===estToday());
   const av=(a,cls="")=>(
     <span className={"af-av"+(a?.role==="forge"?" is-forge":"")+(cls?" "+cls:"")}>
-      {a?.photo_url?<img src={a.photo_url} alt="" onError={e=>{e.target.style.display="none";}}/>:a?.name[0]}
+      {a?.photo_url?<img src={a.photo_url} alt="" onError={e=>{e.target.style.display="none";}}/>:(a?.name||"?")[0]}
     </span>
   );
 

@@ -192,7 +192,7 @@ export default function WeightsTab({ athletes, weightLogs, prLogs }){
                         <li key={ri} className={ri===0?"is-first":""}>
                           <span className={"cd-rank-n"+(ri<3?" is-medal":"")}>{ri===0?"🥇":ri===1?"🥈":ri===2?"🥉":ri+1}</span>
                           <span className="rk-av" style={{"--c":STEEL}}>
-                            {r.photo?<img src={r.photo} alt=""/>:r.name[0]}
+                            {r.photo?<img src={r.photo} alt=""/>:(r.name||"?")[0]}
                           </span>
                           <span className="cd-who"><b>{r.name}</b><small>{r.liftName}</small></span>
                           <span className="cd-val"><b className="tfx-num">{r.orm}</b><small>{pctOf(r.orm)}% of ref</small></span>
