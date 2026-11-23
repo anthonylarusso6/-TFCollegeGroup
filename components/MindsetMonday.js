@@ -364,7 +364,7 @@ function MindsetSeason({cfg,picker}){
           })}
         </div>
         <div className="cf-legend">
-          {TYPE_KEYS.map(([k,l])=>(
+          {TYPE_KEYS.filter(([k])=>WEEKS.some(w=>w.type===k)).map(([k,l])=>(
             <span key={k} style={{"--tone":TYPE_TONE[k]}}><i aria-hidden="true"/>{l}</span>
           ))}
         </div>
