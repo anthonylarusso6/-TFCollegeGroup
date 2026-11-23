@@ -37,28 +37,34 @@ function DriveLinksManager(){
   };
 
   return(
-    <div>
-      {links.map((l,i)=>{
-        const data=JSON.parse(l.message||"{}");
-        return(
-          <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#141414",borderRadius:10,marginBottom:8,border:"0.5px solid #252525"}}>
-            <div style={{fontSize:20}}>📄</div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontSize:13,fontWeight:600,color:"#ddd",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{data.title}</div>
-              {data.description&&<div style={{fontSize:11,color:"#666"}}>{data.description}</div>}
-            </div>
-            <a href={data.url} target="_blank" rel="noreferrer" style={{fontSize:11,color:"#4285f4",textDecoration:"none",fontFamily:"Georgia,serif",padding:"4px 8px",border:"0.5px solid #4285f4",borderRadius:6}}>Open</a>
-            <button onClick={()=>removeLink(l.id)} style={{fontSize:11,color:RED,background:"transparent",border:"0.5px solid "+RED+"44",borderRadius:6,padding:"4px 8px",cursor:"pointer",fontFamily:"Georgia,serif"}}>Remove</button>
-          </div>
-        );
-      })}
-      <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Document title (e.g. Summer Program Poster)" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #222",fontSize:12,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",marginBottom:6,boxSizing:"border-box"}}/>
-      <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="Google Drive link" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #222",fontSize:12,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",marginBottom:6,boxSizing:"border-box"}}/>
-      <input value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Short description (optional)" style={{width:"100%",padding:"8px 10px",borderRadius:8,border:"0.5px solid #222",fontSize:12,fontFamily:"Georgia,serif",background:"#111",color:"#ddd",marginBottom:8,boxSizing:"border-box"}}/>
-      <button onClick={addLink} disabled={!title.trim()||!url.trim()||saving} style={{width:"100%",padding:"10px",borderRadius:8,border:"none",background:title&&url?"#4285f4":"#e0e0e0",color:title&&url?"#fff":"#aaa",fontSize:13,fontWeight:600,cursor:title&&url?"pointer":"not-allowed",fontFamily:"Georgia,serif"}}>
-        {saved?"✓ Added!":saving?"Saving...":"Add document →"}
-      </button>
-    </div>
+    <>
+      {links.length>0&&(
+        <div className="cc-docs">
+          {links.map((l,i)=>{
+            const data=JSON.parse(l.message||"{}");
+            return(
+              <div key={i} className="cc-doc">
+                <span className="cc-doc-ico"><Icon name="fileText" size={18}/></span>
+                <div className="cc-doc-txt">
+                  <b>{data.title}</b>
+                  {data.description&&<small>{data.description}</small>}
+                </div>
+                <a className="cc-mini is-tint" href={data.url} target="_blank" rel="noreferrer">Open</a>
+                <button className="cc-mini is-danger" onClick={()=>removeLink(l.id)}>Remove</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <div className="cc-form">
+        <input className="cc-in" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Document title (e.g. Summer Program Poster)" aria-label="Document title"/>
+        <input className="cc-in" value={url} onChange={e=>setUrl(e.target.value)} placeholder="Google Drive link" aria-label="Google Drive link"/>
+        <input className="cc-in" value={desc} onChange={e=>setDesc(e.target.value)} placeholder="Short description (optional)" aria-label="Short description"/>
+        <button className={"tfx-btn tfx-press cc-btn cc-wide cc-accent"+(saved?" is-green":"")} onClick={addLink} disabled={!title.trim()||!url.trim()||saving}>
+          {saved?"✓ Added!":saving?"Saving...":"Add document →"}
+        </button>
+      </div>
+    </>
   );
 }
 
@@ -130,150 +136,121 @@ export default function PhotosTab({ athletes, setAthletes, uploadAthletePhoto })
 
   useEffect(()=>{ loadGroupPhotos(); },[]);
 
+  const activeAthletes=athletes.filter(a=>a.status==="active");
+
   return (
-            <div>
-              {/* ── Post group photos ── */}
-              <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
-                <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="camera" size={66} color="#fff"/></div>
-                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
-                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📸</div>
-                    <div>
-                      <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Group Feed</div>
-                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Post Photos</div>
-                      <div style={{fontSize:11,color:"#666",marginTop:1}}>Athletes see these in their Photos tab</div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{background:"#111",padding:"16px 18px"}}>
-                  <label style={{display:"block",marginBottom:10,cursor:"pointer"}}>
-                    <div style={{borderRadius:12,overflow:"hidden",border:"1.5px dashed "+PUR+"55",background:"#0d0d0d",
-                      minHeight:110,display:"flex",alignItems:"center",justifyContent:"center",position:"relative"}}>
-                      {gpPreview?(
-                        <img src={gpPreview} style={{width:"100%",maxHeight:220,objectFit:"cover",display:"block"}} alt=""/>
-                      ):(
-                        <div style={{textAlign:"center",padding:"1.5rem"}}>
-                          <div style={{marginBottom:6,display:"flex",justifyContent:"center"}}><Icon name="camera" size={28} color="rgba(255,255,255,0.4)"/></div>
-                          <div style={{fontSize:12,color:"#555"}}>Tap to choose photo</div>
-                        </div>
-                      )}
-                    </div>
-                    <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{
-                      const file=e.target.files[0];
-                      if(!file)return;
-                      setGpFile(file);
-                      const reader=new FileReader();
-                      reader.onload=ev=>setGpPreview(ev.target.result);
-                      reader.readAsDataURL(file);
-                    }}/>
-                  </label>
-                  <input value={gpCaption} onChange={e=>setGpCaption(e.target.value)}
-                    placeholder="Caption (optional)..."
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"0.5px solid #252525",
-                      background:"#0d0d0d",color:"#fff",fontSize:13,fontFamily:"Georgia,serif",
-                      marginBottom:10,boxSizing:"border-box"}}/>
-                  {gpError&&<div style={{fontSize:12,color:RED,marginBottom:8}}>{gpError}</div>}
-                  <button onClick={postGroupPhoto} disabled={gpUploading||!gpFile}
-                    style={{width:"100%",padding:"12px",borderRadius:10,border:"none",
-                      background:gpUploading||!gpFile?"#252525":"linear-gradient(135deg,"+PUR+","+PUR+"cc)",
-                      color:gpUploading||!gpFile?"#555":"#fff",fontSize:13,fontWeight:700,
-                      cursor:gpUploading||!gpFile?"not-allowed":"pointer",fontFamily:"Georgia,serif"}}>
-                    {gpSuccess?"✓ Posted!":gpUploading?"Uploading...":"Post to athletes →"}
-                  </button>
-                  {gpPhotos.length>0&&(
-                    <div style={{marginTop:16}}>
-                      <div style={{fontSize:11,color:"#444",marginBottom:8}}>Posted ({gpPhotos.length}) · tap × to remove</div>
-                      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
-                        {gpPhotos.map((p,i)=>(
-                          <div key={i} style={{position:"relative",borderRadius:8,overflow:"hidden",aspectRatio:"1",background:"#1a1a1a"}}>
-                            <img src={p.day} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>
-                            <button onClick={()=>deleteGroupPhoto(p.id)}
-                              style={{position:"absolute",top:3,right:3,width:20,height:20,borderRadius:"50%",
-                                border:"none",background:"rgba(0,0,0,0.75)",color:RED,cursor:"pointer",
-                                fontSize:13,fontWeight:900,lineHeight:1,padding:0,display:"flex",
-                                alignItems:"center",justifyContent:"center"}}>×</button>
-                            {p.message&&(
-                              <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"2px 4px",
-                                background:"rgba(0,0,0,0.6)",fontSize:8,color:"#ddd",
-                                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.message}</div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* ── Google Drive documents ── */}
-              <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid #4285f433"}}>
-                <div style={{background:"linear-gradient(140deg,#4285f430,#4285f410,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#4285f4,#4285f444,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="fileText" size={66} color="#fff"/></div>
-                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,#4285f412,transparent 70%)",pointerEvents:"none"}}/>
-                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,#4285f444,#4285f422)",border:"1px solid #4285f444",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px #4285f433"}}>📁</div>
-                    <div>
-                      <div style={{fontSize:8,color:"#4285f4",textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Documents</div>
-                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Google Drive</div>
-                      <div style={{fontSize:11,color:"#666",marginTop:1}}>Share docs, programs, or posters with athletes</div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{background:"#111",padding:"16px 18px"}}>
-                  <div style={{background:"#0a1520",borderRadius:8,padding:"10px 12px",marginBottom:12,border:"0.5px solid #4285f422"}}>
-                    <div style={{fontSize:11,color:"#4285f4",fontWeight:600,marginBottom:4}}>How to share from Google Drive:</div>
-                    <div style={{fontSize:11,color:"#777",lineHeight:2}}>1. Open doc in Google Drive &nbsp; 2. Share → Anyone with link &nbsp; 3. Paste below</div>
-                  </div>
-                  <DriveLinksManager/>
-                </div>
-              </div>
-
-              {/* ── Athlete profile photos ── */}
-              <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+STEEL+"33"}}>
-                <div style={{background:"linear-gradient(140deg,"+STEEL+"30,"+STEEL+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+","+STEEL+"44,transparent)"}}/>
-                  <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="profile" size={66} color="#fff"/></div>
-                  <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+STEEL+"12,transparent 70%)",pointerEvents:"none"}}/>
-                  <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                    <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+STEEL+"44,"+STEEL+"22)",border:"1px solid "+STEEL+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+STEEL+"33"}}>👤</div>
-                    <div>
-                      <div style={{fontSize:8,color:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Profile Photos</div>
-                      <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Athlete Headshots</div>
-                      <div style={{fontSize:11,color:"#666",marginTop:1}}>Used on profile cards, leaderboards, etc.</div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{background:"#111",padding:"16px 18px"}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                    {athletes.filter(a=>a.status==="active").map((a,i)=>(
-                      <div key={i} style={{background:"#1a1a1a",borderRadius:12,padding:"1rem",border:"0.5px solid #252525",textAlign:"center"}}>
-                        <div style={{width:64,height:64,borderRadius:"50%",background:STEEL,margin:"0 auto 8px",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"#fff"}}>
-                          {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={ev=>{ev.target.style.display="none";}} alt=""/>:a.name[0]}
-                        </div>
-                        <div style={{fontSize:12,fontWeight:500,color:"#ddd",marginBottom:8}}>{a.name}</div>
-                        <label style={{padding:"6px 12px",borderRadius:8,border:"0.5px solid "+ORANGE,background:ORANGE+"18",fontSize:11,cursor:"pointer",color:ORANGE,display:"inline-block",fontWeight:600}}>
-                          {uploadingPhoto===a.id?"Saving...":a.photo_url?"Change":"Add Photo"}
-                          <input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={async e=>{
-                            const file=e.target.files[0];
-                            if(!file)return;
-                            setUploadingPhoto(a.id);
-                            try{
-                              const publicUrl=await uploadAthletePhoto(a.id,file);
-                              const{error}=await supabase.from("athletes").update({photo_url:publicUrl}).eq("id",a.id);
-                              if(error){alert("Error saving photo: "+error.message);}
-                              else{setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:publicUrl}:x));}
-                            }catch(err){alert("Error saving photo: "+err.message);}
-                            setUploadingPhoto(null);
-                          }}/>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+    <div className="tfx cc">
+      {/* ── Post group photos ── */}
+      <section className="tfx-card cc-head is-violet">
+        <div className="cc-top">
+          <div>
+            <div className="tfx-eyebrow">Group feed</div>
+            <h2>Post photos</h2>
+            <p>Athletes see these in their Photos tab</p>
+          </div>
+        </div>
+        <label className="cc-drop">
+          {gpPreview?(
+            <img src={gpPreview} alt="Selected photo preview"/>
+          ):(
+            <span className="cc-drop-empty">
+              <span><Icon name="camera" size={22}/></span>
+              <b>Tap to choose photo</b>
+              <small>Full quality, up to 4000px</small>
+            </span>
+          )}
+          <input type="file" accept="image/*" className="cc-hide" onChange={e=>{
+            const file=e.target.files[0];
+            if(!file)return;
+            setGpFile(file);
+            const reader=new FileReader();
+            reader.onload=ev=>setGpPreview(ev.target.result);
+            reader.readAsDataURL(file);
+          }}/>
+        </label>
+        <input className="cc-in" value={gpCaption} onChange={e=>setGpCaption(e.target.value)} placeholder="Caption (optional)..." aria-label="Caption"/>
+        {gpError&&<div className="ir-err" role="alert">{gpError}</div>}
+        <button className={"tfx-btn tfx-press cc-wide cc-accent"+(gpSuccess?" is-green":" is-pur")} onClick={postGroupPhoto} disabled={gpUploading||!gpFile}>
+          {gpSuccess?"✓ Posted!":gpUploading?"Uploading...":"Post to athletes →"}
+        </button>
+        {gpPhotos.length>0&&(
+          <div className="cc-divide cc-form">
+            <div className="cc-sec-head">
+              <div className="tfx-eyebrow">Posted · {gpPhotos.length}</div>
+              <span className="cc-sub">Tap × to remove</span>
             </div>
+            <div className="cc-thumbs">
+              {gpPhotos.map((p,i)=>(
+                <figure key={i} className="cc-thumb">
+                  <img src={p.day} alt={p.message||""}/>
+                  <button className="cc-thumb-x" onClick={()=>deleteGroupPhoto(p.id)} aria-label={"Remove photo"+(p.message?" — "+p.message:"")}>×</button>
+                  {p.message&&<figcaption>{p.message}</figcaption>}
+                </figure>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ── Google Drive documents ── */}
+      <section className="tfx-card cc-sec is-sky">
+        <div className="cc-sec-head">
+          <div>
+            <div className="tfx-eyebrow">Documents</div>
+            <h3>Google Drive</h3>
+            <p>Share docs, programs, or posters with athletes</p>
+          </div>
+        </div>
+        <div className="cc-tip">
+          <b>How to share from Google Drive:</b>
+          <ol>
+            <li>Open doc in Google Drive</li>
+            <li>Share → Anyone with link</li>
+            <li>Paste below</li>
+          </ol>
+        </div>
+        <DriveLinksManager/>
+      </section>
+
+      {/* ── Athlete profile photos ── */}
+      <section className="tfx-card cc-sec is-ember">
+        <div className="cc-sec-head">
+          <div>
+            <div className="tfx-eyebrow">Profile photos</div>
+            <h3>Athlete headshots</h3>
+            <p>Used on profile cards, leaderboards, etc.</p>
+          </div>
+          <span className="cc-pill"><span className="tfx-num">{activeAthletes.filter(a=>a.photo_url).length}/{activeAthletes.length}</span></span>
+        </div>
+        <ul className="cc-heads">
+          {activeAthletes.map((a,i)=>(
+            <li key={i} className={a.photo_url?"":"is-missing"}>
+              <span className="rk-av cc-av is-md" style={{"--c":STEEL}}>
+                {a.photo_url?<img src={a.photo_url} onError={ev=>{ev.target.style.display="none";}} alt=""/>:a.name[0]}
+              </span>
+              <span className="cc-who">
+                <b>{a.name}</b>
+                <small>{a.photo_url?"Photo on file":"No photo yet"}</small>
+              </span>
+              <label className={"cc-mini is-tint cc-upload"+(uploadingPhoto===a.id?" is-busy":"")}>
+                {uploadingPhoto===a.id?"Saving...":a.photo_url?"Change":"Add Photo"}
+                <input type="file" accept="image/*" capture="environment" className="cc-hide" onChange={async e=>{
+                  const file=e.target.files[0];
+                  if(!file)return;
+                  setUploadingPhoto(a.id);
+                  try{
+                    const publicUrl=await uploadAthletePhoto(a.id,file);
+                    const{error}=await supabase.from("athletes").update({photo_url:publicUrl}).eq("id",a.id);
+                    if(error){alert("Error saving photo: "+error.message);}
+                    else{setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,photo_url:publicUrl}:x));}
+                  }catch(err){alert("Error saving photo: "+err.message);}
+                  setUploadingPhoto(null);
+                }}/>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
   );
 }
