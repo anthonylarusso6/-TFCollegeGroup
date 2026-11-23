@@ -32,7 +32,7 @@ export default function PrayerWall({athleteId, athleteName}){
         type:"prayer_wall",
         message:text.trim(),
         week_label:anon?"anonymous":(athleteName||"Athlete"),
-        day:String(athleteId),
+        day:anon?null:String(athleteId), // anonymous posts must not be traceable on the public wall
         active:true,
       });
       if(wallErr)throw wallErr;
