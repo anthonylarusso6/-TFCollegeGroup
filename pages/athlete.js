@@ -1052,195 +1052,167 @@ export default function Athlete(){
     const myBraceletRef=selectedAthlete?.bracelet||myGroupLeader?.bracelet||null;
     const myBracelet=myBraceletRef?BRACELETS.find(b=>b.ref===myBraceletRef):null;
 
-    // Theme-aware colors for the edit-profile sheet (its custom shades aren't in the CSS light-map)
-    const mSheet=isLight?"#ffffff":"linear-gradient(180deg,#12121c,#0b0b12)";
-    const mText=isLight?"#16191f":"#fff";
-    const mField=isLight?"#f4f5f8":"#0d0d14";
-    const mBorder=isLight?"rgba(0,0,0,0.16)":"#2a2a3a";
-    const mHandle=isLight?"rgba(0,0,0,0.18)":"rgba(255,255,255,0.18)";
-    const mChipBg=isLight?"rgba(0,0,0,0.05)":"rgba(255,255,255,0.05)";
-    const mChipBorder=isLight?"rgba(0,0,0,0.14)":"rgba(255,255,255,0.14)";
+    // Accent for the athlete's role (Forge = ember, Iron = steel) — passed to CSS as --c
+    const roleC=isForge?"#E8720C":"#8a9aa4";
 
     return(
       <>
         <style>{`@keyframes tfSlideFromRight{from{transform:translateX(52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfSlideFromLeft{from{transform:translateX(-52px) scale(0.98);opacity:0}to{transform:translateX(0) scale(1);opacity:1}}@keyframes tfJiggle{0%{transform:rotate(-1.5deg) scale(1.03)}100%{transform:rotate(1.5deg) scale(1.03)}}`}</style>
         <Head><title>{selectedAthlete.name} — TF College Group</title></Head>
         {milestone&&(
-          <div onClick={()=>setMilestone(null)} style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",padding:"2rem"}}>
-            <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:400,height:400,background:"radial-gradient(circle,"+milestone.color+"22 0%,transparent 70%)",pointerEvents:"none"}}/>
-            <div style={{textAlign:"center",position:"relative"}}>
-              <div style={{fontSize:80,marginBottom:20,lineHeight:1}}>{milestone.icon}</div>
-              <div style={{fontSize:11,color:milestone.color,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:8}}>Milestone reached</div>
-              <div style={{fontSize:32,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",marginBottom:12,lineHeight:1.1}}>{milestone.headline}</div>
-              <div style={{fontSize:15,color:"#888",marginBottom:32,lineHeight:1.6,maxWidth:260,margin:"0 auto 32px"}}>{milestone.msg}</div>
-              <button onClick={()=>setMilestone(null)} style={{padding:"14px 32px",borderRadius:16,border:"none",background:"linear-gradient(135deg,"+milestone.color+","+milestone.color+"aa)",color:"#fff",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>Let's go →</button>
+          <div className="tfx ag-ms" onClick={()=>setMilestone(null)} style={{"--c":milestone.color}} role="dialog" aria-label="Milestone reached">
+            <div className="ag-ms-in">
+              <div className="ag-ms-ic" aria-hidden="true">{milestone.icon}</div>
+              <div className="tfx-eyebrow">Milestone reached</div>
+              <h2>{milestone.headline}</h2>
+              <p>{milestone.msg}</p>
+              <button className="tfx-btn tfx-press" onClick={()=>setMilestone(null)}>Let's go →</button>
             </div>
           </div>
         )}
         {editOpen&&(
-          <div onClick={()=>!editSaving&&setEditOpen(false)} style={{position:"fixed",inset:0,zIndex:9997,background:"rgba(0,0,0,0.82)",backdropFilter:"blur(4px)",WebkitBackdropFilter:"blur(4px)",display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0"}}>
-            <div onClick={e=>e.stopPropagation()} style={{width:"100%",maxWidth:480,background:mSheet,borderTopLeftRadius:24,borderTopRightRadius:24,borderTop:"1px solid "+mChipBorder,padding:"10px 22px 32px",maxHeight:"92dvh",overflowY:"auto",boxShadow:"0 -20px 60px rgba(0,0,0,0.6)"}}>
-              <div style={{width:40,height:4,borderRadius:2,background:mHandle,margin:"0 auto 18px"}}/>
-              <div style={{fontSize:20,fontWeight:900,color:mText,letterSpacing:"-0.02em",marginBottom:20}}>Edit profile</div>
-              {/* Photo */}
-              <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20}}>
-                <div style={{width:66,height:66,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+")":"linear-gradient(145deg,#8a9aa4,"+STEEL+")",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:900,color:"#fff",overflow:"hidden",flexShrink:0}}>
-                  {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(editName||selectedAthlete.name||"?")[0]}
+          <div className="cs-scrim is-sheet" onClick={()=>!editSaving&&setEditOpen(false)}>
+            <div className="tfx cs-sheet ag-sheet" role="dialog" aria-label="Edit profile" onClick={e=>e.stopPropagation()}>
+              <div className="cs-grab" aria-hidden="true"/>
+              <div className="cs-sheet-head">
+                <div className="cs-sheet-id"><b>Edit profile</b><small>Your photo, details and PIN</small></div>
+                <button className="cs-x tfx-press" onClick={()=>!editSaving&&setEditOpen(false)} aria-label="Close">✕</button>
+              </div>
+              <div className="cs-sheet-body ag-form">
+                {/* Photo */}
+                <div className="ag-photo">
+                  <span className="ag-av is-lg" style={{"--c":roleC}}>
+                    {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} alt=""/>:(editName||selectedAthlete.name||"?")[0]}
+                  </span>
+                  <label className="tfx-btn-ghost tfx-press ag-photo-btn">
+                    <Icon name="camera" size={16}/>{editPhotoBusy?"Uploading…":"Change photo"}
+                    <input type="file" accept="image/*" hidden onChange={e=>{const f=e.target.files?.[0];if(f)onEditPhoto(f);e.target.value="";}}/>
+                  </label>
                 </div>
-                <label style={{padding:"11px 18px",borderRadius:11,border:"1px solid "+mChipBorder,background:mChipBg,color:mText,fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                  {editPhotoBusy?"Uploading…":"📷 Change photo"}
-                  <input type="file" accept="image/*" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];if(f)onEditPhoto(f);e.target.value="";}}/>
+                <label className="lg-label">
+                  <span>Name</span>
+                  <input type="text" className="tfx-field ag-field" value={editName} onChange={e=>setEditName(e.target.value)}/>
                 </label>
-              </div>
-              {/* Name */}
-              <div style={{marginBottom:14}}>
-                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Name</div>
-                <input type="text" value={editName} onChange={e=>setEditName(e.target.value)} style={{width:"100%",padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
-              </div>
-              {/* Sport */}
-              <div style={{marginBottom:14}}>
-                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Sport / position</div>
-                <input type="text" value={editSport} onChange={e=>setEditSport(e.target.value)} placeholder="e.g. Baseball · OF" style={{width:"100%",padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
-              </div>
-              {/* College */}
-              <div style={{marginBottom:14}}>
-                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>College</div>
-                <input type="text" value={editCollege} onChange={e=>setEditCollege(e.target.value)} placeholder="e.g. University of Tennessee" style={{width:"100%",padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
-              </div>
-              {/* Year */}
-              <div style={{marginBottom:14}}>
-                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Year</div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                  {["Freshman","Sophomore","Junior","Senior","5th Year","Grad"].map(y=>(
-                    <button key={y} onClick={()=>setEditYear(editYear===y?"":y)} style={{padding:"10px 14px",borderRadius:10,border:"1px solid "+(editYear===y?"#E8720C":mBorder),background:editYear===y?"linear-gradient(135deg,#E8720C22,#C0392B22)":mField,color:editYear===y?"#E8720C":(isLight?"#5b626c":"#888"),fontSize:13,fontWeight:editYear===y?800:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>{y}</button>
-                  ))}
+                <label className="lg-label">
+                  <span>Sport / position</span>
+                  <input type="text" className="tfx-field ag-field" value={editSport} onChange={e=>setEditSport(e.target.value)} placeholder="e.g. Baseball · OF"/>
+                </label>
+                <label className="lg-label">
+                  <span>College</span>
+                  <input type="text" className="tfx-field ag-field" value={editCollege} onChange={e=>setEditCollege(e.target.value)} placeholder="e.g. University of Tennessee"/>
+                </label>
+                <div className="lg-label">
+                  <span>Year</span>
+                  <div className="lg-chips">
+                    {["Freshman","Sophomore","Junior","Senior","5th Year","Grad"].map(y=>(
+                      <button key={y} className={"tfx-chipbtn tfx-press ag-chip"+(editYear===y?" is-on":"")} aria-pressed={editYear===y} onClick={()=>setEditYear(editYear===y?"":y)}>{y}</button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              {/* PIN change */}
-              <div style={{marginBottom:16}}>
-                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Change PIN <span style={{color:"#666",textTransform:"none",letterSpacing:0}}>· leave blank to keep current</span></div>
-                <div style={{display:"flex",gap:10}}>
-                  <input type="password" inputMode="numeric" maxLength={4} value={editPin} onChange={e=>setEditPin(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="New PIN" style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none",textAlign:"center",letterSpacing:"0.25em"}}/>
-                  <input type="password" inputMode="numeric" maxLength={4} value={editPinConfirm} onChange={e=>setEditPinConfirm(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="Confirm" style={{flex:1,padding:"13px",borderRadius:11,border:"1px solid "+mBorder,background:mField,color:mText,fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none",textAlign:"center",letterSpacing:"0.25em"}}/>
+                <div className="lg-label">
+                  <span>Change PIN <em>· leave blank to keep current</em></span>
+                  <div className="lg-pair">
+                    <input type="password" inputMode="numeric" maxLength={4} className="tfx-field ag-field is-pin" aria-label="New PIN" value={editPin} onChange={e=>setEditPin(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="New PIN"/>
+                    <input type="password" inputMode="numeric" maxLength={4} className="tfx-field ag-field is-pin" aria-label="Confirm new PIN" value={editPinConfirm} onChange={e=>setEditPinConfirm(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="Confirm"/>
+                  </div>
                 </div>
-              </div>
-              {editMsg&&<div style={{fontSize:12,color:"#ff6b6b",background:"#1a0707",borderRadius:10,padding:"9px 13px",border:"1px solid #3a0a0a",marginBottom:14}}>{editMsg}</div>}
-              <div style={{display:"flex",gap:10}}>
-                <button onClick={()=>!editSaving&&setEditOpen(false)} style={{flex:1,padding:"14px",borderRadius:12,border:"1px solid "+mChipBorder,background:"transparent",color:isLight?"#5b626c":"#999",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
-                <button onClick={saveProfile} disabled={editSaving} style={{flex:2,padding:"14px",borderRadius:12,border:"none",background:editSaving?"#1a1a1a":"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",color:"#fff",fontSize:14,fontWeight:800,cursor:editSaving?"default":"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em"}}>{editSaving?"Saving…":"Save changes"}</button>
+                {editMsg&&<div className="ir-err" role="alert">{editMsg}</div>}
+                <div className="ag-actions">
+                  <button className="tfx-btn-ghost tfx-press" onClick={()=>!editSaving&&setEditOpen(false)}>Cancel</button>
+                  <button className="tfx-btn tfx-press" onClick={saveProfile} disabled={editSaving}>{editSaving?"Saving…":"Save changes"}</button>
+                </div>
               </div>
             </div>
           </div>
         )}
-        <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto"}}>
+        <div className="tfx ag-page" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {/* Profile header */}
-          <div className="tfx-glassbar" style={{borderBottom:"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
-            {/* Top accent */}
-            <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+(isForge?"rgba(232,114,12,0.9),rgba(192,57,43,0.8)":"rgba(96,106,117,0.8),rgba(138,154,164,0.9)")+",transparent)"}}/>
-            {/* Ambient glow */}
-            <div style={{position:"absolute",top:-40,right:-40,width:220,height:220,borderRadius:"50%",background:isForge?"rgba(232,114,12,0.06)":"rgba(138,154,164,0.06)",filter:"blur(50px)",pointerEvents:"none"}}/>
-            {/* Nav row */}
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
-              <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                <button onClick={()=>setScreen("roster")} style={{background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 14px",borderRadius:20,letterSpacing:"0.02em"}}>← Switch</button>
-                <a href="/" style={{background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>🏠</a>
-                <a href="/coach" style={{background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",WebkitBackdropFilter:"blur(10px)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:20,color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"6px 12px",textDecoration:"none"}}>⚒</a>
-              </div>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.15)",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:600}}>TF College Group</div>
-            </div>
-            {/* Identity banner */}
-            <div style={{display:"flex",alignItems:"center",gap:16,padding:"4px 16px 16px",position:"relative"}}>
-              <div onClick={openEditProfile} style={{position:"relative",flexShrink:0,cursor:"pointer"}}>
-                <div style={{position:"absolute",inset:-5,borderRadius:"50%",border:"1px solid "+(isForge?RED:STEEL)+"44",pointerEvents:"none"}}/>
-                <div style={{width:70,height:70,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,fontWeight:900,color:"#fff",overflow:"hidden",boxShadow:"0 0 30px "+(isForge?RED:STEEL)+"44"}}>
-                  {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>{e.target.style.display="none";}}/>:selectedAthlete.name[0]}
+          <header className="cs-head ag-head">
+            <div className="cs-head-in ag-head-in">
+              <div className="ag-id">
+                <button className="ag-av tfx-press" style={{"--c":roleC}} onClick={openEditProfile} aria-label="Edit profile">
+                  {selectedAthlete.photo_url?<img src={selectedAthlete.photo_url} alt="" onError={e=>{e.target.style.display="none";}}/>:selectedAthlete.name[0]}
+                  <i className="ag-av-edit" aria-hidden="true">✎</i>
+                </button>
+                <div className="ag-who">
+                  <b>{selectedAthlete.name}</b>
+                  {selectedAthlete.sport&&<small>{selectedAthlete.sport}</small>}
+                  {(selectedAthlete.college||selectedAthlete.year)&&(
+                    <small>
+                      {selectedAthlete.college}
+                      {selectedAthlete.college&&selectedAthlete.year&&<span className="ag-dot"> · </span>}
+                      {selectedAthlete.year&&<span className="ag-year">{selectedAthlete.year}</span>}
+                    </small>
+                  )}
                 </div>
-                <div style={{position:"absolute",bottom:-2,right:-2,width:26,height:26,borderRadius:"50%",background:"linear-gradient(135deg,#E8720C,#C0392B)",border:"2px solid #0a0a14",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,boxShadow:"0 2px 8px rgba(0,0,0,0.5)"}}>✎</div>
+                <span className="ag-role" style={{"--c":roleC}}>{isForge?"Forge":"Iron"}</span>
               </div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1,textTransform:"uppercase"}}>{selectedAthlete.name}</div>
-                {selectedAthlete.sport&&<div style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginTop:3,letterSpacing:"0.04em"}}>{selectedAthlete.sport}</div>}
-                {(selectedAthlete.college||selectedAthlete.year)&&(
-                  <div style={{fontSize:10.5,color:"rgba(255,255,255,0.42)",marginTop:4,letterSpacing:"0.03em",display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                    {selectedAthlete.college&&<span style={{display:"flex",alignItems:"center",gap:4}}>🎓 {selectedAthlete.college}</span>}
-                    {selectedAthlete.college&&selectedAthlete.year&&<span style={{color:"rgba(255,255,255,0.2)"}}>·</span>}
-                    {selectedAthlete.year&&<span style={{color:GOLD,fontWeight:700}}>{selectedAthlete.year}</span>}
-                  </div>
-                )}
-              </div>
-              <div style={{textAlign:"right",flexShrink:0}}>
-                <div style={{fontSize:9,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.12em",background:(isForge?RED:STEEL)+"18",padding:"4px 12px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"44",marginBottom:5,display:"inline-block",whiteSpace:"nowrap"}}>{isForge?"⚔ Forge":"⚒ Iron"}</div>
-                {streak>0&&<div style={{fontSize:11,color:GREEN,fontWeight:700,display:"flex",alignItems:"center",gap:3,justifyContent:"flex-end"}}><Icon name="flame" size={11} color={GREEN}/>{streak}-day</div>}
+              <div className="ag-bar">
+                <button className="ag-chip-link tfx-press" onClick={()=>setScreen("roster")}>← Switch</button>
+                <a className="ag-ic-link tfx-press" href="/" aria-label="Home"><Icon name="home" size={16}/></a>
+                <a className="ag-ic-link tfx-press" href="/coach" aria-label="Coach app"><Icon name="anvil" size={16}/></a>
+                {streak>0&&<span className="ag-streak"><Icon name="flame" size={13}/><span><b className="tfx-num">{streak}</b>-day streak</span></span>}
               </div>
             </div>
-          </div>
+          </header>
 
-          <div key={tab} style={{padding:"1.25rem",background:"transparent",minHeight:"60vh",paddingBottom:"110px",animation:slideDirRef.current>0?"tfSlideFromRight 0.32s cubic-bezier(0.22,1,0.36,1) backwards":slideDirRef.current<0?"tfSlideFromLeft 0.32s cubic-bezier(0.22,1,0.36,1) backwards":"none"}}>
+          <div key={tab} className="ag-body" style={{animation:slideDirRef.current>0?"tfSlideFromRight 0.32s cubic-bezier(0.22,1,0.36,1) backwards":slideDirRef.current<0?"tfSlideFromLeft 0.32s cubic-bezier(0.22,1,0.36,1) backwards":"none"}}>
 
             {tab==="profile"&&(
-              <div>
-                {(()=>{const _est=nowEST();const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay||isBeforeSeason(seasonInfo))return null;const isMonFri=_d===1||_d===5;return(<div style={{background:"linear-gradient(135deg,#C0392B,#8B1A1A)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><div style={{fontSize:13,fontWeight:700,color:"#fff"}}>⚒ Class day — be early!</div><div style={{fontSize:11,color:"#ffaaaa"}}>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</div></div><Icon name="zap" size={22} color="rgba(255,255,255,0.6)"/></div>);})()}
-                {weightLoggedToday===false&&(
-                  <div onClick={()=>{slideDirRef.current=0;setTab("weight");}} style={{background:"linear-gradient(135deg,#1a3a1a,#0e240e)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
-                    <div>
-                      <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>Weigh-in day</div>
-                      <div style={{fontSize:11,color:GREEN}}>Tap to log your weight → stay on track</div>
-                    </div>
-                    <Icon name="barChart" size={22} color={GREEN}/>
+              <div className="tfx ag-stack">
+                {(()=>{const _est=nowEST();const _d=_est.getDay();const isClassDay=[1,2,4,5].includes(_d);if(!isClassDay||isBeforeSeason(seasonInfo))return null;const isMonFri=_d===1||_d===5;return(
+                  <div className="tfx-card ag-row" style={{"--c":"var(--ember)"}}>
+                    <span className="ag-tile"><Icon name="zap" size={18}/></span>
+                    <span className="ag-row-txt"><b>Class day — be early!</b><small>Doors open at {isMonFri?"8:30am":"9:00am"} · On time is late</small></span>
                   </div>
+                );})()}
+                {weightLoggedToday===false&&(
+                  <button className="tfx-card ag-row is-tap tfx-press" style={{"--c":"var(--green)"}} onClick={()=>{slideDirRef.current=0;setTab("weight");}}>
+                    <span className="ag-tile"><Icon name="scale" size={18}/></span>
+                    <span className="ag-row-txt"><b>Weigh-in day</b><small>Tap to log your weight → stay on track</small></span>
+                    <span className="ag-chev" aria-hidden="true">›</span>
+                  </button>
                 )}
                 {habitsDoneToday===false&&(
-                  <div onClick={()=>{slideDirRef.current=0;setTab("habits");}} style={{background:"linear-gradient(135deg,#1a1330,#100a22)",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid "+PUR+"55",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
-                    <div>
-                      <div style={{fontSize:13,fontWeight:700,color:"#fff"}}>Log today's habits</div>
-                      <div style={{fontSize:11,color:"#b9a6ff"}}>Water · nutrition · sleep → keep your streak alive</div>
-                    </div>
-                    <div style={{fontSize:20}}>💧</div>
-                  </div>
+                  <button className="tfx-card ag-row is-tap tfx-press" style={{"--c":"var(--violet)"}} onClick={()=>{slideDirRef.current=0;setTab("habits");}}>
+                    <span className="ag-tile"><Icon name="droplet" size={18}/></span>
+                    <span className="ag-row-txt"><b>Log today's habits</b><small>Water · nutrition · sleep → keep your streak alive</small></span>
+                    <span className="ag-chev" aria-hidden="true">›</span>
+                  </button>
                 )}
                 {/* Recent team PRs — hype feed (hidden until there's at least one) */}
-                <div style={{marginBottom:14}}>
+                <div className="ag-slot">
                   <TeamPRFeed athletes={athletes} currentAthleteId={selectedAthlete.id} compact onSeeAll={()=>{slideDirRef.current=0;setTab("prfeed");}}/>
                 </div>
                 {/* Push notification setup card — shown until enabled */}
                 {notifCard==="idle"&&(
-                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a1e",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-                    <div>
-                      <div style={{fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}>Lock screen reminders</div>
-                      <div style={{fontSize:10,color:"#555"}}>Get notified to log weight on class days</div>
-                    </div>
-                    <button onClick={enableProfileNotif} disabled={notifLoading} style={{padding:"8px 14px",borderRadius:8,border:"none",background:"linear-gradient(135deg,"+GREEN+","+GREEN+"aa)",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",flexShrink:0,whiteSpace:"nowrap"}}>
-                      {notifLoading?"...":"Enable →"}
-                    </button>
+                  <div className="tfx-card ag-row">
+                    <span className="ag-tile"><Icon name="bell" size={18}/></span>
+                    <span className="ag-row-txt"><b>Lock screen reminders</b><small>Get notified to log weight on class days</small></span>
+                    <button className="tfx-btn-ghost tfx-press ag-mini" onClick={enableProfileNotif} disabled={notifLoading}>{notifLoading?"…":"Enable"}</button>
                   </div>
                 )}
                 {notifCard==="ios-browser"&&(
-                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a1e"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,fontWeight:700,color:"#fff",marginBottom:6}}><Icon name="bell" size={13} color="#fff"/>Get lock screen reminders</div>
-                    <div style={{fontSize:11,color:"#888",lineHeight:1.6,marginBottom:8}}>
-                      On iPhone, add this app to your Home Screen first:<br/>
-                      <span style={{color:"#aaa"}}>Tap <strong style={{color:"#fff"}}>Share</strong> → <strong style={{color:"#fff"}}>Add to Home Screen</strong> → open from there</span>
+                  <div className="tfx-card ag-card">
+                    <div className="ag-row is-flat">
+                      <span className="ag-tile"><Icon name="bell" size={18}/></span>
+                      <span className="ag-row-txt"><b>Get lock screen reminders</b><small>Then tap Enable inside the app to get notifications</small></span>
                     </div>
-                    <div style={{fontSize:10,color:"#555"}}>Then tap Enable inside the app to get notifications</div>
+                    <p className="ag-p">On iPhone, add this app to your Home Screen first: tap <strong>Share</strong> → <strong>Add to Home Screen</strong> → open from there.</p>
                   </div>
                 )}
                 {notifCard==="denied"&&(
-                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #2a1e1e",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-                    <div>
-                      <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}><Icon name="bell" size={13} color="#fff"/>Notifications blocked</div>
-                      <div style={{fontSize:10,color:"#555"}}>Enable in your browser or phone settings</div>
-                    </div>
-                    <div style={{fontSize:10,color:"#555",flexShrink:0}}>Settings → Safari/Chrome</div>
+                  <div className="tfx-card ag-row">
+                    <span className="ag-tile"><Icon name="bellOff" size={18}/></span>
+                    <span className="ag-row-txt"><b>Notifications blocked</b><small>Enable in your browser or phone settings · Settings → Safari/Chrome</small></span>
                   </div>
                 )}
                 {bioAvail&&!bioCredId&&(
-                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a3a"}}>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-                      <div>
-                        <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}><Icon name="faceId" size={13} color="#fff"/>Enable Face ID / Touch ID</div>
-                        <div style={{fontSize:10,color:"#555"}}>Sign in instantly — skip the PIN next time</div>
-                      </div>
-                      <button disabled={bioRegistering} onClick={async()=>{
+                  <div className="tfx-card ag-card">
+                    <div className="ag-row is-flat">
+                      <span className="ag-tile"><Icon name="faceId" size={18}/></span>
+                      <span className="ag-row-txt"><b>Enable Face ID / Touch ID</b><small>Sign in instantly — skip the PIN next time</small></span>
+                      <button className="tfx-btn-ghost tfx-press ag-mini" disabled={bioRegistering} onClick={async()=>{
                         setBioRegistering(true);setBioRegResult(null);
                         try{localStorage.removeItem("tf_bio_declined_"+selectedAthlete.id);}catch(e){}
                         try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
@@ -1248,22 +1220,20 @@ export default function Athlete(){
                         const st=await registerBiometric(true);
                         setBioRegResult(st==="ok"?"success":st==="error"?"failed":null);
                         setBioRegistering(false);
-                      }} style={{padding:"8px 14px",borderRadius:10,border:"none",background:bioRegistering?"#222":"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",color:bioRegistering?"#555":"#fff",fontSize:12,fontWeight:700,cursor:bioRegistering?"default":"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0}}>
+                      }}>
                         {bioRegistering?"Setting up…":"Enable"}
                       </button>
                     </div>
-                    {bioRegResult==="success"&&<div style={{fontSize:11,color:GREEN,fontWeight:700,marginTop:8}}>✓ Face ID enabled — use it next time you log in</div>}
-                    {bioRegResult==="failed"&&<div style={{fontSize:11,color:"#e05",marginTop:8,lineHeight:1.5}}>{bioMsg||"Setup failed — make sure Face ID is on and try again."}</div>}
+                    {bioRegResult==="success"&&<div className="ag-note is-ok">✓ Face ID enabled — use it next time you log in</div>}
+                    {bioRegResult==="failed"&&<div className="ag-note is-bad">{bioMsg||"Setup failed — make sure Face ID is on and try again."}</div>}
                   </div>
                 )}
                 {bioAvail&&bioCredId&&(
-                  <div style={{background:"#111",borderRadius:12,padding:"12px 16px",marginBottom:12,border:"1px solid #1e2a3a"}}>
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12}}>
-                      <div>
-                        <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12,fontWeight:700,color:"#fff",marginBottom:2}}><Icon name="faceId" size={13} color="#fff"/>Face ID / Touch ID enabled</div>
-                        <div style={{fontSize:10,color:"#555"}}>Reset to re-register with Apple Passwords</div>
-                      </div>
-                      <button disabled={bioRegistering} onClick={async()=>{
+                  <div className="tfx-card ag-card">
+                    <div className="ag-row is-flat">
+                      <span className="ag-tile" style={{"--c":"var(--green)"}}><Icon name="faceId" size={18}/></span>
+                      <span className="ag-row-txt"><b>Face ID / Touch ID enabled</b><small>Reset to re-register with Apple Passwords</small></span>
+                      <button className="tfx-btn-ghost tfx-press ag-mini" disabled={bioRegistering} onClick={async()=>{
                         setBioRegistering(true);setBioRegResult(null);
                         try{localStorage.removeItem("tf_bio_declined_"+selectedAthlete.id);}catch(e){}
                         try{localStorage.removeItem("tf_bio_"+selectedAthlete.id);}catch(e){}
@@ -1271,55 +1241,44 @@ export default function Athlete(){
                         const st=await registerBiometric(true);
                         setBioRegResult(st==="ok"?"success":st==="error"?"failed":null);
                         setBioRegistering(false);
-                      }} style={{padding:"8px 14px",borderRadius:10,border:"none",background:bioRegistering?"#222":"#1a1a1a",color:bioRegistering?"#555":"#888",fontSize:12,fontWeight:700,cursor:bioRegistering?"default":"pointer",fontFamily:"Georgia,serif",whiteSpace:"nowrap",flexShrink:0,border:"0.5px solid #333"}}>
-                        {bioRegistering?"Resetting…":"Reset →"}
+                      }}>
+                        {bioRegistering?"Resetting…":"Reset"}
                       </button>
                     </div>
-                    {bioRegResult==="success"&&<div style={{fontSize:11,color:GREEN,fontWeight:700,marginTop:8}}>✓ Face ID re-registered with Apple Passwords</div>}
-                    {bioRegResult==="failed"&&<div style={{fontSize:11,color:"#e05",marginTop:8,lineHeight:1.5}}>{bioMsg||"Setup failed — make sure Face ID is on and try again."}</div>}
+                    {bioRegResult==="success"&&<div className="ag-note is-ok">✓ Face ID re-registered with Apple Passwords</div>}
+                    {bioRegResult==="failed"&&<div className="ag-note is-bad">{bioMsg||"Setup failed — make sure Face ID is on and try again."}</div>}
                   </div>
                 )}
-                <DailyWord announcement={announcement}/>
-                <ClassCountdown/>
+                <div className="ag-slot"><DailyWord announcement={announcement}/></div>
+                <div className="ag-slot"><ClassCountdown/></div>
                 {(()=>{
                   const _e=nowEST();
                   const _dow=_e.getDay();
                   const GENRES=[{id:"rock",label:"Rock",emoji:"🎸"},{id:"wgt",label:"White Girl Throwbacks",emoji:"💅"},{id:"rap",label:"Rap / Hip-Hop",emoji:"🎤"},{id:"country",label:"Country",emoji:"🤠"},{id:"pop",label:"Pop",emoji:"🎵"},{id:"mcastle",label:"MCASTLES SECRET PICK",emoji:"🍑🚀"}];
                   if(_dow===1||_dow===5)return(
-                    <div style={{borderRadius:16,marginBottom:12,overflow:"hidden",border:"1px solid "+GOLD+"33"}}>
-                      <div style={{background:"linear-gradient(140deg,"+GOLD+"20,"+GOLD+"08,#0d0d0d)",padding:"16px",position:"relative",overflow:"hidden",display:"flex",alignItems:"center",gap:14}}>
-                        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"55,transparent)"}}/>
-                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>🙏</div>
-                        <div>
-                          <div style={{fontSize:9,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Today's Music</div>
-                          <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>Worship Music</div>
-                          <div style={{fontSize:11,color:"#666",marginTop:2}}>{_dow===1?"Mindset Monday":"Fellowship Friday"} · Proverbs 27:17</div>
-                        </div>
-                      </div>
+                    <div className="tfx-card ag-card" style={{"--c":"var(--gold)"}}>
+                      <div className="tfx-eyebrow ag-eb">Today's music</div>
+                      <h3 className="ag-h">Worship music</h3>
+                      <p className="ag-sub">{_dow===1?"Mindset Monday":"Fellowship Friday"} · Proverbs 27:17</p>
                     </div>
                   );
                   return(
-                    <div style={{borderRadius:16,marginBottom:12,overflow:"hidden",border:"1px solid "+ORANGE+"33"}}>
-                      <div style={{background:"linear-gradient(140deg,"+ORANGE+"18,"+ORANGE+"06,#0d0d0d)",padding:"16px 16px 14px",position:"relative",overflow:"hidden"}}>
-                        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,"+ORANGE+","+ORANGE+"55,transparent)"}}/>
-                        <div style={{position:"absolute",bottom:-8,right:-6,fontSize:60,opacity:0.05,lineHeight:1,userSelect:"none"}}>🎵</div>
-                        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}>
-                          <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+ORANGE+"44,"+ORANGE+"22)",border:"1px solid "+ORANGE+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 16px "+ORANGE+"33"}}>🎵</div>
-                          <div>
-                            <div style={{fontSize:9,color:ORANGE,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Vote Now</div>
-                            <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>Today's Music</div>
-                            {myVote&&<div style={{fontSize:10,color:"#555",marginTop:2}}>Tap to change your vote</div>}
-                          </div>
+                    <div className="tfx-card ag-card" style={{"--c":"var(--ember)"}}>
+                      <div className="ag-head-row">
+                        <div>
+                          <div className="tfx-eyebrow ag-eb">Vote now</div>
+                          <h3 className="ag-h">Today's music</h3>
                         </div>
-                        <div style={{display:"flex",flexDirection:"column",gap:7}}>
-                          {GENRES.map(g=>(
-                            <button key={g.id} onClick={()=>submitVote(g.id)} style={{padding:"11px 14px",borderRadius:12,border:"1px solid "+(myVote===g.id?ORANGE+"55":"#1e1e1e"),background:myVote===g.id?"linear-gradient(135deg,"+ORANGE+"1a,"+ORANGE+"0d)":"#111",color:myVote===g.id?"#fff":"#888",fontSize:13,fontWeight:myVote===g.id?700:400,cursor:"pointer",fontFamily:"Georgia,serif",display:"flex",alignItems:"center",gap:10,textAlign:"left",transition:"all 0.12s",boxShadow:myVote===g.id?"0 0 10px "+ORANGE+"22":"none"}}>
-                              <span style={{fontSize:18,lineHeight:1}}>{g.emoji}</span>
-                              <span style={{flex:1}}>{g.label}</span>
-                              {myVote===g.id&&<span style={{fontSize:11,color:ORANGE,fontWeight:800}}>✓</span>}
-                            </button>
-                          ))}
-                        </div>
+                        {myVote&&<small className="ag-hint">Tap to change your vote</small>}
+                      </div>
+                      <div className="ag-votes">
+                        {GENRES.map(g=>(
+                          <button key={g.id} className={"ag-vote tfx-press"+(myVote===g.id?" is-on":"")} aria-pressed={myVote===g.id} onClick={()=>submitVote(g.id)}>
+                            <span className="ag-vote-em" aria-hidden="true">{g.emoji}</span>
+                            <span className="ag-vote-lbl">{g.label}</span>
+                            {myVote===g.id&&<span className="ag-vote-ck" aria-hidden="true">✓</span>}
+                          </button>
+                        ))}
                       </div>
                     </div>
                   );
@@ -1331,15 +1290,17 @@ export default function Athlete(){
                   const _classDays=["Mon","Tue","Thu","Fri"];
                   const _isClassDay=_classDays.includes(_day);
                   if(isBeforeSeason(seasonInfo)) return(
-                    <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525"}}>
-                      <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:4}}>{seasonInfo.label} starts {fmtFirstClass(seasonInfo)}</div>
-                      <div style={{fontSize:12,color:"#666"}}>Class days are Monday, Tuesday, Thursday &amp; Friday. Get your body ready — log your weight and habits so you show up strong.</div>
+                    <div className="tfx-card ag-card">
+                      <div className="tfx-eyebrow">Schedule</div>
+                      <h3 className="ag-h">{seasonInfo.label} starts {fmtFirstClass(seasonInfo)}</h3>
+                      <p className="ag-sub">Class days are Monday, Tuesday, Thursday &amp; Friday. Get your body ready — log your weight and habits so you show up strong.</p>
                     </div>
                   );
                   if(!_isClassDay) return(
-                    <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525"}}>
-                      <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:4}}>No class today</div>
-                      <div style={{fontSize:12,color:"#666"}}>Class days are Monday, Tuesday, Thursday & Friday. Rest up and come back ready.</div>
+                    <div className="tfx-card ag-card">
+                      <div className="tfx-eyebrow">Schedule</div>
+                      <h3 className="ag-h">No class today</h3>
+                      <p className="ag-sub">Class days are Monday, Tuesday, Thursday &amp; Friday. Rest up and come back ready.</p>
                     </div>
                   );
                   const _items=[
@@ -1350,246 +1311,154 @@ export default function Athlete(){
                     {time:"11:15am",label:"Closeout & prayer",detail:"5 min · all together · coach or athlete prays",color:RED,dur:"5 min"},
                   ];
                   return(
-                    <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525"}}>
-                      <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:12}}>Class flow — 2 hours · done by 11:20am</div>
-                      {_items.map((s,i,arr)=>(
-                        <div key={i} style={{display:"flex",gap:12,padding:"8px 0",borderBottom:i<arr.length-1?"0.5px solid #1e1e1e":"none"}}>
-                          <div style={{minWidth:56,fontSize:12,color:"#666",paddingTop:2}}>{s.time}</div>
-                          <div style={{minWidth:8,display:"flex",flexDirection:"column",alignItems:"center"}}>
-                            <div style={{width:8,height:8,borderRadius:"50%",background:s.color,marginTop:4,flexShrink:0,boxShadow:"0 0 6px "+s.color+"66"}}/>
-                            {i<arr.length-1&&<div style={{width:1,flex:1,background:"#252525",marginTop:3}}/>}
-                          </div>
-                          <div style={{flex:1}}>
-                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
-                              <span style={{fontSize:13,fontWeight:500,color:"#ddd"}}>{s.label}</span>
-                              <span style={{fontSize:11,background:"#222",color:"#666",padding:"1px 7px",borderRadius:5}}>{s.dur}</span>
-                            </div>
-                            <div style={{fontSize:12,color:"#666"}}>{s.detail}</div>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="tfx-card ag-card">
+                      <div className="tfx-eyebrow">Today</div>
+                      <h3 className="ag-h">Class flow</h3>
+                      <p className="ag-sub">2 hours · done by 11:20am</p>
+                      <ol className="ag-flow">
+                        {_items.map((s,i)=>(
+                          <li key={i} style={{"--c":s.color}}>
+                            <span className="ag-flow-t tfx-num">{s.time}</span>
+                            <span className="ag-flow-dot" aria-hidden="true"/>
+                            <span className="ag-flow-txt">
+                              <b>{s.label}<em>{s.dur}</em></b>
+                              <small>{s.detail}</small>
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
                     </div>
                   );
                 })()}
                 {announcement&&(
-                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
-                    <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
-                      <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative"}}>
-                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>📣</div>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>From Coach Ant</div>
-                          <div style={{fontSize:13,color:"#fff",lineHeight:1.7}}>{announcement.message}</div>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="tfx-card ag-card ag-coach" style={{"--c":"var(--violet)"}}>
+                    <div className="tfx-eyebrow ag-eb">From Coach Ant</div>
+                    <p className="ag-msg">{announcement.message}</p>
                   </div>
                 )}
                 {bracelet&&(
-                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+bracelet.hex+"33"}}>
-                    <div style={{background:"linear-gradient(140deg,"+bracelet.hex+"30,"+bracelet.hex+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+bracelet.hex+","+bracelet.hex+"44,transparent)"}}/>
-                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+bracelet.hex+"12,transparent 70%)",pointerEvents:"none"}}/>
-                      <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative"}}>
-                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+bracelet.hex+"44,"+bracelet.hex+"22)",border:"1px solid "+bracelet.hex+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+bracelet.hex+"33"}}>📿</div>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:8,color:bracelet.hex,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>{bracelet.color} · {bracelet.ref}</div>
-                          <div style={{fontSize:14,color:"#fff",fontStyle:"italic",lineHeight:1.75}}>"{bracelet.text}"</div>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="tfx-card ag-card" style={{"--c":bracelet.hex}}>
+                    <div className="ag-verse-ref"><i aria-hidden="true"/>{bracelet.color} · {bracelet.ref}</div>
+                    <blockquote className="ag-verse">&#8220;{bracelet.text}&#8221;</blockquote>
                   </div>
                 )}
                 {streak>0&&(
-                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GREEN+"33"}}>
-                    <div style={{background:"linear-gradient(140deg,"+GREEN+"30,"+GREEN+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GREEN+","+GREEN+"44,transparent)"}}/>
-                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>🔥</div>
-                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GREEN+"12,transparent 70%)",pointerEvents:"none"}}/>
-                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GREEN+"44,"+GREEN+"22)",border:"1px solid "+GREEN+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GREEN+"33"}}>🔥</div>
-                        <div>
-                          <div style={{fontSize:8,color:GREEN,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Early arrival streak</div>
-                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>{streak} <span style={{fontSize:13,color:"#888",fontWeight:400}}>days straight</span></div>
-                          <div style={{fontSize:11,color:"#555",marginTop:1}}>{(()=>{const allM=[3,5,7,10,15,20];const next=allM.find(m=>m>streak);return next?next-streak+" more to "+next+"-day milestone":"Keep showing up early.";})()}</div>
-                        </div>
-                      </div>
+                  <div className="tfx-card ag-card" style={{"--c":"var(--green)"}}>
+                    <div className="tfx-eyebrow ag-eb">Early arrival streak</div>
+                    <h3 className="ag-h"><span className="tfx-num">{streak}</span> <span className="ag-h-soft">days straight</span></h3>
+                    <div className="ag-stats">
+                      <div className="cs-stat"><b className="tfx-num">{streak}</b><small>Current</small></div>
+                      <div className="cs-stat"><b className="tfx-num">{athleteLb?.best_streak||streak}</b><small>Best</small></div>
+                      <div className="cs-stat"><b className="tfx-num">{athleteLb?.early_count||streak}</b><small>Total early</small></div>
                     </div>
-                    <div style={{background:"#111",padding:"14px 18px"}}>
-                      <div style={{display:"flex",gap:8,marginBottom:12}}>
-                        <div style={{flex:1,background:"#1a1a1a",borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
-                          <div style={{fontSize:22,fontWeight:900,color:GREEN}}>{streak}</div>
-                          <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:2}}>Current</div>
+                    {(()=>{
+                      const allM=[3,5,7,10,15,20];
+                      const next=allM.find(m=>m>streak);
+                      if(!next)return<div className="ag-note is-ok">🏆 Elite streak. Keep going.</div>;
+                      const prev=allM.filter(m=>m<streak).pop()||0;
+                      const pct=Math.round(((streak-prev)/(next-prev))*100);
+                      return(
+                        <div className="ag-prog">
+                          <div className="ag-prog-lbl"><span>{streak} days</span><span>{next-streak} more to {next}-day milestone</span></div>
+                          <div className="ag-prog-track"><i style={{width:pct+"%"}}/></div>
                         </div>
-                        <div style={{flex:1,background:"#1a1a1a",borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
-                          <div style={{fontSize:22,fontWeight:900,color:GOLD}}>{athleteLb?.best_streak||streak}</div>
-                          <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:2}}>Best</div>
-                        </div>
-                        <div style={{flex:1,background:"#1a1a1a",borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
-                          <div style={{fontSize:22,fontWeight:900,color:"#ddd"}}>{athleteLb?.early_count||streak}</div>
-                          <div style={{fontSize:9,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em",marginTop:2}}>Total Early</div>
-                        </div>
-                      </div>
-                      {(()=>{
-                        const allM=[3,5,7,10,15,20];
-                        const next=allM.find(m=>m>streak);
-                        if(!next)return<div style={{fontSize:11,color:GREEN,textAlign:"center"}}>🏆 Elite streak. Keep going.</div>;
-                        const prev=allM.filter(m=>m<streak).pop()||0;
-                        const pct=Math.round(((streak-prev)/(next-prev))*100);
-                        return(
-                          <div>
-                            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-                              <div style={{fontSize:10,color:"#555"}}>{streak} days</div>
-                              <div style={{fontSize:10,color:GREEN}}>{next-streak} more to {next}-day milestone</div>
-                            </div>
-                            <div style={{height:4,background:"#222",borderRadius:2,overflow:"hidden"}}>
-                              <div style={{height:"100%",width:pct+"%",background:"linear-gradient(90deg,"+GREEN+","+GOLD+")",borderRadius:2,transition:"width 0.5s"}}/>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
+                      );
+                    })()}
                   </div>
                 )}
                 {anvilWinner&&(
-                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
-                    <div style={{background:"linear-gradient(140deg,"+GOLD+"30,"+GOLD+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
-                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒</div>
-                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GOLD+"12,transparent 70%)",pointerEvents:"none"}}/>
-                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                        {(()=>{const wa=athletes.find(a=>a.name===anvilWinner.athlete_name);return(<div style={{width:56,height:56,borderRadius:"50%",background:"linear-gradient(145deg,"+GOLD+","+GOLD+"88)",border:"2px solid "+GOLD,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:700,color:"#1a1a1a",flexShrink:0,boxShadow:"0 0 20px "+GOLD+"55"}}>{wa?.photo_url?<img src={wa.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>{e.target.style.display="none";}} alt=""/>:<span>⚒️</span>}</div>);})()}
-                        <div>
-                          <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>This week's Anvil</div>
-                          <div style={{fontSize:20,fontWeight:900,color:GOLD,letterSpacing:"-0.02em"}}>{anvilWinner.athlete_name}</div>
-                          <div style={{fontSize:11,color:"#666",marginTop:1}}>Iron sharpens iron.</div>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="tfx-card ag-row" style={{"--c":"var(--gold)"}}>
+                    {(()=>{const wa=athletes.find(a=>a.name===anvilWinner.athlete_name);return(<span className="ag-av is-md">{wa?.photo_url?<img src={wa.photo_url} onError={e=>{e.target.style.display="none";}} alt=""/>:(anvilWinner.athlete_name||"?")[0]}</span>);})()}
+                    <span className="ag-row-txt">
+                      <span className="tfx-eyebrow ag-eb">This week's Anvil</span>
+                      <b className="ag-big">{anvilWinner.athlete_name}</b>
+                      <small>Iron sharpens iron.</small>
+                    </span>
                   </div>
                 )}
                 {/* ── GOALS ── */}
-                <Goals athlete={selectedAthlete} season={seasonInfo} onUpdate={patch=>setSelectedAthlete(x=>({...x,...patch}))}/>
+                <div className="ag-slot"><Goals athlete={selectedAthlete} season={seasonInfo} onUpdate={patch=>setSelectedAthlete(x=>({...x,...patch}))}/></div>
 
-                <a href={groupmeLink} target="_blank" rel="noreferrer" style={{textDecoration:"none",display:"block",marginBottom:12}}>
-                  <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid #00aff033"}}>
-                    <div style={{background:"linear-gradient(140deg,#001828,#000d18,#0d0d0d)",padding:"16px 18px",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,#00aff0,#00aff055,transparent)"}}/>
-                      <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.07,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="chat" size={66} color="#fff"/></div>
-                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,#00aff044,#00aff022)",border:"1px solid #00aff044",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px #00aff033"}}>💬</div>
-                        <div style={{flex:1}}>
-                          <div style={{fontSize:8,color:"#00aff0",textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Group Chat</div>
-                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Join GroupMe</div>
-                          <div style={{fontSize:11,color:"#555",marginTop:1}}>Tap to join the team group chat</div>
-                        </div>
-                        <div style={{fontSize:18,color:"#00aff044"}}>→</div>
-                      </div>
-                    </div>
-                  </div>
+                <a href={groupmeLink} target="_blank" rel="noreferrer" className="tfx-card ag-row is-tap tfx-press" style={{"--c":"var(--sky)"}}>
+                  <span className="ag-tile"><Icon name="chat" size={18}/></span>
+                  <span className="ag-row-txt">
+                    <span className="tfx-eyebrow ag-eb">Group chat</span>
+                    <b className="ag-big">Join GroupMe</b>
+                    <small>Tap to join the team group chat</small>
+                  </span>
+                  <span className="ag-chev" aria-hidden="true">›</span>
                 </a>
               </div>
             )}
 
 
             {tab==="mygroup"&&(
-              <div>
+              <div className="tfx ag-stack">
                 {myGroupIdx==null?(
-                  <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+STEEL+"33"}}>
-                    <div style={{background:"linear-gradient(140deg,"+STEEL+"30,"+STEEL+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+","+STEEL+"44,transparent)"}}/>
-                      <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="clock" size={66} color="#fff"/></div>
-                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+STEEL+"12,transparent 70%)",pointerEvents:"none"}}/>
-                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+STEEL+"44,"+STEEL+"22)",border:"1px solid "+STEEL+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+STEEL+"33"}}>⏳</div>
-                        <div>
-                          <div style={{fontSize:8,color:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Your Group</div>
-                          <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>Not assigned yet</div>
-                          <div style={{fontSize:11,color:"#666",marginTop:1}}>Coach will place you in a group soon</div>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="tfx-card ag-card">
+                    <div className="tfx-eyebrow">Your group</div>
+                    <h2 className="ag-title">Not assigned yet</h2>
+                    <p className="ag-sub">Coach will place you in a group soon.</p>
                   </div>
                 ):(()=>{
                   const gc=myBracelet?.hex||LC[myGroupIdx%LC.length]||PUR;
                   const leaderName=myGroupLeader?.name||null;
                   const amLeader=selectedAthlete?.role==="forge";
                   return(
-                    <div>
+                    <>
                       {/* Group identity card */}
-                      <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",border:"1px solid "+gc+"44",boxShadow:"0 8px 32px "+gc+"18"}}>
-                        <div style={{height:3,background:"linear-gradient(90deg,"+gc+","+gc+"44,transparent)"}}/>
-                        <div style={{background:"linear-gradient(140deg,"+gc+"22,"+gc+"06,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
-                          <div style={{position:"absolute",bottom:-10,right:-4,fontSize:80,opacity:0.05,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒</div>
-                          <div style={{fontSize:9,color:gc,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:14}}>
-                            {amLeader?"You're Leading This Group":"Your Group"}
+                      <div className="tfx-card ag-card" style={{"--c":gc}}>
+                        <div className="tfx-eyebrow ag-eb">{amLeader?"You're leading this group":"Your group"}</div>
+                        {leaderName&&(
+                          <div className="ag-leader">
+                            <span className="ag-av is-lg">{myGroupLeader?.photo_url?<img src={myGroupLeader.photo_url} alt=""/>:(leaderName||"?")[0]}</span>
+                            <span className="ag-row-txt">
+                              <b className="ag-big">{leaderName}</b>
+                              <small>{amLeader?"Group leader · That's you":"Group leader"}</small>
+                              {myTier&&<span className="ag-pill">Tier {myTier}</span>}
+                            </span>
                           </div>
-                          {/* Leader row */}
-                          {leaderName&&(
-                            <div style={{display:"flex",alignItems:"center",gap:14}}>
-                              <div style={{width:64,height:64,borderRadius:"50%",border:"2px solid "+gc,overflow:"hidden",flexShrink:0,background:"#222",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:700,color:gc,boxShadow:"0 0 24px "+gc+"44"}}>
-                                {myGroupLeader?.photo_url?<img src={myGroupLeader.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(leaderName||"?")[0]}
-                              </div>
-                              <div style={{flex:1}}>
-                                <div style={{fontSize:22,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>{leaderName}</div>
-                                <div style={{fontSize:11,color:"#666",marginTop:3}}>{amLeader?"Group Leader · That's you":"Group Leader"}</div>
-                                {myTier&&(
-                                  <div style={{marginTop:6}}>
-                                    <span style={{fontSize:10,background:gc+"22",color:gc,padding:"3px 10px",borderRadius:20,fontWeight:700,border:"0.5px solid "+gc+"44"}}>Tier {myTier}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        )}
                         {/* Scripture */}
                         {myBracelet&&(
-                          <div style={{background:"#111",padding:"14px 18px",borderTop:"0.5px solid #1a1a1a"}}>
-                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                              <div style={{width:10,height:10,borderRadius:"50%",background:gc,boxShadow:"0 0 8px "+gc+"88",flexShrink:0}}/>
-                              <span style={{fontSize:10,fontWeight:700,color:gc,textTransform:"uppercase",letterSpacing:"0.07em"}}>{myBracelet.color} — {myBracelet.ref}</span>
-                            </div>
-                            <div style={{fontSize:14,color:"#ddd",fontStyle:"italic",lineHeight:1.8,fontFamily:"Georgia,serif",padding:"10px 14px",background:gc+"0D",borderRadius:10,borderLeft:"2px solid "+gc}}>
-                              &#8220;{myBracelet.text}&#8221;
-                            </div>
+                          <div className="ag-scripture">
+                            <div className="ag-verse-ref"><i aria-hidden="true"/>{myBracelet.color} — {myBracelet.ref}</div>
+                            <blockquote className="ag-verse">&#8220;{myBracelet.text}&#8221;</blockquote>
                           </div>
                         )}
                       </div>
 
                       {/* Teammates grid */}
                       {groupmates.length>0&&(
-                        <div style={{background:"#0e0e0e",borderRadius:16,overflow:"hidden",border:"0.5px solid #1e1e1e",marginBottom:12}}>
-                          <div style={{padding:"12px 16px",borderBottom:"0.5px solid #1a1a1a",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                            <div style={{fontSize:11,fontWeight:700,color:"#666",textTransform:"uppercase",letterSpacing:"0.1em"}}>Teammates</div>
-                            <div style={{fontSize:10,color:"#444"}}>{groupmates.length} member{groupmates.length!==1?"s":""}</div>
+                        <div className="tfx-card ag-card" style={{"--c":gc}}>
+                          <div className="ag-head-row">
+                            <div className="tfx-eyebrow">Teammates</div>
+                            <small className="ag-hint">{groupmates.length} member{groupmates.length!==1?"s":""}</small>
                           </div>
-                          <div style={{padding:"10px 12px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                          <div className="ag-mates">
                             {groupmates.map((ath,i)=>{
                               const isMe=ath.id===selectedAthlete?.id;
                               return(
-                                <div key={ath.id||i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:isMe?gc+"18":"#151515",borderRadius:12,border:"0.5px solid "+(isMe?gc+"44":"#222")}}>
-                                  <div style={{width:38,height:38,borderRadius:"50%",background:isMe?gc+"33":"#222",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:isMe?gc:"#555",flexShrink:0,overflow:"hidden",border:"1.5px solid "+(isMe?gc:"#2a2a2a")}}>
-                                    {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(ath.name||"?")[0]}
-                                  </div>
-                                  <div style={{minWidth:0}}>
-                                    <div style={{fontSize:12,fontWeight:isMe?700:500,color:isMe?gc:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{(ath.name||"").split(" ")[0]}</div>
-                                    {isMe&&<div style={{fontSize:9,color:gc+"88",marginTop:1}}>you</div>}
-                                  </div>
+                                <div key={ath.id||i} className={"ag-mate"+(isMe?" is-me":"")}>
+                                  <span className="ag-av is-sm">{ath?.photo_url?<img src={ath.photo_url} alt=""/>:(ath.name||"?")[0]}</span>
+                                  <span className="ag-row-txt">
+                                    <b>{(ath.name||"").split(" ")[0]}</b>
+                                    {isMe&&<small>you</small>}
+                                  </span>
                                 </div>
                               );
                             })}
                           </div>
                         </div>
                       )}
-                    </div>
+                    </>
                   );
                 })()}
               </div>
             )}
 
-            
-            
+
+
             {tab==="prayer"&&<PrayerWall athleteId={selectedAthlete.id} athleteName={selectedAthlete.name}/>}
 
             {tab==="leaderboard"&&<AthleteLeaderboard athleteId={selectedAthlete.id}/>}
@@ -1637,50 +1506,28 @@ export default function Athlete(){
             {tab==="stretching"&&<StretchingTab/>}
 
             {tab==="journey"&&(
-              <div>
-                <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+GOLD+"33"}}>
-                  <div style={{background:"linear-gradient(140deg,"+GOLD+"30,"+GOLD+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+GOLD+","+GOLD+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>⚒️</div>
-                    <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+GOLD+"12,transparent 70%)",pointerEvents:"none"}}/>
-                    <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+GOLD+"44,"+GOLD+"22)",border:"1px solid "+GOLD+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+GOLD+"33"}}>⚒️</div>
-                      <div>
-                        <div style={{fontSize:8,color:GOLD,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Proverbs 27:17</div>
-                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>As iron sharpens iron...</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{background:"#111",padding:"16px 18px"}}>
-                    <div style={{fontSize:15,color:"#ccc",fontStyle:"italic",lineHeight:1.7}}>"As iron sharpens iron, so one person sharpens another."</div>
-                    <div style={{fontSize:12,color:"#444",marginTop:6}}>— Proverbs 27:17</div>
-                  </div>
+              <div className="tfx ag-stack">
+                <div className="tfx-card ag-card" style={{"--c":"var(--gold)"}}>
+                  <div className="tfx-eyebrow ag-eb">Proverbs 27:17</div>
+                  <h2 className="ag-title">As iron sharpens iron…</h2>
+                  <blockquote className="ag-verse">&#8220;As iron sharpens iron, so one person sharpens another.&#8221;</blockquote>
+                  <p className="ag-cite">— Proverbs 27:17</p>
                 </div>
                 {[
-                  {title:"The Iron",icon:"⚙️",color:STEEL,bg:"#1a1e20",border:"#2a3035",isYou:!isForge,body:"Every athlete enters as The Iron. Raw. Unfinished. Full of potential but not yet fully shaped.",call:"Show up early. Work hard. Hold the standard."},
-                  {title:"The Forge",icon:"🔥",color:RED,bg:"#200a0a",border:"#5a1a1a",isYou:isForge,body:"The Forge is called up for the week. They set the pace, lead the group, hold the standard.",call:"Lead by example before you lead by voice."},
-                  {title:"The Anvil",icon:"⚒️",color:GOLD,bg:"#1f1700",border:"#5a4500",isYou:false,body:"The Anvil is the highest individual honor in TF College Group. It cannot be drafted. It can only be earned.",call:"You do not chase the Anvil. You become the kind of person who earns it."},
+                  {title:"The Iron",color:STEEL,isYou:!isForge,body:"Every athlete enters as The Iron. Raw. Unfinished. Full of potential but not yet fully shaped.",call:"Show up early. Work hard. Hold the standard."},
+                  {title:"The Forge",color:RED,isYou:isForge,body:"The Forge is called up for the week. They set the pace, lead the group, hold the standard.",call:"Lead by example before you lead by voice."},
+                  {title:"The Anvil",color:GOLD,isYou:false,body:"The Anvil is the highest individual honor in TF College Group. It cannot be drafted. It can only be earned.",call:"You do not chase the Anvil. You become the kind of person who earns it."},
                 ].map((item,i)=>(
-                  <div key={i} style={{borderRadius:20,marginBottom:10,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+item.color+"33"}}>
-                    <div style={{background:"linear-gradient(140deg,"+item.color+"30,"+item.color+"10,#0d0d0d)",padding:"18px 18px 14px",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+item.color+","+item.color+"44,transparent)"}}/>
-                      <div style={{position:"absolute",bottom:-10,right:-8,fontSize:72,opacity:0.08,lineHeight:1,userSelect:"none",filter:"saturate(0)"}}>{item.icon}</div>
-                      <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+item.color+"12,transparent 70%)",pointerEvents:"none"}}/>
-                      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                        <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+item.color+"44,"+item.color+"22)",border:"1px solid "+item.color+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+item.color+"33"}}>{item.icon}</div>
-                        <div>
-                          <div style={{fontSize:8,color:item.color,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Tier</div>
-                          <div style={{display:"flex",alignItems:"center",gap:8}}>
-                            <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em"}}>{item.title}</div>
-                            {item.isYou&&<span style={{fontSize:11,background:item.color,color:"#1a1a1a",padding:"2px 8px",borderRadius:5,fontWeight:500}}>You are here</span>}
-                          </div>
-                        </div>
+                  <div key={i} className={"tfx-card ag-card ag-tier"+(item.isYou?" is-you":"")} style={{"--c":item.color}}>
+                    <div className="ag-head-row">
+                      <div>
+                        <div className="tfx-eyebrow ag-eb">Tier</div>
+                        <h3 className="ag-h">{item.title}</h3>
                       </div>
+                      {item.isYou&&<span className="ag-pill">You are here</span>}
                     </div>
-                    <div style={{background:"#111",padding:"16px 18px"}}>
-                      <div style={{fontSize:13,color:"#999",lineHeight:1.75,marginBottom:10}}>{item.body}</div>
-                      <div style={{fontSize:12,color:item.color,fontStyle:"italic"}}>{item.call}</div>
-                    </div>
+                    <p className="ag-p">{item.body}</p>
+                    <p className="ag-call">{item.call}</p>
                   </div>
                 ))}
               </div>
@@ -1690,12 +1537,12 @@ export default function Athlete(){
               {postCheckinStep==="habits"&&(()=>{
                 const _wd=nowEST().getDay();const _weigh=_wd===1||_wd===5;
                 return(
-                  <div style={{background:"linear-gradient(135deg,#12210f,#0d1a0b)",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"1px solid "+GREEN+"55",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+                  <div className="tfx tfx-card wt-step tfx-rise">
                     <div style={{minWidth:0}}>
-                      <div style={{fontSize:9.5,color:GREEN,textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:800,marginBottom:2}}>✓ Checked in · {_weigh?"Step 2 of 2":"Last step"}</div>
-                      <div style={{fontSize:13.5,fontWeight:700,color:"#fff"}}>Log today's habits</div>
+                      <div className="tfx-eyebrow">✓ Checked in · {_weigh?"Step 2 of 2":"Last step"}</div>
+                      <b>Log today's habits</b>
                     </div>
-                    <button onClick={()=>{setPostCheckinStep(null);slideDirRef.current=0;setTab("profile");}} style={{flexShrink:0,fontSize:12,fontWeight:700,color:"#9a9a9a",border:"1px solid rgba(255,255,255,0.14)",borderRadius:9,padding:"8px 13px",background:"transparent",cursor:"pointer",fontFamily:"Georgia,serif"}}>Done</button>
+                    <button className="tfx-btn-ghost tfx-press" onClick={()=>{setPostCheckinStep(null);slideDirRef.current=0;setTab("profile");}}>Done</button>
                   </div>
                 );
               })()}
@@ -1704,62 +1551,40 @@ export default function Athlete(){
 
             {tab==="surprise"&&<SurpriseTab athleteName={selectedAthlete.name}/>}
             {tab==="private"&&(
-              <div>
-                <div style={{borderRadius:20,marginBottom:12,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+STEEL+"33"}}>
-                  <div style={{background:"linear-gradient(140deg,"+STEEL+"30,"+STEEL+"10,#0d0d0d)",padding:"20px 18px 18px",position:"relative",overflow:"hidden"}}>
-                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+STEEL+","+STEEL+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="mail" size={66} color="#fff"/></div>
-                    <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+STEEL+"12,transparent 70%)",pointerEvents:"none"}}/>
-                    <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative",marginBottom:14}}>
-                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+STEEL+"44,"+STEEL+"22)",border:"1px solid "+STEEL+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+STEEL+"33"}}>✉️</div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:8,color:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Private</div>
-                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>Message Coach Ant</div>
-                        <div style={{fontSize:11,color:"#666",marginTop:3}}>Nobody else sees what you send here.</div>
-                      </div>
-                    </div>
-                    {feedbackSent?(
-                      <div style={{fontSize:13,color:GREEN,fontWeight:600,padding:"14px",background:GREEN+"18",borderRadius:12,border:"0.5px solid "+GREEN+"44",textAlign:"center"}}>✓ Message sent to Coach Ant.</div>
-                    ):(
-                      <>
-                        <textarea value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="Type your message to Coach Ant..." style={{width:"100%",minHeight:90,padding:"12px 14px",fontSize:13,border:"1px solid #2a2a2a",borderRadius:12,background:"#0a0a0a",color:"#fff",fontFamily:"Georgia,serif",resize:"vertical",marginBottom:10,boxSizing:"border-box",lineHeight:1.6,outline:"none",transition:"border-color 0.2s"}} onFocus={e=>e.target.style.borderColor=STEEL+"88"} onBlur={e=>e.target.style.borderColor="#2a2a2a"}/>
-                        <button onClick={sendFeedback} style={{width:"100%",padding:"12px",borderRadius:12,border:"none",background:feedbackText.trim()?"linear-gradient(135deg,"+STEEL+",#2a3a4a)":"#1e1e1e",color:feedbackText.trim()?"#fff":"#444",fontSize:13,fontWeight:800,cursor:feedbackText.trim()?"pointer":"default",fontFamily:"Georgia,serif",boxShadow:feedbackText.trim()?"0 0 16px "+STEEL+"44":"none",transition:"all 0.2s",letterSpacing:"0.02em"}}>Send to Coach Ant →</button>
-                      </>
-                    )}
-                  </div>
+              <div className="tfx ag-stack">
+                <div className="tfx-card ag-card" style={{"--c":"#8a9aa4"}}>
+                  <div className="tfx-eyebrow ag-eb">Message</div>
+                  <h3 className="ag-h">Message Coach Ant</h3>
+                  <p className="ag-sub">Nobody else sees what you send here.</p>
+                  {feedbackSent?(
+                    <div className="ag-sent" role="status">✓ Message sent to Coach Ant.</div>
+                  ):(
+                    <>
+                      <textarea className="tfx-field ag-area" value={feedbackText} onChange={e=>setFeedbackText(e.target.value)} placeholder="Type your message to Coach Ant..." aria-label="Message to Coach Ant"/>
+                      <button className={"ag-send tfx-press"+(feedbackText.trim()?"":" is-off")} onClick={sendFeedback}>Send to Coach Ant →</button>
+                    </>
+                  )}
                 </div>
-                <div style={{borderRadius:20,overflow:"hidden",boxShadow:"0 8px 32px #00000060",border:"1px solid "+PUR+"33"}}>
-                  <div style={{background:"linear-gradient(140deg,"+PUR+"30,"+PUR+"10,#0d0d0d)",padding:"18px 18px 16px",position:"relative",overflow:"hidden"}}>
-                    <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,"+PUR+","+PUR+"44,transparent)"}}/>
-                    <div style={{position:"absolute",bottom:-10,right:-8,opacity:0.08,lineHeight:0,userSelect:"none",pointerEvents:"none"}}><Icon name="pray" size={66} color="#fff"/></div>
-                    <div style={{position:"absolute",top:0,right:0,bottom:0,width:"40%",background:"radial-gradient(ellipse at right,"+PUR+"12,transparent 70%)",pointerEvents:"none"}}/>
-                    <div style={{display:"flex",alignItems:"flex-start",gap:14,position:"relative",marginBottom:14}}>
-                      <div style={{width:48,height:48,borderRadius:14,background:"linear-gradient(145deg,"+PUR+"44,"+PUR+"22)",border:"1px solid "+PUR+"44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 0 20px "+PUR+"33"}}>🙏</div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:8,color:PUR,textTransform:"uppercase",letterSpacing:"0.2em",fontWeight:900,marginBottom:2}}>Private</div>
-                        <div style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",lineHeight:1.1}}>Prayer Request</div>
-                        <div style={{fontSize:11,color:"#666",marginTop:3}}>Coach Ant will pray for you personally.</div>
-                      </div>
-                    </div>
-                    {prayerSent?(
-                      <div style={{fontSize:13,color:GREEN,fontWeight:600,padding:"14px",background:GREEN+"18",borderRadius:12,border:"0.5px solid "+GREEN+"44",textAlign:"center"}}>✓ Your request has been received. We're praying for you.</div>
-                    ):(
-                      <>
-                        <textarea value={prayerText} onChange={e=>setPrayerText(e.target.value)} placeholder="Share your prayer request here..." style={{width:"100%",minHeight:90,padding:"12px 14px",fontSize:13,border:"1px solid #2a2a2a",borderRadius:12,background:"#0a0a0a",color:"#fff",fontFamily:"Georgia,serif",resize:"vertical",marginBottom:10,boxSizing:"border-box",lineHeight:1.6,outline:"none",transition:"border-color 0.2s"}} onFocus={e=>e.target.style.borderColor=PUR+"88"} onBlur={e=>e.target.style.borderColor="#2a2a2a"}/>
-                        <button onClick={sendPrayer} style={{width:"100%",padding:"12px",borderRadius:12,border:"none",background:prayerText.trim()?"linear-gradient(135deg,"+PUR+",#3a2d8f)":"#1e1e1e",color:prayerText.trim()?"#fff":"#444",fontSize:13,fontWeight:800,cursor:prayerText.trim()?"pointer":"default",fontFamily:"Georgia,serif",boxShadow:prayerText.trim()?"0 0 16px "+PUR+"44":"none",transition:"all 0.2s",letterSpacing:"0.02em"}}>Submit prayer request →</button>
-                      </>
-                    )}
-                  </div>
+                <div className="tfx-card ag-card" style={{"--c":"var(--violet)"}}>
+                  <div className="tfx-eyebrow ag-eb">Prayer</div>
+                  <h3 className="ag-h">Prayer request</h3>
+                  <p className="ag-sub">Coach Ant will pray for you personally.</p>
+                  {prayerSent?(
+                    <div className="ag-sent" role="status">✓ Your request has been received. We're praying for you.</div>
+                  ):(
+                    <>
+                      <textarea className="tfx-field ag-area" value={prayerText} onChange={e=>setPrayerText(e.target.value)} placeholder="Share your prayer request here..." aria-label="Prayer request"/>
+                      <button className={"ag-send tfx-press"+(prayerText.trim()?"":" is-off")} onClick={sendPrayer}>Submit prayer request →</button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
           </div>
         </div>
-        {/* ── LIQUID GLASS BOTTOM NAV ── */}
+        {/* ── BOTTOM BAR (pinned tabs) + ALL TABS DRAWER ── */}
         {(()=>{
             const ICON_MAP={"profile":"profile","verse":"book","attendance":"calendar","draft":"target","mygroup":"users","weight":"scale","body":"heart","prs":"barbell","leaderboard":"trophy","prayer":"pray","bracelets":"link","photos":"camera","notes":"fileText","habits":"droplet","private":"lock","stretching":"activity","journey":"compass","anvil":"anvil","mcastles":"crown","events":"star","surprise":"gift","badges":"medal","recap":"award","prfeed":"flame","callouts":"megaphone"};
-            const ICON_COLORS={"profile":"#8CB4D5","prs":"#FF7A2F","attendance":"#7B6EE8","weight":"#C8D040","verse":"#4DC8F5","draft":"#44D9B0","mygroup":"#90A8C0","anvil":"#F0C040","body":"#E05555","leaderboard":"#FFD700","prayer":"#9060E0","bracelets":"#C090F0","photos":"#50D0B8","notes":"#E8B84A","habits":"#20BEA8","private":"#666","stretching":"#3A9E5A","journey":"#E8720C","mcastles":"#D060C0","events":"#D4AF37","surprise":"#E8478C","badges":"#D4AF37","recap":"#E8720C","prfeed":"#F0C040","callouts":"#E05555"};
-            const tabColor=isForge?"#E8720C":STEEL;
             const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id));
             const PRIMARY=["profile",...validPinned];
             const togglePin=(id)=>{
@@ -1768,22 +1593,24 @@ export default function Athlete(){
               setPinnedTabs(next);
               try{localStorage.setItem("tf_pinned_"+selectedAthlete.id,JSON.stringify(next));}catch(e){}
             };
-            const renderTabIcon=(id,size,isActive,grid=false)=>{const n=ICON_MAP[id];const col=ICON_COLORS[id]||"#aaa";const op=isActive?1:grid?0.65:0.55;if(n)return <span style={{opacity:op,display:"flex",alignItems:"center"}}><Icon name={n} size={size} color={col}/></span>;return <span style={{fontSize:size,lineHeight:1,opacity:op}}>{col}</span>;};
+            const ic=(id,size)=><Icon name={ICON_MAP[id]||"grid"} size={size} color="currentColor"/>;
+            const activeIdx=PRIMARY.indexOf(tab);
             return(
               <>
-                <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:448,zIndex:1000,fontFamily:"Georgia,serif"}}>
-                  <div style={{background:"rgba(8,8,14,0.88)",backdropFilter:"blur(48px) saturate(220%)",WebkitBackdropFilter:"blur(48px) saturate(220%)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:28,boxShadow:"0 20px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.12)",display:"flex",alignItems:"stretch",padding:"6px 4px 6px",position:"relative"}}>
-                    {(()=>{const n=PRIMARY.length+1;const activeIdx=PRIMARY.indexOf(tab);if(activeIdx<0||jiggleMode)return null;const col=ICON_COLORS[tab]||tabColor;return <div style={{position:"absolute",bottom:6,left:`calc(4px + ${activeIdx} * (100% - 8px) / ${n})`,width:`calc((100% - 8px) / ${n})`,height:2,borderRadius:2,background:col,boxShadow:`0 0 8px ${col}99`,transition:"left 0.32s cubic-bezier(0.22,1,0.36,1),background 0.2s",pointerEvents:"none",zIndex:0}}/>})()}
+                <nav className="cs-nav ag-nav" aria-label="Athlete tabs">
+                  <div className="cs-nav-in" style={{"--n":PRIMARY.length+1,"--i":activeIdx}}>
+                    {activeIdx>=0&&!jiggleMode&&<i className="cs-ind" aria-hidden="true"/>}
                     {PRIMARY.map(id=>{
                       const t=TABS.find(x=>x.id===id);
                       if(!t)return null;
-                      const isActive=tab===id;
-                      const col=ICON_COLORS[id]||tabColor;
+                      const isActive=tab===id&&!jiggleMode;
                       const isJiggling=jiggleMode&&id!=="profile"&&jiggleDragId!==id;
                       const isDragging=jiggleDragId===id;
                       return(
                         <button key={id}
                           ref={isDragging?jiggleDragElemRef:null}
+                          className={"cs-tab"+(isActive?" is-on":"")+(isJiggling?" is-jiggle":"")+(isDragging?" is-drag":"")+(jiggleMode?" is-edit":"")}
+                          aria-current={isActive?"page":undefined}
                           onClick={()=>{if(jiggleMode)return;hTap();slideDirRef.current=0;setTab(id);}}
                           onTouchStart={(e)=>{
                             if(id==="profile")return;
@@ -1816,80 +1643,68 @@ export default function Athlete(){
                             if(jiggleDragElemRef.current)jiggleDragElemRef.current.style.transform="";
                             setJiggleDragId(null);
                             if(jiggleDragOrderRef.current){try{localStorage.setItem("tf_pinned_"+selectedAthlete.id,JSON.stringify(jiggleDragOrderRef.current));}catch(err){}jiggleDragOrderRef.current=null;}
-                          }}
-                          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive&&!jiggleMode?"rgba(255,255,255,0.11)":"transparent",border:"none",borderRadius:22,fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:isDragging?"none":"transform 0.18s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:isDragging?"0 12px 32px rgba(0,0,0,0.55)":isActive&&!jiggleMode?"inset 0 1px 0 rgba(255,255,255,0.18)":"none",animation:isJiggling?"tfJiggle 0.22s ease-in-out infinite alternate":"none",position:"relative",zIndex:isDragging?10:1,userSelect:"none",WebkitUserSelect:"none",touchAction:jiggleMode?"none":"auto"}}>
-                          <span style={{filter:isActive&&!jiggleMode?"drop-shadow(0 0 10px "+col+"dd)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,19,isActive)}</span>
-                          <span style={{letterSpacing:"0.02em",color:isActive&&!jiggleMode?col:"rgba(255,255,255,0.38)"}}>{t.label}</span>
+                          }}>
+                          <span className="cs-ic">{ic(id,20)}</span>
+                          <span className="cs-lbl">{t.label}</span>
                         </button>
                       );
                     })}
-                    <button data-nav="more" onClick={()=>{setShowTabPicker(true);setEditingPins(false);}}
-                      style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:"transparent",border:"none",borderRadius:22,color:"rgba(255,255,255,0.38)",fontSize:9,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
-                      <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:20,opacity:0.55}}><Icon name="menu" size={19} color="#aaa"/></span>
-                      <span>More</span>
+                    <button data-nav="more" className={"cs-tab is-all"+(showTabPicker?" is-on":"")} onClick={()=>{setShowTabPicker(true);setEditingPins(false);}} aria-haspopup="dialog">
+                      <span className="cs-ic"><Icon name="menu" size={20} color="currentColor"/></span>
+                      <span className="cs-lbl">More</span>
                     </button>
                   </div>
-                </div>
+                </nav>
 
                 {jiggleMode&&(
-                  <div style={{position:"fixed",bottom:100,left:"50%",transform:"translateX(-50%)",zIndex:1002}}>
-                    <button onClick={()=>{setJiggleMode(false);setJiggleDragId(null);if(jiggleDragElemRef.current)jiggleDragElemRef.current.style.transform="";}} style={{background:"rgba(255,255,255,0.92)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",color:"#000",fontSize:13,fontWeight:800,padding:"9px 28px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 4px 20px rgba(0,0,0,0.35)",letterSpacing:"0.04em"}}>Done</button>
-                  </div>
+                  <button className="cs-done tfx-press" onClick={()=>{setJiggleMode(false);setJiggleDragId(null);if(jiggleDragElemRef.current)jiggleDragElemRef.current.style.transform="";}}>Done</button>
                 )}
 
                 {showTabPicker&&(
-                  <>
-                  <style>{`@keyframes tfDrawerIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
-                  <div onClick={()=>setShowTabPicker(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.62)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",zIndex:9999,display:"flex"}}>
-                    <div ref={drawerRef} onScroll={e=>{drawerScrollRef.current=e.currentTarget.scrollTop;}} onClick={e=>e.stopPropagation()} style={{width:"min(84vw,300px)",height:"100%",overflowY:"auto",background:"rgba(10,10,18,0.98)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRight:"1px solid rgba(255,255,255,0.12)",boxShadow:"24px 0 60px rgba(0,0,0,0.7)",paddingBottom:40,animation:"tfDrawerIn 0.26s cubic-bezier(0.22,1,0.36,1)",WebkitOverflowScrolling:"touch"}}>
-                      <div style={{position:"sticky",top:0,background:"rgba(10,10,18,0.98)",padding:"18px 16px 12px",zIndex:1,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"0.5px solid rgba(255,255,255,0.08)"}}>
-                        <div style={{fontSize:17,fontWeight:900,color:"#fff",letterSpacing:"-0.01em"}}>All Tabs</div>
-                        <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)",fontSize:14,cursor:"pointer",width:30,height:30,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>✕</button>
+                  <div className="cs-scrim" onClick={()=>setShowTabPicker(false)}>
+                    <aside className="tfx cs-drawer ag-drawer" role="dialog" aria-label="All tabs" ref={drawerRef} onScroll={e=>{drawerScrollRef.current=e.currentTarget.scrollTop;}} onClick={e=>e.stopPropagation()}>
+                      <div className="cs-drawer-head">
+                        <b>All tabs</b>
+                        <button className="cs-x tfx-press" onClick={()=>setShowTabPicker(false)} aria-label="Close">✕</button>
                       </div>
                       {/* Appearance: light / dark */}
-                      <div style={{padding:"12px 16px 4px"}}>
-                        <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>Appearance</div>
-                        <div style={{display:"flex",gap:6,background:"#131313",borderRadius:12,padding:4,border:"1px solid #222"}}>
-                          {[{m:"dark",label:"🌙 Dark"},{m:"light",label:"☀️ Light"}].map(o=>{
-                            const on=themeMode===o.m;
-                            return(
-                              <button key={o.m} onClick={()=>{if(themeMode!==o.m)toggleTheme();}}
-                                style={{flex:1,padding:"9px",borderRadius:9,border:"none",background:on?"#E8720C":"transparent",color:on?"#fff":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:on?800:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                                {o.label}
-                              </button>
-                            );
-                          })}
+                      <div className="cs-drawer-sec">
+                        <div className="tfx-eyebrow">Appearance</div>
+                        <div className="ir-seg">
+                          {[{m:"dark",label:"Dark"},{m:"light",label:"Light"}].map(o=>(
+                            <button key={o.m} className={themeMode===o.m?"is-on":""} aria-pressed={themeMode===o.m} onClick={()=>{if(themeMode!==o.m)toggleTheme();}}>{o.label}</button>
+                          ))}
                         </div>
                       </div>
                       {[
                         {label:"Home",ids:["profile"]},
                         {label:"Training",ids:["prs","weight","stretching","body"]},
                         {label:"Progress",ids:["attendance","leaderboard","prfeed","callouts","anvil","badges","recap"]},
-                        {label:"Team & Faith",ids:["mygroup","verse","prayer","bracelets"]},
+                        {label:"Team & faith",ids:["mygroup","verse","prayer","bracelets"]},
                         {label:"More",ids:["surprise","mcastles","events","photos","notes","habits","private"]},
                       ].map(section=>(
-                        <div key={section.label} style={{marginTop:6}}>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,padding:"12px 18px 6px"}}>{section.label}</div>
-                          {section.ids.map(id=>{
-                            const t=TABS.find(x=>x.id===id);
-                            if(!t)return null;
-                            const col=ICON_COLORS[id]||"#aaa";
-                            const active=tab===id;
-                            const pinned=validPinned.includes(id);
-                            return(
-                              <button key={id} data-active={active?"1":"0"} onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}
-                                style={{width:"100%",display:"flex",alignItems:"center",gap:13,padding:"12px 18px",background:active?col+"1f":"transparent",borderLeft:"3px solid "+(active?col:"transparent"),borderTop:"none",borderRight:"none",borderBottom:"none",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",transition:"background 0.12s"}}>
-                                <span style={{width:24,height:24,borderRadius:8,background:active?col+"22":"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{renderTabIcon(id,17,active)}</span>
-                                <span style={{fontSize:14.5,fontWeight:active?800:500,color:active?col:"rgba(255,255,255,0.72)",letterSpacing:active?"0.01em":"0"}}>{t.label}</span>
-                                {pinned&&<span title="On the bottom bar" style={{marginLeft:"auto",fontSize:9,color:active?col:"rgba(255,255,255,0.3)",flexShrink:0}}>● bar</span>}
-                              </button>
-                            );
-                          })}
+                        <div key={section.label} className="cs-drawer-sec">
+                          <div className="tfx-eyebrow">{section.label}</div>
+                          <div className="cs-items">
+                            {section.ids.map(id=>{
+                              const t=TABS.find(x=>x.id===id);
+                              if(!t)return null;
+                              const active=tab===id;
+                              const pinned=id==="profile"||validPinned.includes(id);
+                              return(
+                                <button key={id} data-active={active?"1":"0"} className={"cs-item tfx-press"+(active?" is-on":"")} aria-current={active?"page":undefined} onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}>
+                                  <span className="cs-item-ic">{ic(id,17)}</span>
+                                  <span className="cs-item-lbl">{t.label}</span>
+                                  {pinned&&<small title="On the bottom bar">On bar</small>}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       ))}
-                    </div>
+                      <p className="cs-hint">Hold a tab on the bottom bar to reorder it.</p>
+                    </aside>
                   </div>
-                  </>
                 )}
               </>
             );
