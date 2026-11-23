@@ -46,8 +46,12 @@ export default function App({ Component, pageProps }) {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <style>{`html,body{background:#080808 !important;margin:0}`}</style>
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="icon" href="/icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v2.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-title" content="TF College" />
         <meta property="og:image" content="https://tfcollegegroup.com/og-image.jpg" />
         <meta property="og:title" content="TF College Group" />
         <meta property="og:description" content="Faith · Family · Fitness — Triple F, Knoxville TN" />
