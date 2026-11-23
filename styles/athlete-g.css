@@ -166,3 +166,9 @@ html[data-theme="light"] .ag-ms { background: rgba(244, 245, 248, 0.82); }
 .ag-ms p { margin: 2px 0 18px; font-family: var(--font-ui); font-size: 15px; line-height: 1.6; color: var(--tx2); }
 
 @media (prefers-reduced-motion: reduce) { .ag-ms { animation: none; } .ag-prog-track i { transition: none; } }
+
+/* Six items at phone width: keep full labels readable */
+.ag-nav { padding-left: 10px; padding-right: 10px; }
+.ag-nav .cs-nav-in { padding: 5px; }
+.ag-nav .cs-tab { padding-left: 0; padding-right: 0; }
+.ag-nav .cs-lbl { font-size: 10px; letter-spacing: -0.01em; text-overflow: clip; }
