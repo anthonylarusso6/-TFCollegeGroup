@@ -642,20 +642,16 @@ export default function Coach(){
       <Head><title>Coach Dashboard — TF College Group</title></Head>
       <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{fontFamily:"Georgia, serif",paddingBottom:"2rem",background:"transparent",minHeight:"100vh"}}>
 
-        <div className="tfx-glassbar" style={{borderBottom:isLight?"1px solid rgba(0,0,0,0.10)":"1px solid rgba(255,255,255,0.08)",position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,rgba(232,114,12,0.9),rgba(192,57,43,0.8),transparent)"}}/>
-          <div style={{position:"absolute",top:-40,right:-40,width:200,height:200,borderRadius:"50%",background:"rgba(232,114,12,0.05)",filter:"blur(50px)",pointerEvents:"none"}}/>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 16px 10px",position:"relative"}}>
-            <div>
-              <div style={{fontSize:18,fontWeight:900,color:isLight?"#16191f":"#fff",letterSpacing:"-0.01em",textTransform:"uppercase"}}>TF College Group</div>
-              <div style={{fontSize:11,color:isLight?"rgba(0,0,0,0.55)":"rgba(255,255,255,0.3)",marginTop:2,letterSpacing:"0.04em"}}>{coachRole==="mcastles"?"MCastles 🍑":coachRole==="kevin"?"Kevin":"Coach Ant"} · {dayName} · <span style={{color:isClassDay?"#E8720C":(isLight?"rgba(0,0,0,0.4)":"rgba(255,255,255,0.2)")}}>{isClassDay?"Class day":"No class"}</span></div>
+        <header className="cs-head">
+          <div className="cs-head-in">
+            <img src="/icon.png" alt="" className="cs-logo"/>
+            <div className="cs-id">
+              <b>{coachRole==="mcastles"?"MCastles":coachRole==="kevin"?"Coach Kevin":"Coach Ant"}</b>
+              <small>{dayName} · <span className={isClassDay?"is-on":""}>{isClassDay?"Class day":"No class"}</span> · {athletes.filter(a=>a.status==="active").length} active</small>
             </div>
-            <div style={{textAlign:"right"}}>
-              <div style={{fontSize:11,color:isLight?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.25)",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
-              <button onClick={()=>{clearCurrent();setAuthed(false);}} style={{fontSize:10,color:isLight?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.2)",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.04em"}}>Sign out</button>
-            </div>
+            <button className="cs-out tfx-press" onClick={()=>{clearCurrent();setAuthed(false);}}>Sign out</button>
           </div>
-        </div>
+        </header>
 
         <div key={tab} style={{padding:"1rem",maxWidth:900,margin:"0 auto",paddingBottom:"110px",animation:slideDirRef.current>0?"tfSlideFromRight 0.32s cubic-bezier(0.22,1,0.36,1) backwards":slideDirRef.current<0?"tfSlideFromLeft 0.32s cubic-bezier(0.22,1,0.36,1) backwards":"none"}}>
 
@@ -705,44 +701,38 @@ export default function Coach(){
             {tab==="callouts"&&<CalloutsTab/>}
           </ErrorBoundary>
         </div>
-        {/* ── BOTTOM NAV (4 quick tabs) + SIDE DRAWER (the rest) ── */}
+        {/* ── BOTTOM BAR (pinned tabs) + ALL TABS DRAWER ── */}
         {(()=>{
             const ICON_MAP={"overview":"barChart","teams":"grid","roster":"users","attendance":"calendar","accountability":"checkSquare","inbox":"inbox","leaderboard":"trophy","goals":"target","fellowship":"pray","mindset":"compass","culture":"flame","prayers":"heart","weights":"scale","photos":"camera","engagement":"megaphone","qr":"smartphone","ironroom":"barbell","program":"fileText","injuries":"alertTriangle","habits":"droplet","callouts":"zap","anvil":"anvil","mcastles-post":"crown"};
-            const ICON_COLORS={"overview":"#FF7A2F","teams":"#60A8D0","roster":"#8CB4D5","attendance":"#7B6EE8","accountability":"#3A9E5A","anvil":"#F0C040","inbox":"#B56EE8","leaderboard":"#FFD700","goals":"#44D9B0","fellowship":"#A080D0","mindset":"#4DC8F5","culture":"#E8720C","prayers":"#FF80A8","weights":"#C8D040","photos":"#50D0B8","engagement":"#FF5A9D","qr":"#80C0D8","mcastles-post":"#D060C0","ironroom":"#E05555","program":"#E8B84A","injuries":"#FF8060","habits":"#20BEA8","callouts":"#FFC040"};
             const fixedTab=coachRole==="kevin"?"roster":"overview";
             const validPinned=pinnedTabs.filter(id=>TABS.find(t=>t.id===id)&&id!==fixedTab);
             const PRIMARY=[fixedTab,...validPinned];
-            const togglePin=(id)=>{
-              if(id===fixedTab)return;
-              const next=validPinned.includes(id)?validPinned.filter(p=>p!==id):(validPinned.length<3?[...validPinned,id]:validPinned);
-              setPinnedTabs(next);
-              try{localStorage.setItem("tf_pinned_coach_"+coachRole,JSON.stringify(next));}catch(e){}
-            };
-            const renderTabIcon=(id,size,isActive,grid=false)=>{const n=ICON_MAP[id];const col=ICON_COLORS[id]||"#aaa";const op=isActive?1:grid?0.75:0.55;if(n)return <span style={{opacity:op,display:"flex",alignItems:"center"}}><Icon name={n} size={size} color={col}/></span>;return <span style={{fontSize:size,lineHeight:1,opacity:op}}>{col}</span>;};
+            const ic=(id,size)=><Icon name={ICON_MAP[id]||"grid"} size={size} color="currentColor"/>;
             const SECTIONS=[
-              {label:"Overview",ids:["overview","roster","teams","attendance"]},
+              {label:"Today",ids:["overview","roster","teams","attendance"]},
               {label:"Accountability",ids:["accountability","inbox","leaderboard","anvil"]},
-              {label:"Culture & Faith",ids:["culture","fellowship","prayers","mindset"]},
-              {label:"Tools",ids:["program","ironroom","weights","goals","engagement","qr"]},
+              {label:"Culture & faith",ids:["culture","fellowship","prayers","mindset"]},
+              {label:"Training",ids:["program","ironroom","weights","goals","engagement","qr"]},
               {label:"More",ids:["photos","injuries","habits","callouts","mcastles-post"]},
             ].map(s=>({...s,ids:s.ids.filter(id=>TABS.find(t=>t.id===id))})).filter(s=>s.ids.length>0);
+            const activeIdx=PRIMARY.indexOf(tab);
             return(
               <>
-                <style>{`@keyframes tfDrawerIn{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
-                <div style={{position:"fixed",bottom:16,left:"50%",transform:"translateX(-50%)",width:"calc(100% - 32px)",maxWidth:680,zIndex:1000,fontFamily:"Georgia,serif"}}>
-                  <div style={{background:"rgba(8,8,14,0.88)",backdropFilter:"blur(48px) saturate(220%)",WebkitBackdropFilter:"blur(48px) saturate(220%)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:28,boxShadow:"0 20px 60px rgba(0,0,0,0.7),inset 0 1px 0 rgba(255,255,255,0.12)",display:"flex",alignItems:"stretch",padding:"6px 4px 6px",position:"relative"}}>
-                    {(()=>{const n=PRIMARY.length+1;const activeIdx=PRIMARY.indexOf(tab);if(activeIdx<0||jiggleMode)return null;const col=ICON_COLORS[tab]||"#E8720C";return <div style={{position:"absolute",bottom:6,left:`calc(4px + ${activeIdx} * (100% - 8px) / ${n})`,width:`calc((100% - 8px) / ${n})`,height:2,borderRadius:2,background:col,boxShadow:`0 0 8px ${col}99`,transition:"left 0.32s cubic-bezier(0.22,1,0.36,1),background 0.2s",pointerEvents:"none",zIndex:0}}/>})()}
+                <nav className="cs-nav" aria-label="Coach tabs">
+                  <div className="cs-nav-in" style={{"--n":PRIMARY.length+1,"--i":activeIdx}}>
+                    {activeIdx>=0&&!jiggleMode&&<i className="cs-ind" aria-hidden="true"/>}
                     {PRIMARY.map(id=>{
                       const t=TABS.find(x=>x.id===id);
                       if(!t)return null;
-                      const isActive=tab===id;
-                      const col=ICON_COLORS[id]||"#E8720C";
+                      const isActive=tab===id&&!jiggleMode;
                       const cnt=id==="inbox"&&inboxCount>0?inboxCount:0;
                       const isJiggling=jiggleMode&&id!==fixedTab&&jiggleDragId!==id;
                       const isDragging=jiggleDragId===id;
                       return(
                         <button key={id}
                           ref={isDragging?jiggleDragElemRef:null}
+                          className={"cs-tab"+(isActive?" is-on":"")+(isJiggling?" is-jiggle":"")+(isDragging?" is-drag":"")+(jiggleMode?" is-edit":"")}
+                          aria-current={isActive?"page":undefined}
                           onClick={()=>{if(jiggleMode)return;hTap();slideDirRef.current=0;setTab(id);}}
                           onTouchStart={(e)=>{
                             if(id===fixedTab)return;
@@ -775,231 +765,143 @@ export default function Coach(){
                             if(jiggleDragElemRef.current)jiggleDragElemRef.current.style.transform="";
                             setJiggleDragId(null);
                             if(jiggleDragOrderRef.current){try{localStorage.setItem("tf_pinned_coach_"+coachRole,JSON.stringify(jiggleDragOrderRef.current));}catch(err){}jiggleDragOrderRef.current=null;}
-                          }}
-                          style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:isActive&&!jiggleMode?"rgba(255,255,255,0.11)":"transparent",border:"none",borderRadius:22,fontSize:9,fontWeight:isActive?700:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:isDragging?"none":"transform 0.18s cubic-bezier(0.34,1.56,0.64,1)",boxShadow:isDragging?"0 12px 32px rgba(0,0,0,0.55)":isActive&&!jiggleMode?"inset 0 1px 0 rgba(255,255,255,0.18)":"none",animation:isJiggling?"tfJiggle 0.22s ease-in-out infinite alternate":"none",position:"relative",zIndex:isDragging?10:1,userSelect:"none",WebkitUserSelect:"none",touchAction:jiggleMode?"none":"auto"}}>
-                          <span style={{filter:isActive&&!jiggleMode?"drop-shadow(0 0 10px "+col+"dd)":"none",transition:"filter 0.2s",display:"flex",alignItems:"center",justifyContent:"center",height:20}}>{renderTabIcon(id,19,isActive)}</span>
-                          <span style={{letterSpacing:"0.02em",color:isActive&&!jiggleMode?col:"rgba(255,255,255,0.38)"}}>{t.label}</span>
-                          {cnt>0&&!jiggleMode&&<div style={{position:"absolute",top:4,right:"50%",transform:"translateX(6px)",background:"#E8720C",color:"#fff",fontSize:7,fontWeight:900,minWidth:14,height:14,borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px"}}>{cnt}</div>}
+                          }}>
+                          <span className="cs-ic">{ic(id,20)}</span>
+                          <span className="cs-lbl">{t.label.replace(/\s*\(\d+\)$/,"")}</span>
+                          {cnt>0&&!jiggleMode&&<em className="cs-badge" aria-label={cnt+" new"}>{cnt}</em>}
                         </button>
                       );
                     })}
-                    <button onClick={()=>{setShowTabPicker(true);setEditingPins(false);}}
-                      style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:showTabPicker?"#E8720C":"#E8720C22",border:"1px solid #E8720C66",borderRadius:22,color:showTabPicker?"#fff":"#F0A050",fontSize:10,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s",boxShadow:showTabPicker?"0 0 16px #E8720C88":"0 0 10px #E8720C33"}}>
-                      <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:20}}><Icon name="menu" size={21} color={showTabPicker?"#fff":"#F0A050"}/></span>
-                      <span style={{letterSpacing:"0.04em"}}>All Tabs</span>
+                    <button className={"cs-tab is-all"+(showTabPicker?" is-on":"")} onClick={()=>{setShowTabPicker(true);setEditingPins(false);}} aria-haspopup="dialog">
+                      <span className="cs-ic"><Icon name="menu" size={20} color="currentColor"/></span>
+                      <span className="cs-lbl">All tabs</span>
                     </button>
                   </div>
-                </div>
+                </nav>
 
                 {jiggleMode&&(
-                  <div style={{position:"fixed",bottom:100,left:"50%",transform:"translateX(-50%)",zIndex:1002}}>
-                    <button onClick={()=>{setJiggleMode(false);setJiggleDragId(null);if(jiggleDragElemRef.current)jiggleDragElemRef.current.style.transform="";}} style={{background:"rgba(255,255,255,0.92)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",color:"#000",fontSize:13,fontWeight:800,padding:"9px 28px",borderRadius:24,border:"none",cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 4px 20px rgba(0,0,0,0.35)",letterSpacing:"0.04em"}}>Done</button>
-                  </div>
+                  <button className="cs-done tfx-press" onClick={()=>{setJiggleMode(false);setJiggleDragId(null);if(jiggleDragElemRef.current)jiggleDragElemRef.current.style.transform="";}}>Done</button>
                 )}
 
-                {/* Left slide-in tab drawer — opened by "More" */}
                 {showTabPicker&&(
-                  <div onClick={()=>setShowTabPicker(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.62)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",zIndex:9999,display:"flex"}}>
-                    <div onClick={e=>e.stopPropagation()} style={{width:"min(84vw,300px)",height:"100%",overflowY:"auto",background:"rgba(10,10,18,0.98)",backdropFilter:"blur(48px) saturate(200%)",WebkitBackdropFilter:"blur(48px) saturate(200%)",borderRight:"1px solid rgba(255,255,255,0.12)",boxShadow:"24px 0 60px rgba(0,0,0,0.7)",paddingBottom:40,animation:"tfDrawerIn 0.26s cubic-bezier(0.22,1,0.36,1)",WebkitOverflowScrolling:"touch"}}>
-                      <div style={{position:"sticky",top:0,background:"rgba(10,10,18,0.98)",padding:"18px 16px 12px",zIndex:1,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:"0.5px solid rgba(255,255,255,0.08)"}}>
-                        <div style={{fontSize:17,fontWeight:900,color:"#fff",letterSpacing:"-0.01em"}}>All Tabs</div>
-                        <button onClick={()=>setShowTabPicker(false)} style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.55)",fontSize:14,cursor:"pointer",width:30,height:30,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>✕</button>
+                  <div className="cs-scrim" onClick={()=>setShowTabPicker(false)}>
+                    <aside className="cs-drawer" role="dialog" aria-label="All tabs" onClick={e=>e.stopPropagation()}>
+                      <div className="cs-drawer-head">
+                        <b>All tabs</b>
+                        <button className="cs-x tfx-press" onClick={()=>setShowTabPicker(false)} aria-label="Close">✕</button>
                       </div>
-                      {/* Appearance: light / dark */}
-                      <div style={{padding:"12px 16px 4px"}}>
-                        <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,marginBottom:8}}>Appearance</div>
-                        <div style={{display:"flex",gap:6,background:"#131313",borderRadius:12,padding:4,border:"1px solid #222"}}>
-                          {[{m:"dark",label:"🌙 Dark"},{m:"light",label:"☀️ Light"}].map(o=>{
-                            const on=themeMode===o.m;
-                            return(
-                              <button key={o.m} onClick={()=>{if(themeMode!==o.m)toggleTheme();}}
-                                style={{flex:1,padding:"9px",borderRadius:9,border:"none",background:on?"#E8720C":"transparent",color:on?"#fff":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:on?800:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                                {o.label}
-                              </button>
-                            );
-                          })}
+                      <div className="cs-drawer-sec">
+                        <div className="tfx-eyebrow">Appearance</div>
+                        <div className="ir-seg">
+                          {[{m:"dark",label:"Dark"},{m:"light",label:"Light"}].map(o=>(
+                            <button key={o.m} className={themeMode===o.m?"is-on":""} onClick={()=>{if(themeMode!==o.m)toggleTheme();}}>{o.label}</button>
+                          ))}
                         </div>
                       </div>
                       {SECTIONS.map(section=>(
-                        <div key={section.label} style={{marginTop:6}}>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",textTransform:"uppercase",letterSpacing:"0.12em",fontWeight:700,padding:"12px 18px 6px"}}>{section.label}</div>
-                          {section.ids.map(id=>{
-                            const t=TABS.find(x=>x.id===id);
-                            if(!t)return null;
-                            const col=ICON_COLORS[id]||"#aaa";
-                            const active=tab===id;
-                            const pinned=id===fixedTab||validPinned.includes(id);
-                            return(
-                              <button key={id} onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}
-                                style={{width:"100%",display:"flex",alignItems:"center",gap:13,padding:"12px 18px",background:active?col+"1f":"transparent",borderLeft:"3px solid "+(active?col:"transparent"),borderTop:"none",borderRight:"none",borderBottom:"none",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left",transition:"background 0.12s"}}>
-                                <span style={{width:24,height:24,borderRadius:8,background:active?col+"22":"rgba(255,255,255,0.05)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{renderTabIcon(id,17,active,true)}</span>
-                                <span style={{fontSize:14.5,fontWeight:active?800:500,color:active?col:"rgba(255,255,255,0.72)",letterSpacing:active?"0.01em":"0"}}>{t.label}</span>
-                                {pinned&&<span title="On the bottom bar" style={{marginLeft:"auto",fontSize:9,color:active?col:"rgba(255,255,255,0.3)",flexShrink:0}}>● bar</span>}
-                              </button>
-                            );
-                          })}
+                        <div key={section.label} className="cs-drawer-sec">
+                          <div className="tfx-eyebrow">{section.label}</div>
+                          <div className="cs-items">
+                            {section.ids.map(id=>{
+                              const t=TABS.find(x=>x.id===id);
+                              if(!t)return null;
+                              const active=tab===id;
+                              const pinned=id===fixedTab||validPinned.includes(id);
+                              const cnt=id==="inbox"&&inboxCount>0?inboxCount:0;
+                              return(
+                                <button key={id} className={"cs-item tfx-press"+(active?" is-on":"")} aria-current={active?"page":undefined} onClick={()=>{slideDirRef.current=0;setTab(id);setShowTabPicker(false);}}>
+                                  <span className="cs-item-ic">{ic(id,17)}</span>
+                                  <span className="cs-item-lbl">{t.label.replace(/\s*\(\d+\)$/,"")}</span>
+                                  {cnt>0&&<em className="cs-badge is-inline">{cnt}</em>}
+                                  {pinned&&<small title="On the bottom bar">On bar</small>}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       ))}
-                    </div>
+                      <p className="cs-hint">Hold a tab on the bottom bar to reorder it.</p>
+                    </aside>
                   </div>
                 )}
               </>
             );
           })()}
       </div>
-      {modalAth&&(
-        <div style={{position:"fixed",inset:0,zIndex:9000,background:"rgba(0,0,0,0.85)"}} onClick={()=>{setModalAth(null);setModalData(null);}}>
-          <div onClick={e=>e.stopPropagation()} style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"#0e0e0e",borderRadius:"24px 24px 0 0",maxHeight:"90vh",overflowY:"auto",border:"1px solid #1e1e1e",borderBottom:"none",fontFamily:"Georgia,serif"}}>
-            <div style={{width:40,height:4,borderRadius:2,background:"#333",margin:"12px auto 0"}}/>
-            <div style={{padding:"16px 20px 14px",borderBottom:"0.5px solid #1a1a1a",display:"flex",alignItems:"center",gap:14}}>
-              <div style={{width:52,height:52,borderRadius:"50%",background:modalAth.role==="forge"?RED:STEEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden",border:"2px solid "+(modalAth.role==="forge"?RED:STEEL)+"55"}}>
-                {modalAth.photo_url?<img src={modalAth.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:modalAth.name[0]}
+      {modalAth&&(()=>{
+        const close=()=>{setModalAth(null);setModalData(null);};
+        const forge=modalAth.role==="forge";
+        return(
+        <div className="cs-scrim is-sheet" onClick={close}>
+          <div className="cs-sheet" role="dialog" aria-label={modalAth.name} onClick={e=>e.stopPropagation()} style={{"--c":forge?"#C0392B":"#708090"}}>
+            <div className="cs-grab" aria-hidden="true"/>
+            <div className="cs-sheet-head">
+              <span className="lg-av">{modalAth.photo_url?<img src={modalAth.photo_url} alt=""/>:(modalAth.name||"?")[0]}</span>
+              <div className="cs-sheet-id">
+                <b>{modalAth.name}</b>
+                <small>{[modalAth.sport,forge?"Forge":"Iron",modalAth.status==="sleeping"?"Sleeping":null].filter(Boolean).join(" · ")}</small>
               </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:18,fontWeight:900,color:"#fff"}}>{modalAth.name}</div>
-                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:3}}>
-                  {modalAth.sport&&<span style={{fontSize:10,color:"#666"}}>{modalAth.sport}</span>}
-                  <span style={{fontSize:10,color:modalAth.role==="forge"?RED:STEEL,fontWeight:700,textTransform:"uppercase"}}>{modalAth.role||"iron"}</span>
-                  {modalAth.status==="sleeping"&&<span style={{fontSize:10,color:"#666"}}>· sleeping</span>}
-                </div>
-              </div>
-              <button onClick={()=>{setModalAth(null);setModalData(null);}} style={{background:"transparent",border:"none",color:"#444",fontSize:20,cursor:"pointer",padding:"4px"}}>✕</button>
+              <button className="cs-x tfx-press" onClick={close} aria-label="Close">✕</button>
             </div>
-            {modalLoading&&<div style={{textAlign:"center",padding:"3rem",color:"#555",fontSize:13}}>Loading...</div>}
+            {modalLoading&&<div className="cs-sheet-empty">Loading…</div>}
             {modalData&&(()=>{
               const{att,lbRow,msgs,wt,anv}=modalData;
-              const streak=lbRow?.current_streak||0;
-              const early=lbRow?.early_count||0;
-              const best=lbRow?.best_streak||0;
-              const lastAtt=att.slice(0,8);
+              const stats=[{label:"Streak",val:lbRow?.current_streak||0},{label:"Best",val:lbRow?.best_streak||0},{label:"Early",val:lbRow?.early_count||0},{label:"Late",val:lbRow?.late_count||0,warn:true}];
+              const open=msgs.filter(m=>!m.done).slice(0,3);
               return(
-                <div style={{padding:"16px 20px 40px"}}>
-                  <div style={{display:"flex",gap:8,marginBottom:16}}>
-                    {[{label:"Streak",val:streak,color:GREEN,icon:"🔥"},{label:"Best",val:best,color:GOLD,icon:"⭐"},{label:"Early",val:early,color:"#ddd",icon:"⏰"},{label:"Late",val:lbRow?.late_count||0,color:RED,icon:"⚠"}].map(s=>(
-                      <div key={s.label} style={{flex:1,background:"#111",borderRadius:10,padding:"8px",textAlign:"center",border:"0.5px solid #1e1e1e"}}>
-                        <div style={{fontSize:8,marginBottom:2}}>{s.icon}</div>
-                        <div style={{fontSize:20,fontWeight:900,color:s.color}}>{s.val}</div>
-                        <div style={{fontSize:8,color:"#555",textTransform:"uppercase",letterSpacing:"0.06em"}}>{s.label}</div>
-                      </div>
+                <div className="cs-sheet-body">
+                  <div className="cs-stats">
+                    {stats.map(s=>(
+                      <div key={s.label} className={"cs-stat"+(s.warn&&s.val>0?" is-warn":"")}><b className="tfx-num">{s.val}</b><small>{s.label}</small></div>
                     ))}
                   </div>
-                  {lastAtt.length>0&&(
-                    <div style={{marginBottom:16}}>
-                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Recent attendance</div>
-                      <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                        {lastAtt.map((r,i)=>(
-                          <div key={i} style={{textAlign:"center"}}>
-                            <div style={{width:28,height:28,borderRadius:8,background:r.status==="early"?GREEN+"22":r.status==="late"?"#2a1500":"#1a1a1a",border:"0.5px solid "+(r.status==="early"?GREEN:r.status==="late"?GOLD:"#2a2a2a"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10}}>{r.status==="early"?"✓":r.status==="late"?"↓":"?"}</div>
-                            <div style={{fontSize:7,color:"#444",marginTop:2,whiteSpace:"nowrap"}}>{r.date?.slice(5)}</div>
-                          </div>
+                  {att.length>0&&(
+                    <section>
+                      <div className="tfx-eyebrow">Recent check-ins</div>
+                      <div className="cs-att">
+                        {att.slice(0,8).map((r,i)=>(
+                          <div key={i} className={"cs-att-d is-"+(r.status||"none")}><i>{r.status==="early"?"✓":r.status==="late"?"L":"–"}</i><small>{r.date?.slice(5).replace("-","/")}</small></div>
                         ))}
                       </div>
-                    </div>
+                    </section>
                   )}
                   {(modalAth.athletic_goal||modalAth.character_goal)&&(
-                    <div style={{marginBottom:16}}>
-                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Goals</div>
-                      {modalAth.athletic_goal&&<div style={{background:"#111",borderRadius:10,padding:"10px 12px",marginBottom:6,borderLeft:"3px solid "+GREEN}}><div style={{fontSize:9,color:GREEN,marginBottom:3,fontWeight:700}}>ATHLETIC</div><div style={{fontSize:12,color:"#ccc"}}>{modalAth.athletic_goal}</div></div>}
-                      {modalAth.character_goal&&<div style={{background:"#111",borderRadius:10,padding:"10px 12px",borderLeft:"3px solid "+PUR}}><div style={{fontSize:9,color:PUR,marginBottom:3,fontWeight:700}}>CHARACTER</div><div style={{fontSize:12,color:"#ccc"}}>{modalAth.character_goal}</div></div>}
-                    </div>
+                    <section>
+                      <div className="tfx-eyebrow">Goals</div>
+                      {modalAth.athletic_goal&&<div className="cs-quote" style={{"--q":"var(--green)"}}><small>Athletic</small><p>{modalAth.athletic_goal}</p></div>}
+                      {modalAth.character_goal&&<div className="cs-quote" style={{"--q":"var(--violet)"}}><small>Character</small><p>{modalAth.character_goal}</p></div>}
+                    </section>
                   )}
-                  {msgs.filter(m=>!m.done).length>0&&(
-                    <div style={{marginBottom:16}}>
-                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Recent messages</div>
-                      {msgs.filter(m=>!m.done).slice(0,3).map((m,i)=>{
-                        const typeColor=m.type==="injury"?RED:m.type==="prayer"?GREEN:PUR;
-                        return<div key={i} style={{background:"#111",borderRadius:10,padding:"10px 12px",marginBottom:6,borderLeft:"3px solid "+typeColor}}><div style={{fontSize:9,color:typeColor,marginBottom:3,fontWeight:700,textTransform:"uppercase"}}>{m.type}</div><div style={{fontSize:12,color:"#ccc",fontStyle:"italic"}}>"{m.message}"</div></div>;
-                      })}
-                    </div>
+                  {open.length>0&&(
+                    <section>
+                      <div className="tfx-eyebrow">Open messages</div>
+                      {open.map((m,i)=>(
+                        <div key={i} className="cs-quote" style={{"--q":m.type==="injury"?"var(--red)":m.type==="prayer"?"var(--green)":"var(--violet)"}}><small>{m.type==="injury"?"Injury":m.type==="prayer"?"Prayer":"Message"}</small><p>{m.message}</p></div>
+                      ))}
+                    </section>
                   )}
                   {wt.length>0&&(
-                    <div style={{marginBottom:16}}>
-                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Weight log</div>
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                        {wt.map((w,i)=>(
-                          <div key={i} style={{background:"#111",borderRadius:8,padding:"6px 10px",border:"0.5px solid #1e1e1e"}}>
-                            <div style={{fontSize:13,fontWeight:700,color:"#ddd"}}>{w.weight}<span style={{fontSize:10,color:"#555"}}>lb</span></div>
-                            <div style={{fontSize:9,color:"#444"}}>{w.date?.slice(5)}</div>
-                          </div>
-                        ))}
+                    <section>
+                      <div className="tfx-eyebrow">Weigh-ins</div>
+                      <div className="cs-chips">
+                        {wt.map((w,i)=><div key={i} className="cs-chip"><b className="tfx-num">{w.weight}<em>lb</em></b><small>{w.date?.slice(5).replace("-","/")}</small></div>)}
                       </div>
-                    </div>
+                    </section>
                   )}
                   {anv.length>0&&(
-                    <div>
-                      <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>⚒ Anvil awards ({anv.length})</div>
-                      {anv.map((a,i)=><div key={i} style={{background:"#1f1700",borderRadius:8,padding:"8px 12px",marginBottom:4,border:"0.5px solid "+GOLD+"33",display:"flex",justifyContent:"space-between"}}><span style={{fontSize:12,color:GOLD}}>{a.type==="group"?"Group":"Individual"}</span><span style={{fontSize:11,color:"#666"}}>{a.date_awarded}</span></div>)}
-                    </div>
+                    <section>
+                      <div className="tfx-eyebrow">Anvil awards · {anv.length}</div>
+                      {anv.map((a,i)=><div key={i} className="cs-anvil"><span>{a.type==="group"?"Group":"Individual"}</span><small>{a.date_awarded}</small></div>)}
+                    </section>
                   )}
+                  {!att.length&&!open.length&&!wt.length&&!anv.length&&!modalAth.athletic_goal&&!modalAth.character_goal&&<div className="cs-sheet-empty">Nothing logged yet.</div>}
                 </div>
               );
             })()}
           </div>
         </div>
-      )}
+        );
+      })()}
     </>
-  );
-}
-
-function InboxItem({item,color,bg,type,onReply,onGenerate,genLoading,loadKey,onArchive,onPriority,athletes,isNew}){
-  const[reply,setReply]=useState(item.reply||"");
-  const[sent,setSent]=useState(item.reply_sent||false);
-  const[showReply,setShowReply]=useState(!item.reply_sent);
-  const ath=athletes?.find(a=>a.id===item.athlete_id);
-  const prompts={
-    injury:`You are Coach Ant, a faith-based strength coach. Athlete ${item.athletes?.name} reported: "${item.message}". Write a caring professional response as Coach Ant. Acknowledge the injury, tell them what to do, encourage them. Under 60 words.`,
-    message:`You are Coach Ant, a faith-based strength coach. Athlete ${item.athletes?.name} sent: "${item.message}". Write a warm personal reply as Coach Ant. Encouraging, real, grounded in faith. Under 60 words.`,
-    prayer:`You are Coach Ant, a faith-based coach who prays for athletes. ${item.athletes?.name} submitted: "${item.message}". Write a warm faith-filled response as Coach Ant. Include a short scripture if natural. Under 70 words.`,
-  };
-  const RED="#C0392B",GREEN="#1E6B3A",GOLD="#D4AF37",STEEL="#708090";
-  return(
-    <div className={isNew?"tf-pulse-glow":""} style={{padding:isNew?"12px":"12px 0",margin:isNew?"0 -4px 4px":0,borderRadius:isNew?12:0,borderBottom:isNew?"none":"0.5px solid #1e1e1e",background:isNew?color+"0d":"transparent",opacity:item.archived?0.5:1}}>
-      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
-        <div style={{position:"relative",flexShrink:0}}>
-          {isNew&&<div style={{position:"absolute",top:-2,right:-2,width:9,height:9,borderRadius:"50%",background:color,border:"2px solid #0d0d0d",zIndex:2}}/>}
-          <div style={{width:34,height:34,borderRadius:"50%",background:ath?.role==="forge"?RED:STEEL,overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff"}}>
-            {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:(item.athletes?.name||"?")[0]}
-          </div>
-        </div>
-        <div style={{flex:1}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <span style={{fontSize:13,fontWeight:600,color}}>{item.anonymous?"Anonymous":item.athletes?.name}</span>
-            {isNew&&<span style={{fontSize:8.5,background:color,color:"#fff",padding:"1px 6px",borderRadius:4,fontWeight:800,letterSpacing:"0.06em"}}>NEW</span>}
-            {item.priority&&<span style={{fontSize:9,background:RED,color:"#fff",padding:"1px 5px",borderRadius:3,fontWeight:600}}>URGENT</span>}
-            {item.reply_sent&&<span style={{fontSize:10,color:GREEN}}>✓ Replied</span>}
-          </div>
-          <span style={{fontSize:11,color:"#555"}}>{new Date(item.created_at).toLocaleDateString()}</span>
-        </div>
-        <div style={{display:"flex",gap:6}}>
-          <button onClick={()=>onPriority&&onPriority(item)} title="Mark urgent" style={{background:"transparent",border:"none",fontSize:14,cursor:"pointer",opacity:item.priority?1:0.3}}>🚨</button>
-          <button onClick={()=>onArchive&&onArchive(item)} title="Archive" style={{background:"transparent",border:"none",fontSize:14,cursor:"pointer",opacity:0.5}}>📁</button>
-        </div>
-      </div>
-      <div style={{fontSize:13,color:"#bbb",marginBottom:8,padding:"8px 10px",background:bg,borderRadius:8,borderLeft:"3px solid "+color,fontStyle:"italic"}}>"{item.message}"</div>
-      {item.reply&&(
-        <div style={{marginBottom:8}}>
-          <div onClick={()=>setShowReply(!showReply)} style={{fontSize:11,color:GREEN,cursor:"pointer",marginBottom:4}}>
-            {showReply?"▼ Hide reply":"▶ Show your reply"}
-          </div>
-          {showReply&&(
-            <div style={{fontSize:12,color:"#aaa",padding:"6px 10px",background:"#0d1a10",borderRadius:8,borderLeft:"3px solid "+GREEN,fontStyle:"italic"}}>
-              "{item.reply}"
-            </div>
-          )}
-        </div>
-      )}
-      {!item.archived&&(
-        <>
-          <textarea value={reply} onChange={e=>setReply(e.target.value)} placeholder="Write a reply..." style={{width:"100%",minHeight:50,padding:"6px",fontSize:12,border:"0.5px solid #2a2a2a",borderRadius:8,background:"#111",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",marginBottom:6}}/>
-          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            <button onClick={()=>onGenerate(prompts[type],text=>setReply(text))} style={{padding:"5px 12px",borderRadius:8,border:"0.5px solid "+color,background:"transparent",color,fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-              {genLoading===loadKey?"Generating...":"Generate reply"}
-            </button>
-            <button onClick={async()=>{await onReply(item,reply);setSent(true);}} style={{padding:"5px 14px",borderRadius:8,border:"none",background:color,color:"#fff",fontSize:12,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>Send reply</button>
-            {sent&&<span style={{fontSize:12,color:GREEN,fontWeight:500}}>✓ Sent</span>}
-          </div>
-        </>
-      )}
-    </div>
   );
 }
