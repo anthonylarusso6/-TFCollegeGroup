@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { getTier, BRACELETS, GROUP_COLORS } from "../lib/teams";
 import { SkeletonList } from "./Skeleton";
+import Icon from "./Icon";
 
 const GC=GROUP_COLORS;
 const TIER_LABEL={1:"Tier 1",2:"Tier 2",3:"Tier 3"};
@@ -141,123 +142,128 @@ export default function TeamsView({athletes=[]}){
   const allAssigned=Object.values(groups).flat();
   const active=athletes.filter(a=>a.status==="active");
   const unassigned=active.filter(a=>!allAssigned.includes(a.name));
+  const firstName=(n)=>(n||"").split(" ")[0];
+  const face=(ath,name)=>ath?.photo_url?<img src={ath.photo_url} alt=""/>:(name||"?")[0];
 
   return(
-    <div>
-      {/* Athlete group-picker modal */}
+    <div className="tfx cb cb-teams">
+      {/* Athlete group-picker dialog */}
       {picker&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.75)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"}} onClick={()=>setPicker(null)}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"#141414",borderRadius:16,padding:"1.5rem",width:"100%",maxWidth:300,border:"1px solid #2a2a2a",fontFamily:"Georgia,serif"}}>
-            <div style={{fontSize:15,fontWeight:700,color:"#fff",marginBottom:2}}>{picker}</div>
-            <div style={{fontSize:11,color:"#555",marginBottom:16}}>Add to which group?</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <div className="cb-scrim is-center" onClick={()=>setPicker(null)}>
+          <div className="cb-dialog" role="dialog" aria-modal="true" aria-label={"Place "+picker} onClick={e=>e.stopPropagation()}>
+            <div>
+              <div className="tfx-eyebrow">Add to which group?</div>
+              <h3>{picker}</h3>
+            </div>
+            <div className="cb-gpick">
               {Array.from({length:groupCount},(_,i)=>(
-                <button key={i} onClick={()=>addToGroup(picker,i)} style={{padding:"14px 10px",borderRadius:10,border:"2px solid "+GC[i]+"55",background:GC[i]+"18",color:GC[i],fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center",lineHeight:1.3}}>
-                  Group {i+1}
-                  <div style={{fontSize:9,fontWeight:400,color:GC[i]+"99",marginTop:3}}>{TIER_LABEL[getTier(i,groupCount)]}</div>
-                  <div style={{fontSize:10,color:GC[i]+"cc",marginTop:2}}>{(groups[i]||[]).length} members</div>
+                <button key={i} className="tfx-press" style={{"--c":GC[i]}} onClick={()=>addToGroup(picker,i)}>
+                  <b><i className="cb-dot"/>Group {i+1}</b>
+                  <small>{TIER_LABEL[getTier(i,groupCount)]} · {(groups[i]||[]).length} members</small>
                 </button>
               ))}
             </div>
-            <button onClick={()=>setPicker(null)} style={{width:"100%",marginTop:12,padding:"10px",borderRadius:10,border:"0.5px solid #252525",background:"transparent",color:"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Cancel</button>
+            <button className="tfx-btn-ghost cb-btn-block tfx-press" onClick={()=>setPicker(null)}>Cancel</button>
           </div>
         </div>
       )}
 
-      {/* Leader + Bracelet picker modal */}
+      {/* Leader + Bracelet picker sheet */}
       {leaderPicker!==null&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setLeaderPicker(null)}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"#141414",borderRadius:"20px 20px 0 0",padding:"1.25rem 1.25rem 2rem",width:"100%",maxWidth:480,border:"1px solid #252525",borderBottom:"none",fontFamily:"Georgia,serif",maxHeight:"85vh",overflowY:"auto"}}>
-            <div style={{width:40,height:4,borderRadius:2,background:"#333",margin:"0 auto 14px"}}/>
-            {/* Header */}
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16}}>
-              <div style={{width:10,height:10,borderRadius:"50%",background:GC[leaderPicker],flexShrink:0}}/>
-              <div style={{fontSize:15,fontWeight:700,color:GC[leaderPicker]}}>Group {leaderPicker+1}</div>
+        <div className="cb-scrim" onClick={()=>setLeaderPicker(null)}>
+          <div className="cb-sheet" role="dialog" aria-modal="true" aria-label={"Group "+(leaderPicker+1)+" leader and bracelet"} style={{"--c":GC[leaderPicker]}} onClick={e=>e.stopPropagation()}>
+            <div className="cb-grab"/>
+            <div className="cb-sheet-head">
+              <i className="cb-dot"/>
+              <h3>Group {leaderPicker+1}</h3>
             </div>
 
             {/* ── LEADER SECTION ── */}
-            <div style={{fontSize:11,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>⚒ Forge Leader</div>
-            <div style={{display:"flex",flexDirection:"column",gap:4,marginBottom:20}}>
+            <div className="tfx-eyebrow cb-sheet-lbl">Forge leader</div>
+            <div className="cb-opts">
               {active.map(a=>{
                 const isCurrentLeader=leaders[leaderPicker]===a.name;
                 const isLeaderElsewhere=Object.entries(leaders).some(([k,v])=>Number(k)!==leaderPicker&&v===a.name);
                 return(
-                  <button key={a.id} disabled={isLeaderElsewhere}
+                  <button key={a.id} disabled={isLeaderElsewhere} aria-pressed={isCurrentLeader}
+                    className={"cb-opt"+(isCurrentLeader?" is-on":"")}
                     onClick={()=>{
                       if(isCurrentLeader){setLeaders(prev=>{const n={...prev};delete n[leaderPicker];return n;});}
                       else{
                         setGroups(prev=>{const n={...prev};Object.keys(n).forEach(k=>{n[k]=(n[k]||[]).filter(x=>x!==a.name);});n[leaderPicker]=[...(n[leaderPicker]||[]),a.name];return n;});
                         setLeaders(prev=>({...prev,[leaderPicker]:a.name}));
                       }
-                    }}
-                    style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:12,border:"1.5px solid "+(isCurrentLeader?GC[leaderPicker]:isLeaderElsewhere?"#1e1e1e":"#252525"),background:isCurrentLeader?GC[leaderPicker]+"22":isLeaderElsewhere?"#0d0d0d":"#1a1a1a",cursor:isLeaderElsewhere?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:isLeaderElsewhere?0.4:1,textAlign:"left"}}>
-                    <div style={{width:34,height:34,borderRadius:"50%",background:isCurrentLeader?GC[leaderPicker]:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
-                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
-                    </div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:isCurrentLeader?700:500,color:isCurrentLeader?GC[leaderPicker]:"#ccc"}}>{a.name}</div>
-                      <div style={{fontSize:10,color:"#555"}}>{a.sport||"Athlete"}{isLeaderElsewhere?" · Leader elsewhere":""}</div>
-                    </div>
-                    {isCurrentLeader&&<span style={{fontSize:13}}>✓</span>}
+                    }}>
+                    <span className={"rk-av"+(isCurrentLeader?"":" cb-av-plain")}>{face(a,a.name)}</span>
+                    <span className="cb-opt-txt">
+                      <b>{a.name}</b>
+                      <small>{a.sport||"Athlete"}{isLeaderElsewhere?" · Leader elsewhere":""}</small>
+                    </span>
+                    {isCurrentLeader&&<span className="cb-check" aria-hidden="true">✓</span>}
                   </button>
                 );
               })}
             </div>
 
             {/* ── BRACELET SECTION ── */}
-            <div style={{fontSize:11,fontWeight:700,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>📿 Bracelet Verse</div>
-            <div style={{display:"flex",flexDirection:"column",gap:5}}>
+            <div className="tfx-eyebrow cb-sheet-lbl">Bracelet verse</div>
+            <div className="cb-opts">
               {BRACELETS.map(b=>{
                 const taken=takenRefs.includes(b.ref)&&bracelets[leaderPicker]?.ref!==b.ref;
                 const selected=bracelets[leaderPicker]?.ref===b.ref;
                 return(
-                  <button key={b.ref} disabled={taken}
-                    onClick={()=>setBracelets(prev=>({...prev,[leaderPicker]:selected?null:b}))}
-                    style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:10,border:"1.5px solid "+(selected?b.hex:taken?"#1e1e1e":b.hex+"33"),background:selected?b.hex+"22":taken?"#0d0d0d":"#1a1a1a",cursor:taken?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:taken?0.3:1,textAlign:"left"}}>
-                    <div style={{width:14,height:14,borderRadius:"50%",background:taken?"#333":b.hex,flexShrink:0,boxShadow:selected?"0 0 8px "+b.hex+"88":"none"}}/>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:12,fontWeight:selected?700:400,color:taken?"#333":selected?b.hex:"#ccc"}}>{b.color}</div>
-                      <div style={{fontSize:10,color:taken?"#2a2a2a":"#555",fontStyle:"italic"}}>{b.ref} — {b.text}</div>
-                    </div>
-                    {selected&&<span style={{fontSize:12,color:b.hex}}>✓</span>}
-                    {taken&&<span style={{fontSize:10,color:"#2a2a2a"}}>taken</span>}
+                  <button key={b.ref} disabled={taken} aria-pressed={selected} style={{"--c":b.hex}}
+                    className={"cb-opt"+(selected?" is-on":"")}
+                    onClick={()=>setBracelets(prev=>({...prev,[leaderPicker]:selected?null:b}))}>
+                    <i className="cb-sw"/>
+                    <span className="cb-opt-txt">
+                      <b>{b.color}</b>
+                      <small>{b.ref} — <i>{b.text}</i></small>
+                    </span>
+                    {selected&&<span className="cb-check" aria-hidden="true">✓</span>}
+                    {taken&&<span className="cb-taken">taken</span>}
                   </button>
                 );
               })}
             </div>
 
-            <button onClick={()=>setLeaderPicker(null)} style={{width:"100%",marginTop:14,padding:"12px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",fontFamily:"Georgia,serif"}}>Done</button>
+            <button className="tfx-btn cb-btn-block tfx-press" onClick={()=>setLeaderPicker(null)}>Done</button>
           </div>
         </div>
       )}
 
-      {/* Bracelet picker modal */}
+      {/* Bracelet picker sheet */}
       {braceletModal!==null&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",zIndex:999,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={()=>setBraceletModal(null)}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"#141414",borderRadius:"20px 20px 0 0",padding:"1.25rem 1.25rem 2rem",width:"100%",maxWidth:480,border:"1px solid #252525",borderBottom:"none",fontFamily:"Georgia,serif",maxHeight:"80vh",overflowY:"auto"}}>
-            <div style={{width:40,height:4,borderRadius:2,background:"#333",margin:"0 auto 16px"}}/>
-            <div style={{fontSize:14,fontWeight:700,color:"#fff",marginBottom:4}}>Group {braceletModal+1} — Bracelet</div>
-            <div style={{fontSize:11,color:"#555",marginBottom:16}}>Pick the verse bracelet for this group's leader. Taken ones are grayed out.</div>
-            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+        <div className="cb-scrim" onClick={()=>setBraceletModal(null)}>
+          <div className="cb-sheet" role="dialog" aria-modal="true" aria-label={"Group "+(braceletModal+1)+" bracelet"} style={{"--c":GC[braceletModal]}} onClick={e=>e.stopPropagation()}>
+            <div className="cb-grab"/>
+            <div className="cb-sheet-head">
+              <div>
+                <h3>Group {braceletModal+1} — Bracelet</h3>
+                <p>Pick the verse bracelet for this group&apos;s leader. Taken ones are grayed out.</p>
+              </div>
+            </div>
+            <div className="cb-opts">
               {BRACELETS.map(b=>{
                 const taken=takenRefs.includes(b.ref)&&bracelets[braceletModal]?.ref!==b.ref;
                 const selected=bracelets[braceletModal]?.ref===b.ref;
                 return(
-                  <button key={b.ref} disabled={taken} onClick={()=>{setBracelets(prev=>({...prev,[braceletModal]:b}));setBraceletModal(null);}}
-                    style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:12,border:"1.5px solid "+(selected?b.hex:taken?"#1e1e1e":b.hex+"44"),background:selected?b.hex+"22":taken?"#0d0d0d":"#1a1a1a",cursor:taken?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:taken?0.35:1,textAlign:"left"}}>
-                    <div style={{width:16,height:16,borderRadius:"50%",background:taken?"#333":b.hex,flexShrink:0,boxShadow:selected?"0 0 8px "+b.hex+"99":"none"}}/>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:13,fontWeight:selected?700:400,color:taken?"#444":selected?b.hex:"#ccc"}}>{b.color}</div>
-                      <div style={{fontSize:10,color:taken?"#333":"#555"}}>{b.ref} — <span style={{fontStyle:"italic"}}>{b.text}</span></div>
-                    </div>
-                    {selected&&<span style={{fontSize:11,color:b.hex}}>✓</span>}
-                    {taken&&<span style={{fontSize:10,color:"#333"}}>taken</span>}
+                  <button key={b.ref} disabled={taken} aria-pressed={selected} style={{"--c":b.hex}}
+                    className={"cb-opt"+(selected?" is-on":"")}
+                    onClick={()=>{setBracelets(prev=>({...prev,[braceletModal]:b}));setBraceletModal(null);}}>
+                    <i className="cb-sw"/>
+                    <span className="cb-opt-txt">
+                      <b>{b.color}</b>
+                      <small>{b.ref} — <i>{b.text}</i></small>
+                    </span>
+                    {selected&&<span className="cb-check" aria-hidden="true">✓</span>}
+                    {taken&&<span className="cb-taken">taken</span>}
                   </button>
                 );
               })}
             </div>
             {bracelets[braceletModal]&&(
-              <button onClick={()=>{setBracelets(prev=>{const n={...prev};delete n[braceletModal];return n;});setBraceletModal(null);}} style={{width:"100%",marginTop:10,padding:"10px",borderRadius:10,border:"0.5px solid #333",background:"transparent",color:"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>Remove bracelet</button>
+              <button className="tfx-btn-ghost cb-btn-block" onClick={()=>{setBracelets(prev=>{const n={...prev};delete n[braceletModal];return n;});setBraceletModal(null);}}>Remove bracelet</button>
             )}
           </div>
         </div>
@@ -265,153 +271,140 @@ export default function TeamsView({athletes=[]}){
 
       {/* Load error banner */}
       {loadError&&(
-        <div style={{background:"#1a0808",borderRadius:10,padding:"10px 14px",marginBottom:10,border:"0.5px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
-          <span style={{fontSize:12,color:"#C0392B"}}>⚠ {loadError}</span>
-          <button onClick={()=>{setLoadError("");loadTeams();}} style={{background:"transparent",border:"0.5px solid #C0392B55",borderRadius:6,color:"#C0392B",fontSize:11,cursor:"pointer",padding:"4px 10px",fontFamily:"Georgia,serif"}}>Retry</button>
+        <div className="ir-err cb-banner" role="alert">
+          <span>{loadError}</span>
+          <button className="cb-banner-btn" onClick={()=>{setLoadError("");loadTeams();}}>Retry</button>
         </div>
       )}
 
       {/* Header */}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:saveError?6:14}}>
-        <div>
-          <div style={{fontSize:13,fontWeight:600,color:"#ddd"}}>{allAssigned.length}/{active.length} assigned</div>
-          {unassigned.length>0&&<div style={{fontSize:11,color:"#555"}}>{unassigned.length} not yet placed</div>}
+      <section className="tfx-card cb-head">
+        <div className="cb-head-top">
+          <div>
+            <div className="tfx-eyebrow">Teams</div>
+            <h2><span className="tfx-num">{allAssigned.length}/{active.length}</span> assigned</h2>
+            <p>{unassigned.length>0?unassigned.length+" not yet placed":"Everyone is placed"}</p>
+          </div>
+          <div className="cb-head-acts">
+            {saved&&<button className="tfx-btn-ghost cb-btn-sm tfx-press" onClick={loadTeams}>↺ Reload</button>}
+            <button className={"tfx-btn cb-btn-sm tfx-press"+(saved?" is-saved":"")} onClick={saveChanges} disabled={saving}>
+              {saved?"✓ Saved!":saving?"Saving...":"Save teams"}
+            </button>
+          </div>
         </div>
-        <div style={{display:"flex",gap:8,alignItems:"center"}}>
-          {saved&&<button onClick={loadTeams} style={{padding:"8px 12px",borderRadius:10,border:"0.5px solid #1E6B3A55",background:"transparent",color:"#1E6B3A",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif"}}>↺ Reload</button>}
-          <button onClick={saveChanges} disabled={saving} style={{padding:"10px 20px",borderRadius:10,border:"none",background:saved?"#1E6B3A":saving?"#222":"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:12,fontWeight:700,cursor:saving?"not-allowed":"pointer",fontFamily:"Georgia,serif",boxShadow:(saved||saving)?"none":"0 4px 16px #E8720C44",transition:"all 0.2s"}}>
-            {saved?"✓ Saved!":saving?"Saving...":"Save Teams"}
-          </button>
+        <div className={"cb-meter"+(active.length&&unassigned.length===0?" is-full":"")} aria-hidden="true">
+          <i style={{"--p":active.length?Math.min(1,allAssigned.length/active.length):0}}/>
         </div>
-      </div>
+      </section>
 
       {/* Save error banner */}
       {saveError&&(
-        <div style={{background:"#1a0808",borderRadius:10,padding:"10px 14px",marginBottom:12,border:"0.5px solid #C0392B44",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
-          <span style={{fontSize:12,color:"#C0392B"}}>⚠ {saveError}</span>
-          <button onClick={()=>setSaveError("")} style={{background:"transparent",border:"none",color:"#666",fontSize:14,cursor:"pointer",padding:"0 4px"}}>×</button>
+        <div className="ir-err cb-banner" role="alert">
+          <span>{saveError}</span>
+          <button className="cb-x" aria-label="Dismiss error" onClick={()=>setSaveError("")}>×</button>
         </div>
       )}
 
       {/* Group count slider */}
-      <div style={{background:"#111",borderRadius:12,padding:"12px 14px",marginBottom:14,border:"0.5px solid #1e1e1e"}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <div style={{fontSize:11,color:"#555",textTransform:"uppercase",letterSpacing:"0.08em"}}>Number of groups</div>
-          <div style={{fontSize:18,fontWeight:900,color:"#fff",minWidth:20,textAlign:"center"}}>{groupCount}</div>
+      <section className="tfx-card cb-count">
+        <div className="cb-count-top">
+          <span className="tfx-eyebrow">Number of groups</span>
+          <b className="tfx-num">{groupCount}</b>
         </div>
-        <input type="range" min={1} max={6} value={groupCount}
+        <input type="range" className="tfx-range" min={1} max={6} value={groupCount} aria-label="Number of groups"
+          style={{"--p":(groupCount-1)/5}}
           onChange={e=>{
             const n=Number(e.target.value);
             setGroupCount(n);
             setGroups(prev=>{const next={...prev};for(let i=0;i<n;i++){if(!next[i])next[i]=[];}return next;});
           }}
           onWheel={e=>e.currentTarget.blur()}
-          style={{width:"100%",accentColor:"#E8720C",cursor:"pointer",height:4}}
         />
-        <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+        <div className="cb-ticks" aria-hidden="true">
           {[1,2,3,4,5,6].map(n=>(
-            <span key={n} style={{fontSize:10,color:n===groupCount?"#E8720C":"#333",fontWeight:n===groupCount?700:400,transition:"color 0.15s"}}>{n}</span>
+            <span key={n} className={n===groupCount?"is-on":""}>{n}</span>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Unassigned pool */}
       {unassigned.length>0&&(
-        <div style={{background:"#111",borderRadius:14,padding:"14px",marginBottom:12,border:"1px dashed #252525"}}>
-          <div style={{fontSize:10,color:"#555",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Unassigned — tap to place</div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+        <section className="tfx-card cb-pool">
+          <div className="tfx-eyebrow">Unassigned — tap to place</div>
+          <div className="cb-chips">
             {unassigned.map(a=>(
-              <div key={a.id}
-                onClick={()=>setPicker(a.name)}
-                style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px 6px 6px",borderRadius:20,border:"0.5px solid #2a2a2a",background:"#1e1e1e",cursor:"pointer",userSelect:"none"}}>
-                <div style={{width:22,height:22,borderRadius:"50%",background:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:600,color:"#888",flexShrink:0,overflow:"hidden"}}>
-                  {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
-                </div>
-                <span style={{fontSize:12,color:"#888"}}>{(a.name||"").split(" ")[0]}</span>
-              </div>
+              <button key={a.id} className="cb-chip tfx-press" onClick={()=>setPicker(a.name)}>
+                <span className="rk-av cb-av-plain">{face(a,a.name)}</span>
+                {firstName(a.name)}
+              </button>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Group cards */}
       {Array.from({length:groupCount},(_,i)=>{
-        const color=GC[i];
         const members=groups[i]||[];
         const brac=bracelets[i]||null;
+        const currentLeader=leaders[i];
+        const leaderAth=currentLeader?athletes.find(a=>a.name===currentLeader):null;
         return(
-          <div key={i}
-            style={{background:"#141414",borderRadius:14,padding:"14px",marginBottom:10,border:"2px solid "+color+"33"}}>
+          <section key={i} className="tfx-card cb-group" style={{"--c":GC[i]}}>
 
             {/* Group header */}
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-              <div style={{width:10,height:10,borderRadius:"50%",background:color,flexShrink:0,boxShadow:"0 0 6px "+color+"88"}}/>
-              <div style={{fontSize:13,fontWeight:700,color}}>Group {i+1}</div>
-              <span style={{fontSize:9,padding:"2px 8px",borderRadius:5,background:color+"18",color,border:"0.5px solid "+color+"33"}}>{TIER_LABEL[getTier(i,groupCount)]}</span>
-              <div style={{marginLeft:"auto",fontSize:11,color:"#444"}}>{members.length}</div>
+            <div className="cb-group-head">
+              <i className="cb-dot"/>
+              <h3>Group {i+1}</h3>
+              <span className="cb-pill">{TIER_LABEL[getTier(i,groupCount)]}</span>
+              <span className="cb-group-n"><b>{members.length}</b> {members.length===1?"member":"members"}</span>
             </div>
 
             {/* Leader zone */}
-            {(()=>{
-              const currentLeader=leaders[i];
-              const leaderAth=currentLeader?athletes.find(a=>a.name===currentLeader):null;
-              return(
-                <div
-                  onClick={()=>setLeaderPicker(i)}
-                  style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:10,marginBottom:8,border:"1.5px dashed "+(currentLeader?color+"55":"#2a2a2a"),background:currentLeader?color+"10":"transparent",cursor:"pointer",minHeight:38}}>
-                  <span style={{fontSize:13,filter:"drop-shadow(0 0 4px "+(currentLeader?color+"88":"transparent")+")"}}>⚒</span>
-                  {currentLeader?(
-                    <div style={{display:"flex",alignItems:"center",gap:6,flex:1}}>
-                      <div style={{width:22,height:22,borderRadius:"50%",background:color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
-                        {leaderAth?.photo_url?<img src={leaderAth.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:currentLeader[0]}
-                      </div>
-                      <span style={{fontSize:12,fontWeight:700,color}}>{currentLeader}</span>
-                      <span style={{fontSize:9,color:color+"88",marginLeft:2}}>Forge leader · tap to change</span>
-                    </div>
-                  ):(
-                    <span style={{fontSize:11,color:"#444",flex:1}}>Tap to set Forge leader</span>
-                  )}
-                  {currentLeader&&(
-                    <button onClick={e=>{e.stopPropagation();setLeaders(prev=>{const n={...prev};delete n[i];return n;});}} style={{background:"transparent",border:"none",cursor:"pointer",color:"#333",fontSize:13,lineHeight:1,padding:"0 2px"}}>×</button>
-                  )}
-                </div>
-              );
-            })()}
+            <div className={"cb-lead"+(currentLeader?" is-set":"")}>
+              <button className="cb-lead-btn" onClick={()=>setLeaderPicker(i)}>
+                {currentLeader?(
+                  <span className="rk-av">{face(leaderAth,currentLeader)}</span>
+                ):(
+                  <span className="cb-lead-ico"><Icon name="anvil" size={18}/></span>
+                )}
+                <span className="cb-lead-txt">
+                  {currentLeader?(<><b>{currentLeader}</b><small>Forge leader · tap to change</small></>):(<small>Tap to set Forge leader</small>)}
+                </span>
+              </button>
+              {currentLeader&&(
+                <button className="cb-x" aria-label={"Remove "+currentLeader+" as leader"} onClick={e=>{e.stopPropagation();setLeaders(prev=>{const n={...prev};delete n[i];return n;});}}>×</button>
+              )}
+            </div>
 
             {/* Bracelet row */}
             {brac?(
-              <button onClick={()=>setBraceletModal(i)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"6px 10px",borderRadius:8,marginBottom:8,background:brac.hex+"12",border:"1px solid "+brac.hex+"33",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
-                <div style={{width:10,height:10,borderRadius:"50%",background:brac.hex,flexShrink:0}}/>
-                <span style={{fontSize:11,fontWeight:600,color:brac.hex}}>{brac.color}</span>
-                <span style={{fontSize:10,color:"#555",marginLeft:2}}>{brac.ref}</span>
-                <span style={{marginLeft:"auto",fontSize:10,color:"#444"}}>change</span>
+              <button className="cb-brac is-set" style={{"--c":brac.hex}} onClick={()=>setBraceletModal(i)}>
+                <i className="cb-sw"/>
+                <b>{brac.color}</b>
+                <span>{brac.ref}</span>
+                <em>Change</em>
               </button>
             ):(
-              <button onClick={()=>setBraceletModal(i)} style={{width:"100%",display:"flex",alignItems:"center",gap:8,padding:"7px 10px",borderRadius:8,marginBottom:8,border:"1px dashed #252525",background:"transparent",cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"left"}}>
-                <span style={{fontSize:12}}>📿</span>
-                <span style={{fontSize:11,color:"#444"}}>Assign bracelet verse</span>
+              <button className="cb-brac" onClick={()=>setBraceletModal(i)}>
+                <i className="cb-sw is-empty"/>
+                <span>Assign bracelet verse</span>
               </button>
             )}
 
             {/* Members */}
             {members.length===0?(
-              <div style={{fontSize:12,color:"#2a2a2a",textAlign:"center",padding:"18px 8px",border:"1px dashed #252525",borderRadius:8}}>
-                Empty — tap from pool above to add
-              </div>
+              <div className="cb-empty">Empty — tap from pool above to add</div>
             ):(
-              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              <div className="cb-members">
                 {members.map(name=>{
                   const isLeader=leaders[i]===name;
                   const ath=athletes.find(a=>a.name===name);
                   return(
-                    <div key={name}
-                      style={{display:"flex",alignItems:"center",gap:5,padding:"5px 4px 5px 6px",borderRadius:20,background:isLeader?color+"22":"#1e1e1e",border:"1px solid "+(isLeader?color+"88":"#2a2a2a"),userSelect:"none"}}>
-                      <div style={{width:20,height:20,borderRadius:"50%",background:isLeader?color:"#333",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#fff",flexShrink:0,overflow:"hidden"}}>
-                        {ath?.photo_url?<img src={ath.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:name[0]}
-                      </div>
-                      <span style={{fontSize:12,color:isLeader?color:"#ccc",fontWeight:isLeader?700:400}}>{(name||"").split(" ")[0]}</span>
-                      <button onClick={()=>removeFromGroup(name,i)} style={{background:"transparent",border:"none",cursor:"pointer",padding:"0 4px 0 2px",fontSize:13,color:"#333",lineHeight:1}}>×</button>
-                    </div>
+                    <span key={name} className={"cb-mchip"+(isLeader?" is-lead":"")}>
+                      <span className={"rk-av"+(isLeader?"":" cb-av-plain")}>{face(ath,name)}</span>
+                      <span>{firstName(name)}</span>
+                      <button aria-label={"Remove "+name+" from group "+(i+1)} onClick={()=>removeFromGroup(name,i)}>×</button>
+                    </span>
                   );
                 })}
               </div>
@@ -419,41 +412,41 @@ export default function TeamsView({athletes=[]}){
 
             {/* Quick-add */}
             {unassigned.length>0&&(
-              <div style={{marginTop:10,paddingTop:10,borderTop:"0.5px solid #1e1e1e"}}>
-                <div style={{fontSize:10,color:"#444",marginBottom:6}}>Quick add:</div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+              <div className="cb-quick">
+                <div className="cb-quick-lbl">Quick add</div>
+                <div className="cb-chips">
                   {unassigned.map(a=>(
-                    <button key={a.id} onClick={()=>addToGroup(a.name,i)} style={{fontSize:10,padding:"3px 8px",borderRadius:10,border:"0.5px solid "+color+"44",background:"transparent",color:color+"99",cursor:"pointer",fontFamily:"Georgia,serif"}}>+ {(a.name||"").split(" ")[0]}</button>
+                    <button key={a.id} className="cb-add tfx-press" onClick={()=>addToGroup(a.name,i)}>+ {firstName(a.name)}</button>
                   ))}
                 </div>
               </div>
             )}
-          </div>
+          </section>
         );
       })}
 
       {/* Reset section */}
-      <div style={{marginTop:24,borderTop:"0.5px solid #1e1e1e",paddingTop:20}}>
-        {resetErr&&<div style={{fontSize:12,color:"#C0392B",marginBottom:10,padding:"8px 12px",background:"rgba(192,57,43,0.12)",border:"0.5px solid rgba(192,57,43,0.3)",borderRadius:8}}>⚠ {resetErr}</div>}
+      <section className="cb-reset">
+        {resetErr&&<div className="ir-err" role="alert">{resetErr}</div>}
         {!confirmReset?(
-          <button onClick={()=>setConfirmReset(true)} style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid rgba(192,57,43,0.35)",background:"rgba(192,57,43,0.07)",color:"#C0392B",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+          <button className="cb-danger tfx-press" onClick={()=>setConfirmReset(true)}>
             Reset all teams
           </button>
         ):(
-          <div style={{background:"rgba(192,57,43,0.1)",borderRadius:12,padding:"1rem",border:"1px solid rgba(192,57,43,0.3)"}}>
-            <div style={{fontSize:13,fontWeight:700,color:"#C0392B",marginBottom:4}}>Clear everything?</div>
-            <div style={{fontSize:12,color:"#888",marginBottom:14,lineHeight:1.6}}>All group assignments, leaders, and bracelets will be removed. This can't be undone.</div>
-            <div style={{display:"flex",gap:8}}>
-              <button onClick={doReset} disabled={resetting} style={{flex:1,padding:"11px",borderRadius:10,border:"none",background:"#C0392B",color:"#fff",fontSize:13,fontWeight:700,cursor:resetting?"not-allowed":"pointer",fontFamily:"Georgia,serif",opacity:resetting?0.6:1}}>
+          <div className="cb-confirm" role="alertdialog" aria-label="Confirm reset">
+            <b>Clear everything?</b>
+            <p>All group assignments, leaders, and bracelets will be removed. This can&apos;t be undone.</p>
+            <div className="cb-confirm-acts">
+              <button className="cb-btn-danger tfx-press" onClick={doReset} disabled={resetting}>
                 {resetting?"Resetting…":"Yes, reset"}
               </button>
-              <button onClick={()=>setConfirmReset(false)} disabled={resetting} style={{padding:"11px 18px",borderRadius:10,border:"0.5px solid #2a2a2a",background:"transparent",color:"#555",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+              <button className="tfx-btn-ghost cb-btn-sm" onClick={()=>setConfirmReset(false)} disabled={resetting}>
                 Cancel
               </button>
             </div>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
