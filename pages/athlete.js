@@ -1823,7 +1823,7 @@ export default function Athlete(){
                         </button>
                       );
                     })}
-                    <button onClick={()=>{setShowTabPicker(true);setEditingPins(false);}}
+                    <button data-nav="more" onClick={()=>{setShowTabPicker(true);setEditingPins(false);}}
                       style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"8px 4px 6px",background:"transparent",border:"none",borderRadius:22,color:"rgba(255,255,255,0.38)",fontSize:9,fontWeight:400,cursor:"pointer",fontFamily:"Georgia,serif",transition:"all 0.15s"}}>
                       <span style={{display:"flex",alignItems:"center",justifyContent:"center",height:20,opacity:0.55}}><Icon name="menu" size={19} color="#aaa"/></span>
                       <span>More</span>
@@ -1864,7 +1864,7 @@ export default function Athlete(){
                       {[
                         {label:"Home",ids:["profile"]},
                         {label:"Training",ids:["prs","weight","stretching","body"]},
-                        {label:"Progress",ids:["attendance","leaderboard","anvil","badges","recap"]},
+                        {label:"Progress",ids:["attendance","leaderboard","prfeed","callouts","anvil","badges","recap"]},
                         {label:"Team & Faith",ids:["mygroup","verse","prayer","bracelets"]},
                         {label:"More",ids:["surprise","mcastles","events","photos","notes","habits","private"]},
                       ].map(section=>(
