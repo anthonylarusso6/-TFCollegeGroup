@@ -8,18 +8,26 @@ export default function AnvilTab({ athletes=[], anvil=[], setAnvil, anvilPrizes=
   const[anvilNote,setAnvilNote]=useState("");
   const[anvilDate,setAnvilDate]=useState("");
   const[anvilCategory,setAnvilCategory]=useState("Effort");
+  const[awardBusy,setAwardBusy]=useState(false);
+  const[awardErr,setAwardErr]=useState("");
 
   const awardAnvil=async()=>{
     if(!anvilWinner.trim())return;
     const _n=new Date();const _e=new Date(_n.toLocaleString("en-US",{timeZone:"America/New_York"}));const _iso=_e.getFullYear()+"-"+String(_e.getMonth()+1).padStart(2,"0")+"-"+String(_e.getDate()).padStart(2,"0");
-    await supabase.from("anvil").insert({athlete_name:anvilWinner,note:anvilNote,date_awarded:anvilDate||_iso,type:"individual",athlete_role:anvilCategory});
-    const ath=athletes.find(a=>a.name===anvilWinner);
-    if(ath){
-      const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",ath.id);
-      if(lb&&lb.length>0)await supabase.from("leaderboard").update({anvil_count:(lb[0].anvil_count||0)+1}).eq("athlete_id",ath.id);
-    }
-    setAnvilWinner("");setAnvilNote("");setAnvilDate("");setAnvilCategory("Effort");
-    await loadAll();
+    setAwardBusy(true);setAwardErr("");
+    try{
+      const{error}=await supabase.from("anvil").insert({athlete_name:anvilWinner,note:anvilNote,date_awarded:anvilDate||_iso,type:"individual",athlete_role:anvilCategory});
+      if(error)throw error;
+      const ath=athletes.find(a=>a.name===anvilWinner);
+      if(ath){
+        const{data:lb}=await supabase.from("leaderboard").select("*").eq("athlete_id",ath.id);
+        if(lb&&lb.length>0)await supabase.from("leaderboard").update({anvil_count:(lb[0].anvil_count||0)+1}).eq("athlete_id",ath.id);
+        else await supabase.from("leaderboard").insert({athlete_id:ath.id,anvil_count:1});
+      }
+      setAnvilWinner("");setAnvilNote("");setAnvilDate("");setAnvilCategory("Effort");
+      await loadAll();
+    }catch(e){setAwardErr("The award didn't save: "+(e.message||"check your connection")+". Try again.");}
+    setAwardBusy(false);
   };
 
   const ANVIL_CATS=[
@@ -102,8 +110,9 @@ export default function AnvilTab({ athletes=[], anvil=[], setAnvil, anvilPrizes=
         <p className="cb-hint">Athletes can see exactly what you write here.</p>
       </div>
 
-      <button className="tfx-btn cb-btn-gold cb-btn-block tfx-press" onClick={awardAnvil} disabled={!canAward}>
-        <Icon name="anvil" size={18}/> Award the Anvil
+      {awardErr&&<div className="ir-err" role="alert">{awardErr}</div>}
+      <button className="tfx-btn cb-btn-gold cb-btn-block tfx-press" onClick={awardAnvil} disabled={!canAward||awardBusy}>
+        <Icon name="anvil" size={18}/> {awardBusy?"Saving…":"Award the Anvil"}
       </button>
     </section>
 

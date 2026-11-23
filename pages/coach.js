@@ -299,13 +299,16 @@ export default function Coach(){
     });
   };
 
+  // Returns an error message, or "" when saved.
   const saveAnnouncement=async()=>{
-    if(currentAnnouncement){
-      await supabase.from("announcements").update({message:announcement}).eq("id",currentAnnouncement.id);
-    } else {
-      await supabase.from("announcements").insert({type:"general",message:announcement,week_label:"This week",active:true});
-    }
-    await loadAll();
+    try{
+      const{error}=currentAnnouncement
+        ?await supabase.from("announcements").update({message:announcement}).eq("id",currentAnnouncement.id)
+        :await supabase.from("announcements").insert({type:"general",message:announcement,week_label:"This week",active:true});
+      if(error)return error.message||"Save failed";
+      await loadAll();
+      return "";
+    }catch(e){return e.message||"Save failed";}
   };
 
   const openAthleteModal=async(ath)=>{

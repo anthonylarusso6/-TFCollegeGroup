@@ -154,7 +154,7 @@ export default function WeightsTab({ athletes, weightLogs, prLogs }){
             cats.forEach(cat=>{
               const catLifts=Object.entries(lifts).filter(([name])=>getCatFrom(cats,name)===cat.id);
               if(!catLifts.length)return;
-              const best=catLifts.reduce((b,[,v])=>v.orm>b.orm?v.orm:b,0);
+              const best=catLifts.reduce((b,[,v])=>Math.max(b,v.orm||0),0);
               if(best>0){totalOrm+=best;count++;}
             });
             if(!count)return;

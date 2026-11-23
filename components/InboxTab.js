@@ -45,13 +45,23 @@ export default function InboxTab({ inbox, setInbox, injuries, messages, prayers,
               {athletes.filter(a=>a.status==="active").map(a=><option key={a.id} value={a.id}>{a.name}</option>)}
             </select>
           </span>
-          <button className="tfx-btn-ghost tfx-press" onClick={async()=>{
-            if(!window.confirm("Mark all as done and clear inbox?"))return;
-            await Promise.all(inbox.map(item=>supabase.from("inbox").update({done:true}).eq("id",item.id)));
-            setInbox([]);
-          }}>
-            Mark all done
-          </button>
+          {(()=>{
+            // Only clear what the filters show, so a filtered view never wipes everything.
+            const filtered=inboxFilter!=="all"||!!inboxAthFilter;
+            const shown=inbox.filter(i=>(inboxFilter==="all"||i.type===inboxFilter)&&(!inboxAthFilter||String(i.athlete_id)===String(inboxAthFilter)));
+            return(
+              <button className="tfx-btn-ghost tfx-press" disabled={!shown.length} onClick={async()=>{
+                if(!window.confirm(filtered?"Mark these "+shown.length+" as done?":"Mark all "+shown.length+" as done and clear the inbox?"))return;
+                const res=await Promise.all(shown.map(item=>supabase.from("inbox").update({done:true}).eq("id",item.id)));
+                const failed=new Set(shown.filter((_,i)=>res[i]?.error).map(i=>i.id));
+                const cleared=new Set(shown.map(i=>i.id).filter(id=>!failed.has(id)));
+                setInbox(prev=>prev.filter(i=>!cleared.has(i.id)));
+                if(failed.size)window.alert(failed.size+" couldn't be marked done. Check your connection and try again.");
+              }}>
+                {filtered?"Mark these done":"Mark all done"}
+              </button>
+            );
+          })()}
         </div>
       </section>
 

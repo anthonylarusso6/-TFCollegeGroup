@@ -173,9 +173,11 @@ export default function ProgramUpload(){
     DAYS.forEach(d=>{cleanDays[d]=(days[d]||[]).filter(l=>(l.name||"").trim()).map(l=>({...l,name:l.name.trim()}));});
     const program={phase,days:cleanDays,notes,updatedAt:new Date().toISOString()};
     try{
-      await supabase.from("announcements").update({active:false}).eq("type","program");
-      const{error}=await supabase.from("announcements").insert({type:"program",message:JSON.stringify(program),active:true});
+      // Insert the new program first, then retire the old ones, so athletes are
+      // never left without an active program if a step fails.
+      const{data:ins,error}=await supabase.from("announcements").insert({type:"program",message:JSON.stringify(program),active:true}).select("id").single();
       if(error){setSaveErr("Save failed: "+error.message);setSaving(false);return;}
+      await supabase.from("announcements").update({active:false}).eq("type","program").neq("id",ins.id);
       setCurrentProgram(program);
       setSaved(true);setTimeout(()=>setSaved(false),3000);
     }catch(e){setSaveErr("Save failed: "+e.message);}

@@ -54,6 +54,9 @@ export default function MCastlesPostTab(){
   const postMcPhoto=async(file)=>{
     setMcUploading(true);setMcError("");setMcSuccess(false);
     try{
+      if(!file&&mcCurrentPhoto&&mcCaption.trim()===(mcCurrentPhoto.message||"").trim()&&mcWeek.trim()===(mcCurrentPhoto.week_label||"").trim()){
+        setMcError("That's already the live post. Pick a new photo or change the caption first.");setMcUploading(false);return;
+      }
       let photoUrl=mcCurrentPhoto?.day||null;
       if(file){photoUrl=await uploadMotivationalPhoto(file);}
       if(!photoUrl&&!mcCaption.trim()){setMcError("Add a photo or caption first.");setMcUploading(false);return;}

@@ -142,6 +142,7 @@ export default function TeamsView({athletes=[]}){
   const allAssigned=Object.values(groups).flat();
   const active=athletes.filter(a=>a.status==="active");
   const unassigned=active.filter(a=>!allAssigned.includes(a.name));
+  const placedActive=active.length-unassigned.length; // saved drafts can still name inactive athletes
   const firstName=(n)=>(n||"").split(" ")[0];
   const face=(ath,name)=>ath?.photo_url?<img src={ath.photo_url} alt=""/>:(name||"?")[0];
 
@@ -282,7 +283,7 @@ export default function TeamsView({athletes=[]}){
         <div className="cb-head-top">
           <div>
             <div className="tfx-eyebrow">Teams</div>
-            <h2><span className="tfx-num">{allAssigned.length}/{active.length}</span> assigned</h2>
+            <h2><span className="tfx-num">{placedActive}/{active.length}</span> assigned</h2>
             <p>{unassigned.length>0?unassigned.length+" not yet placed":"Everyone is placed"}</p>
           </div>
           <div className="cb-head-acts">
@@ -293,7 +294,7 @@ export default function TeamsView({athletes=[]}){
           </div>
         </div>
         <div className={"cb-meter"+(active.length&&unassigned.length===0?" is-full":"")} aria-hidden="true">
-          <i style={{"--p":active.length?Math.min(1,allAssigned.length/active.length):0}}/>
+          <i style={{"--p":active.length?Math.min(1,placedActive/active.length):0}}/>
         </div>
       </section>
 

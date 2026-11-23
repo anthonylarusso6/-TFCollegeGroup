@@ -6,6 +6,13 @@ import Icon from "./Icon";
 
 export default function OverviewTab({ athletes, attendance, estTodayStr, weekDays, dayName, inboxCount, musicVotes, loadMusicVotes, announcement, setAnnouncement, saveAnnouncement, injuries, messages, prayers }){
   const[recapOpen,setRecapOpen]=useState(false);
+  const[annState,setAnnState]=useState({busy:false,msg:"",ok:false});
+  const pushAnnouncement=async()=>{
+    setAnnState({busy:true,msg:"",ok:false});
+    const err=await saveAnnouncement();
+    setAnnState({busy:false,ok:!err,msg:err?"Didn't save: "+err:"Saved. Athletes see it on their home screen."});
+    if(!err)setTimeout(()=>setAnnState(s=>s.ok?{busy:false,msg:"",ok:false}:s),4000);
+  };
   const[recapData,setRecapData]=useState(null);
   const[recapLoading,setRecapLoading]=useState(false);
 
@@ -168,7 +175,8 @@ export default function OverviewTab({ athletes, attendance, estTodayStr, weekDay
         </div>
         <textarea className="tfx-field cf-ta" value={announcement} onChange={e=>setAnnouncement(e.target.value)} placeholder="Type this week's message to your athletes..." aria-label="Weekly announcement"/>
         <div className="cf-ann-foot">
-          <button className="tfx-btn tfx-press cf-ann-go" onClick={saveAnnouncement}>Save & push to athletes →</button>
+          <button className="tfx-btn tfx-press cf-ann-go" onClick={pushAnnouncement} disabled={annState.busy}>{annState.busy?"Saving…":"Save & push to athletes →"}</button>
+          {annState.msg&&<div role="status" className={annState.ok?"lg-msg is-ok":"ir-err"}>{annState.msg}</div>}
         </div>
       </section>
 
