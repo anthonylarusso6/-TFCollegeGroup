@@ -372,3 +372,11 @@ html[data-theme="light"] .cc-idea small { color: #5b4fd0; }
 @media (max-width: 359px) { .cc-ideas { grid-template-columns: minmax(0, 1fr); } }
 @media (prefers-reduced-motion: reduce) { .cc-chev i, .cc-link i { transition: none; } }
 .cc-compose { min-height: 170px; line-height: 1.5; }
+
+/* Roster: reset PIN (PINs are never displayed) */
+.cc-pin-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.cc-pin-btn { width: auto; flex: 1 1 auto; cursor: pointer; font-family: var(--font-ui); font-size: 14px; font-weight: 650; color: var(--tx); text-align: center; }
+.cc-pin-btn.is-danger { color: var(--tx); border-color: color-mix(in srgb, var(--red) 55%, transparent) !important; background: color-mix(in srgb, var(--red) 16%, transparent) !important; }
+.cc-pin-btn[disabled] { opacity: 0.6; cursor: default; }
+.cc-pin-note { display: flex; align-items: center; font-family: var(--font-ui); font-size: 13px; color: var(--green); }
+.cc-pin-err { flex-basis: 100%; font-family: var(--font-ui); font-size: 12.5px; color: var(--red); }

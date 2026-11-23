@@ -2,9 +2,37 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import Icon from "./Icon";
 import { RED, STEEL } from "../lib/constants";
+import { authApi, authErrorText } from "../lib/session";
 
 const STATUSES=["active","sleeping","archived"];
 const cap=(s)=>s.charAt(0).toUpperCase()+s.slice(1);
+
+// PINs are checked on the server and never shown. A coach can clear one so the
+// athlete creates a new PIN the next time they sign in.
+function PinReset({athlete}){
+  const[state,setState]=useState("idle"); // idle | confirm | busy | done | error
+  const[err,setErr]=useState("");
+  const first=(athlete.name||"").split(" ")[0];
+  const reset=async()=>{
+    setState("busy");
+    const r=await authApi({action:"change",athleteId:athlete.id,newPin:""});
+    if(r.ok)setState("done");
+    else{setErr(r.error==="signin_required"?"Sign out and back in, then try again.":authErrorText(r));setState("error");}
+  };
+  if(state==="done")return <span className="cc-in cc-pin-note">Cleared. {first} creates a new PIN at next sign-in.</span>;
+  if(state==="confirm"||state==="busy")return(
+    <span className="cc-pin-row">
+      <button className="cc-in cc-pin-btn is-danger" disabled={state==="busy"} onClick={reset}>{state==="busy"?"Resetting…":"Yes, reset "+first+"'s PIN"}</button>
+      <button className="cc-in cc-pin-btn" onClick={()=>setState("idle")}>Cancel</button>
+    </span>
+  );
+  return(
+    <span className="cc-pin-row">
+      <button className="cc-in cc-pin-btn" onClick={()=>{setErr("");setState("confirm");}}>Reset PIN</button>
+      {state==="error"&&<span className="cc-pin-err" role="alert">{err}</span>}
+    </span>
+  );
+}
 
 export default function RosterTab({athletes=[],setAthletes,updateAthlete,deleteAthlete,addAthlete,uploadAthletePhoto,openAthleteModal,newName,setNewName,newSport,setNewSport,newGender,setNewGender,newRole,setNewRole}){
   const[rosterSearch,setRosterSearch]=useState("");
@@ -93,10 +121,10 @@ export default function RosterTab({athletes=[],setAthletes,updateAthlete,deleteA
                           </select>
                         </span>
                       </label>
-                      <label className="cc-fld">
+                      <div className="cc-fld">
                         <span>PIN</span>
-                        <input className="cc-in" defaultValue={a.pin||""} placeholder="4-digit PIN" onBlur={async e=>{await supabase.from("athletes").update({pin:e.target.value||null}).eq("id",a.id);}}/>
-                      </label>
+                        <PinReset athlete={a}/>
+                      </div>
                       <label className="cc-fld">
                         <span>Bracelet</span>
                         <input className="cc-in" defaultValue={a.bracelet||""} placeholder="e.g. Phil 4:13" onBlur={async e=>{await supabase.from("athletes").update({bracelet:e.target.value||null}).eq("id",a.id);setAthletes(prev=>prev.map(x=>x.id===a.id?{...x,bracelet:e.target.value}:x));}}/>
