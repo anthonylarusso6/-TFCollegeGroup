@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { GOLD, GREEN, RED, STEEL } from "../lib/constants";
-import { Skeleton, SkeletonList } from "./Skeleton";
+import Icon from "./Icon";
+import { SkeletonList } from "./Skeleton";
 import { prEvents } from "../lib/lifting";
 
 // PR math lives in lib/lifting (prEvents) so the feed, My Season and the Iron Room agree.
@@ -47,25 +47,30 @@ export default function TeamPRFeed({ athletes = [], currentAthleteId = null, com
   const all = (events || []).filter(e => aMap[e.athlete_id]);
   const shown = compact ? all.slice(0, 4) : all.slice(0, 50);
 
-  const Header = () => (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+  const Header = () => compact ? (
+    <div className="af-pr-mini">
       <div>
-        <div style={{ fontSize: compact ? 11 : 18, fontWeight: 800, color: "#fff", letterSpacing: "-0.01em", display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ fontSize: compact ? 15 : 20 }}>🏆</span>{compact ? "Recent Team PRs" : "Team PR Feed"}
-        </div>
-        {!compact && <div style={{ fontSize: 12, color: "#888", marginTop: 3 }}>Every new record, as it happens.</div>}
+        <div className="tfx-eyebrow">Team</div>
+        <b>Recent team PRs</b>
       </div>
-      {compact && onSeeAll && all.length > 0 && (
-        <button onClick={onSeeAll} style={{ fontSize: 11, fontWeight: 700, color: GOLD, background: "transparent", border: "1px solid " + GOLD + "44", borderRadius: 8, padding: "5px 11px", cursor: "pointer", fontFamily: "Georgia,serif" }}>See all →</button>
+      {onSeeAll && all.length > 0 && (
+        <button className="tfx-btn-ghost tfx-press af-pr-all" onClick={onSeeAll}>See all →</button>
       )}
     </div>
+  ) : (
+    <header className="tfx-hb-head">
+      <div>
+        <div className="tfx-eyebrow">Team</div>
+        <h2>Team PR feed</h2>
+        <p className="af-sub">Every new record, as it happens.</p>
+      </div>
+    </header>
   );
 
   if (events === null) {
     return (
-      <div>
+      <div className="tfx af af-pr">
         <Header />
-        {!compact && <Skeleton height={54} radius={14} style={{ marginBottom: 10 }} />}
         <SkeletonList rows={compact ? 2 : 5} avatar />
       </div>
     );
@@ -74,54 +79,50 @@ export default function TeamPRFeed({ athletes = [], currentAthleteId = null, com
   if (all.length === 0) {
     if (compact) return null; // don't clutter the home when there's nothing yet
     return (
-      <div>
+      <div className="tfx af af-pr">
         <Header />
-        <div style={{ background: "#111", borderRadius: 16, padding: "2.5rem 1.5rem", textAlign: "center", border: "0.5px solid #1e1e1e" }}>
-          <div style={{ fontSize: 40, marginBottom: 10 }}>🏋️</div>
-          <div style={{ fontSize: 14, color: "#888", fontWeight: 600 }}>No PRs yet — be the first.</div>
-          <div style={{ fontSize: 12, color: "#555", marginTop: 4 }}>Beat one of your records in the Iron Room and it shows up here for the whole team.</div>
-        </div>
+        <section className="tfx-card af-empty" style={{ "--c": "var(--gold)" }}>
+          <span className="af-empty-ic"><Icon name="barbell" size={24} /></span>
+          <b>No PRs yet — be the first.</b>
+          <p>Beat one of your records in the Iron Room and it shows up here for the whole team.</p>
+        </section>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className={"tfx af af-pr" + (compact ? " is-compact" : "")}>
       <Header />
-      <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+      <ul className="af-pr-list">
         {shown.map((e, i) => {
           const a = aMap[e.athlete_id];
           const isMe = String(e.athlete_id) === String(currentAthleteId);
           const forge = a.role === "forge";
-          const ring = forge ? RED : STEEL;
           return (
-            <div key={e.id} className="tf-fade-up" style={{ position: "relative", display: "flex", alignItems: "center", gap: 12, background: isMe ? "linear-gradient(135deg,#141207,#111)" : "#111", borderRadius: 14, padding: "12px 14px", border: "0.5px solid " + (isMe ? GOLD + "55" : "#1e1e1e"), borderLeft: "3px solid " + (isMe ? GOLD : ring), overflow: "hidden", animationDelay: (i * 0.03) + "s" }}>
+            <li key={e.id} className={"af-pr-row tf-fade-up" + (isMe ? " is-me" : "")} style={{ animationDelay: (i * 0.03) + "s" }}>
               {/* Avatar */}
-              <div style={{ width: 42, height: 42, borderRadius: "50%", flexShrink: 0, background: forge ? "linear-gradient(145deg,#E8720C," + RED + ")" : "linear-gradient(145deg,#8a9aa4," + STEEL + ")", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 800, color: "#fff", overflow: "hidden" }}>
-                {a.photo_url ? <img src={a.photo_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={ev => { ev.target.style.display = "none"; }} alt="" /> : (a.name || "?")[0]}
-              </div>
+              <span className={"af-av" + (forge ? " is-forge" : "")}>
+                {a.photo_url ? <img src={a.photo_url} onError={ev => { ev.target.style.display = "none"; }} alt="" /> : (a.name || "?")[0]}
+              </span>
               {/* Text */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{isMe ? "You" : (a.name || "").split(" ")[0]}</span>
-                  {isMe && <span style={{ fontSize: 8.5, fontWeight: 800, color: GOLD, background: GOLD + "1f", padding: "1px 6px", borderRadius: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>You</span>}
+              <div className="af-pr-txt">
+                <div className="af-pr-name">
+                  <span>{isMe ? "You" : (a.name || "").split(" ")[0]}</span>
                 </div>
-                <div style={{ fontSize: 11.5, color: "#888", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  new PR · {e.lift}
-                </div>
+                <div className="af-pr-lift">New PR · {e.lift}</div>
               </div>
               {/* Value */}
-              <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <div style={{ fontSize: 19, fontWeight: 900, color: GOLD, lineHeight: 1, letterSpacing: "-0.02em" }}>{e.metric}<span style={{ fontSize: 10, fontWeight: 700, marginLeft: 2 }}>{e.unit}</span></div>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, justifyContent: "flex-end", marginTop: 3 }}>
-                  {e.delta > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: GREEN }}>+{e.delta}</span>}
-                  <span style={{ fontSize: 10, color: "#555" }}>{relTime(e.date, e.created_at)}</span>
+              <div className="af-pr-val">
+                <b className="tfx-num">{e.metric}<small>{e.unit}</small></b>
+                <div className="af-pr-when">
+                  {e.delta > 0 && <em className="tfx-num">+{e.delta}</em>}
+                  <span>{relTime(e.date, e.created_at)}</span>
                 </div>
               </div>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </div>
   );
 }
