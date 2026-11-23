@@ -3,7 +3,9 @@ import { supabase } from "../lib/supabase";
 
 export default function PrayersTab(){
   const[coachPrayers,setCoachPrayers]=useState([]);
-  const[prayedFor,setPrayedFor]=useState({});
+  // Remembered on this device so "prayed for" survives a reload.
+  const[prayedFor,setPrayedFor]=useState(()=>{try{return JSON.parse(localStorage.getItem("tf_prayed_for")||"{}");}catch(e){return {};}});
+  const markPrayed=(id)=>setPrayedFor(prev=>{const next={...prev,[id]:true};try{localStorage.setItem("tf_prayed_for",JSON.stringify(next));}catch(e){}return next;});
 
   useEffect(()=>{
     (async()=>{
@@ -41,7 +43,7 @@ export default function PrayersTab(){
                     <span className="tfx-num">{new Date(p.created_at).toLocaleDateString()}</span>
                   </div>
                   <blockquote>"{p.message}"</blockquote>
-                  <button className={"cf-pr-btn tfx-press"+(done?" is-done":"")} aria-pressed={done} onClick={()=>setPrayedFor(prev=>({...prev,[p.id]:true}))}>
+                  <button className={"cf-pr-btn tfx-press"+(done?" is-done":"")} aria-pressed={done} onClick={()=>markPrayed(p.id)}>
                     {done?"✓ Prayed for":"Mark as prayed →"}
                   </button>
                 </li>

@@ -41,7 +41,7 @@ function DriveLinksManager(){
       {links.length>0&&(
         <div className="cc-docs">
           {links.map((l,i)=>{
-            const data=JSON.parse(l.message||"{}");
+            let data={};try{data=JSON.parse(l.message||"{}")||{};}catch(e){data={url:l.message};}
             return(
               <div key={i} className="cc-doc">
                 <span className="cc-doc-ico"><Icon name="fileText" size={18}/></span>
