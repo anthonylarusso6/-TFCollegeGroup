@@ -1,8 +1,3 @@
-import { useState, useEffect, useRef } from "react";
-import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
-import { supabase } from "../lib/supabase";
-
-
 export default function BraceletWall({athleteBracelet}){
   const BRACELETS_LIST=[
     {ref:"1 John 3:1",   color:"Dark Blue",    hex:"#1A3A6B", text:"See what great love the Father has lavished on us, that we should be called children of God! And that is what we are!"},
@@ -18,28 +13,53 @@ export default function BraceletWall({athleteBracelet}){
     {ref:"Josh 1:9",     color:"Green",        hex:"#1E7A34", text:"Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go."},
     {ref:"Ps 27:1",      color:"Olive Green",  hex:"#5C6B1A", text:"The Lord is my light and my salvation — whom shall I fear? The Lord is the stronghold of my life — of whom shall I be afraid?"},
   ];
+  const mine=BRACELETS_LIST.find(b=>b.ref===athleteBracelet);
   return(
-    <div>
-      <div style={{background:"#0f0f0f",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #333"}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:4}}>📿 Bracelet Wall</div>
-        <div style={{fontSize:12,color:"#888"}}>All 12 bracelets — one scripture for the group.</div>
-      </div>
-      {BRACELETS_LIST.map((b,i)=>{
-        const isMe=athleteBracelet===b.ref;
-        return(
-          <div key={i} style={{background:isMe?b.hex+"14":"rgba(255,255,255,0.04)",borderRadius:12,padding:"1rem",marginBottom:8,border:"1px solid "+(isMe?b.hex+"55":"rgba(255,255,255,0.07)"),borderLeft:"4px solid "+b.hex}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <div style={{width:10,height:10,borderRadius:"50%",background:b.hex,boxShadow:"0 0 8px "+b.hex+"88"}}/>
-                <span style={{fontSize:12,fontWeight:600,color:b.hex}}>{b.color}</span>
-                {isMe&&<span style={{fontSize:10,background:b.hex,color:"#fff",padding:"1px 6px",borderRadius:4,fontWeight:700}}>yours</span>}
-              </div>
-              <span style={{fontSize:11,color:"#555"}}>{b.ref}</span>
-            </div>
-            <div style={{fontSize:13,color:"#ccc",fontStyle:"italic",lineHeight:1.6}}>"{b.text}"</div>
+    <div className="tfx ae ae-violet">
+      <header className="ae-head">
+        <div>
+          <div className="tfx-eyebrow">Scripture</div>
+          <h2>Bracelet wall</h2>
+          <p>All 12 bracelets — one scripture for the group.</p>
+        </div>
+      </header>
+
+      {mine&&(
+        <section className="tfx-card ae-mine" style={{"--c":mine.hex}}>
+          <div className="ae-mine-top">
+            <span className="ae-dot" aria-hidden="true"/>
+            <div className="tfx-eyebrow">Your bracelet</div>
           </div>
-        );
-      })}
+          <p className="ae-quote">“{mine.text}”</p>
+          <div className="ae-mine-foot">
+            <b>{mine.color}</b>
+            <span>{mine.ref}</span>
+          </div>
+        </section>
+      )}
+
+      <section className="tfx-card ae-card">
+        <div className="ae-sec">
+          <div className="tfx-eyebrow">All bracelets</div>
+          <span className="tfx-num">{BRACELETS_LIST.length}</span>
+        </div>
+        <ul className="ae-br-list">
+          {BRACELETS_LIST.map((b,i)=>{
+            const isMe=athleteBracelet===b.ref;
+            return(
+              <li key={i} className={"ae-br"+(isMe?" is-me":"")} style={{"--c":b.hex}}>
+                <div className="ae-br-top">
+                  <span className="ae-dot" aria-hidden="true"/>
+                  <b>{b.color}</b>
+                  {isMe&&<span className="ae-pill">yours</span>}
+                  <span className="ae-br-ref">{b.ref}</span>
+                </div>
+                <p className="ae-quote">“{b.text}”</p>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
   );
 }
