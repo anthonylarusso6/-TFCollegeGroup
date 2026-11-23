@@ -52,4 +52,40 @@
 .lg-wide { width: 100%; }
 .lg-loading { min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 14px; }
 .lg-loading img { width: 72px; height: 72px; border-radius: 20px; background: #fff; animation: tfxPulse 1.6s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .lg-dots.is-error, .lg-loading img { animation: none; } }
+
+/* Athlete portal additions */
+.lg-col.is-top { justify-content: flex-start; padding-top: 18px; }
+.lg-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lg-top .lg-brand { text-decoration: none; }
+.lg-top .lg-link { margin-top: 0; }
+.lg-av { overflow: hidden; color: var(--tx); font-family: var(--font-ui); font-weight: 750; }
+.lg-av img { width: 100%; height: 100%; object-fit: cover; }
+.lg-tag { flex-shrink: 0; padding: 4px 9px; border-radius: 999px; font-family: var(--font-ui); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx2);
+  border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); background: color-mix(in srgb, var(--c) 14%, transparent); }
+.lg-tag.is-hurt { --c: var(--red); color: var(--tx); }
+.lg-list.is-long .lg-row { -webkit-backdrop-filter: none; backdrop-filter: none; padding: 12px 14px; }
+.lg-list.is-long .lg-av { width: 44px; height: 44px; font-size: 18px; }
+.lg-empty { padding: 18px 8px; text-align: center; font-family: var(--font-ui); font-size: 14px; color: var(--tx2); }
+.lg-note { display: grid; gap: 4px; padding: 14px 16px; }
+.lg-note p { margin: 0; font-family: var(--font-ui); font-size: 14.5px; line-height: 1.5; color: var(--tx); }
+.lg-note.is-row { display: flex; align-items: center; gap: 14px; border-color: color-mix(in srgb, var(--c) 40%, var(--glass-line)); }
+.lg-note b { font-size: 18px; font-weight: 800; color: var(--tx); }
+.lg-note-ic { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; font-size: 20px; background: color-mix(in srgb, var(--c) 18%, transparent); }
+.lg-seg-n { margin-left: 7px; font-size: 12px; font-weight: 600; color: var(--tx3); font-variant-numeric: tabular-nums; }
+.lg-search { position: relative; }
+.lg-search > svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--tx3); pointer-events: none; }
+.lg-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 50%; border: 0; cursor: pointer;
+  font-size: 12px; color: var(--tx2); background: var(--glass-hi); }
+.lg-form { display: grid; gap: 18px; }
+.lg-label { display: grid; gap: 8px; min-width: 0; }
+.lg-label > span { font-family: var(--font-ui); font-size: 12px; font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tx2); }
+.lg-label > span em { font-style: normal; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--tx3); }
+.lg-label > small { font-family: var(--font-ui); font-size: 12.5px; line-height: 1.45; color: var(--tx3); }
+.lg-form .tfx-field { padding-left: 16px; }
+.lg-form .tfx-field.is-pin { text-align: center; font-family: var(--font-num); font-size: 20px; letter-spacing: 0.4em; }
+.lg-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.lg-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.lg-form .tfx-btn[disabled] { opacity: 0.6; cursor: default; }
+.lg-dots.is-busy i.is-on { animation: tfxPulse 0.9s ease-in-out infinite; }
+.lg-foot { margin-top: 6px; text-align: center; font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tx3); }
+@media (prefers-reduced-motion: reduce) { .lg-dots.is-error, .lg-dots.is-busy i.is-on, .lg-loading img { animation: none; } }

@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import webpush from "../../lib/webpush";
-import { actionSecretOk } from "../../lib/apiGuard";
+import { actionSecretOk, requireSession } from "../../lib/apiGuard";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -13,6 +13,7 @@ const safeUrl = (u) =>
   typeof u === "string" && u.startsWith("/") && !u.startsWith("//") ? u : "/athlete";
 
 export default async function handler(req, res) {
+  if (req.method === "POST" && !requireSession(req, res, { roles: ["coach"] })) return;
   if (req.method !== "POST") return res.status(405).end();
   if (!actionSecretOk(req)) return res.status(401).json({ error: "unauthorized" });
   const rawTitle = req.body?.title;

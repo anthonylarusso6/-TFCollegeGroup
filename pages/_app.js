@@ -8,8 +8,11 @@ import '../styles/coach-shell.css'
 import Head from 'next/head'
 import { useEffect } from 'react'
 import Ambient from '../components/Ambient'
+import { installFetchAuth } from '../lib/session'
 
 export default function App({ Component, pageProps }) {
+  // Attach the signed-in session to the app's own /api calls
+  if (typeof window !== 'undefined') installFetchAuth()
   useEffect(()=>{
     // Catch unhandled promise rejections from Supabase calls
     const handler=(event)=>{

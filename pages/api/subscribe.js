@@ -1,3 +1,4 @@
+import { requireSession } from "../../lib/apiGuard";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -8,6 +9,7 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method === "POST") {
     const { athleteId, subscription } = req.body;
+    if (!requireSession(req, res, { athleteId })) return;
     if (!athleteId || !subscription) return res.status(400).json({ error: "Missing fields" });
     try {
       // Already on file and active for this athlete? Nothing to do — the client
@@ -38,6 +40,7 @@ export default async function handler(req, res) {
   }
   if (req.method === "DELETE") {
     const { athleteId } = req.body;
+    if (!requireSession(req, res, { athleteId })) return;
     if (!athleteId) return res.status(400).json({ error: "Missing athleteId" });
     try {
       await supabase.from("announcements").update({ active: false })

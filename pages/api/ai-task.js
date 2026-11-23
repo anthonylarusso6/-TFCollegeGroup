@@ -1,7 +1,8 @@
-import { actionSecretOk } from "../../lib/apiGuard";
+import { actionSecretOk, requireSession } from "../../lib/apiGuard";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
+  if (!requireSession(req, res, { roles: ["coach"] })) return;
   if (!actionSecretOk(req)) return res.status(401).json({ error: "unauthorized" });
   const { prompt } = req.body || {};
   if (!prompt) return res.status(400).json({ error: "prompt required" });

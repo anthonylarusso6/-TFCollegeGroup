@@ -3,7 +3,8 @@ import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { passkeyAvailable, passkeySignIn, passkeyRegister, rememberPasskey, isCancel, passkeyErrorText } from "../lib/passkey";
 // useLayoutEffect warns during SSR; fall back to useEffect on the server.
 const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
-import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
+import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE, ATHLETE_SAFE_COLS } from "../lib/constants";
+import { authApi, setSession, loadSavedSession, clearCurrent, authErrorText } from "../lib/session";
 import { isFemale } from "../lib/teams";
 import { nowEST } from "../lib/dates";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -37,7 +38,6 @@ import { hTap } from "../lib/haptics";
 import { useMood } from "../lib/ambient";
 import TeamsView from "../components/TeamsView";
 
-const COACH_PIN="1803";
 
 
 
@@ -159,7 +159,7 @@ export default function Coach(){
     setLoading(true);
     try{
     const[{data:aths},{data:att},{data:inb},{data:anv},{data:lb},{data:ann}]=await Promise.all([
-      supabase.from("athletes").select("*").order("name"),
+      supabase.from("athletes").select(ATHLETE_SAFE_COLS).order("name"),
       supabase.from("attendance").select("*,athletes(name)").order("date",{ascending:false}).limit(1000),
       supabase.from("inbox").select("*,athletes(name)").eq("done",false).order("created_at",{ascending:false}),
       supabase.from("anvil").select("*").order("created_at",{ascending:false}),
@@ -238,7 +238,7 @@ export default function Coach(){
 
   const addAthlete=async()=>{
     if(!newName.trim())return;
-    const{data,error}=await supabase.from("athletes").insert({name:newName.trim(),sport:newSport.trim(),gender:newGender,role:newRole,status:"active"}).select();
+    const{data,error}=await supabase.from("athletes").insert({name:newName.trim(),sport:newSport.trim(),gender:newGender,role:newRole,status:"active"}).select(ATHLETE_SAFE_COLS);
     if(error){if(typeof window!=="undefined")alert("Couldn't add athlete: "+error.message);return;}
     if(data)setAthletes(p=>[...p,data[0]]);
     setNewName("");setNewSport("");setNewGender("");setNewRole("iron");
@@ -392,12 +392,7 @@ export default function Coach(){
   const KEVIN_TABS=["roster","mindset","attendance"];
   const TABS=coachRole==="kevin"?ALL_TABS.filter(t=>KEVIN_TABS.includes(t.id)):ALL_TABS;
 
-  // Kevin PIN stored in localStorage
-  const getKevinPin=()=>typeof window!=="undefined"?localStorage.getItem("kevin_coach_pin_v2"):null;
-  const saveKevinPin=(p)=>localStorage.setItem("kevin_coach_pin_v2",p);
-  // MCastles PIN stored in localStorage
-  const getMCastlesPin=()=>typeof window!=="undefined"?localStorage.getItem("mcastles_coach_pin"):null;
-  const saveMCastlesPin=(p)=>localStorage.setItem("mcastles_coach_pin",p);
+  // Coach PINs are checked on the server (/api/auth); nothing secret lives in this page.
 
   const getBioLabel=()=>{
     if(typeof window==="undefined")return"Biometrics";
@@ -438,6 +433,12 @@ export default function Coach(){
     if(!resolved)resolved=picked;
     if(!resolved){setBioSetupMsg("Couldn't tell which coach that Face ID is for. Pick your name and use your PIN.");return false;}
     rememberPasskey("tf_bio_coach_"+resolved,res.credId); // repair this browser's hint
+    // Face ID unlocks this device's saved session; without one, the PIN is needed once.
+    if(!loadSavedSession("coach_"+resolved)){
+      setSelectedCoach(resolved);setPin("");setPinError("");setPinStep("enter");
+      setBioSetupMsg("Enter your PIN once on this device to finish signing in.");
+      return false;
+    }
     setBioSetupMsg("");
     const nav=coachNavFor(resolved);
     completeCoachAuth(nav.role,nav.tab);
@@ -474,42 +475,45 @@ export default function Coach(){
     }
   };
 
+  const [pinBusy,setPinBusy]=useState(false);
   function handlePinKey(k){
-    if(k===null)return;
+    if(k===null||pinBusy)return;
     if(k==="⌫"){setPin(p=>p.slice(0,-1));setPinError("");return;}
     if(pin.length>=4)return;
     const newPin=pin+String(k);
     setPin(newPin);
-    if(newPin.length===4){
-      const offerBio=(nav)=>{
-        if(bioAvail&&!bioCredId){setPendingNav(nav);setShowBioOffer(true);setPin("");}
-        else{setPin("");completeCoachAuth(nav.role,nav.tab);}
-      };
-      if(pinStep==="enter"){
-        if(selectedCoach==="ant"){
-          if(newPin===COACH_PIN)offerBio({role:"ant",tab:"overview"});
-          else{setPinError("Wrong PIN. Try again.");setPin("");}
-        }else if(selectedCoach==="kevin"){
-          const kp=getKevinPin();
-          if(kp&&newPin===kp)offerBio({role:"kevin",tab:"roster"});
-          else{setPinError("Wrong PIN. Try again.");setPin("");}
-        }else if(selectedCoach==="mcastles"){
-          const mcp=getMCastlesPin();
-          if(mcp&&newPin===mcp)offerBio({role:"mcastles",tab:"overview"});
-          else{setPinError("Wrong PIN. Try again.");setPin("");}
+    if(newPin.length<4)return;
+    const nav=coachNavFor(selectedCoach);
+    const offerBio=()=>{
+      if(bioAvail&&!bioCredId){setPendingNav(nav);setShowBioOffer(true);setPin("");}
+      else{setPin("");completeCoachAuth(nav.role,nav.tab);}
+    };
+    const signedIn=(token)=>{setSession("coach_"+selectedCoach,token);setPinError("");offerBio();};
+    (async()=>{
+      setPinBusy(true);
+      try{
+        if(pinStep==="enter"){
+          const r=await authApi({action:"login",kind:"coach",id:selectedCoach,pin:newPin});
+          if(r.token)signedIn(r.token);
+          else if(r.needsCreate){setPinConfirm(newPin);setPin("");setPinStep("confirm");setPinError("");}
+          else{setPinError(authErrorText(r));setPin("");}
+        }else if(pinStep==="create"){
+          setPinConfirm(newPin);setPin("");setPinStep("confirm");setPinError("");
+        }else if(pinStep==="confirm"){
+          if(newPin!==pinConfirm){setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
+          else if(selectedCoach==="ant"){
+            const r=await authApi({action:"create",kind:"coach",id:"ant",pin:newPin});
+            if(r.token)signedIn(r.token);else{setPinError(authErrorText(r));setPin("");setPinStep("enter");}
+          }else{setPin("");setPinStep("approve");setPinError("");}
+        }else if(pinStep==="approve"){
+          // Coach Ant approves a new coach PIN with his own PIN
+          const r=await authApi({action:"create",kind:"coach",id:selectedCoach,pin:pinConfirm,approvePin:newPin});
+          if(r.token)signedIn(r.token);
+          else if(r.error==="already_set"){setPinError(authErrorText(r));setPin("");setPinStep("enter");setPinConfirm("");}
+          else{setPinError(authErrorText(r));setPin("");}
         }
-      }else if(pinStep==="create"){
-        setPinConfirm(newPin);setPin("");setPinStep("confirm");setPinError("");
-      }else if(pinStep==="confirm"){
-        if(selectedCoach==="mcastles"){
-          if(newPin===pinConfirm){saveMCastlesPin(newPin);offerBio({role:"mcastles",tab:"overview"});}
-          else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
-        }else{
-          if(newPin===pinConfirm){saveKevinPin(newPin);offerBio({role:"kevin",tab:"roster"});}
-          else{setPinError("PINs don't match. Try again.");setPin("");setPinStep("create");setPinConfirm("");}
-        }
-      }
-    }
+      }finally{setPinBusy(false);}
+    })();
   }
 
   const coaches=[
@@ -547,9 +551,8 @@ export default function Coach(){
                     let bioRaw=null;try{bioRaw=localStorage.getItem("tf_bio_coach_"+c.id);}catch(e){}
                     if(bioRaw)authenticateWithBiometric(c.id);
                     setSelectedCoach(c.id);
-                    setPin("");setPinError("");
-                    const hasPin=c.id==="ant"||(c.id==="kevin"&&getKevinPin())||(c.id==="mcastles"&&getMCastlesPin());
-                    setPinStep(hasPin?"enter":"create");
+                    setPin("");setPinError("");setPinConfirm("");setPinStep("enter");
+                    authApi({action:"status",kind:"coach",id:c.id}).then(r=>{if(r.hasPin===false)setPinStep(s=>s==="enter"?"create":s);});
                   }}>
                     <span className="lg-av">{c.emoji}</span>
                     <span className="lg-row-txt"><b>{c.name}</b><small>{c.sub}</small></span>
@@ -568,7 +571,7 @@ export default function Coach(){
               <div className="lg-who" style={{"--c":selCoach.color}}>
                 <span className="lg-av is-big">{selCoach.emoji}</span>
                 <h1>{selCoach.name}</h1>
-                <p>{pinStep==="create"?"Create your 4-digit PIN":pinStep==="confirm"?"Enter it once more to confirm":"Enter your PIN"}</p>
+                <p>{pinStep==="create"?"Create your 4-digit PIN":pinStep==="confirm"?"Enter it once more to confirm":pinStep==="approve"?"Coach Ant: enter your PIN to approve":"Enter your PIN"}</p>
               </div>
 
               {bioCredId&&pinStep==="enter"&&!showBioOffer&&(
@@ -649,7 +652,7 @@ export default function Coach(){
             </div>
             <div style={{textAlign:"right"}}>
               <div style={{fontSize:11,color:isLight?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.25)",marginBottom:2}}>{athletes.filter(a=>a.status==="active").length} athletes</div>
-              <button onClick={()=>setAuthed(false)} style={{fontSize:10,color:isLight?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.2)",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.04em"}}>Sign out</button>
+              <button onClick={()=>{clearCurrent();setAuthed(false);}} style={{fontSize:10,color:isLight?"rgba(0,0,0,0.5)":"rgba(255,255,255,0.2)",background:"transparent",border:"none",cursor:"pointer",fontFamily:"Georgia, serif",letterSpacing:"0.04em"}}>Sign out</button>
             </div>
           </div>
         </div>

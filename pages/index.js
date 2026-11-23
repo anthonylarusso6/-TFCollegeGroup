@@ -6,6 +6,7 @@ import { nowEST } from "../lib/dates";
 import { loadSeason, seasonStart, seasonEnd, seasonWeeks, isBeforeSeason, firstClassAt, fmtFirstClass } from "../lib/season";
 import Icon from "../components/Icon";
 import { useMood } from "../lib/ambient";
+import { authApi, authErrorText } from "../lib/session";
 
 const GOLD="#D4AF37";
 const RED="#C0392B";
@@ -231,19 +232,18 @@ export default function Landing(){
     }
   };
 
+  // The QR is unlocked with Coach Ant's PIN, checked on the server.
   const handleQrUnlock=(next)=>{
+    if(next.length>4)return;
     setQrPin(next);
     setQrPinError(false);
     if(next.length===4){
-      if(next==="1803"){
-        sessionStorage.setItem("qr_unlocked","1");
-        setQrUnlocked(true);
-        setQrPinModal(false);
-        setQrFullscreen(true);
-      }else{
-        setQrPinError(true);
-        setQrPin("");
-      }
+      authApi({action:"login",kind:"coach",id:"ant",pin:next}).then(r=>{
+        if(r.token){
+          try{sessionStorage.setItem("qr_unlocked","1");}catch(e){}
+          setQrUnlocked(true);setQrPinModal(false);setQrFullscreen(true);
+        }else{setQrPinError(r.error==="locked"?authErrorText(r):true);setQrPin("");}
+      });
     }
   };
 
@@ -440,7 +440,7 @@ export default function Landing(){
               <b>Coach passcode</b>
               <small>Enter it to show the check-in QR</small>
               <div className="hm-pin-dots" aria-hidden="true">{[0,1,2,3].map(i=><i key={i} className={i<qrPin.length?"is-on":""}/>)}</div>
-              {qrPinError&&<div className="hm-pin-err">Wrong passcode. Try again.</div>}
+              {qrPinError&&<div className="hm-pin-err">{typeof qrPinError==="string"?qrPinError:"Wrong passcode. Try again."}</div>}
               <div className="hm-pin-pad">
                 {[1,2,3,4,5,6,7,8,9].map(n=><button key={n} className="tfx-press" onClick={()=>handleQrUnlock(qrPin+n)}>{n}</button>)}
                 <button className="tfx-press is-text" onClick={()=>setQrPinModal(false)}>Cancel</button>

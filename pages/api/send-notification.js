@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import webpush from "../../lib/webpush";
-import { actionSecretOk } from "../../lib/apiGuard";
+import { actionSecretOk, requireSession } from "../../lib/apiGuard";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -17,6 +17,7 @@ export default async function handler(req, res) {
   const { athleteId } = req.body || {};
   const url = safeUrl(req.body?.url);
   if (!athleteId || !req.body?.title) return res.status(400).json({ error: "Missing fields" });
+  if (!requireSession(req, res, { roles: ["athlete", "coach"], athleteId })) return;
   const title = String(req.body.title).slice(0, 120);
   const body = String(req.body?.body || "").slice(0, 500);
 

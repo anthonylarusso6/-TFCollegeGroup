@@ -36,9 +36,12 @@ import { hTap, hSuccess, hError, hCelebrate } from "../lib/haptics";
 import Head from "next/head";
 import { supabase } from "../lib/supabase";
 import { ensurePushSync } from "../lib/push";
+import { authApi, setSession, loadSavedSession, clearCurrent, authErrorText } from "../lib/session";
 import { loadSeason, isBeforeSeason, fmtFirstClass } from "../lib/season";
 import { setMood } from "../lib/ambient";
 
+// What this device calls its biometric sign-in.
+function bioLabel(){const ua=(typeof navigator!=="undefined"&&navigator.userAgent)||"";return/iPhone|iPad|iPod/.test(ua)?"Face ID":/Mac/.test(ua)?"Touch ID":/Android/.test(ua)?"fingerprint":"Face ID";}
 const LC=["#534AB7","#0F6E56","#854F0B","#993556"];
 const LB=["#EEEDFE","#E1F5EE","#FAEEDA","#FBEAF0"];
 
@@ -65,6 +68,8 @@ export default function Athlete(){
   const[pinStep,setPinStep]=useState("enter");
   const[pinConfirm,setPinConfirm]=useState("");
   const[pinError,setPinError]=useState("");
+  const[athHasPin,setAthHasPin]=useState(null); // null = checking, from /api/auth status
+  const[pinBusy,setPinBusy]=useState(false);
   const[bioAvail,setBioAvail]=useState(false);
   const[bioCredId,setBioCredId]=useState(null);
   const[bioDeclined,setBioDeclined]=useState(false);
@@ -250,6 +255,13 @@ export default function Athlete(){
     rememberPasskey("tf_bio_"+athlete.id,res.credId);
     setBioCredId(res.credId);
     if(!exp)primeAthlete(athlete);
+    // Face ID unlocks the sign-in saved on this phone. No saved sign-in yet
+    // (first time since the update, or it expired after 30 days): PIN once.
+    if(!loadSavedSession("athlete_"+athlete.id)){
+      setScreen("login");
+      setBioMsg("Face ID works. Enter your PIN once on this phone to finish signing in.");
+      return false;
+    }
     const info=await doCheckin(athlete);
     setCheckinInfo(info);setPin("");setPinError("");
     if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
@@ -393,8 +405,11 @@ export default function Athlete(){
     // so profiles still save even before those columns are added to the table.
     if(editCollege.trim()||selectedAthlete.college!=null)patch.college=editCollege.trim();
     if(editYear||selectedAthlete.year!=null)patch.year=editYear;
-    if(editPin)patch.pin=editPin;
     try{
+      if(editPin){
+        const r=await authApi({action:"change",newPin:editPin});
+        if(!r.ok){setEditMsg(r.error==="signin_required"?"Sign out and back in, then change your PIN.":authErrorText(r,"athlete"));setEditSaving(false);return;}
+      }
       const{error}=await supabase.from("athletes").update(patch).eq("id",selectedAthlete.id);
       if(error){setEditMsg(error.message);setEditSaving(false);return;}
       const updated={...selectedAthlete,...patch};
@@ -414,11 +429,14 @@ export default function Athlete(){
     try{
       const{data:existing}=await supabase.from("athletes").select("id").ilike("name",name).maybeSingle();
       if(existing){setSignupError("That name's already on the roster — find it on the list to sign in.");setSignupSaving(false);return;}
-      const signupPayload={name,sport:signupSport.trim(),gender:signupGender,role:"iron",status:"active",pin:signupPin};
+      const signupPayload={name,sport:signupSport.trim(),gender:signupGender,role:"iron",status:"active"};
       if(signupCollege.trim())signupPayload.college=signupCollege.trim();
       if(signupYear)signupPayload.year=signupYear;
-      const{data,error}=await supabase.from("athletes").insert(signupPayload).select().single();
+      const{data,error}=await supabase.from("athletes").insert(signupPayload).select(ATHLETE_SAFE_COLS).single();
       if(error){setSignupError(error.message);setSignupSaving(false);return;}
+      // The PIN is set through the server so it never sits in a readable column.
+      const pr=await authApi({action:"create",kind:"athlete",id:data.id,pin:signupPin});
+      if(pr.token)setSession("athlete_"+data.id,pr.token);
       setAthletes(prev=>[...prev,data].sort((a,b)=>(a.name||"").localeCompare(b.name||"")));
       athleteIdRef.current=data.id;
       setSelectedAthlete(data);
@@ -577,6 +595,9 @@ export default function Athlete(){
   const primeAthlete=(a)=>{
     setSelectedAthlete(a);setBioMsg("");
     setPin("");setPinError("");setPinStep("enter");setPinConfirm("");
+    clearCurrent();
+    setAthHasPin(null);
+    authApi({action:"status",kind:"athlete",id:a.id}).then(r=>{if(typeof r.hasPin==="boolean")setAthHasPin(r.hasPin);});
     setFeedbackText("");setFeedbackSent(false);
     setPrayerText("");setPrayerSent(false);
     setInjuryText("");setInjurySent(false);setInjuryOpen(false);
@@ -598,7 +619,7 @@ export default function Athlete(){
     // Load supporting data in the background
     Promise.all([
       loadAttendance(a.id),
-      (async()=>{try{const{data}=await supabase.from("athletes").select("*").eq("id",a.id).maybeSingle();if(data)setSelectedAthlete(data);}catch(e){}})(),
+      (async()=>{try{const{data}=await supabase.from("athletes").select(ATHLETE_SAFE_COLS).eq("id",a.id).maybeSingle();if(data)setSelectedAthlete(data);}catch(e){}})(),
     ]).catch(()=>{});
   };
 
@@ -615,48 +636,41 @@ export default function Athlete(){
     if(bioPromise)bioPromise.catch(()=>{});
   };
 
+  // PIN check happens on the server (/api/auth); the app never sees the PIN on file.
+  const afterSignIn=async(a)=>{
+    const info=await doCheckin(a);
+    setCheckinInfo(info);setPin("");setPinError("");setPinStep("enter");setPinConfirm("");
+    if(bioAvail&&!bioCredId&&!bioDeclined){
+      setPendingNav({screen:info?"checkin":"profile",milestone:info?.milestoneHit||null});
+      setShowBioOffer(true);
+    }else{
+      if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
+      else setScreen("profile");
+    }
+  };
   const submitPin=async()=>{
-    if(pin.length<4)return;
-    // The roster list no longer carries pins (privacy), so fetch this athlete's
-    // pin at login time if it isn't loaded yet — undefined must NOT be treated
-    // as "no pin set" or it would silently overwrite an existing pin.
-    let saved=selectedAthlete.pin;
-    if(saved===undefined){
-      try{const{data}=await supabase.from("athletes").select("pin").eq("id",selectedAthlete.id).maybeSingle();saved=data?(data.pin??null):null;}catch(e){saved=null;}
-    }
-    if(!saved||saved===""||saved===null){
-      if(pinStep==="enter"){setPinConfirm(pin);setPin("");setPinStep("confirm");setPinError("");}
-      else{
-        if(pin===pinConfirm){
-          await supabase.from("athletes").update({pin}).eq("id",selectedAthlete.id);
-          setSelectedAthlete({...selectedAthlete,pin});
-          const info=await doCheckin({...selectedAthlete,pin});
-          setCheckinInfo(info);setPin("");
-          if(bioAvail&&!bioCredId&&!bioDeclined){
-            setPendingNav({screen:info?"checkin":"profile",milestone:info?.milestoneHit||null});
-            setShowBioOffer(true);
-          }else{
-            if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
-            else setScreen("profile");
-          }
-        } else {setPinError("PINs don't match. Try again.");setPin("");setPinStep("enter");setPinConfirm("");}
+    const a=selectedAthlete;
+    if(pin.length<4||pinBusy||!a)return;
+    const startOver=(msg)=>{setPinError(msg);setPin("");setPinStep("enter");setPinConfirm("");};
+    setPinBusy(true);
+    try{
+      if(pinStep==="confirm"){
+        if(pin!==pinConfirm){startOver("PINs don't match. Try again.");return;}
+        const r=await authApi({action:"create",kind:"athlete",id:a.id,pin});
+        if(r.token){setSession("athlete_"+a.id,r.token);setAthHasPin(true);setBioMsg("");await afterSignIn(a);}
+        else{if(r.error==="already_set")setAthHasPin(true);startOver(authErrorText(r,"athlete"));}
+        return;
       }
-    } else {
-      if(pin===saved){
-        const info=await doCheckin(selectedAthlete);
-        setCheckinInfo(info);setPin("");setPinError("");
-        if(bioAvail&&!bioCredId&&!bioDeclined){
-          setPendingNav({screen:info?"checkin":"profile",milestone:info?.milestoneHit||null});
-          setShowBioOffer(true);
-        }else{
-          if(info){setScreen("checkin");if(info.milestoneHit)setMilestone(info.milestoneHit);}
-          else setScreen("profile");
-        }
-      } else {setPinError("Incorrect PIN. Try again.");setPin("");}
-    }
+      const r=await authApi({action:"login",kind:"athlete",id:a.id,pin});
+      if(r.token){setSession("athlete_"+a.id,r.token);setAthHasPin(true);setBioMsg("");await afterSignIn(a);}
+      else if(r.needsCreate){setAthHasPin(false);setPinConfirm(pin);setPin("");setPinStep("confirm");setPinError("");}
+      else{setPinError(authErrorText(r,"athlete"));setPin("");}
+    }finally{setPinBusy(false);}
   };
 
   useEffect(()=>{if(pin.length===4)submitPin();},[pin]);
+  // Leaving to the roster or sign-up drops the active sign-in (it stays saved for Face ID).
+  useEffect(()=>{if(screen==="roster"||screen==="signup")clearCurrent();},[screen]);
 
   useEffect(()=>{
     if(screen==="profile"){
@@ -664,7 +678,7 @@ export default function Athlete(){
       pollRef.current=setInterval(async()=>{
         if(athleteIdRef.current){
           try{
-            const{data}=await supabase.from("athletes").select("*").eq("id",athleteIdRef.current).maybeSingle();
+            const{data}=await supabase.from("athletes").select(ATHLETE_SAFE_COLS).eq("id",athleteIdRef.current).maybeSingle();
             if(data)setSelectedAthlete(data);
           }catch(e){}
         }
@@ -708,314 +722,203 @@ export default function Athlete(){
   const isForge=selectedAthlete?.role==="forge";
 
   if(loading)return(
-    <div style={{minHeight:"100vh",background:"transparent",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",top:"40%",left:"50%",transform:"translate(-50%,-50%)",width:600,height:400,background:"radial-gradient(ellipse,#E8720C10 0%,transparent 65%)",pointerEvents:"none"}}/>
-      <div style={{textAlign:"center",position:"relative"}}>
-        <div style={{width:100,height:100,borderRadius:28,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto 24px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:52,boxShadow:"0 0 80px #E8720C55,0 0 160px #E8720C22,inset 0 1px 0 rgba(255,255,255,0.1)"}}>⚒</div>
-        <div style={{fontSize:11,color:"#E8720C",letterSpacing:"0.25em",textTransform:"uppercase",fontWeight:700}}>TF College Group</div>
-      </div>
-    </div>
+    <div className="tfx lg"><div className="lg-loading"><img src="/icon.png" alt=""/><span className="tfx-eyebrow">Loading the roster…</span></div></div>
   );
 
-  if(screen==="roster")return(
+  if(screen==="roster"){
+    const q=search.trim().toLowerCase();
+    const counts={active:athletes.filter(a=>a.status==="active").length,sleeping:athletes.filter(a=>a.status==="sleeping").length};
+    const list=athletes.filter(a=>a.status===rosterTab&&(!q||(a.name||"").toLowerCase().includes(q)));
+    return(
     <>
       <Head><title>TF College Group — Athlete</title></Head>
-      <div style={{minHeight:"100vh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflowX:"hidden"}}>
-        {/* Ambient fire glow top */}
-        <div style={{position:"fixed",top:-120,left:"50%",transform:"translateX(-50%)",width:500,height:400,borderRadius:"50%",background:"radial-gradient(ellipse,#E8720C22 0%,transparent 70%)",pointerEvents:"none"}}/>
-        {/* Ambient bottom */}
-        <div style={{position:"fixed",bottom:-80,right:-80,width:300,height:300,borderRadius:"50%",background:"#C0392B0a",filter:"blur(60px)",pointerEvents:"none"}}/>
-
-        {/* Hero Banner */}
-        <div style={{background:"transparent",borderBottom:"1px solid rgba(232,114,12,0.14)",padding:"2rem 1.5rem 1.5rem",textAlign:"center",position:"relative"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent 0%,#E8720C 30%,#C0392B 70%,transparent 100%)"}}/>
-          {/* Nav */}
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:"1.5rem"}}>
-            <a href="/" style={{fontSize:11,color:"#555",textDecoration:"none",padding:"6px 14px",borderRadius:8,border:"0.5px solid #1e1e1e",background:"#0e0e0e",letterSpacing:"0.04em"}}>← Home</a>
-            <a href="/coach" style={{fontSize:11,color:"#555",textDecoration:"none",padding:"6px 14px",borderRadius:8,border:"0.5px solid #1e1e1e",background:"#0e0e0e",letterSpacing:"0.04em"}}>⚒ Coach</a>
+      <div className="tfx lg">
+        <div className="lg-col is-top">
+          <div className="lg-top">
+            <a href="/" className="lg-brand"><img src="/icon.png" alt=""/><span>TF College Group</span></a>
+            <a href="/coach" className="lg-link is-quiet">Coach sign in ›</a>
           </div>
-          {/* Icon */}
-          <div style={{position:"relative",display:"inline-block",marginBottom:20}}>
-            <div style={{width:96,height:96,borderRadius:28,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",fontSize:52,boxShadow:"0 0 80px #E8720C55,0 0 160px #E8720C22,inset 0 1px 0 rgba(255,255,255,0.1)"}}>⚒</div>
-            <div style={{position:"absolute",inset:-6,borderRadius:34,border:"1px solid #E8720C33",pointerEvents:"none"}}/>
-            <div style={{position:"absolute",inset:-12,borderRadius:40,border:"0.5px solid #E8720C11",pointerEvents:"none"}}/>
+          <div className="lg-head">
+            <div className="tfx-eyebrow">Athletes</div>
+            <h1>Check in</h1>
+            <p>Tap your name to sign in.</p>
           </div>
-          <div style={{fontSize:32,fontWeight:900,color:"#fff",letterSpacing:"-0.03em",marginBottom:4,textTransform:"uppercase"}}>TF College Group</div>
-          <div style={{fontSize:10,color:"#E8720C",textTransform:"uppercase",letterSpacing:"0.22em",fontWeight:700}}>Iron Sharpens Iron · Proverbs 27:17</div>
-        </div>
 
-        <div style={{padding:"1rem 1.25rem 2rem",position:"relative"}}>
-          {/* Announcement banner */}
-          {announcement&&(
-            <div style={{background:"linear-gradient(135deg,#0e0900,#160e00)",border:"1px solid #E8720C33",borderRadius:14,padding:"14px 16px",marginBottom:12,position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#E8720C,transparent)"}}/>
-              <div style={{fontSize:10,color:"#E8720C",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:4,fontWeight:700}}>This week</div>
-              <div style={{fontSize:13,color:"#ccc",lineHeight:1.6}}>{announcement.message}</div>
-            </div>
-          )}
-
-          {/* Anvil winner */}
-          {anvilWinner&&(
-            <div style={{background:"linear-gradient(135deg,#130e00,#1c1400)",border:"1px solid "+GOLD+"44",borderRadius:14,padding:"14px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:12,position:"relative",overflow:"hidden"}}>
-              <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,"+GOLD+",transparent)"}}/>
-              <div style={{fontSize:28,filter:"drop-shadow(0 0 12px "+GOLD+"aa)"}}>⚒</div>
-              <div>
-                <div style={{fontSize:10,color:GOLD,textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:2,fontWeight:700}}>This week's Anvil</div>
-                <div style={{fontSize:16,fontWeight:800,color:GOLD}}>{anvilWinner.athlete_name}</div>
-              </div>
-            </div>
-          )}
-
-          {/* One-tap Face ID: works even if this phone forgot who's signed in */}
+          {/* One tap: works even if this phone forgot who was signed in */}
           {bioAvail&&(
-            <div style={{marginBottom:12}}>
-              <button onClick={()=>{setBioMsg("");authenticateWithBiometric(null);}} className="tfx-press"
-                style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:10,padding:"14px",borderRadius:14,
-                  border:"1px solid rgba(232,114,12,0.35)",background:"linear-gradient(135deg,rgba(232,114,12,0.14),rgba(192,57,43,0.08))",
-                  color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.01em"}}>
-                <Icon name="faceId" size={22} color="#E8720C"/>
-                <span>Sign in with {(()=>{const ua=(typeof navigator!=="undefined"&&navigator.userAgent)||"";return/iPhone|iPad|iPod/.test(ua)?"Face ID":/Mac/.test(ua)?"Touch ID":/Android/.test(ua)?"fingerprint":"Face ID";})()}</span>
-              </button>
-              {bioMsg&&<div role="alert" style={{marginTop:8,fontSize:12,lineHeight:1.5,color:"#E8A33C",textAlign:"center"}}>{bioMsg}</div>}
+            <button className="lg-faceid tfx-press" onClick={()=>{setBioMsg("");authenticateWithBiometric(null);}}>
+              <Icon name="faceId" size={22} color="currentColor"/><span>Sign in with {bioLabel()}</span>
+            </button>
+          )}
+          {bioMsg&&<div role="alert" className="lg-msg is-warn">{bioMsg}</div>}
+
+          {announcement&&(
+            <div className="tfx-card lg-note">
+              <div className="tfx-eyebrow">This week</div>
+              <p>{announcement.message}</p>
+            </div>
+          )}
+          {anvilWinner&&(
+            <div className="tfx-card lg-note is-row" style={{"--c":GOLD}}>
+              <span className="lg-note-ic" aria-hidden="true">⚒</span>
+              <div><div className="tfx-eyebrow">This week's Anvil</div><b>{anvilWinner.athlete_name}</b></div>
             </div>
           )}
 
-          {/* Active / Sleeping tabs */}
-          <div style={{display:"flex",gap:6,marginBottom:10,background:"#0a0a0a",borderRadius:12,padding:4,border:"0.5px solid #1e1e1e"}}>
-            {[{id:"active",label:"Active"},{id:"sleeping",label:"Sleeping"}].map(t=>{
-              const count=athletes.filter(a=>t.id==="active"?a.status==="active":a.status==="sleeping").length;
+          <div className="ir-seg" role="tablist" aria-label="Roster">
+            {[{id:"active",label:"Active"},{id:"sleeping",label:"Sleeping"}].map(t=>(
+              <button key={t.id} role="tab" aria-selected={rosterTab===t.id} className={rosterTab===t.id?"is-on":""} onClick={()=>setRosterTab(t.id)}>
+                {t.label}<span className="lg-seg-n">{counts[t.id]}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="lg-search">
+            <Icon name="search" size={16} color="currentColor"/>
+            <input className="tfx-field" type="text" placeholder="Search your name" value={search} onChange={e=>setSearch(e.target.value)} autoComplete="off" aria-label="Search your name"/>
+            {search&&<button className="lg-clear" onClick={()=>setSearch("")} aria-label="Clear search">✕</button>}
+          </div>
+
+          <div className="lg-list is-long">
+            {list.map(a=>{
+              const forge=a.role==="forge";
               return(
-                <button key={t.id} onClick={()=>setRosterTab(t.id)} style={{flex:1,padding:"10px 8px",borderRadius:9,border:"none",background:rosterTab===t.id?"linear-gradient(135deg,#E8720C,#C0392B)":"transparent",color:rosterTab===t.id?"#fff":"#555",fontSize:12,fontWeight:rosterTab===t.id?800:400,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:rosterTab===t.id?"0.02em":"0",textTransform:rosterTab===t.id?"uppercase":"none",boxShadow:rosterTab===t.id?"0 2px 14px #E8720C44":"none",transition:"all 0.15s",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                  {t.label}
-                  <span style={{fontSize:10,fontWeight:700,opacity:rosterTab===t.id?0.75:0.4,background:"rgba(255,255,255,0.12)",borderRadius:6,padding:"1px 6px"}}>{count}</span>
+                <button key={a.id} className="tfx-card lg-row tfx-press" style={{"--c":forge?"#C0392B":"#708090"}} onClick={()=>selectAthlete(a)}>
+                  <span className="lg-av">{a.photo_url?<img src={a.photo_url} alt=""/>:(a.name||"?")[0]}</span>
+                  <span className="lg-row-txt"><b>{a.name}</b><small>{a.sport||"Athlete"}</small></span>
+                  {a.injury&&<span className="lg-tag is-hurt">Injured</span>}
+                  {forge&&<span className="lg-tag">Forge</span>}
+                  <span className="lg-chev" aria-hidden="true">›</span>
                 </button>
               );
             })}
+            {list.length===0&&<div className="lg-empty">{q?"No one on the "+rosterTab+" list matches “"+search.trim()+"”.":"No one on the "+rosterTab+" list."}</div>}
           </div>
 
-          {/* Search */}
-          <div style={{marginBottom:14,position:"relative"}}>
-            <input type="text" placeholder="Search your name..." value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"13px 42px 13px 44px",borderRadius:12,border:"1px solid #252525",background:"#0a0a0a",color:"#fff",fontSize:14,fontFamily:"Georgia, serif",boxSizing:"border-box",outline:"none",letterSpacing:"-0.01em"}} autoComplete="off"/>
-            <div style={{position:"absolute",left:15,top:"50%",transform:"translateY(-50%)",display:"flex",alignItems:"center"}}><Icon name="search" size={14} color="#333"/></div>
-            {search&&<button onClick={()=>setSearch("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"#1a1a1a",border:"none",color:"#666",fontSize:12,cursor:"pointer",width:22,height:22,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>}
-          </div>
-
-          {/* Athlete list */}
-          <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:24}}>
-            {athletes.filter(a=>(rosterTab==="active"?a.status==="active":a.status==="sleeping")&&(!search||a.name.toLowerCase().includes(search.toLowerCase()))).map((a,idx)=>{
-              const isForge=a.role==="forge";
-              const roleColor=isForge?RED:STEEL;
-              return(
-                <button key={a.id} onClick={()=>selectAthlete(a)} style={{width:"100%",padding:0,borderRadius:16,border:"1px solid "+(isForge?"#2a0808":"#151820"),background:isForge?"linear-gradient(135deg,#130808,#1a0c0c)":"linear-gradient(135deg,#0c0c10,#111318)",cursor:"pointer",fontFamily:"Georgia, serif",display:"flex",alignItems:"stretch",textAlign:"left",overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.5)"}}>
-                  {/* Left role stripe */}
-                  <div style={{width:4,background:isForge?"linear-gradient(180deg,#E8720C,"+RED+")":"linear-gradient(180deg,#8a9aa4,"+STEEL+")",flexShrink:0}}/>
-                  {/* Avatar */}
-                  <div style={{padding:"14px 12px 14px 14px",flexShrink:0,display:"flex",alignItems:"center"}}>
-                    <div style={{width:58,height:58,borderRadius:16,background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#fff",flexShrink:0,overflow:"hidden",boxShadow:"0 4px 16px "+roleColor+"44"}}>
-                      {a.photo_url?<img src={a.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:a.name[0]}
-                    </div>
-                  </div>
-                  {/* Info */}
-                  <div style={{flex:1,padding:"14px 4px",minWidth:0,display:"flex",flexDirection:"column",justifyContent:"center"}}>
-                    <div style={{fontSize:16,fontWeight:700,color:"#fff",marginBottom:3,letterSpacing:"-0.01em"}}>{a.name}</div>
-                    <div style={{fontSize:11,color:"#555",marginBottom:a.injury?4:0}}>{a.sport||"Athlete"}</div>
-                    {a.injury&&<div style={{fontSize:9,fontWeight:800,color:RED,background:RED+"1a",padding:"2px 8px",borderRadius:5,border:"0.5px solid "+RED+"33",display:"inline-block",textTransform:"uppercase",letterSpacing:"0.08em",width:"fit-content"}}>⚡ Injured</div>}
-                  </div>
-                  {/* Right role badge */}
-                  <div style={{padding:"14px 16px",display:"flex",flexDirection:"column",alignItems:"flex-end",justifyContent:"center",gap:8}}>
-                    <div style={{fontSize:9,fontWeight:800,color:roleColor,background:roleColor+"15",padding:"4px 10px",borderRadius:8,textTransform:"uppercase",letterSpacing:"0.1em",border:"0.5px solid "+roleColor+"40"}}>{isForge?"Forge":"Iron"}</div>
-                    <div style={{color:"#2a2a2a",fontSize:18,fontWeight:300,lineHeight:1}}>›</div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          {/* New here → self sign-up */}
-          <button onClick={()=>{setSignupError("");setScreen("signup");}} style={{width:"100%",padding:"15px",borderRadius:14,border:"1px dashed #E8720C55",background:"linear-gradient(135deg,#140a02,#1a0d00)",color:"#E8720C",fontSize:14,fontWeight:800,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-            <span style={{fontSize:17,lineHeight:1}}>＋</span> New here? Create your profile
-          </button>
-          <div style={{textAlign:"center",fontSize:10,color:"#222",letterSpacing:"0.08em",textTransform:"uppercase"}}>TF College Group · Triple F Sports</div>
+          <button className="tfx-btn-ghost tfx-press lg-wide" onClick={()=>{setSignupError("");setScreen("signup");}}>New here? Create your profile</button>
+          <div className="lg-foot">Iron sharpens iron · Proverbs 27:17</div>
         </div>
       </div>
     </>
-  );
+    );
+  }
 
   if(screen==="signup")return(
     <>
       <Head><title>Create Your Profile — TF College Group</title></Head>
-      <div style={{minHeight:"100dvh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",position:"relative",overflowX:"hidden",padding:"0 0 3rem"}}>
-        <div style={{position:"fixed",top:-120,left:"50%",transform:"translateX(-50%)",width:500,height:400,borderRadius:"50%",background:"radial-gradient(ellipse,#E8720C22 0%,transparent 70%)",pointerEvents:"none"}}/>
-        <div style={{background:"transparent",borderBottom:"1px solid rgba(232,114,12,0.14)",padding:"1.5rem 1.5rem 1.75rem",position:"relative"}}>
-          <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent 0%,#E8720C 30%,#C0392B 70%,transparent 100%)"}}/>
-          <button onClick={()=>setScreen("roster")} style={{background:"#0e0e0e",border:"0.5px solid #1e1e1e",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",padding:"7px 14px",borderRadius:10,marginBottom:18}}>← Back</button>
-          <div style={{width:72,height:72,borderRadius:22,background:"linear-gradient(145deg,#E8720C,#C0392B,#8B0000)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:38,boxShadow:"0 0 60px #E8720C44",marginBottom:14}}>⚒</div>
-          <div style={{fontSize:26,fontWeight:900,color:"#fff",letterSpacing:"-0.02em",textTransform:"uppercase"}}>Create your profile</div>
-          <div style={{fontSize:12,color:"#E8720C",letterSpacing:"0.04em",marginTop:4}}>Join the College Group · takes 20 seconds</div>
-        </div>
-
-        <div style={{padding:"1.5rem 1.25rem",position:"relative",display:"flex",flexDirection:"column",gap:16}}>
-          {/* Name */}
-          <div>
-            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Your name</div>
-            <input type="text" value={signupName} onChange={e=>setSignupName(e.target.value)} placeholder="First & last name" autoComplete="off"
-              style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
+      <div className="tfx lg">
+        <div className="lg-col is-top">
+          <button className="lg-back tfx-press" onClick={()=>setScreen("roster")}>‹ Back</button>
+          <div className="lg-head">
+            <div className="tfx-eyebrow">New athlete</div>
+            <h1>Create your profile</h1>
+            <p>Takes about 20 seconds.</p>
           </div>
-          {/* Team / gender */}
-          <div>
-            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Strength standards</div>
-            <div style={{display:"flex",gap:8}}>
-              {[{id:"male",label:"Men's"},{id:"female",label:"Women's"}].map(g=>(
-                <button key={g.id} onClick={()=>setSignupGender(g.id)} style={{flex:1,padding:"13px",borderRadius:12,border:"1px solid "+(signupGender===g.id?"#E8720C":"#252525"),background:signupGender===g.id?"linear-gradient(135deg,#E8720C22,#C0392B22)":"#0d0d0d",color:signupGender===g.id?"#E8720C":"#666",fontSize:14,fontWeight:signupGender===g.id?800:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>{g.label}</button>
-              ))}
+          <div className="lg-form">
+            <label className="lg-label"><span>Your name</span>
+              <input className="tfx-field" type="text" value={signupName} onChange={e=>setSignupName(e.target.value)} placeholder="First and last name" autoComplete="name"/>
+            </label>
+            <div className="lg-label"><span>Strength standards</span>
+              <div className="ir-seg">
+                {[{id:"male",label:"Men's"},{id:"female",label:"Women's"}].map(g=>(
+                  <button key={g.id} className={signupGender===g.id?"is-on":""} onClick={()=>setSignupGender(g.id)}>{g.label}</button>
+                ))}
+              </div>
+              <small>Only used to scale your strength benchmarks. Coach sets your group.</small>
             </div>
-            <div style={{fontSize:10,color:"#444",marginTop:6}}>Used only to scale your strength benchmarks. Coach sets your group later.</div>
-          </div>
-          {/* Sport */}
-          <div>
-            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Sport / position <span style={{color:"#444",textTransform:"none",letterSpacing:0}}>· optional</span></div>
-            <input type="text" value={signupSport} onChange={e=>setSignupSport(e.target.value)} placeholder="e.g. Baseball · OF" autoComplete="off"
-              style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
-          </div>
-          {/* College */}
-          <div>
-            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>College</div>
-            <input type="text" value={signupCollege} onChange={e=>setSignupCollege(e.target.value)} placeholder="e.g. University of Tennessee" autoComplete="off"
-              style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:16,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none"}}/>
-          </div>
-          {/* Year */}
-          <div>
-            <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Year</div>
-            <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-              {["Freshman","Sophomore","Junior","Senior","5th Year","Grad"].map(y=>(
-                <button key={y} onClick={()=>setSignupYear(signupYear===y?"":y)} style={{padding:"11px 15px",borderRadius:11,border:"1px solid "+(signupYear===y?"#E8720C":"#252525"),background:signupYear===y?"linear-gradient(135deg,#E8720C22,#C0392B22)":"#0d0d0d",color:signupYear===y?"#E8720C":"#666",fontSize:13,fontWeight:signupYear===y?800:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>{y}</button>
-              ))}
+            <label className="lg-label"><span>Sport / position <em>· optional</em></span>
+              <input className="tfx-field" type="text" value={signupSport} onChange={e=>setSignupSport(e.target.value)} placeholder="e.g. Baseball · OF" autoComplete="off"/>
+            </label>
+            <label className="lg-label"><span>College</span>
+              <input className="tfx-field" type="text" value={signupCollege} onChange={e=>setSignupCollege(e.target.value)} placeholder="e.g. University of Tennessee" autoComplete="off"/>
+            </label>
+            <div className="lg-label"><span>Year</span>
+              <div className="lg-chips">
+                {["Freshman","Sophomore","Junior","Senior","5th Year","Grad"].map(y=>(
+                  <button key={y} className={"tfx-chipbtn tfx-press"+(signupYear===y?" is-on":"")} onClick={()=>setSignupYear(signupYear===y?"":y)}>{y}</button>
+                ))}
+              </div>
             </div>
-          </div>
-          {/* PIN */}
-          <div style={{display:"flex",gap:10}}>
-            <div style={{flex:1}}>
-              <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Create a 4-digit PIN</div>
-              <input type="password" inputMode="numeric" maxLength={4} value={signupPin} onChange={e=>setSignupPin(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="••••"
-                style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:18,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none",textAlign:"center",letterSpacing:"0.3em"}}/>
+            <div className="lg-pair">
+              <label className="lg-label"><span>4-digit PIN</span>
+                <input className="tfx-field is-pin" type="password" inputMode="numeric" maxLength={4} value={signupPin} onChange={e=>setSignupPin(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="••••" autoComplete="new-password"/>
+              </label>
+              <label className="lg-label"><span>Confirm PIN</span>
+                <input className="tfx-field is-pin" type="password" inputMode="numeric" maxLength={4} value={signupPinConfirm} onChange={e=>setSignupPinConfirm(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="••••" autoComplete="new-password"/>
+              </label>
             </div>
-            <div style={{flex:1}}>
-              <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",fontWeight:700,marginBottom:7}}>Confirm PIN</div>
-              <input type="password" inputMode="numeric" maxLength={4} value={signupPinConfirm} onChange={e=>setSignupPinConfirm(e.target.value.replace(/\D/g,"").slice(0,4))} placeholder="••••"
-                style={{width:"100%",padding:"14px",borderRadius:12,border:"1px solid #252525",background:"#0d0d0d",color:"#fff",fontSize:18,fontFamily:"Georgia,serif",boxSizing:"border-box",outline:"none",textAlign:"center",letterSpacing:"0.3em"}}/>
-            </div>
+            {signupError&&<div role="alert" className="lg-msg is-error">{signupError}</div>}
+            <button className="tfx-btn tfx-press lg-wide" onClick={createAccount} disabled={signupSaving}>{signupSaving?"Creating…":"Create profile"}</button>
+            <button className="lg-link is-btn" onClick={()=>setScreen("roster")}>Already on the list? Find your name</button>
           </div>
-          {signupError&&<div style={{fontSize:12,color:"#ff6b6b",background:"#1a0707",borderRadius:10,padding:"10px 14px",border:"1px solid #3a0a0a"}}>{signupError}</div>}
-          <button onClick={createAccount} disabled={signupSaving} style={{width:"100%",padding:"16px",borderRadius:14,border:"none",background:signupSaving?"#1a1a1a":"linear-gradient(135deg,#E8720C,#C0392B)",color:"#fff",fontSize:15,fontWeight:800,cursor:signupSaving?"default":"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.03em",boxShadow:signupSaving?"none":"0 6px 22px #E8720C44",marginTop:4}}>
-            {signupSaving?"Creating…":"Create profile & enter →"}
-          </button>
-          <div style={{textAlign:"center",fontSize:10.5,color:"#444",lineHeight:1.6}}>Already have a profile? <span onClick={()=>setScreen("roster")} style={{color:"#E8720C",cursor:"pointer",fontWeight:700}}>Find your name</span> on the list instead.</div>
         </div>
       </div>
     </>
   );
 
-  if(screen==="login")return(
+  if(screen==="login"){
+    const roleC=isForge?"#C0392B":"#708090";
+    const first=(selectedAthlete?.name||"").split(" ")[0];
+    const creating=athHasPin===false||pinStep==="confirm";
+    const notNow=()=>{
+      try{localStorage.setItem("tf_bio_declined_"+selectedAthlete.id,"1");}catch(e){}
+      setBioDeclined(true);
+      const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
+      if(nav?.screen==="checkin"){setScreen("checkin");if(nav.milestone)setMilestone(nav.milestone);}
+      else setScreen("profile");
+    };
+    const key=(k)=>{
+      if(pinBusy)return;
+      if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
+      setPin(p=>p.length<4?p+String(k):p);
+    };
+    return(
     <>
       <Head><title>Sign In — TF College Group</title></Head>
-      <div style={{height:"100dvh",background:"transparent",fontFamily:"Georgia, serif",maxWidth:480,margin:"0 auto",textAlign:"center",position:"relative",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"0 1.5rem",overflow:"hidden"}}>
-        <div style={{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:560,height:400,background:"radial-gradient(ellipse at top,"+(isForge?"#C0392B18":"#4a5a6618")+" 0%,transparent 65%)",pointerEvents:"none"}}/>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,"+(isForge?"#C0392B,#E8720C":"#505a66,#8a9aa4")+",transparent)"}}/>
-        <button onClick={()=>setScreen("roster")} style={{position:"absolute",top:16,left:16,background:"#111",border:"0.5px solid #222",color:"#555",fontSize:11,cursor:"pointer",fontFamily:"Georgia, serif",padding:"7px 14px",borderRadius:10}}>← Back</button>
-
-        {/* Role pill */}
-        <div style={{fontSize:9,fontWeight:800,color:isForge?RED:STEEL,textTransform:"uppercase",letterSpacing:"0.2em",marginBottom:18,background:(isForge?RED:STEEL)+"15",padding:"4px 14px",borderRadius:20,border:"0.5px solid "+(isForge?RED:STEEL)+"33"}}>
-          {isForge?"⚔ The Forge":"⚒ The Iron"}
-        </div>
-
-        {/* Avatar */}
-        <div style={{position:"relative",marginBottom:18}}>
-          <div style={{position:"absolute",inset:-8,borderRadius:"50%",border:"1px solid "+(isForge?RED:STEEL)+"40",pointerEvents:"none"}}/>
-          <div style={{position:"absolute",inset:-16,borderRadius:"50%",border:"0.5px solid "+(isForge?RED:STEEL)+"18",pointerEvents:"none"}}/>
-          <div style={{width:84,height:84,borderRadius:"50%",background:isForge?"linear-gradient(145deg,#E8720C,"+RED+",#8B0000)":"linear-gradient(145deg,#8a9aa4,"+STEEL+",#404a55)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,fontWeight:900,color:"#fff",overflow:"hidden",boxShadow:"0 0 60px "+(isForge?RED:STEEL)+"55,0 0 120px "+(isForge?RED:STEEL)+"18"}}>
-            {selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} style={{width:"100%",height:"100%",objectFit:"cover"}} alt=""/>:selectedAthlete?.name[0]}
+      <div className="tfx lg">
+        <div className="lg-col">
+          <button className="lg-back tfx-press" onClick={()=>setScreen("roster")}>‹ Back</button>
+          <div className="lg-who" style={{"--c":roleC}}>
+            <span className="lg-av is-big">{selectedAthlete?.photo_url?<img src={selectedAthlete.photo_url} alt=""/>:(first[0]||"?")}</span>
+            <h1>{pinStep==="confirm"?"Confirm your PIN":first}</h1>
+            <p>{pinStep==="confirm"?"Enter the same 4 digits again":athHasPin===false?"Create a 4-digit PIN":"Enter your PIN to check in"}</p>
           </div>
-        </div>
 
-        {/* Name */}
-        <div style={{fontSize:26,fontWeight:900,color:"#fff",marginBottom:5,letterSpacing:"-0.02em",textTransform:"uppercase"}}>
-          {!selectedAthlete?.pin?(selectedAthlete?.name||"").split(" ")[0]:pinStep==="confirm"?"Confirm PIN":(selectedAthlete?.name||"").split(" ")[0]}
-        </div>
-        <div style={{fontSize:12,color:"#555",marginBottom:28,letterSpacing:"0.05em"}}>
-          {!selectedAthlete?.pin?"Create a 4-digit PIN":pinStep==="confirm"?"Enter the same 4 digits":"Enter your PIN to check in"}
-        </div>
+          {bioAvail&&!showBioOffer&&!creating&&(
+            <button className="lg-faceid tfx-press" onClick={()=>{setBioMsg("");authenticateWithBiometric(selectedAthlete);}}>
+              <Icon name="faceId" size={22} color="currentColor"/><span>Use {bioLabel()}</span>
+            </button>
+          )}
+          {bioMsg&&!showBioOffer&&<div role="alert" className="lg-msg is-warn">{bioMsg}</div>}
 
-        {/* Biometric shortcut — shown when credential stored */}
-        {bioAvail&&!showBioOffer&&(
-          <div style={{marginBottom:22,display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-            <button onClick={()=>{setBioMsg("");authenticateWithBiometric(selectedAthlete);}}
-              style={{display:"flex",alignItems:"center",gap:10,padding:"14px 28px",
-                borderRadius:16,border:"1px solid "+(isForge?RED:STEEL)+"44",
-                background:(isForge?RED:STEEL)+"12",color:"#fff",fontSize:15,fontWeight:700,
-                cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:"0.02em",
-                boxShadow:"0 0 24px "+(isForge?RED:STEEL)+"22"}}>
-              <Icon name="faceId" size={24} color="#fff"/>
-              <span>Use {(()=>{const ua=navigator.userAgent||"";return/iPhone|iPad|iPod/.test(ua)?"Face ID / Touch ID":/Mac/.test(ua)?"Touch ID":/Android/.test(ua)?"Fingerprint":"Biometrics";})()}</span>
-            </button>
-            {bioMsg&&<div role="alert" style={{maxWidth:300,fontSize:12,lineHeight:1.5,color:"#E8A33C",textAlign:"center"}}>{bioMsg}</div>}
-            {!bioCredId&&!bioMsg&&<div style={{fontSize:11,color:"#666"}}>Set up before? Tap to use it. New? Enter your PIN first.</div>}
-          </div>
-        )}
-
-        {showBioOffer?(
-          /* Bio enroll offer — replaces keypad after first PIN success */
-          <div style={{width:"100%",maxWidth:320,textAlign:"center"}}>
-            <div style={{marginBottom:14,display:"flex",justifyContent:"center"}}><Icon name="faceId" size={42} color={isForge?RED:STEEL}/></div>
-            <div style={{fontSize:18,fontWeight:800,color:"#fff",marginBottom:8,letterSpacing:"-0.01em"}}>Enable Biometrics?</div>
-            <div style={{fontSize:12,color:"#555",marginBottom:28,lineHeight:1.6}}>
-              Skip the PIN next time. Sign in instantly with your fingerprint or face.
+          {showBioOffer?(
+            <div className="tfx-card lg-offer" style={{"--c":roleC}}>
+              <Icon name="faceId" size={40} color="currentColor"/>
+              <b>Turn on {bioLabel()}?</b>
+              <p>Skip the PIN next time and check in with your face or fingerprint.</p>
+              {bioMsg&&<div role="alert" className="lg-msg is-warn">{bioMsg}</div>}
+              <button className="tfx-btn tfx-press lg-wide" onClick={()=>registerBiometric(false)}>Turn on {bioLabel()}</button>
+              <button className="tfx-btn-ghost tfx-press lg-wide" onClick={notNow}>Not now</button>
             </div>
-            <button onClick={()=>registerBiometric(false)}
-              style={{width:"100%",padding:"14px",borderRadius:12,border:"none",
-                background:"linear-gradient(135deg,"+(isForge?"#E8720C,"+RED:"#8a9aa4,"+STEEL)+")",
-                color:"#fff",fontSize:15,fontWeight:800,cursor:"pointer",
-                fontFamily:"Georgia,serif",letterSpacing:"0.04em",marginBottom:12,
-                boxShadow:"0 4px 24px "+(isForge?RED:STEEL)+"44"}}>
-              Enable Biometrics
-            </button>
-            {bioMsg&&<div role="alert" style={{fontSize:12,lineHeight:1.5,color:"#E8A33C",marginBottom:12}}>{bioMsg}</div>}
-            <button onClick={()=>{
-              try{localStorage.setItem("tf_bio_declined_"+selectedAthlete.id,"1");}catch(e){}
-              setBioDeclined(true);
-              const nav=pendingNav;setPendingNav(null);setShowBioOffer(false);
-              if(nav?.screen==="checkin"){setScreen("checkin");if(nav.milestone)setMilestone(nav.milestone);}
-              else setScreen("profile");
-            }} style={{width:"100%",padding:"12px",borderRadius:12,border:"0.5px solid #222",
-              background:"transparent",color:"#444",fontSize:13,fontWeight:500,
-              cursor:"pointer",fontFamily:"Georgia,serif"}}>
-              Not now
-            </button>
-          </div>
-        ):(
-          <>
-            {/* PIN dots */}
-            <div style={{display:"flex",justifyContent:"center",gap:18,marginBottom:28}}>
-              {[0,1,2,3].map(i=>(
-                <div key={i} style={{width:18,height:18,borderRadius:"50%",border:"2px solid "+(isForge?RED:STEEL)+(i<pin.length?"":"33"),background:i<pin.length?(isForge?"linear-gradient(135deg,#E8720C,"+RED+")":"linear-gradient(135deg,#8a9aa4,"+STEEL+")"):"transparent",transition:"all 0.15s",boxShadow:i<pin.length?"0 0 14px "+(isForge?RED:STEEL)+"99":"none"}}/>
-              ))}
-            </div>
-            {/* Keypad */}
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,width:"100%",maxWidth:300,margin:"0 auto"}}>
-              {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>(
-                <button key={i} onClick={()=>{
-                  if(k===null)return;
-                  if(k==="⌫"){setPin(p=>p.slice(0,-1));return;}
-                  if(pin.length<4)setPin(p=>p+String(k));
-                }} style={{padding:"20px 8px",borderRadius:14,border:"0.5px solid "+(k===null?"transparent":isLight?"rgba(0,0,0,0.22)":"#222"),background:k===null?"transparent":isLight?(k==="⌫"?"#eef0f4":"#ffffff"):(k==="⌫"?"#161616":"#131313"),fontSize:26,fontWeight:500,cursor:k===null?"default":"pointer",color:k==="⌫"?(isLight?"#767d87":"#666"):(isLight?"#16191f":"#ebebeb"),fontFamily:"sans-serif",transition:"background 0.1s",lineHeight:1,boxShadow:k===null?"none":isLight?"0 1px 3px rgba(0,0,0,0.08)":"none"}}>
-                  {k===null?"":k}
-                </button>
-              ))}
-            </div>
-            {pinError&&<div style={{marginTop:16,fontSize:12,color:"#ff5555",padding:"9px 18px",background:"#1a0505",borderRadius:10,border:"1px solid #3a0808"}}>{pinError}</div>}
-          </>
-        )}
+          ):(
+            <>
+              <div key={"d"+pinError} className={"lg-dots"+(pinError?" is-error":"")+(pinBusy?" is-busy":"")} style={{"--c":roleC}} aria-label={pinBusy?"Checking your PIN":pin.length+" of 4 digits entered"}>
+                {[0,1,2,3].map(i=><i key={i} className={i<pin.length?"is-on":""}/>)}
+              </div>
+              {pinError&&<div role="alert" className="lg-msg is-error">{pinError}</div>}
+              <div className="lg-pad">
+                {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>k===null?<span key={i}/>:(
+                  <button key={i} className={"tfx-press"+(k==="⌫"?" is-del":"")} onClick={()=>key(k)} aria-label={k==="⌫"?"Delete":String(k)}>{k}</button>
+                ))}
+              </div>
+              {athHasPin!==false&&pinStep==="enter"&&<div className="lg-msg">Forgot your PIN? Ask Coach Ant to reset it.</div>}
+            </>
+          )}
+        </div>
       </div>
     </>
-  );
+    );
+  }
 
   if(screen==="checkin"){
     const isLate=checkinInfo?.status==="late";

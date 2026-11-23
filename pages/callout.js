@@ -6,6 +6,7 @@ import { nowEST } from "../lib/dates";
 import Icon from "../components/Icon";
 import { hTap, hSuccess } from "../lib/haptics";
 import { useMood } from "../lib/ambient";
+import { authApi, setSession, loadSavedSession, authErrorText } from "../lib/session";
 
 const RED="#C0392B";
 const GREEN="#2FA869";
@@ -41,6 +42,24 @@ export default function Callout(){
   const[showLog,setShowLog]=useState(false);
   const[done,setDone]=useState(false);
   const[loading,setLoading]=useState(true);
+  // This station sends push notifications, so a coach unlocks it once per
+  // device (30 days) with Coach Ant's PIN, checked on the server.
+  const[station,setStation]=useState(null);
+  const[sPin,setSPin]=useState("");
+  const[sErr,setSErr]=useState("");
+  useEffect(()=>{setStation(!!loadSavedSession("station"));},[]);
+  const stationKey=(k)=>{
+    if(k==="⌫"){setSPin(p=>p.slice(0,-1));setSErr("");return;}
+    if(sPin.length>=4)return;
+    const next=sPin+String(k);setSPin(next);
+    if(next.length===4){
+      authApi({action:"login",kind:"coach",id:"ant",pin:next}).then(r=>{
+        if(r.token){setSession("station",r.token);setStation(true);setSErr("");}
+        else{setSErr(authErrorText(r));}
+        setSPin("");
+      });
+    }
+  };
 
   useEffect(()=>{loadAthletes();},[]);
 
@@ -106,6 +125,25 @@ export default function Callout(){
     boxShadow:"inset 0 1px 0 rgba(255,255,255,0.05)",
     ...extra,
   });
+
+  if(station===false) return(
+    <div className="tfx lg">
+      <Head><title>Call-Out Station · TF College Group</title></Head>
+      <div className="lg-col">
+        <div className="lg-brand"><img src="/icon.png" alt=""/><span>TF College Group</span></div>
+        <div className="lg-who" style={{"--c":"#e5484d"}}>
+          <h1>Unlock the call-out station</h1>
+          <p>Coach Ant: enter your PIN. This iPad stays unlocked for 30 days.</p>
+        </div>
+        <div className={"lg-dots"+(sErr?" is-error":"")} style={{"--c":"#e5484d"}} aria-label={sPin.length+" of 4 digits entered"}>{[0,1,2,3].map(i=><i key={i} className={i<sPin.length?"is-on":""}/>)}</div>
+        {sErr&&<div role="alert" className="lg-msg is-error">{sErr}</div>}
+        <div className="lg-pad">
+          {[1,2,3,4,5,6,7,8,9,null,0,"⌫"].map((k,i)=>k===null?<span key={i}/>:<button key={i} className={"tfx-press"+(k==="⌫"?" is-del":"")} onClick={()=>stationKey(k)} aria-label={k==="⌫"?"Delete":String(k)}>{k}</button>)}
+        </div>
+        <a href="/" className="lg-link">← Back to home</a>
+      </div>
+    </div>
+  );
 
   if(loading) return(
     <div style={{minHeight:"100vh",background:"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>
