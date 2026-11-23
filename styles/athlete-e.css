@@ -262,3 +262,6 @@ html[data-theme="light"] .ae-skel { background-image: linear-gradient(90deg, var
 
 @media (prefers-reduced-motion: reduce) { .ae-skel, .ae-gift-box { animation: none; } }
 .ae-gold .ae-btn { color: #241a03; }
+
+/* Season chips above the week cards */
+.ae-season { display: flex; flex-wrap: wrap; gap: 8px; }

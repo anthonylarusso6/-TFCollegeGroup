@@ -319,3 +319,6 @@ html[data-theme="light"] .cf-qs li.is-open .cf-qn { color: #5b4fd0; }
   .cf-a { padding-left: 14px; }
 }
 @media (prefers-reduced-motion: reduce) { .cf-chev, .cf-bar i { transition: none; } }
+
+/* Season switch (Winter / Summer) in the faith tab headers */
+.cf-season { margin-top: 14px; }

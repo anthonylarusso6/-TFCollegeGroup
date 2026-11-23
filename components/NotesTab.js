@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { GREEN, GOLD, RED, PUR } from "../lib/constants";
 import { supabase } from "../lib/supabase";
+import { MM_WINTER_NOTES, FF_WINTER_NOTES, WINTER_LABEL } from "../lib/studySeries";
 
 const MINDSET_WEEKS=[
   {week:1,title:"Who Are You Now?",scripture:"2 Corinthians 5:17",verse:"If anyone is in Christ, the new creation has come: The old has gone, the new is here.",takeaway:"Your past is not your ceiling.",color:GOLD},
@@ -34,6 +35,7 @@ const FELLOWSHIP_WEEKS=[
 
 export default function NotesTab({athleteId}){
   const[category,setCategory]=useState("mindset");
+  const[season,setSeason]=useState("winter");
   const[notes,setNotes]=useState({});
   const[drafts,setDrafts]=useState({});
   const[saving,setSaving]=useState(null);
@@ -89,8 +91,10 @@ export default function NotesTab({athleteId}){
     setSaving(null);
   };
 
-  const weeks=category==="mindset"?MINDSET_WEEKS:FELLOWSHIP_WEEKS;
-  const prefix=category==="mindset"?"mm_":"ff_";
+  const winter=season==="winter";
+  const weeks=category==="mindset"?(winter?MM_WINTER_NOTES:MINDSET_WEEKS):(winter?FF_WINTER_NOTES:FELLOWSHIP_WEEKS);
+  // Winter notes are saved as week "w26-1", "w26-2"… so they never overwrite summer notes.
+  const prefix=(category==="mindset"?"mm_":"ff_")+(winter?"w26-":"");
   const catColor=category==="mindset"?GOLD:"#C0392B";
   const catLabel=category==="mindset"?"Mindset Monday":"Fellowship Friday";
 
@@ -100,7 +104,7 @@ export default function NotesTab({athleteId}){
         <div>
           <div className="tfx-eyebrow">Study notes</div>
           <h2>{catLabel}</h2>
-          <p>Write your personal takeaway. Only you can see these.</p>
+          <p>{winter?WINTER_LABEL+" · ":"Summer 2026 · "}Write your personal takeaway. Only you can see these.</p>
         </div>
       </header>
 
@@ -110,6 +114,12 @@ export default function NotesTab({athleteId}){
           <button key={c.id} type="button" role="tab" aria-selected={category===c.id} className={category===c.id?"is-on":""} onClick={()=>setCategory(c.id)}>
             {c.label}
           </button>
+        ))}
+      </div>
+
+      <div className="ae-season" role="group" aria-label="Season">
+        {[{id:"winter",label:WINTER_LABEL},{id:"summer",label:"Summer 2026"}].map(o=>(
+          <button key={o.id} type="button" className={"tfx-chipbtn tfx-press"+(season===o.id?" is-on":"")} aria-pressed={season===o.id} onClick={()=>setSeason(o.id)}>{o.label}</button>
         ))}
       </div>
 
@@ -126,7 +136,7 @@ export default function NotesTab({athleteId}){
         return(
           <section key={i} className={"tfx-card ae-week"+state} style={{"--c":w.color}}>
             <div className="ae-week-top">
-              <div className="tfx-eyebrow"><i aria-hidden="true"/>Week {w.week}</div>
+              <div className="tfx-eyebrow"><i aria-hidden="true"/>Week {w.week}{w.date?" · "+w.date:""}</div>
               {isSaved&&<span className="ae-status is-saved">✓ Saved</span>}
               {isSaving&&<span className="ae-status">Saving...</span>}
               {isError&&<span className="ae-status is-err">Save failed — try again</span>}

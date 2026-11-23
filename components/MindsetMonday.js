@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
+import { MM_WINTER, MM_WINTER_META, WINTER_LABEL } from "../lib/studySeries";
 
 
 const SERIES_META=[
@@ -238,7 +239,7 @@ const WEEKS=[
     color:GOLD,light:"#1f1700"},
 ];
 
-function printHandout(week, typeColor) {
+function printHandout(week, typeColor, total = 12) {
   const w = window.open("", "_blank");
   if (!w) return;
   w.document.write(`<!DOCTYPE html><html><head><title>Mindset Monday — Week ${week.week}: ${week.title}</title>
@@ -258,7 +259,7 @@ function printHandout(week, typeColor) {
     .deep{border:2px solid #333;border-radius:8px;padding:16px;margin:28px 0;font-style:italic;font-size:15px;}
     @media print{body{margin:20px auto;}}
   </style></head><body>
-  <div class="ref">Mindset Monday — Week ${week.week} of 12 · ${week.seriesTitle}</div>
+  <div class="ref">Mindset Monday — Week ${week.week} of ${total} · ${week.seriesTitle}</div>
   <h1>${week.title}</h1>
   <div class="sub">Speaker: ${week.speaker} · ${week.scripture}</div>
   <div class="scripture"><div class="ref">${week.scripture}</div>"${week.verse}"</div>
@@ -280,19 +281,38 @@ function printHandout(week, typeColor) {
 const TYPE_TONE={coach:"var(--gold)",kevin:"var(--violet)",testimony:"var(--green)"};
 const TYPE_KEYS=[["coach","Coach Ant"],["kevin","Kevin"],["testimony","Athlete testimony"]];
 
+// Each season keeps its own weeks, notes and progress on this device.
+const SEASONS={
+  winter:{label:WINTER_LABEL,sub:"The Break Is the Test · 4 weeks",weeks:MM_WINTER,meta:MM_WINTER_META,store:"mm_w26_"},
+  summer:{label:"Summer 2026",sub:"12 weeks · 3 series",weeks:WEEKS,meta:SERIES_META,store:"mm_"},
+};
+
 export default function MindsetMonday(){
+  const[season,setSeason]=useState("winter");
+  const picker=(
+    <div className="ir-seg cf-season" role="tablist" aria-label="Series season">
+      {Object.entries(SEASONS).map(([k,v])=>(
+        <button key={k} role="tab" aria-selected={season===k} className={season===k?"is-on":""} onClick={()=>setSeason(k)}>{v.label}</button>
+      ))}
+    </div>
+  );
+  return <MindsetSeason key={season} cfg={SEASONS[season]} picker={picker}/>;
+}
+
+function MindsetSeason({cfg,picker}){
+  const WEEKS=cfg.weeks, SERIES_META=cfg.meta, TOTAL=cfg.weeks.length;
   const[currentWeek,setCurrentWeek]=useState(1);
   const[view,setView]=useState("guide");
   const[expandedQ,setExpandedQ]=useState(null);
   const[notes,setNotes]=useState(()=>{
-    try{const s=localStorage.getItem("mm_notes");return s?JSON.parse(s):{};}catch{return {};}
+    try{const s=localStorage.getItem(cfg.store+"notes");return s?JSON.parse(s):{};}catch{return {};}
   });
   const[completedWeeks,setCompletedWeeks]=useState(()=>{
-    try{const s=localStorage.getItem("mm_completed");return s?JSON.parse(s):[];}catch{return [];}
+    try{const s=localStorage.getItem(cfg.store+"completed");return s?JSON.parse(s):[];}catch{return [];}
   });
 
-  useEffect(()=>{try{localStorage.setItem("mm_notes",JSON.stringify(notes));}catch{};},[notes]);
-  useEffect(()=>{try{localStorage.setItem("mm_completed",JSON.stringify(completedWeeks));}catch{};},[completedWeeks]);
+  useEffect(()=>{try{localStorage.setItem(cfg.store+"notes",JSON.stringify(notes));}catch{};},[notes]);
+  useEffect(()=>{try{localStorage.setItem(cfg.store+"completed",JSON.stringify(completedWeeks));}catch{};},[completedWeeks]);
 
   const week=WEEKS[currentWeek-1];
   const noteKey="mm-week-"+currentWeek;
@@ -313,10 +333,11 @@ export default function MindsetMonday(){
           <div>
             <div className="tfx-eyebrow">Faith</div>
             <h2>Mindset Monday</h2>
-            <p>12 weeks · 3 series</p>
+            <p>{cfg.sub}</p>
           </div>
-          <span className={"cf-pill "+(completedWeeks.length>0?"is-green":"is-muted")}><b className="tfx-num">{completedWeeks.length}/12</b> complete</span>
+          <span className={"cf-pill "+(completedWeeks.length>0?"is-green":"is-muted")}><b className="tfx-num">{completedWeeks.length}/{TOTAL}</b> complete</span>
         </div>
+        {picker}
 
         <div className="cf-series" role="group" aria-label="Series and weeks">
           {SERIES_META.map(s=>{
@@ -352,7 +373,7 @@ export default function MindsetMonday(){
       {/* Week header */}
       <section className="tfx-card cf-wcard">
         <div className="cf-wcard-top">
-          <div className="tfx-eyebrow">Week {week.week} of 12 · {week.seriesTitle}</div>
+          <div className="tfx-eyebrow">Week {week.week} of {TOTAL} · {week.seriesTitle}{week.date?" · "+week.date:""}</div>
           {isDone&&<span className="cf-pill is-green">Complete</span>}
         </div>
         <h2 className="cf-title">{week.title}</h2>
@@ -470,13 +491,13 @@ export default function MindsetMonday(){
       <section className={"tfx-card cf-card cf-complete"+(isDone?" is-done":"")}>
         <div className="cf-complete-txt">
           <b>{isDone?"Week complete ✓":"Mark this week complete"}</b>
-          <small>{isDone?(12-completedWeeks.length)+" weeks remaining":"Your notes save automatically as you type"}</small>
+          <small>{isDone?(TOTAL-completedWeeks.length)+" weeks remaining":"Your notes save automatically as you type"}</small>
         </div>
         <div className="cf-acts is-row">
           {!isDone&&(
             <button className="tfx-btn tfx-press cf-primary" onClick={markComplete}>Complete Week {currentWeek} →</button>
           )}
-          {currentWeek<12&&(
+          {currentWeek<TOTAL&&(
             <button className="tfx-btn-ghost tfx-press" onClick={()=>{setCurrentWeek(w=>w+1);setView("guide");setExpandedQ(null);}}>Next →</button>
           )}
         </div>
@@ -486,7 +507,7 @@ export default function MindsetMonday(){
       <section className="tfx-card cf-card cf-handout">
         <div className="tfx-eyebrow">Student handout — Week {currentWeek}</div>
         <p>Opens a clean print-ready page with scripture, discussion questions with writing space, and the 3 takeaways. Use Print → Save as PDF in your browser.</p>
-        <button className="tfx-btn-ghost tfx-press" onClick={()=>printHandout(week,typeColor)}>Print handout — Week {currentWeek} →</button>
+        <button className="tfx-btn-ghost tfx-press" onClick={()=>printHandout(week,typeColor,TOTAL)}>Print handout — Week {currentWeek} →</button>
       </section>
     </div>
   );

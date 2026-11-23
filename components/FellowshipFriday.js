@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { BG, PUR, RED, GREEN, GOLD, STEEL, ORANGE } from "../lib/constants";
+import { FF_WINTER, FF_WINTER_META, WINTER_LABEL } from "../lib/studySeries";
 
 const BLUE="#1A4F8A";
 const TEAL="#0F6E56";
@@ -240,20 +241,39 @@ const SERIES=[
 // On-screen series tones (theme tokens). The handout keeps the print colors above.
 const TONE={1:"var(--red)",2:"var(--sky)",3:"var(--teal)"};
 
+// Each season keeps its own weeks, notes and progress on this device.
+const SEASONS={
+  winter:{label:WINTER_LABEL,sub:"A study of James · 5 weeks",weeks:FF_WINTER,meta:FF_WINTER_META,tone:{1:"var(--gold)"},store:"ff_w26_"},
+  summer:{label:"Summer 2026",sub:"Summer series · 12 weeks",weeks:SERIES,meta:SERIES_META,tone:TONE,store:"ff_"},
+};
+
 export default function FellowshipFriday(){
+  const[season,setSeason]=useState("winter");
+  const picker=(
+    <div className="ir-seg cf-season" role="tablist" aria-label="Series season">
+      {Object.entries(SEASONS).map(([k,v])=>(
+        <button key={k} role="tab" aria-selected={season===k} className={season===k?"is-on":""} onClick={()=>setSeason(k)}>{v.label}</button>
+      ))}
+    </div>
+  );
+  return <FellowshipSeason key={season} cfg={SEASONS[season]} picker={picker}/>;
+}
+
+function FellowshipSeason({cfg,picker}){
+  const SERIES=cfg.weeks, SERIES_META=cfg.meta, TONE=cfg.tone, TOTAL=cfg.weeks.length;
   const[currentWeek,setCurrentWeek]=useState(1);
   const[view,setView]=useState("guide");
   const[expandedQ,setExpandedQ]=useState(null);
   const[notes,setNotes]=useState(()=>{
-    try{const s=localStorage.getItem("ff_notes");return s?JSON.parse(s):{};}catch{return {};}
+    try{const s=localStorage.getItem(cfg.store+"notes");return s?JSON.parse(s):{};}catch{return {};}
   });
   const[completedWeeks,setCompletedWeeks]=useState(()=>{
-    try{const s=localStorage.getItem("ff_completed");return s?JSON.parse(s):[];}catch{return [];}
+    try{const s=localStorage.getItem(cfg.store+"completed");return s?JSON.parse(s):[];}catch{return [];}
   });
   const[showHandout,setShowHandout]=useState(false);
 
-  useEffect(()=>{try{localStorage.setItem("ff_notes",JSON.stringify(notes));}catch{};},[notes]);
-  useEffect(()=>{try{localStorage.setItem("ff_completed",JSON.stringify(completedWeeks));}catch{};},[completedWeeks]);
+  useEffect(()=>{try{localStorage.setItem(cfg.store+"notes",JSON.stringify(notes));}catch{};},[notes]);
+  useEffect(()=>{try{localStorage.setItem(cfg.store+"completed",JSON.stringify(completedWeeks));}catch{};},[completedWeeks]);
 
   const week=SERIES[currentWeek-1];
   const noteKey="week-"+currentWeek;
@@ -312,17 +332,18 @@ export default function FellowshipFriday(){
           <div>
             <div className="tfx-eyebrow">Faith</div>
             <h2>Fellowship Friday</h2>
-            <p>Summer series · 12 weeks</p>
+            <p>{cfg.sub}</p>
           </div>
-          <span className={"cf-pill "+(completedWeeks.length>0?"is-green":"is-muted")}><b className="tfx-num">{completedWeeks.length}/12</b> complete</span>
+          <span className={"cf-pill "+(completedWeeks.length>0?"is-green":"is-muted")}><b className="tfx-num">{completedWeeks.length}/{TOTAL}</b> complete</span>
         </div>
+        {picker}
 
         <div className="cf-series" role="group" aria-label="Series and weeks">
           {SERIES_META.map(s=>{
             const on=currentSeries.num===s.num;
             return(
               <div key={s.num} className={"cf-srow"+(on?" is-on":"")} style={{"--tone":TONE[s.num]}}>
-                <button className="cf-slabel is-btn tfx-press" aria-pressed={on} onClick={()=>{setCurrentWeek((s.num-1)*4+1);setView("guide");setExpandedQ(null);}}>
+                <button className="cf-slabel is-btn tfx-press" aria-pressed={on} onClick={()=>{setCurrentWeek((SERIES.find(w=>w.series===s.num)||SERIES[0]).week);setView("guide");setExpandedQ(null);}}>
                   <i className="cf-sdot" aria-hidden="true"/>
                   <span><b>{s.title}</b><small>{s.weeks}</small></span>
                 </button>
@@ -346,7 +367,7 @@ export default function FellowshipFriday(){
       {/* This week */}
       <section className="tfx-card cf-wcard">
         <div className="cf-wcard-top">
-          <div className="tfx-eyebrow">{week.seriesTitle} · Week {week.week}</div>
+          <div className="tfx-eyebrow">{week.seriesTitle} · Week {week.week}{week.date?" · "+week.date:""}</div>
           {isDone&&<span className="cf-pill is-green">Complete</span>}
         </div>
         <h2 className="cf-title">{week.title}</h2>
@@ -444,7 +465,7 @@ export default function FellowshipFriday(){
         <button className="tfx-btn-ghost tfx-press" onClick={()=>setShowHandout(true)}>
           Student handout →
         </button>
-        {currentWeek<12&&(
+        {currentWeek<TOTAL&&(
           <button className="tfx-btn-ghost tfx-press" onClick={()=>{setCurrentWeek(w=>w+1);setView("guide");setExpandedQ(null);}}>
             Next →
           </button>
