@@ -1,1 +1,321 @@
 /* Coach tabs — group a. Owned by one redesign pass; tokens and primitives come from forge.css. */
+/* Overview · Fellowship Friday · Mindset Monday · Prayers — every class is cf-*. */
+
+/* ════════════════════════════════════════════════════════════════════
+   SHARED
+   ════════════════════════════════════════════════════════════════════ */
+.cf { display: grid; gap: 14px; min-width: 0; }
+.cf > * { min-width: 0; }
+.cf .is-green  { --c: var(--green); }
+.cf .is-amber  { --c: #e8a33c; }
+.cf .is-red    { --c: var(--red); }
+.cf .is-violet { --c: var(--violet); }
+.cf .is-sky    { --c: var(--sky); }
+.cf .is-gold   { --c: var(--gold); }
+.cf .is-ember  { --c: var(--ember); }
+.cf .is-muted  { --c: var(--tx3); }
+
+/* Tab header card */
+.cf-head { display: grid; gap: 14px; padding: 18px 16px 16px; }
+.cf-head-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.cf-head-top > div { min-width: 0; }
+.cf-head h2 { margin: 4px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; color: var(--tx); }
+.cf-head p { margin: 4px 0 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.45; color: var(--tx2); }
+
+/* Section card + its heading row */
+.cf-card { display: grid; gap: 12px; padding: 16px; }
+.cf-sec { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.cf-sec > div:first-child { min-width: 0; }
+.cf-sec h3 { margin: 4px 0 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: var(--tx); }
+.cf-sec p { margin: 3px 0 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.45; color: var(--tx2); }
+
+.cf-pill { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 6px 11px; border-radius: 999px; white-space: nowrap;
+  font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; color: var(--tx);
+  background: color-mix(in srgb, var(--c, var(--tx3)) 16%, transparent); border: 1px solid color-mix(in srgb, var(--c, var(--tx3)) 40%, transparent); }
+.cf-pill b { font-weight: 750; }
+.cf-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--c); }
+.cf-empty { margin: 0; padding: 10px 4px; text-align: center; font-family: var(--font-ui); font-size: 13.5px; line-height: 1.5; color: var(--tx2); }
+.cf-hint { font-family: var(--font-ui); font-size: 12px; color: var(--tx3); }
+.cf .cf-ta { display: block; min-height: 112px; padding: 12px 14px; border-radius: 14px; resize: vertical; font-size: 15px; line-height: 1.55; }
+.cf-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cf-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; font-family: var(--font-ui); font-size: 13px; font-weight: 550; color: var(--tx);
+  background: color-mix(in srgb, var(--c, var(--tx3)) 12%, var(--field)); border: 1px solid color-mix(in srgb, var(--c, var(--tx3)) 34%, transparent); }
+.cf-chip b { font-weight: 750; }
+.cf-chev { display: grid; place-items: center; flex-shrink: 0; color: var(--tx3); transition: transform 0.25s var(--ease-out); }
+
+/* Stat tiles */
+.cf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.cf-stats.is-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cf-stats > div { --c: var(--tx3); position: relative; display: grid; align-content: start; gap: 4px; padding: 11px 10px 10px; border-radius: 14px;
+  background: color-mix(in srgb, var(--c) 11%, var(--field)); border: 1px solid color-mix(in srgb, var(--c) 32%, var(--glass-line)); }
+.cf-stats > div::after { content: ""; position: absolute; top: 11px; right: 10px; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.cf-stats > div.is-muted { background: var(--field); border-color: var(--glass-line); }
+.cf-stats > div.is-muted::after { display: none; }
+.cf-stats b { font-size: 26px; font-weight: 750; line-height: 1.05; color: var(--tx); }
+.cf-stats span { font-family: var(--font-ui); font-size: 11.5px; font-weight: 600; line-height: 1.25; color: var(--tx2); }
+.cf-stats small { margin-top: -2px; font-family: var(--font-ui); font-size: 11px; color: var(--tx3); }
+
+/* ════════════════════════════════════════════════════════════════════
+   OVERVIEW
+   ════════════════════════════════════════════════════════════════════ */
+/* Needs attention */
+.cf-attn { border-color: color-mix(in srgb, var(--red) 34%, var(--glass-line)); }
+.cf-attn-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.cf-attn-list li { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 11px 12px 11px 18px; border-radius: 14px; background: var(--field); }
+.cf-attn-list li::before { content: ""; position: absolute; left: 7px; top: 12px; bottom: 12px; width: 3px; border-radius: 3px; background: var(--c); }
+.cf-attn-txt { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.cf-attn-txt b { font-size: 15px; font-weight: 700; color: var(--tx); }
+.cf-attn-txt small { font-family: var(--font-ui); font-size: 13px; line-height: 1.45; color: var(--tx2); overflow-wrap: anywhere; }
+.cf-tag { flex-shrink: 0; padding: 3px 9px; border-radius: 999px; font-family: var(--font-ui); font-size: 11.5px; font-weight: 650; color: var(--tx);
+  background: color-mix(in srgb, var(--c) 16%, transparent); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); }
+
+/* Music vote */
+.cf-votes { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.cf-votes-n { display: grid; justify-items: end; line-height: 1; }
+.cf-votes-n b { font-size: 24px; font-weight: 750; color: var(--tx); }
+.cf-votes-n small { margin-top: 3px; font-family: var(--font-ui); font-size: 11px; color: var(--tx3); }
+.cf .cf-iconbtn { display: grid; place-items: center; color: var(--tx2); }
+.cf-genres { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.cf-genres li { display: flex; align-items: center; gap: 10px; }
+.cf-genre-emo { flex: 0 0 28px; text-align: center; font-size: 14px; line-height: 1; white-space: nowrap; letter-spacing: -0.25em; }
+.cf-genre-main { flex: 1; min-width: 0; }
+.cf-genre-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 5px; font-family: var(--font-ui); font-size: 13px; color: var(--tx2); }
+.cf-genre-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cf-genre-n { flex-shrink: 0; font-weight: 650; }
+.cf-genre-n small { font-size: 12px; font-weight: 500; color: var(--tx3); }
+.cf-genres li.is-top .cf-genre-name, .cf-genres li.is-top .cf-genre-n { font-weight: 700; color: var(--tx); }
+.cf-bar { height: 6px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.cf-bar i { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--tx3) 75%, transparent); transition: width 0.5s var(--ease-out); }
+.cf-genres li.is-top .cf-bar i { background: linear-gradient(90deg, var(--ember), var(--gold)); }
+.cf .cf-top { padding: 3px 9px; font-size: 11.5px; }
+
+/* Announcement */
+.cf-ann-foot { display: flex; justify-content: flex-end; }
+.cf .cf-ann-go { padding: 13px 22px; font-size: 14.5px; }
+
+/* This week — attendance mini-chart */
+.cf-chart { display: flex; gap: 8px; border-bottom: 1px solid var(--glass-line); }
+.cf-col { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 4px 0 8px; border-radius: 12px 12px 0 0; }
+.cf-col.is-today { background: color-mix(in srgb, var(--gold) 9%, transparent); }
+.cf-col-bars { width: 100%; height: 120px; padding-top: 24px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; }
+.cf-col-bars i { display: block; flex-shrink: 0; width: min(44px, 62%); min-height: 4px; background: var(--c); }
+.cf-col-bars i:first-of-type { border-radius: 6px 6px 0 0; }
+.cf-col-bars i.is-early { --c: var(--green); }
+.cf-col-bars i.is-late { --c: #e8a33c; }
+.cf-col-n { flex-shrink: 0; margin-bottom: 2px; font-size: 13px; font-weight: 700; line-height: 16px; color: var(--tx); }
+.cf-col-d { font-family: var(--font-ui); font-size: 12px; font-weight: 650; color: var(--tx3); }
+.cf-col.is-today .cf-col-d { font-weight: 800; color: var(--tx); }
+.cf-keys { display: flex; justify-content: center; gap: 16px; margin-top: 10px; font-family: var(--font-ui); font-size: 12px; color: var(--tx2); }
+.cf-keys span { display: inline-flex; align-items: center; gap: 6px; }
+.cf-keys i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+
+/* Weekly recap (disclosure) */
+.cf-recap { padding: 0; overflow: hidden; }
+.cf-recap-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px; border: 0; background: transparent; cursor: pointer; text-align: left; color: var(--tx); font-family: var(--font-brand); }
+.cf-recap-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -4px; border-radius: 22px; }
+.cf-recap-txt { flex: 1; min-width: 0; display: grid; }
+.cf-recap-txt b { margin-top: 4px; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: var(--tx); }
+.cf-recap-txt small { margin-top: 3px; font-family: var(--font-ui); font-size: 13px; color: var(--tx2); }
+.cf-recap .cf-chev { width: 40px; height: 40px; border-radius: 12px; color: var(--tx2); background: var(--field); border: 1px solid var(--glass-line); transform: rotate(90deg); }
+.cf-recap.is-open .cf-chev { transform: rotate(-90deg); }
+.cf-recap-body { display: grid; gap: 14px; padding: 0 16px 16px; }
+.cf-recap-sec { display: grid; gap: 8px; }
+
+/* Class flow timeline */
+.cf-flow-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.cf-flow-list li { position: relative; display: grid; grid-template-columns: 58px 14px minmax(0, 1fr); column-gap: 10px; padding: 10px 0; }
+.cf-flow-list li:not(:last-child)::after { content: ""; position: absolute; left: 74px; top: 30px; bottom: -10px; width: 2px; border-radius: 2px; background: var(--glass-line); }
+.cf-flow-t { padding-top: 1px; font-size: 13px; font-weight: 650; color: var(--tx2); white-space: nowrap; }
+.cf-flow-dot { justify-self: center; width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); }
+.cf-flow-txt { min-width: 0; }
+.cf-flow-top { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
+.cf-flow-top b { font-size: 15px; font-weight: 700; color: var(--tx); }
+.cf-dur { padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 650; color: var(--tx2); background: var(--field); border: 1px solid var(--glass-line); }
+.cf-flow-txt p { margin: 3px 0 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.45; color: var(--tx2); }
+
+/* ════════════════════════════════════════════════════════════════════
+   PRAYERS
+   ════════════════════════════════════════════════════════════════════ */
+.cf-pr-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cf-pr-list li { --c: var(--violet); position: relative; display: grid; gap: 8px; padding: 13px 14px 14px 20px; border-radius: 16px; background: var(--field); border: 1px solid var(--glass-line); }
+.cf-pr-list li::before { content: ""; position: absolute; left: 8px; top: 14px; bottom: 14px; width: 3px; border-radius: 3px; background: var(--c); }
+.cf-pr-list li.is-done { --c: var(--green); }
+.cf-pr-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.cf-pr-top b { min-width: 0; font-size: 15.5px; font-weight: 700; color: var(--tx); overflow-wrap: anywhere; }
+.cf-pr-top span { flex-shrink: 0; font-size: 12px; color: var(--tx3); }
+.cf-pr-list blockquote { margin: 0; font-size: 16px; font-style: italic; line-height: 1.65; color: var(--tx); overflow-wrap: anywhere; }
+.cf-pr-list li.is-done blockquote { color: var(--tx2); }
+.cf-pr-btn { justify-self: start; min-height: 40px; padding: 9px 16px; border-radius: 999px; cursor: pointer; font-family: var(--font-ui); font-size: 13.5px; font-weight: 650; color: var(--tx);
+  background: color-mix(in srgb, var(--c) 18%, transparent); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); }
+
+/* ════════════════════════════════════════════════════════════════════
+   FAITH SERIES — Fellowship Friday + Mindset Monday
+   --tone is the series (FF) or speaker (MM) accent; violet = scripture
+   and selection, as on the athlete homepage.
+   ════════════════════════════════════════════════════════════════════ */
+/* Series × week picker: one row per series, its four weeks on the right */
+.cf-series { display: grid; gap: 6px; }
+.cf-srow { display: flex; align-items: center; gap: 8px; padding: 4px; border-radius: 16px; border: 1px solid transparent; }
+.cf-srow.is-on { background: var(--field); border-color: var(--glass-line); }
+.cf-slabel { flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 4px 8px; border: 0; border-radius: 12px; background: transparent; text-align: left; color: var(--tx2); font-family: var(--font-brand); }
+.cf-slabel.is-btn { cursor: pointer; }
+.cf-slabel > span { display: grid; gap: 1px; min-width: 0; }
+.cf-slabel b { font-size: 14px; font-weight: 700; line-height: 1.2; color: var(--tx2); }
+.cf-slabel small { font-family: var(--font-ui); font-size: 11.5px; color: var(--tx3); }
+.cf-srow.is-on .cf-slabel b { color: var(--tx); }
+.cf-sdot { width: 8px; height: 8px; flex-shrink: 0; border-radius: 50%; background: var(--tone); }
+.cf-wks { display: grid; grid-template-columns: repeat(4, 40px); gap: 5px; flex-shrink: 0; }
+.cf-wk { position: relative; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 12px; cursor: pointer;
+  font-size: 14px; font-weight: 650; color: var(--tx2); background: var(--field); border: 1px solid var(--glass-line); }
+.cf-wk.has-dot { padding-bottom: 5px; }
+.cf-wk.has-dot i { position: absolute; left: 50%; bottom: 5px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--tone); }
+.cf-wk.is-done { color: var(--green); background: color-mix(in srgb, var(--green) 12%, var(--field)); border-color: color-mix(in srgb, var(--green) 35%, transparent); }
+.cf-wk.is-on { color: var(--tx); background: var(--glass-strong); border-color: var(--violet); box-shadow: 0 0 0 1px var(--violet), 0 4px 12px -6px rgba(0, 0, 0, 0.5); }
+html[data-theme="light"] .cf-wk.is-done { color: #1f7a4d; }
+.cf-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0 4px; font-family: var(--font-ui); font-size: 12px; color: var(--tx2); }
+.cf-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.cf-legend i { width: 8px; height: 8px; border-radius: 50%; background: var(--tone); }
+
+/* The week */
+.cf-wcard { display: grid; gap: 10px; padding: 18px 16px 16px; }
+.cf-wcard-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cf-wcard-top .tfx-eyebrow { min-width: 0; }
+.cf-title { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: var(--tx); text-wrap: balance; }
+.cf-speaker { justify-self: start; display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px 5px 9px; border-radius: 999px; font-family: var(--font-ui); font-size: 12.5px; font-weight: 650; color: var(--tx);
+  background: color-mix(in srgb, var(--tone) 16%, transparent); border: 1px solid color-mix(in srgb, var(--tone) 42%, transparent); }
+.cf-speaker i { width: 7px; height: 7px; border-radius: 50%; background: var(--tone); }
+.cf-focus { margin: 0; font-family: var(--font-ui); font-size: 14.5px; line-height: 1.6; color: var(--tx2); }
+
+/* Scripture */
+.cf-verse { margin: 4px 0 0; padding: 14px 16px 16px; border-radius: 16px; background: color-mix(in srgb, var(--violet) 10%, var(--field)); border: 1px solid color-mix(in srgb, var(--violet) 26%, transparent); }
+.cf .cf-verse.is-card { margin: 0; padding: 16px 18px 18px; border-radius: 22px; background: color-mix(in srgb, var(--violet) 12%, var(--glass)); border-color: color-mix(in srgb, var(--violet) 30%, var(--glass-line)); }
+.cf-verse.is-card blockquote { font-size: 17px; }
+.cf-verse figcaption { font-family: var(--font-ui); font-size: 12.5px; font-weight: 700; letter-spacing: 0.01em; color: var(--violet); }
+.cf-verse blockquote { margin: 8px 0 0; font-size: 16px; font-style: italic; line-height: 1.75; color: var(--tx); text-wrap: pretty; }
+html[data-theme="light"] .cf-verse figcaption { color: #5b4fd0; }
+
+/* Big idea */
+.cf-idea { position: relative; display: grid; gap: 8px; padding: 16px 16px 16px 20px; overflow: hidden; }
+.cf-idea::before { content: ""; position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px; border-radius: 0 3px 3px 0; background: var(--tone); }
+.cf-idea p { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.55; letter-spacing: -0.005em; color: var(--tx); text-wrap: pretty; }
+
+/* Sub-tabs sit on the page, so give them a glass base */
+.cf .cf-seg { background: var(--glass); -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%); }
+.cf .cf-seg > button { min-height: 44px; }
+
+.cf-body { display: grid; gap: 12px; padding: 16px; }
+.cf-body-label { padding: 0 2px; }
+
+/* Teaching points (FF: scripture ref chips) */
+.cf-points { list-style: none; margin: 0; padding: 0; display: grid; }
+/* ref chip + title share a line; the detail runs full width beneath */
+.cf-points li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; column-gap: 10px; padding: 13px 2px; }
+.cf-points li + li { border-top: 1px solid var(--glass-line); }
+.cf-points li:first-child { padding-top: 2px; }
+.cf-points li:last-child { padding-bottom: 2px; }
+.cf-points li > div { display: contents; }
+.cf-points li p { grid-column: 1 / -1; margin-top: 6px; }
+.cf-ref { min-width: 34px; padding: 3px 8px; border-radius: 8px; text-align: center; white-space: nowrap; font-family: var(--font-ui); font-size: 11.5px; font-weight: 700; color: var(--tx);
+  background: color-mix(in srgb, var(--tone) 16%, transparent); border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent); }
+.cf-points b, .cf-takes b { display: block; font-size: 15.5px; font-weight: 700; line-height: 1.35; color: var(--tx); }
+.cf-points p, .cf-takes li > div > p { margin: 4px 0 0; font-family: var(--font-ui); font-size: 14px; line-height: 1.6; color: var(--tx2); }
+
+/* Numbered rows (takeaways; MM teaching points) */
+.cf-takes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cf-takes li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--field); border: 1px solid var(--glass-line); }
+.cf-takes li > span { display: grid; place-items: center; width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; font-size: 13px; font-weight: 750; color: var(--tx);
+  background: color-mix(in srgb, var(--tone) 20%, transparent); border: 1px solid color-mix(in srgb, var(--tone) 50%, transparent); }
+.cf-takes li > p { margin: 3px 0 0; font-size: 15.5px; font-weight: 600; line-height: 1.5; color: var(--tx); }
+.cf-takes li > div { flex: 1; min-width: 0; padding-top: 3px; }
+
+/* Discussion questions */
+.cf-qs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cf-qs li { border-radius: 14px; background: var(--field); border: 1px solid var(--glass-line); overflow: hidden; transition: border-color 0.2s ease, background 0.2s ease; }
+.cf-qs li.is-open { background: color-mix(in srgb, var(--violet) 8%, var(--field)); border-color: color-mix(in srgb, var(--violet) 45%, transparent); }
+.cf-q { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 44px; padding: 12px 12px 12px 14px; border: 0; background: transparent; cursor: pointer; text-align: left; color: var(--tx); font-family: var(--font-brand); }
+.cf-q:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; border-radius: 14px; }
+.cf-qn { flex-shrink: 0; min-width: 24px; margin-top: 1px; font-size: 13px; font-weight: 750; color: var(--tx3); }
+.cf-qs li.is-open .cf-qn { color: var(--violet); }
+html[data-theme="light"] .cf-qs li.is-open .cf-qn { color: #5b4fd0; }
+.cf-qt { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; line-height: 1.45; }
+.cf-q .cf-chev { margin-top: 2px; font-size: 12px; }
+.cf-qs li.is-open .cf-chev { transform: rotate(180deg); }
+.cf-a { padding: 0 14px 14px 48px; }
+.cf-a p { margin: 4px 0 0; font-family: var(--font-ui); font-size: 14px; line-height: 1.65; color: var(--tx2); }
+
+.cf-deep { display: grid; gap: 8px; padding: 16px; border-radius: 16px; background: color-mix(in srgb, var(--violet) 10%, var(--field)); border: 1px solid color-mix(in srgb, var(--violet) 30%, transparent); }
+.cf-deep p { margin: 0; font-size: 18px; font-style: italic; font-weight: 600; line-height: 1.5; color: var(--tx); text-wrap: pretty; }
+.cf-deep small { font-family: var(--font-ui); font-size: 12.5px; color: var(--tx2); }
+
+/* MM — series arc so far */
+.cf-arc { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--glass-line); }
+.cf-chip.is-arc { padding: 5px 10px; font-size: 12.5px; background: var(--field); border-color: var(--glass-line); }
+.cf-chip.is-arc i { width: 7px; height: 7px; border-radius: 50%; background: var(--tone); }
+.cf-chip.is-arc.is-now { font-weight: 700; background: color-mix(in srgb, var(--tone) 18%, transparent); border-color: color-mix(in srgb, var(--tone) 50%, transparent); }
+
+/* Notes */
+.cf-notes { gap: 10px; }
+
+/* Actions */
+.cf-acts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.cf-acts > .cf-primary, .cf-acts > :last-child:nth-child(2) { grid-column: 1 / -1; }
+.cf-acts.is-row { display: flex; flex-wrap: wrap; }
+.cf-acts.is-row > * { flex: 1 1 auto; }
+.cf .cf-acts .tfx-btn { padding: 14px 18px; font-size: 15px; }
+.cf .cf-acts .tfx-btn-ghost { padding: 12px 16px; font-size: 14.5px; }
+.cf-ff .cf-primary { background: linear-gradient(135deg, var(--red), #b2343a); box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--red) 75%, transparent); }
+.cf-mm .cf-primary { color: #2a1f00; background: linear-gradient(135deg, #f0d477, var(--gold)); box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--gold) 75%, transparent); }
+.cf .cf-primary:disabled, .cf .cf-primary.is-done { cursor: default; color: var(--tx); background: color-mix(in srgb, var(--green) 16%, transparent); border: 1px solid color-mix(in srgb, var(--green) 45%, transparent); box-shadow: none; }
+.cf .cf-primary:disabled:active { transform: none; }
+
+/* MM — complete + handout cards */
+.cf-complete { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.cf-complete.is-done { border-color: color-mix(in srgb, var(--green) 40%, var(--glass-line)); }
+.cf-complete-txt { flex: 1 1 200px; min-width: 0; display: grid; gap: 3px; }
+.cf-complete-txt b { font-size: 16px; font-weight: 750; color: var(--tx); }
+.cf-complete-txt small { font-family: var(--font-ui); font-size: 12.5px; line-height: 1.4; color: var(--tx2); }
+.cf-complete .cf-acts { flex: 1 1 240px; }
+.cf-handout p { margin: 0; font-family: var(--font-ui); font-size: 13.5px; line-height: 1.5; color: var(--tx2); }
+.cf .cf-handout .tfx-btn-ghost { justify-self: start; padding: 12px 18px; font-size: 14.5px; }
+
+/* FF — student handout preview. Paper stays white in both themes, so it
+   carries its own ink tokens; --hue is the series print color. */
+.cf-scrim { position: fixed; inset: 0; z-index: 1100; display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto;
+  background: rgba(0, 0, 0, 0.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.cf-paper { --ink: #15171c; --ink2: #4b5160; --ink3: #7d8394; --rule: #d6d9e0;
+  position: relative; width: 100%; max-width: 680px; padding: 30px 24px; border-radius: 16px; background: #fff; color: var(--ink); font-family: var(--font-brand);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6); }
+.cf-paper-x { position: absolute; top: 12px; right: 12px; width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer; font-family: var(--font-ui); font-size: 15px; font-weight: 700; color: var(--ink); background: #eef0f4; }
+.cf-paper-eyebrow { margin-bottom: 10px; padding-right: 44px; font-family: var(--font-ui); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); }
+.cf-paper-eyebrow.is-hue { color: var(--hue); }
+.cf-paper h1 { margin: 0 0 4px; font-size: 24px; font-weight: 800; letter-spacing: -0.015em; line-height: 1.2; color: var(--hue); }
+.cf-paper-ref { margin-bottom: 10px; font-family: var(--font-ui); font-size: 13px; font-weight: 700; color: var(--hue); }
+.cf-paper-verse { margin: 0 0 26px; padding: 14px 16px; border-left: 4px solid var(--hue); border-radius: 4px; background: #f6f7f9; font-size: 15px; font-style: italic; line-height: 1.8; }
+.cf-paper-q { margin-bottom: 18px; }
+.cf-paper-q b { display: block; margin-bottom: 8px; font-size: 14.5px; line-height: 1.45; }
+.cf-paper-line { height: 22px; margin-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.cf-paper-deep { margin: 24px 0; padding: 14px 16px; border: 2px solid var(--hue); border-radius: 10px; }
+.cf-paper-deep .cf-paper-eyebrow { padding-right: 0; }
+.cf-paper-deep p { margin: 0 0 10px; font-size: 15.5px; font-style: italic; font-weight: 700; line-height: 1.5; }
+.cf-paper-take { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; padding: 10px 12px; border-radius: 8px; background: #f4f5f7; }
+.cf-paper-take span { display: grid; place-items: center; width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: #fff; background: var(--hue); }
+.cf-paper-take p { margin: 2px 0 0; font-size: 14.5px; line-height: 1.5; }
+.cf-paper-foot { margin-top: 28px; padding-top: 12px; border-top: 1px solid #eceef2; text-align: center; font-family: var(--font-ui); font-size: 11.5px; color: var(--ink3); }
+.cf-paper-tip { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: #f0f1f4; text-align: center; font-family: var(--font-ui); font-size: 12.5px; color: var(--ink2); }
+
+/* ── Small phones ─────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .cf-ann-foot .tfx-btn { flex: 1; }
+}
+@media (max-width: 400px) {
+  .cf-head h2 { font-size: 24px; }
+  .cf-stats { gap: 6px; }
+  .cf-stats > div { padding: 10px 8px 9px; }
+  .cf-stats b { font-size: 22px; }
+  .cf-stats > div::after { top: 10px; right: 8px; }
+  .cf-slabel { padding: 4px 6px; gap: 7px; }
+  .cf-slabel b { font-size: 13.5px; }
+  .cf-wks { grid-template-columns: repeat(4, 40px); gap: 4px; }
+  .cf-a { padding-left: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .cf-chev, .cf-bar i { transition: none; } }

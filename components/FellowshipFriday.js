@@ -237,6 +237,9 @@ const SERIES=[
     color:TEAL,light:"#E1F5EE"},
 ];
 
+// On-screen series tones (theme tokens). The handout keeps the print colors above.
+const TONE={1:"var(--red)",2:"var(--sky)",3:"var(--teal)"};
+
 export default function FellowshipFriday(){
   const[currentWeek,setCurrentWeek]=useState(1);
   const[view,setView]=useState("guide");
@@ -262,173 +265,187 @@ export default function FellowshipFriday(){
   };
 
   const blankLines=(n)=>Array(n).fill(null).map((_,i)=>(
-    <div key={i} style={{borderBottom:"1px solid #ccc",height:22,marginBottom:6}}/>
+    <div key={i} className="cf-paper-line"/>
   ));
 
+  const isDone=completedWeeks.includes(currentWeek);
+
   return(
-    <div>
+    <div className="tfx cf cf-faith cf-ff" style={{"--tone":TONE[week.series]}}>
       {/* Handout modal */}
       {showHandout&&(
-        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.75)",zIndex:1000,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"24px",overflowY:"auto"}}>
-          <div style={{background:"#fff",borderRadius:12,maxWidth:680,width:"100%",padding:"32px",color:"#111",fontFamily:"Georgia, serif",position:"relative"}}>
-            <button onClick={()=>setShowHandout(false)} style={{position:"absolute",top:14,right:14,background:"#eee",border:"none",borderRadius:"50%",width:30,height:30,cursor:"pointer",fontSize:14,fontWeight:700,color:"#333"}}>✕</button>
-            <div style={{fontSize:11,fontWeight:"bold",textTransform:"uppercase",letterSpacing:"0.06em",color:"#888",marginBottom:6}}>TF College Group · Fellowship Friday · {week.seriesTitle}</div>
-            <h1 style={{fontSize:22,color:week.color,marginBottom:4,marginTop:0}}>Week {currentWeek}: {week.title}</h1>
-            <div style={{fontSize:13,fontWeight:"bold",color:week.color,marginBottom:8}}>{week.scripture}</div>
-            <div style={{fontStyle:"italic",fontSize:14,lineHeight:1.8,padding:"14px 16px",borderLeft:"4px solid "+week.color,background:"#f9f9f9",borderRadius:4,marginBottom:24}}>"{week.verse}"</div>
-            <div style={{fontSize:11,fontWeight:"bold",textTransform:"uppercase",letterSpacing:"0.06em",color:"#888",marginBottom:10}}>Discussion Questions</div>
+        <div className="cf-scrim" role="dialog" aria-modal="true" aria-label={"Student handout — Week "+currentWeek}>
+          <div className="cf-paper" style={{"--hue":week.color}}>
+            <button className="cf-paper-x" onClick={()=>setShowHandout(false)} aria-label="Close handout">✕</button>
+            <div className="cf-paper-eyebrow">TF College Group · Fellowship Friday · {week.seriesTitle}</div>
+            <h1>Week {currentWeek}: {week.title}</h1>
+            <div className="cf-paper-ref">{week.scripture}</div>
+            <blockquote className="cf-paper-verse">"{week.verse}"</blockquote>
+            <div className="cf-paper-eyebrow">Discussion Questions</div>
             {week.questions.map((q,i)=>(
-              <div key={i} style={{marginBottom:18}}>
-                <div style={{fontSize:14,fontWeight:"bold",marginBottom:8}}>Q{i+1}. {q.q}</div>
+              <div key={i} className="cf-paper-q">
+                <b>Q{i+1}. {q.q}</b>
                 {blankLines(3)}
               </div>
             ))}
-            <div style={{marginTop:24,padding:"14px 16px",border:"2px solid "+week.color,borderRadius:8,marginBottom:24}}>
-              <div style={{fontSize:11,fontWeight:"bold",textTransform:"uppercase",letterSpacing:"0.06em",color:week.color,marginBottom:6}}>Deep Heart Question</div>
-              <div style={{fontSize:15,fontStyle:"italic",fontWeight:"bold",marginBottom:10}}>"{week.deepQuestion}"</div>
+            <div className="cf-paper-deep">
+              <div className="cf-paper-eyebrow is-hue">Deep Heart Question</div>
+              <p>"{week.deepQuestion}"</p>
               {blankLines(4)}
             </div>
-            <div style={{fontSize:11,fontWeight:"bold",textTransform:"uppercase",letterSpacing:"0.06em",color:"#888",marginBottom:10}}>3 Big Takeaways</div>
+            <div className="cf-paper-eyebrow">3 Big Takeaways</div>
             {week.takeaways.map((t,i)=>(
-              <div key={i} style={{display:"flex",gap:12,alignItems:"flex-start",marginBottom:10,padding:"10px 12px",background:"#f5f5f5",borderRadius:6}}>
-                <div style={{minWidth:24,height:24,borderRadius:"50%",background:week.color,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:"bold",flexShrink:0}}>{i+1}</div>
-                <div style={{fontSize:14}}>{t}</div>
+              <div key={i} className="cf-paper-take">
+                <span>{i+1}</span>
+                <p>{t}</p>
               </div>
             ))}
-            <div style={{marginTop:28,fontSize:11,color:"#aaa",textAlign:"center",borderTop:"1px solid #eee",paddingTop:12}}>TF College Group · Proverbs 27:17 — Iron sharpens iron</div>
-            <div style={{marginTop:16,padding:"12px 14px",background:"#f0f0f0",borderRadius:8,fontSize:12,color:"#555",textAlign:"center"}}>To save as PDF: <strong>File → Print → Save as PDF</strong></div>
+            <div className="cf-paper-foot">TF College Group · Proverbs 27:17 — Iron sharpens iron</div>
+            <div className="cf-paper-tip">To save as PDF: <strong>File → Print → Save as PDF</strong></div>
           </div>
         </div>
       )}
 
-      {/* Header */}
-      <div style={{background:"#141414",borderRadius:12,padding:"1.25rem",marginBottom:12,border:"0.5px solid #252525",borderTop:"3px solid "+currentSeries.color}}>
-        <div style={{fontSize:13,fontWeight:600,color:"#ddd",marginBottom:12}}>Fellowship Friday — Summer Series · 12 weeks</div>
-
-        {/* Stat cards */}
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}}>
-          {[
-            {label:"Series",val:currentSeries.title,color:currentSeries.color,bg:currentSeries.color+"18",small:true},
-            {label:"Current week",val:"Week "+currentWeek,color:week.color,bg:week.color+"18"},
-            {label:"Completed",val:completedWeeks.length+"/12",color:"#1E6B3A",bg:"#0a160a"},
-          ].map(s=>(
-            <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"10px",textAlign:"center",border:"0.5px solid #252525"}}>
-              <div style={{fontSize:s.small?11:20,fontWeight:500,color:s.color,lineHeight:1.3}}>{s.val}</div>
-              <div style={{fontSize:11,color:s.color,marginTop:2,opacity:0.7}}>{s.label}</div>
-            </div>
-          ))}
+      {/* Header + series / week picker */}
+      <section className="tfx-card cf-head">
+        <div className="cf-head-top">
+          <div>
+            <div className="tfx-eyebrow">Faith</div>
+            <h2>Fellowship Friday</h2>
+            <p>Summer series · 12 weeks</p>
+          </div>
+          <span className={"cf-pill "+(completedWeeks.length>0?"is-green":"is-muted")}><b className="tfx-num">{completedWeeks.length}/12</b> complete</span>
         </div>
 
-        {/* Series tabs */}
-        <div style={{display:"flex",gap:6,marginBottom:10}}>
-          {SERIES_META.map(s=>(
-            <button key={s.num} onClick={()=>{setCurrentWeek((s.num-1)*4+1);setView("guide");setExpandedQ(null);}} style={{flex:1,padding:"6px 8px",borderRadius:8,border:"0.5px solid "+(currentSeries.num===s.num?s.color:"#252525"),background:currentSeries.num===s.num?s.color:"transparent",color:currentSeries.num===s.num?"#fff":s.color,fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",textAlign:"center"}}>
-              {s.title}
-              <div style={{fontSize:9,opacity:0.7,marginTop:1}}>{s.weeks}</div>
-            </button>
-          ))}
-        </div>
-
-        {/* Week buttons */}
-        <div style={{display:"flex",gap:3}}>
-          {SERIES.map(s=>{
-            const sm=SERIES_META[s.series-1];
-            const isDone=completedWeeks.includes(s.week);
-            const isActive=currentWeek===s.week;
+        <div className="cf-series" role="group" aria-label="Series and weeks">
+          {SERIES_META.map(s=>{
+            const on=currentSeries.num===s.num;
             return(
-              <button key={s.week} onClick={()=>{setCurrentWeek(s.week);setView("guide");setExpandedQ(null);}} style={{flex:1,height:32,borderRadius:6,border:"0.5px solid "+(isActive?sm.color:sm.color+"33"),background:isActive?sm.color:"#111",color:isActive?"#fff":sm.color,fontSize:10,fontWeight:isActive?600:400,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                {isDone?"✓":s.week}
-              </button>
+              <div key={s.num} className={"cf-srow"+(on?" is-on":"")} style={{"--tone":TONE[s.num]}}>
+                <button className="cf-slabel is-btn tfx-press" aria-pressed={on} onClick={()=>{setCurrentWeek((s.num-1)*4+1);setView("guide");setExpandedQ(null);}}>
+                  <i className="cf-sdot" aria-hidden="true"/>
+                  <span><b>{s.title}</b><small>{s.weeks}</small></span>
+                </button>
+                <div className="cf-wks">
+                  {SERIES.filter(w=>w.series===s.num).map(w=>{
+                    const done=completedWeeks.includes(w.week);
+                    const act=currentWeek===w.week;
+                    return(
+                      <button key={w.week} className={"cf-wk tfx-press tfx-num"+(act?" is-on":"")+(done?" is-done":"")} aria-current={act?"true":undefined} aria-label={"Week "+w.week+(done?", complete":"")} onClick={()=>{setCurrentWeek(w.week);setView("guide");setExpandedQ(null);}}>
+                        {done?"✓":w.week}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Week title */}
-      <div style={{background:week.color+"12",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid "+week.color+"44"}}>
-        <div style={{fontSize:11,color:week.color,textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:4}}>{week.seriesTitle} · Week {week.week}</div>
-        <div style={{fontSize:18,fontWeight:600,color:week.color,marginBottom:6}}>{week.title}</div>
-        <div style={{display:"inline-block",background:week.color,color:"#fff",fontSize:11,padding:"2px 8px",borderRadius:5,marginBottom:10}}>{week.scripture}</div>
-        <div style={{fontSize:13,fontStyle:"italic",color:"#aaa",lineHeight:1.8,padding:"10px 12px",background:"rgba(0,0,0,0.3)",borderRadius:8,borderLeft:"3px solid "+week.color}}>"{week.verse}"</div>
-      </div>
+      {/* This week */}
+      <section className="tfx-card cf-wcard">
+        <div className="cf-wcard-top">
+          <div className="tfx-eyebrow">{week.seriesTitle} · Week {week.week}</div>
+          {isDone&&<span className="cf-pill is-green">Complete</span>}
+        </div>
+        <h2 className="cf-title">{week.title}</h2>
+        <figure className="cf-verse">
+          <figcaption>{week.scripture}</figcaption>
+          <blockquote>"{week.verse}"</blockquote>
+        </figure>
+      </section>
 
       {/* Big idea */}
-      <div style={{background:"#0f0f0f",borderRadius:12,padding:"1rem",marginBottom:12,border:"2px solid "+week.color}}>
-        <div style={{fontSize:10,color:week.color,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Big idea</div>
-        <div style={{fontSize:14,color:"#fff",lineHeight:1.7}}>{week.bigIdea}</div>
-      </div>
+      <section className="tfx-card cf-idea">
+        <div className="tfx-eyebrow">Big idea</div>
+        <p>{week.bigIdea}</p>
+      </section>
 
       {/* Sub tabs */}
-      <div style={{display:"flex",gap:6,marginBottom:12}}>
+      <div className="ir-seg cf-seg" role="tablist" aria-label="Week content">
         {["guide","questions","takeaways"].map(v=>(
-          <button key={v} onClick={()=>setView(v)} style={{flex:1,padding:"8px",borderRadius:8,border:"0.5px solid "+(view===v?week.color:"#252525"),background:view===v?week.color:"transparent",color:view===v?"#fff":"#555",fontSize:12,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+          <button key={v} role="tab" aria-selected={view===v} className={"tfx-press"+(view===v?" is-on":"")} onClick={()=>setView(v)}>
             {v==="guide"?"Teaching guide":v==="questions"?"Discussion":"Takeaways"}
           </button>
         ))}
       </div>
 
       {/* Content */}
-      <div style={{background:"#141414",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #252525"}}>
-        {view==="guide"&&week.teaching.map((t,i)=>(
-          <div key={i} style={{padding:"10px 0",borderBottom:i<week.teaching.length-1?"0.5px solid #1e1e1e":"none"}}>
-            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
-              <span style={{background:week.color,color:"#fff",fontSize:10,padding:"2px 6px",borderRadius:4,fontWeight:500,flexShrink:0,marginTop:2}}>{t.ref}</span>
-              <div>
-                <div style={{fontSize:13,fontWeight:600,marginBottom:2,color:"#ddd"}}>{t.point}</div>
-                <div style={{fontSize:12,color:"#888",lineHeight:1.6}}>{t.detail}</div>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {view==="questions"&&(
-          <div>
-            {week.questions.map((q,i)=>(
-              <div key={i} style={{marginBottom:8,borderRadius:10,border:"0.5px solid "+(expandedQ===i?week.color:"#252525"),overflow:"hidden"}}>
-                <button onClick={()=>setExpandedQ(expandedQ===i?null:i)} style={{width:"100%",padding:"10px 12px",background:expandedQ===i?week.color+"18":"#0e0e0e",border:"none",cursor:"pointer",textAlign:"left",fontFamily:"Georgia,serif",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:13,fontWeight:500,color:expandedQ===i?week.color:"#ddd"}}>Q{i+1}. {q.q}</span>
-                  <span style={{fontSize:12,color:week.color,flexShrink:0}}>{expandedQ===i?"▲":"▼"}</span>
-                </button>
-                {expandedQ===i&&(
-                  <div style={{padding:"10px 12px",background:week.color+"15",borderTop:"0.5px solid "+week.color+"33"}}>
-                    <div style={{fontSize:11,fontWeight:500,color:week.color,textTransform:"uppercase",letterSpacing:"0.04em",marginBottom:4}}>Guided answer</div>
-                    <div style={{fontSize:13,color:"#aaa",lineHeight:1.7}}>{q.a}</div>
-                  </div>
-                )}
-              </div>
+      <section className="tfx-card cf-body">
+        {view==="guide"&&(
+          <ol className="cf-points">
+            {week.teaching.map((t,i)=>(
+              <li key={i}>
+                <span className="cf-ref">{t.ref}</span>
+                <div>
+                  <b>{t.point}</b>
+                  <p>{t.detail}</p>
+                </div>
+              </li>
             ))}
-            <div style={{background:"#0f0f0f",borderRadius:10,padding:"12px 14px",marginTop:12,border:"2px solid "+week.color}}>
-              <div style={{fontSize:10,fontWeight:500,color:week.color,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6}}>Deep heart question</div>
-              <div style={{fontSize:14,color:"#fff",lineHeight:1.7,fontStyle:"italic"}}>"{week.deepQuestion}"</div>
-              <div style={{fontSize:11,color:"#555",marginTop:6}}>Give space. Let it land. Don't rush past this one.</div>
-            </div>
-          </div>
+          </ol>
         )}
 
-        {view==="takeaways"&&week.takeaways.map((t,i)=>(
-          <div key={i} style={{display:"flex",gap:10,padding:"10px",borderRadius:8,background:week.color+"18",marginBottom:8,border:"0.5px solid "+week.color+"33"}}>
-            <div style={{width:24,height:24,borderRadius:"50%",background:week.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:500,color:"#fff",flexShrink:0}}>{i+1}</div>
-            <div style={{fontSize:13,color:"#ddd",lineHeight:1.6,fontWeight:500,alignSelf:"center"}}>{t}</div>
-          </div>
-        ))}
-      </div>
+        {view==="questions"&&(
+          <>
+            <ul className="cf-qs">
+              {week.questions.map((q,i)=>{
+                const open=expandedQ===i;
+                return(
+                  <li key={i} className={open?"is-open":""}>
+                    <button className="cf-q" aria-expanded={open} onClick={()=>setExpandedQ(expandedQ===i?null:i)}>
+                      <span className="cf-qn tfx-num">Q{i+1}</span>
+                      <span className="cf-qt">{q.q}</span>
+                      <span className="cf-chev" aria-hidden="true">▾</span>
+                    </button>
+                    {open&&(
+                      <div className="cf-a">
+                        <div className="tfx-eyebrow">Guided answer</div>
+                        <p>{q.a}</p>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="cf-deep">
+              <div className="tfx-eyebrow">Deep heart question</div>
+              <p>"{week.deepQuestion}"</p>
+              <small>Give space. Let it land. Don't rush past this one.</small>
+            </div>
+          </>
+        )}
+
+        {view==="takeaways"&&(
+          <ol className="cf-takes">
+            {week.takeaways.map((t,i)=>(
+              <li key={i}>
+                <span className="tfx-num">{i+1}</span>
+                <p>{t}</p>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
 
       {/* Coach notes */}
-      <div style={{background:"#141414",borderRadius:12,padding:"1rem",marginBottom:12,border:"0.5px solid #252525"}}>
-        <div style={{fontSize:11,fontWeight:500,color:"#666",textTransform:"uppercase",letterSpacing:"0.05em",marginBottom:6}}>Coach notes — Week {currentWeek}</div>
-        <textarea value={notes[noteKey]||""} onChange={e=>setNotes(p=>({...p,[noteKey]:e.target.value}))} placeholder="What came up? Who opened up? What to follow up on?" rows={5} style={{width:"100%",minHeight:120,padding:"10px",fontSize:13,border:"0.5px solid #333",borderRadius:8,background:"#111",color:"#ddd",fontFamily:"Georgia,serif",resize:"vertical",boxSizing:"border-box",lineHeight:1.6}}/>
-      </div>
+      <section className="tfx-card cf-card cf-notes">
+        <label className="tfx-eyebrow" htmlFor="cf-ff-notes">Coach notes — Week {currentWeek}</label>
+        <textarea id="cf-ff-notes" className="tfx-field cf-ta" value={notes[noteKey]||""} onChange={e=>setNotes(p=>({...p,[noteKey]:e.target.value}))} placeholder="What came up? Who opened up? What to follow up on?" rows={5}/>
+        <small className="cf-hint">Saved on this device as you type.</small>
+      </section>
 
       {/* Mark complete + handout */}
-      <div style={{display:"flex",gap:8}}>
-        <button onClick={markComplete} disabled={completedWeeks.includes(currentWeek)} style={{flex:1,padding:"10px",borderRadius:8,border:"none",background:completedWeeks.includes(currentWeek)?"#0a160a":week.color,color:completedWeeks.includes(currentWeek)?"#1E6B3A":"#fff",fontSize:13,fontWeight:500,cursor:completedWeeks.includes(currentWeek)?"default":"pointer",fontFamily:"Georgia,serif"}}>
-          {completedWeeks.includes(currentWeek)?"Week complete ✓":"Mark complete →"}
+      <div className="cf-acts">
+        <button className={"tfx-btn tfx-press cf-primary"+(isDone?" is-done":"")} onClick={markComplete} disabled={isDone}>
+          {isDone?"Week complete ✓":"Mark complete →"}
         </button>
-        <button onClick={()=>setShowHandout(true)} style={{flex:1,padding:"10px",borderRadius:8,border:"0.5px solid "+week.color,background:"transparent",color:week.color,fontSize:13,fontWeight:500,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+        <button className="tfx-btn-ghost tfx-press" onClick={()=>setShowHandout(true)}>
           Student handout →
         </button>
         {currentWeek<12&&(
-          <button onClick={()=>{setCurrentWeek(w=>w+1);setView("guide");setExpandedQ(null);}} style={{padding:"10px 16px",borderRadius:8,border:"0.5px solid #252525",background:"transparent",color:"#555",fontSize:13,cursor:"pointer",fontFamily:"Georgia,serif"}}>
+          <button className="tfx-btn-ghost tfx-press" onClick={()=>{setCurrentWeek(w=>w+1);setView("guide");setExpandedQ(null);}}>
             Next →
           </button>
         )}
